@@ -19,6 +19,7 @@ WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）
 
 ### 例子：
 1. 一个最简单的例子
+
   ```
   // http://www.a.com/test.js www.a.com域的js文件    
   let myName = "li";
@@ -31,6 +32,7 @@ WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）
   </script>
   ```
 2. 更符合JSONP定义的一个例子。其实道理完全一样
+
   ```
   // http://www.b.com/test.html www.b.com域的html文件
   <script>
