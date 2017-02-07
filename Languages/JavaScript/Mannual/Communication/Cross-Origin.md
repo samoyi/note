@@ -1,18 +1,18 @@
-# Cross-Origin
+# Cross-Origin 方法
 
-## CORS（Cross-Origin Resource Sharing
+## 方法一：CORS（Cross-Origin Resource Sharing）
 ### Pros：
   * 支持所有类型的HTTP请求
 
 
-## WebSockets
+## 方法二：WebSockets
 ### 原理：
 WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）作为协议前缀。该协议不实行同源政策，只要服务器支持，就可以通过它进行跨源通信。
 ### Cons:
 * 需要搭建WebSocket服务器
 
 
-## JSONP
+## 方法三：JSONP
 ### 原理：
 `<script>`的`src`属性加载资源不受同源策略的限制
 
@@ -56,7 +56,7 @@ WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）
 3. 只支持`GET`请求
 
 
-## Image Pings
+## 方法四：Image Pings
 ### 原理：
 `<img>`的`src`属性加载资源不受同源策略的限制
 
