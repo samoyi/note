@@ -62,15 +62,15 @@ WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）
 `<img>`的`src`属性加载资源不受同源策略的限制
 
 ### 例子：
-```
-var img = new Image();
-function imgPing(){
-    alert("Done!");
-}
-// 因为请求的不是图片，所以即使请求成功，也不会触发`load`事件，只会触发`error`事件
-img.addEventListener('error', imgPing, false);
-img.src = "http://www.otherDomain/test.php?name=li";
-```
+  ```
+  var img = new Image();
+  function imgPing(){
+      alert("Done!");
+  }
+  // 因为请求的不是图片，所以即使请求成功，也不会触发`load`事件，只会触发`error`事件
+  img.addEventListener('error', imgPing, false);
+  img.src = "http://www.otherDomain/test.php?name=li";
+  ```
 
 ### 用途：
 * 监听用户是否访问了某个网页。如果访问了，上例中的```test.php```就会收到指定的参数
