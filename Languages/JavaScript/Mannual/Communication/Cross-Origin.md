@@ -4,14 +4,19 @@
 ### Pros：
   * 支持所有类型的HTTP请求
 
-### Cons：
-  * 需要
+
+***
+
 
 ## WebSockets
 ### 原理：
 WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）作为协议前缀。该协议不实行同源政策，只要服务器支持，就可以通过它进行跨源通信。
 ### Cons:
 * 需要搭建WebSocket服务器
+
+
+***
+
 
 ## JSONP
 ### 原理：
@@ -55,6 +60,9 @@ WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）
 2. 无法很好的确定请求是否失败  
   Although HTML5 has specified an onerror event handler for `<script>` elements, it hasn’t yet been implemented by any browser. Developers frequently used timers to see if a response has or has not been received within a set amount of time, but even this is tricky because not every user has the same connection speed and bandwidth.
 3. 只支持`GET`请求
+
+
+***
 
 
 ## Image Pings
