@@ -2,7 +2,7 @@
 
 ## Summary
 1. The data URI scheme is a uniform resource identifier (URI) scheme that provides a way to include data in-line in web pages as if they were external resources.
-2. 虽然也可以用来编码文本信息，但意义不大。
+2. 虽然也可以用来编码文本及其他信息信息，但意义不大。编码图片才具有使用的价值。
 
 ## Syntax
 
@@ -10,23 +10,45 @@
 data:[<media type>][;base64],<data>
 ```
 ## Advantages
-http://stackoverflow.com/questions/6819314/why-use-data-uri-scheme
-http://blog.teamtreehouse.com/using-data-uris-speed-website
-https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding
-https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataURL
-https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement
-http://blog.csdn.net/danteliujie/article/details/52299391
-http://justcoding.iteye.com/blog/2090964
-http://dev.mobify.com/blog/data-uris-are-slow-on-mobile/
+* ### 不发送请求，因此节省了请求本身的带宽。  
+	例如一个600bytes的图片使用Data URI编码后大小变成了800bytes。但如果HTTP请求该图片时请求本身消耗的带宽超过200bytes的话，则至少在节省带宽这方面，这里使用Data URI更合适。
+* ### For transferring many small files (less than a few kilobytes each), this can be faster.  
+	TCP transfers tend to start slowly. If each file requires a new TCP connection, the transfer speed is limited by the round-trip time rather than the available bandwidth. Using HTTP keep-alive improves the situation, but may not entirely alleviate the bottleneck.
+* ### 配置较差的HTTPS有时比使用Data URI要慢。  
+	On badly configured servers, HTTPS requests have significant overhead over common HTTP requests, so embedding data in data URIs may improve speed in this case.
+* ### 不受最大请求并发数的限制
+* ### It is possible to manage a multimedia page as a single file
 
-## Problems
-[MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs#Common_problems)
-* Base64编码的数据体积通常是原数据的体积4/3
-* Data URI 形式的图片不会被浏览器缓存
-* 对CPU、内存的消耗
-* Malware and phishing
+## Disadvantages:
+* ### Data URIs are not separately cached from their containing documents  
+	当你重新加载页面时，图片和背景图片会优先使用缓存的的图片文件。但因为Data URIs图片没办法独立成图片文件进行缓存，所以它们也会被重新加载
+* ### Data is included as a simple stream, and many processing environments may not support using containers to provide greater complexity
+	==不懂==  Data is included as a simple stream, and many processing environments (such as web browsers) may not support using containers (such as multipart/alternative or message/rfc822) to provide greater complexity such as metadata, data compression, or content negotiation.
+* ### Base64-encoded data URIs are 1/3 larger in size than their binary equivalent.
+* ### Data URIs make it more difficult for security software to filter content.
+* ### 因为需要进行解码处理，所以在性能相对弱的移动端，处理过程会占用相对较多的资源，从而导致实际速度明显变慢(2013年的测试结果)
+	[On Mobile, Data URIs are 6x Slower than Source Linking (New Research)](http://dev.mobify.com/blog/data-uris-are-slow-on-mobile/)
+* ### 安全问题  
 	The data URI can be utilized by criminals to construct attack pages that attempt to obtain usernames and passwords from unsuspecting web users. It can also be used to get around site cross-scripting restrictions, embedding the attack payload fully inside the address bar, and hosted via URL shortening services rather than needing a full website that is owned by the criminal.
 
+## 编码和解码
+### JavaScript
+#### `HTMLCanvasElement.toDataURL()`  
+ 1. [MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataURL)
+ 2. 使用这个方法对图片进行编码后的返回值并不是图片真实的base64数据组成的Data URI，而是有更多的数据。下面以一个36.6KB的图片为例，其真正的Data URI字符串长度是50083（通过网上的在线编码工具获得）：
+
+ 	* 使用该方法且quality参数为默认的0.92，编码后的返回值字符串长度为87647；如果再对其解码为图片，图片大小就变为了64.1KB。  
+
+	* 如果quality设为最大值1，返回值字符串长度为243307。再解码为图片后大小成了178KB。  
+
+	所以要涉及传输和保存的情况，可以考虑降低品质。
+ 3. 看起来第一个输出图片类型参数只能是 image/png image/png image/webp 之一，如果设置为其他类型，最终都会输出位png类型的图片
+ 4. 只有对于jpeg和webp格式的图片，quality参数才是有效的。不过你可以把其他格式的设定为image/jpeg或image/webp类型来进行quality修改，最后会转化为指定的格式。例如把png图片转化为不透明的jpg或者转化为同样透明的webp，同时也进行压缩。
+
+
 ## References
-[Wikipedia](https://en.wikipedia.org/wiki/Data_URI_scheme)
-[MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs)
+* [Wikipedia](https://en.wikipedia.org/wiki/Data_URI_scheme)
+* [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs)
+* [Why use data URI scheme?](http://stackoverflow.com/questions/6819314/why-use-data-uri-scheme)
+* [Using Data URIs to Speed Up Your Website](http://blog.teamtreehouse.com/using-data-uris-speed-website)
+* [On Mobile, Data URIs are 6x Slower than Source Linking](http://dev.mobify.com/blog/data-uris-are-slow-on-mobile/)
