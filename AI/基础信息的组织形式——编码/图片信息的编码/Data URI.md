@@ -45,6 +45,10 @@ data:[<media type>][;base64],<data>
  3. 看起来第一个输出图片类型参数只能是 image/png image/png image/webp 之一，如果设置为其他类型，最终都会输出位png类型的图片
  4. 只有对于jpeg和webp格式的图片，quality参数才是有效的。不过你可以把其他格式的设定为image/jpeg或image/webp类型来进行quality修改，最后会转化为指定的格式。例如把png图片转化为不透明的jpg或者转化为同样透明的webp，同时也进行压缩。
 
+https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement
+http://stackoverflow.com/questions/4998908/convert-data-uri-to-file-then-append-to-formdata
+http://stackoverflow.com/questions/6850276/how-to-convert-dataurl-to-file-object-in-javascript
+http://stackoverflow.com/questions/17328438/convert-data-uri-to-file
 
 ## References
 * [Wikipedia](https://en.wikipedia.org/wiki/Data_URI_scheme)
