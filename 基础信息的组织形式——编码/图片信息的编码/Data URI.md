@@ -50,7 +50,7 @@ data:[<media type>][;base64],<data>
 	3. 其次要在服务器设置对被请求的图片进行`CORS`设置。  
 		目前知道的一个方法是在图片所在目录或者其包含目录设置如下`.htaccess`文件：`Header set Access-Control-Allow-Origin "*"`
 
-https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement
+
 http://stackoverflow.com/questions/4998908/convert-data-uri-to-file-then-append-to-formdata
 http://stackoverflow.com/questions/6850276/how-to-convert-dataurl-to-file-object-in-javascript
 http://stackoverflow.com/questions/17328438/convert-data-uri-to-file
