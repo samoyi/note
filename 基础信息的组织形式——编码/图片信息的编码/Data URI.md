@@ -44,6 +44,11 @@ data:[<media type>][;base64],<data>
 	所以要涉及传输和保存的情况，可以考虑降低品质。
  3. 看起来第一个输出图片类型参数只能是 image/png image/png image/webp 之一，如果设置为其他类型，最终都会输出位png类型的图片
  4. 只有对于jpeg和webp格式的图片，quality参数才是有效的。不过你可以把其他格式的设定为image/jpeg或image/webp类型来进行quality修改，最后会转化为指定的格式。例如把png图片转化为不透明的jpg或者转化为同样透明的webp，同时也进行压缩。
+ 5. 解决跨域问题:[MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image)
+	1. 默认情况下，对于跨域请求的图片，canvas不能对其进行获取图片内部数据的。
+	2. 首先需要对图片元素进行如下属性设置：`img.crossOrigin = "Anonymous";`
+	3. 其次要在服务器设置对被请求的图片进行`CORS`设置。  
+		目前知道的一个方法是在图片所在目录或者其包含目录设置如下`.htaccess`文件：`Header set Access-Control-Allow-Origin "*"`
 
 https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement
 http://stackoverflow.com/questions/4998908/convert-data-uri-to-file-then-append-to-formdata
