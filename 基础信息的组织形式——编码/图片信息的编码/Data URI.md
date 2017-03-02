@@ -80,18 +80,25 @@ getDataURI($sFilePath); // 返回DataURI
 
 function getDataURI($sFilePath)
 {
-	function getMIMEType($sFilePath)
+	$sBase64 = base64_encode( file_get_contents($sFilePath) );
+
+	if( function_exists('mime_content_type') )  // PHP6中断了对该函数的支持
 	{
-		$finfo = finfo_open(FILEINFO_MIME_TYPE);
-		$sMIMEType = finfo_file($finfo, $sFilePath);
-		finfo_close($finfo);
-		return $sMIMEType;
+		$sMIMEType = mime_content_type($sFilePath);
+	}
+	else
+	{
+		function getMIMEType($sFilePath)
+		{
+			$finfo = finfo_open(FILEINFO_MIME_TYPE);
+			$sMIMEType = finfo_file($finfo, $sFilePath);
+			finfo_close($finfo);
+			return $sMIMEType;
+		}
+		$sMIMEType = getMIMEType($sFilePath);
 	}
 
-	$sBase64 = base64_encode( file_get_contents($sFilePath) );
-	$sMIMEType = getMIMEType($sFilePath);
 	$sDataURI = 'data: ' . $sMIMEType . ';base64,' . $sBase64;
-
 	return $sDataURI;
 }
 ```
