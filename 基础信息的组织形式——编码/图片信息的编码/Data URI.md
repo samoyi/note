@@ -2,7 +2,7 @@
 
 ## Summary
 1. The data URI scheme is a uniform resource identifier (URI) scheme that provides a way to include data in-line in web pages as if they were external resources.
-2. 虽然也可以用来编码文本及其他信息信息，但意义不大。编码图片才具有使用的价值。
+2. 虽然也可以用来编码文本及其他类型信息，但意义不大。编码图片才具有使用的价值。
 
 ## Syntax
 
@@ -31,11 +31,32 @@ data:[<media type>][;base64],<data>
 * ### 安全问题  
 	The data URI can be utilized by criminals to construct attack pages that attempt to obtain usernames and passwords from unsuspecting web users. It can also be used to get around site cross-scripting restrictions, embedding the attack payload fully inside the address bar, and hosted via URL shortening services rather than needing a full website that is owned by the criminal.
 
-## 编码和解码
+## 编码
 ### JavaScript
-#### `HTMLCanvasElement.toDataURL()`  
+#### `FileReader.readAsDataURL()` 方法
+该方法适用于所有类型的文件，而不限于图片
+```
+<!--通过表单获取图片文件-->
+<input type="file" id="chooseImage" />
+```
+```
+/*
+ * 接受获取到的文件后，使用FileReader类型实例的readAsDataURL方法读取DataURI，
+ * 在读取完成的回调函数中，实例的result属性就是图片的readAsDataURL
+ */
+document.querySelector("#chooseImage").addEventListener("change", function(ev)
+{
+	let fileReader = new FileReader();
+	fileReader.addEventListener("load", function(ev) // 读取完成的回调
+	{
+		console.log( ev.target.result ); // DataURI
+	});
+	fileReader.readAsDataURL( ev.target.files[0] ); // 读取
+});
+```
+#### `HTMLCanvasElement.toDataURL()` 方法  
  1. [MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataURL)
- 2. 使用这个方法对图片进行编码后的返回值并不是图片真实的base64数据组成的Data URI，而是有更多的数据。下面以一个36.6KB的图片为例，其真正的Data URI字符串长度是50083（通过网上的在线编码工具获得）：
+ 2. 使用这个方法对图片进行编码后的返回值并不是图片真实的base64数据组成的Data URI，而是有更多的数据。下面以一个36.6KB的图片为例，其真正的Data URI字符串长度是50083：
 
  	* 使用该方法且quality参数为默认的0.92，编码后的返回值字符串长度为87647；如果再对其解码为图片，图片大小就变为了64.1KB。  
 
@@ -49,6 +70,33 @@ data:[<media type>][;base64],<data>
 	2. 首先需要对图片元素进行如下属性设置：`img.crossOrigin = "Anonymous";`
 	3. 其次要在服务器设置对被请求的图片进行`CORS`设置。  
 		目前知道的一个方法是在图片所在目录或者其包含目录设置如下`.htaccess`文件：`Header set Access-Control-Allow-Origin "*"`
+
+### PHP
+以图片为例，但文件类型并不限于图片  
+
+```
+$sFilePath = "image/test.jpg";
+getDataURI($sFilePath); // 返回DataURI
+
+function getDataURI($sFilePath)
+{
+	function getMIMEType($sFilePath)
+	{
+		$finfo = finfo_open(FILEINFO_MIME_TYPE);
+		$sMIMEType = finfo_file($finfo, $sFilePath);
+		finfo_close($finfo);
+		return $sMIMEType;
+	}
+
+	$sBase64 = base64_encode( file_get_contents($sFilePath) );
+	$sMIMEType = getMIMEType($sFilePath);
+	$sDataURI = 'data: ' . $sMIMEType . ';base64,' . $sBase64;
+
+	return $sDataURI;
+}
+```
+
+## 解码
 
 http://stackoverflow.com/questions/4998908/convert-data-uri-to-file-then-append-to-formdata
 http://stackoverflow.com/questions/6850276/how-to-convert-dataurl-to-file-object-in-javascript
