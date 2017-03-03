@@ -72,7 +72,8 @@ document.querySelector("#chooseImage").addEventListener("change", function(ev)
 		目前知道的一个方法是在图片所在目录或者其包含目录设置如下`.htaccess`文件：`Header set Access-Control-Allow-Origin "*"`
 
 ### PHP
-以图片为例，但文件类型并不限于图片  
+1. PHP的`base64_encode`函数编码后只是base64部分，还需要自己加上前面的内容
+2. 以图片为例，但文件类型并不限于图片  
 
 ```
 $sFilePath = "image/test.jpg";
@@ -104,6 +105,13 @@ function getDataURI($sFilePath)
 ```
 
 ## 解码
+### PHP
+PHP的`base64_decode`函数只能解码DataURI的base64部分，所以需要自己提取其中的Base64部分
+```
+$sDataURI = 'data: image/jpeg;base64,/9j/4QAYR省略省略省略';
+$sBase64 = explode(';base64,', $sDataURI)[1];
+file_put_contents('image.jpg', base64_decode($sBase64) );
+```
 
 http://stackoverflow.com/questions/4998908/convert-data-uri-to-file-then-append-to-formdata
 http://stackoverflow.com/questions/6850276/how-to-convert-dataurl-to-file-object-in-javascript
