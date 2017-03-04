@@ -15,4 +15,4 @@ Single-threaded execution means that web browsers must stop responding to user i
 * Use `Web worker`
 * If your application must perform enough computation to cause a noticeable delay, you should allow the document to load fully before performing that computation
 * You should be sure to notify the user that computation is underway and that the browser is not hung.
-* If it is possible to break your computation down into discrete subtasks, you can use methods such as setTimeout() and setInterval() to run the subtasks in the background while updating a progress indicator that displays feedback to the user.
+* If it is possible to break your computation down into discrete subtasks, you can use methods such as `setTimeout()` and `setInterval()` to run the subtasks in the background while updating a progress indicator that displays feedback to the user.

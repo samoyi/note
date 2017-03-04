@@ -32,16 +32,16 @@ occurring.
         <script defer src="a.js">
         <script defer src="b.js">
         ```    
-    3. If a <script> tag has both attributes, a browser that supports both will honor the async attribute and ignore the defer attribute.
+    3. If a `<script>` tag has both attributes, a browser that supports both will honor the async attribute and ignore the defer attribute.
 * async：异步加载，同步执行
-    1. If a <script> tag has both attributes, a browser that supports both will honor the async attribute and ignore the defer attribute.
+    1. If a `<script>` tag has both attributes, a browser that supports both will honor the async attribute and ignore the defer attribute.
     2. 不保证先后顺序，b.js不一定会在a.js执行之后再执行，b.js不能依赖a.js
     ```
     <script async src="a.js">
     <script async src="b.js">
     ```
-    
-![image](http://note.youdao.com/yws/public/resource/dec185d3327b2d9cb540bb06bd81edd8/xmlnote/2D1724E0445E4D9E801AD67AA65F77A3/47972)  
+
+![scriptTimeline](image/scriptTimeline.jpg)  
 **使用```defer```和```async```先查看最新的浏览器支持情况**  
 
 [参考资料1](https://www.igvita.com/2014/05/20/script-injected-async-scripts-considered-harmful/)  
@@ -53,7 +53,7 @@ occurring.
 **This is an idealized timeline and all browsers do not support all of its details.**
 
 1. The web browser creates a Document object and begins parsing the web page, adding Element objects and Text nodes to the document as it parses HTML elements and their textual content. The document.readyState property has the value “loading” at this stage.
-2. When the HTML parser encounters <script> elements that have neither the async nor defer attributes, it adds those elements to the document and then executes the inline or external script. These scripts are executed synchronously, and the parser pauses while the script downloads (if necessary) and runs. **inline script 不会阻塞渲染**
+2. When the HTML parser encounters `<script>` elements that have neither the async nor defer attributes, it adds those elements to the document and then executes the inline or external script. These scripts are executed synchronously, and the parser pauses while the script downloads (if necessary) and runs. **inline script 不会阻塞渲染**
 3. 异步下载带有async 或者 defer 属性的scripts，并在下载完成后立刻同步执行带有async属性的脚本文件
 4. When the document is completely parsed, the document.readyState property changes to “interactive”.
 5. Any scripts that had the defer attribute set are executed
