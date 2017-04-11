@@ -18,6 +18,16 @@
 * If you must use a global variable to store data, make sure to null it.
 * One common cause for increased memory consumption in connection with globals are **caches**. Caches must have an upper bound for its size. Caches that grow unbounded can result in high memory consumption because their contents cannot be collected.
 
+### 彻底 `removeChild` 或 `replaceChild` 之后没有清空对其引用
+```
+var node =  document.querySelector("#node");
+node.parentNode.removeChild( node );
+console.log( document.querySelector("#node") ); // null
+console.log( node ); // <div id="node"></div>
+```
+因为现在变量`node`还在引用该节点，所以节点占用的内存并不会释放，其上的属性、方法、事件绑定都会存在。在手动解除了对该节点的所有引用后，该节点及其属性、方法和事件绑定都会被浏览器的内存回收机制释放内存。
+
+
 ### Forgotten timers or callbacks
 
 ## References
