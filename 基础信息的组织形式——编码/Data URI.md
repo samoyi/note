@@ -9,6 +9,7 @@
 ```
 data:[<media type>][;base64],<data>
 ```
+
 ## Advantages
 * ### 不发送请求，因此节省了请求本身的带宽。  
 	例如一个600bytes的图片使用Data URI编码后大小变成了800bytes。但如果HTTP请求该图片时请求本身消耗的带宽超过200bytes的话，则至少在节省带宽这方面，这里使用Data URI更合适。
@@ -71,6 +72,12 @@ document.querySelector("#chooseImage").addEventListener("change", function(ev)
 	3. 其次要在服务器设置对被请求的图片进行`CORS`设置。  
 		目前知道的一个方法是在图片所在目录或者其包含目录设置如下`.htaccess`文件：`Header set Access-Control-Allow-Origin "*"`
 
+#### `WindowOrWorkerGlobalScope.btoa()` 方法
+* This method creates a base-64 encoded ASCII string from a String object in which each character in the string is treated as a byte of binary data.
+* Since this function treats each character as a byte of binary data, regardless of the number of bytes which actually make up the character, an InvalidCharacterError exception is thrown if any character's code point is outside the range 0x00 to 0xFF. See [Unicode strings](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/btoa#Unicode_strings) for an example demonstrating how to encode strings with characters outside the 0x00 to 0xFF range
+* You can use this method to encode data which may otherwise cause communication problems, transmit it, then use the `atob()` method to decode the data again. For example, you can encode control characters such as ASCII values 0 through 31.
+
+
 ### PHP
 1. PHP的`base64_encode`函数编码后只是base64部分，还需要自己加上前面的内容
 2. 以图片为例，但文件类型并不限于图片  
@@ -105,6 +112,58 @@ function getDataURI($sFilePath)
 ```
 
 ## 解码
+### JS
+#### `WindowOrWorkerGlobalScope.atob()`方法
+* Decodes a string of data which has been encoded using base-64 encoding.
+* Throws a DOMException if the length of passed-in string is not a multiple of 4.
+
+#### dataURI to Blob
+```
+function dataURItoBlob(dataURI) {
+
+	// convert base64/URLEncoded data component to raw binary data held in a string
+	var byteString = atob(dataURI.split(',')[1]);
+
+    // separate out the mime component
+    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+    // write the bytes of the string to a typed array
+    var ia = new Uint8Array(byteString.length);
+    for (var i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ia], {type:mimeString});
+}
+```
+Blob 可以转为FormData或者img
+##### to FormData
+```
+let blob = dataURItoBlob(dataURI),
+	fd = new FormData();
+fd.append("image", blob);
+```
+##### to img
+`URL.createObjectURL()`
+* Creates a DOMString containing a URL representing the object given in the parameter.
+* The URL lifetime is tied to the document in the window on which it was created.
+* The new object URL represents the specified File object or Blob object.
+* `URL.revokeObjectURL()`: releases an existing object URL which was previously created by calling URL.createObjectURL().
+
+```
+let blob = dataURItoBlob(dataURI),
+	img = document.createElement("img");
+
+img.addEventListener("load", function(e)
+{
+	window.URL.revokeObjectURL(img.src); // 清除释放
+});
+
+img.src = window.URL.createObjectURL(blob);
+document.body.appendChild(img);
+```
+
+
 ### PHP
 PHP的`base64_decode`函数只能解码DataURI的base64部分，所以需要自己提取其中的Base64部分
 ```
@@ -113,13 +172,13 @@ $sBase64 = explode(';base64,', $sDataURI)[1];
 file_put_contents('image.jpg', base64_decode($sBase64) );
 ```
 
-http://stackoverflow.com/questions/4998908/convert-data-uri-to-file-then-append-to-formdata
-http://stackoverflow.com/questions/6850276/how-to-convert-dataurl-to-file-object-in-javascript
-http://stackoverflow.com/questions/17328438/convert-data-uri-to-file
 
 ## References
 * [Wikipedia](https://en.wikipedia.org/wiki/Data_URI_scheme)
-* [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs)
+* [Data_URIs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs)
+* [Base64 encoding and decoding](https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#Solution_.232_.E2.80.93_rewriting_atob()_and_btoa()_using_TypedArrays_and_UTF-8)
 * [Why use data URI scheme?](http://stackoverflow.com/questions/6819314/why-use-data-uri-scheme)
 * [Using Data URIs to Speed Up Your Website](http://blog.teamtreehouse.com/using-data-uris-speed-website)
 * [On Mobile, Data URIs are 6x Slower than Source Linking](http://dev.mobify.com/blog/data-uris-are-slow-on-mobile/)
+* [Convert Data URI to File then append to FormData](http://stackoverflow.com/questions/4998908/convert-data-uri-to-file-then-append-to-formdata)
+* [理解DOMString、Document、FormData、Blob、File、ArrayBuffer数据类型](http://www.zhangxinxu.com/wordpress/2013/10/understand-domstring-document-formdata-blob-file-arraybuffer/)
