@@ -46,7 +46,7 @@
 A reference to another window; such a reference may be obtained, for example, using the `contentWindow` property of an `iframe` element, the object returned by `window.open`, or by named or numeric index on `Window.frames`, if you're trying to start the communication from iframe to parent window then `parent` is also a valid reference
 
 * #### message
-Data to be sent to the other window. The data is serialized using the structured clone algorithm. This means you can pass a broad variety of data objects safely to the destination window without having to serialize them yourself.
+Data to be sent to the other window. The data is serialized using the structured clone algorithm. This means you can pass a broad variety of data objects safely to the destination window without having to serialize them yourself.(Prior to Gecko 6.0, the message parameter must be a string. )
 
 * #### targetOrigin
   1. A string that specifies the expected origin of the destination window. 2. Include the protocol, hostname, and (optionally) the port portions of a URL (you can pass a complete URL, but anything other than the protocol, host, and port will be ignored). If you want to specify the same origin as the current window, you can simply use `/`.
