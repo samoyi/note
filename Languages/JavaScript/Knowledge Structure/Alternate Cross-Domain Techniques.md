@@ -60,4 +60,19 @@ This is a copy of the message that was passed as the first argument to `postMess
 * #### `source`
 The Window object from which the message was sent. You can use it to reply message by `postMessage()`
 * #### `origin`
-A string that specifies the origin (as a URL) from which the message was sent.
+  1. The origin of the window that sent the message at the time postMessage was called.
+  2. This string is the concatenation of the protocol and "://", the host name if one exists, and ":" followed by a port number if a port is present and differs from the default port for the given protocol.
+  3. Note that this origin is not guaranteed to be the current or future origin of that window, which might have been navigated to a different location since `postMessage` was called.
+  4. The value of the origin property of the dispatched event is not affected by the current value of document.domain in the calling window.
+  5. For IDN host names only, the value of the `origin` property is not consistently Unicode or punycode; for greatest compatibility check for both the IDN and punycode values when using this property if you expect messages from IDN sites. This value will eventually be consistently IDN, but for now you should handle both IDN and punycode forms.
+  6. The value of the `origin` when the sending window contains a `javascript:` or `data:` URL is the origin of the script that loaded the URL.
+* #### Security
+  1. Any window may access `postMessage` method on any other window, at any time, regardless of the location of the document in the window, to send it a message.
+  2. Consequently, any event listener used to receive messages must first check the identity of the sender of the message, using the `origin` and possibly `source` properties.
+  3. Failure to check the `origin` and possibly `source` properties enables cross-site scripting attacks.
+
+### Security concerns
+1. If you do not expect to receive messages from other sites, do not add any event listeners for message events. This is a completely foolproof way to avoid security problems.
+2. If you do expect to receive messages from other sites, always verify the sender's identity using the origin and possibly source properties.
+3. Having verified identity, however, you still should always verify the syntax of the received message. Otherwise, a security hole in the site you trusted to send only trusted messages could then open a cross-site scripting hole in your site.
+4. Always specify an exact target origin, not `*`, when you use postMessage to send data to other windows. A malicious site can change the location of the window without your knowledge, and therefore it can intercept the data sent using postMessage.
