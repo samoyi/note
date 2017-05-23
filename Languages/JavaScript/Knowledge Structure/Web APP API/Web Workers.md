@@ -64,7 +64,7 @@ document.
   * The usual event target methods `addEventListener()` and `removeEventListener()`.
   * The `XMLHttpRequest` constructor
 
-
+***
 ## Including Other Scripts
   ```
   importScripts(“file1.js”, “file2.js”);
@@ -76,59 +76,34 @@ document.
 * The scripts are executed in the worker global scope, so if they make use of page-specific JavaScript, then they may not work in a worker.
 
 
-## 例子
-##### 主页面脚本
-```
-let worker = new Worker("Worker.js"),
-	nLoopTime = 22222;
+***
+## Shared workers
+The workers discussed above are called `dedicated workers`, they are dedicated to a particular page and cannot be shared. The specification intorduced a concept of `shared workers`, a `shared worker` is accessible by multiple scripts — even if they are being accessed by different windows, iframes or even workers.
 
-worker.onmessage = function(event)
-{
-    let nResult = event.data;
+### Spawning a shared worker
+1. Spawning a new shared worker is pretty much the same as with a dedicated worker, but with a different constructor name
+  ```
+  var myWorker = new SharedWorker('worker.js');
+  ```
+2. One big difference is that with a shared worker you have to communicate via a port object — an explicit port is opened that the scripts can use to communicate with the worker (this is done implicitly in the case of dedicated workers).  
+3. The port connection needs to be started either implicitly by use of the `onmessage` event handler or explicitly with the `start()` method before any messages can be posted. Calling `start()` is only needed if the message event is wired up via the `addEventListener()` method.
 
-    alert( " 循环结束。循环次数是 " + nResult );
-}
+### Single Thread
+通过`postMessage()`调用worker进行计算时，如果之前其他对象也通过`postMessage()`调用了worker且计算尚未完成，则本次调用的计算要等到上一次计算完成之后才能开始。
 
-worker.onerror = function(event)
-{
-    console.log("ERROR: " + event.filename + " (" + event.lineno + "): " +
-                event.message);
+### Performance
+在进行`Fibonacci(45)`的计算时，直接计算和通过`dedicated worker`计算，都是20秒左右的时间。但如果是通过`shared worker`计算，不管有没有其他的脚本在计算过程中发起共享调用，计算时间都是28秒左右。
 
-      测试错误处理的兼容性，测试return false是否会阻止报错，并记入笔记
-};
-
-worker.postMessage( nLoopTime );
-
-document.write("循环运算异步进行，所以不会阻塞这行文字的输出。");
-```
-##### Worker.js
-```
-self.onmessage = function(event)
-{
-    // 接收到数据
-    var nLoopTimes = event.data;
-
-    // 引入外部文件
-    self.importScripts("loopHandler.js");
-
-    // 下来处理数据
-    let nReturnLoopTimes = loopConsoleIndex( nLoopTimes );
-
-    // 将处理后的数据发会页面
-    self.postMessage( nReturnLoopTimes );
-
-    // 结束
-    self.close(); // 也可以在页面中调用 worker.terminate();
-};
-```
-##### loopHandler.js
-```
-function loopConsoleIndex( times )
-{
-    for(var i=0; i< times; i++)
-    {
-        console.log( i );
-    }
-    return i;
-}
-```
+### 测试中发现但没有看到资料说明的东西 （2017.5）.
+* #### 计算速度的差异（出现过，但并不总出现）
+  1. 用`onmessage`方法的`SharedWorker`，不确定怎么情况下，有时会出现worker线程的计算速度会变慢。
+  2. 但用`addEventListener()`的情况下，并不会变慢。
+  3. 在进行`Fibonacci(45)`的计算时，直接计算、通过`dedicated worker`以及`addEventListener()`方法的`SharedWorker`计算，都是20秒左右的时间。但如果是通过`onmessage`方法的`SharedWorker`计算，不管有没有其他的脚本在计算过程中发起共享调用，计算时间都是28秒左右。
+* #### 单线程与多线程（出现过，但并不总出现）
+ 1. 用`onmessage`方法的`SharedWorker`，不确定在什么情况下，有时worker是单线程的。
+ 2. 即通过`postMessage()`调用worker进行计算时，如果之前其他对象也通过`postMessage()`调用了worker且计算尚未完成，则本次调用的计算要等到上一次计算完成之后才能开始。
+ 3. 但如果是`addEventListener()`方法的`SharedWorker`，则是同时进行计算。
+* #### 缓存问题
+在Chrome中测试时，通过`SharedWorker`引入worker脚本时有明显的类似于缓存的情况，如果给url后面加上随机变化的参数则可以避免。
+* #### 错误处理问题
+在Chrome中测试时，通过`SharedWorker`引入的worker脚本中有错误时，浏览器不会报错，主线程的`onerror`事件也无效，只是静默失败。FF中浏览器也不会报错，但主线程的`onerror`事件可以正常响应错误。
