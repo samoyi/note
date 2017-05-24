@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+</head>
+<body>
+
+</body>
+<script>
+"use strict";
+
+
+function sieve(n) {
+  var a = new Int8Array(n+1); // a[x] will be 1 if x is composite
+  var max = Math.floor(Math.sqrt(n)); // Don't do factors higher than this
+  var p = 2; // 2 is the first prime
+  while(p <= max) { // For primes less than max
+    for(var i = 2*p; i <= n; i += p) // Mark multiples of p as composite
+    a[i] = 1;
+    while(a[++p]) /* empty */; // The next unmarked index is prime
+  }
+  while(a[n]) n--; // Loop backward to find the last prime
+  return n; // And return it
+}
+//https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes
+// https://stackoverflow.com/questions/15471291/sieve-of-eratosthenes-algorithm-in-javascript-running-endless-for-large-number
+var eratosthenes = function(n) {
+    // Eratosthenes algorithm to find all primes under n
+    var array = [], upperLimit = Math.sqrt(n), output = [];
+
+    // Make an array from 2 to (n - 1)
+    for (var i = 0; i < n; i++) {
+        array.push(true);
+    }
+
+    // Remove multiples of primes starting from 2, 3, 5,...
+    for (var i = 2; i <= upperLimit; i++) {
+        if (array[i]) {
+            for (var j = i * i; j < n; j += i) {
+                array[j] = false;
+            }
+        }
+    }
+
+    // All array[i] set to true are primes
+    for (var i = 2; i < n; i++) {
+        if(array[i]) {
+            output.push(i);
+        }
+    }
+
+    return output;
+};
+
+
+
+let nStartTime = (new Date()).getTime();
+// console.log( SieveOfEratosthenes(100000) ); //1494
+// console.log( SieveOfEratosthenes1(100000) ); // 241
+console.log( eratosthenes(100000) ); // 30
+let nStopTime = (new Date()).getTime();
+console.log( nStopTime-nStartTime );
+
+
+
+function SieveOfEratosthenes(nMax){
+  let arr = [],
+      index = 0,
+      value = null;
+let times = 0;
+
+  let nSqrtMax = Math.floor(Math.sqrt(nMax));
+
+  for( let i=3; i<nMax+1;){
+    arr.push( i );
+    i+=2; // 直接跳过偶数
+  }
+
+  while( arr[index] <= nSqrtMax ){
+    for( let i=arr.indexOf(arr[index]*arr[index]); i<arr.length; i++){
+      times++;
+      if( Math.floor(arr[i]/arr[index]) === arr[i]/arr[index] ){
+        arr.splice(i, 1); i--;
+      }
+    }
+    index++;
+  }
+  arr.unshift(2);
+  console.log( times );
+  return arr;
+}
+
+
+function SieveOfEratosthenes1(nMax){
+  let arr = [],
+      index = 0;
+
+  let nSqrtMax = Math.floor(Math.sqrt(nMax));
+
+  for( let i=3; i<nMax+1;){
+    arr.push( i );
+    i+=2; // 直接跳过偶数
+  }
+
+  while( arr[index] <= nSqrtMax ){
+    for( let i=arr.indexOf(arr[index]*arr[index]); i<arr.length; i++){
+      if( Math.floor(arr[i]/arr[index]) === arr[i]/arr[index] ){
+        delete arr[i];
+      }
+    }
+    index++;
+  }
+
+  let aPrime = arr.filter(function(value){
+    return value;
+  });
+  aPrime.unshift(2);
+  return aPrime;
+}
+
+
+</script>
+</html>
