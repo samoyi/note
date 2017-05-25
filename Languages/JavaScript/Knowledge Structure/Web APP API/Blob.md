@@ -24,3 +24,16 @@ features of the XHR2 specification.
 
 ***
 ## Downloading Blobs
+使用时要测试兼容性
+```
+let xhr = new XMLHttpRequest();
+xhr.open("GET", "test.mp4");
+xhr.responseType = "blob" // 必须设定这个属性的值为"blob"
+xhr.onprogress = function(ev) {
+    console.log(ev.loaded + "/" + ev.total); // show progress, if needed
+};
+xhr.onload = function() {
+    console.log(xhr.response); // 获得MP4文件的Blob对象
+}
+xhr.send(null);
+```

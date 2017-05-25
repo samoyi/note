@@ -72,7 +72,7 @@ You can cancel an asynchronous request before a response is received by calling 
 * 如果试图获取`Set-Cookie` 或 `Set-Cookie2` 的值，或返回`null`。
 
 ### `overrideMimeType()`
-*  If you know the MIME type of a resource better than the server does, pass the type of overrideMimeType() before you call send()— this will make XMLHttpRequest ignore the content-type header and use the type you specify instead.
+*  If you know the MIME type of a resource better than the server does, pass the type of `overrideMimeType()` before you call `send()`— this will make XMLHttpRequest ignore the content-type header and use the type you specify instead.
 *  虽然服务器的response仍然给出了它的`Content-Type`，但`XMLHttpRequest`会按照`overrideMimeType()`设定的类型来进行解析。  
 例如在请求一个`XML`文件时，如果设定了`overrideMimeType("text/plain")`，则`responseXML`的属性值不是`document`对象，而是`null`
 
@@ -101,6 +101,17 @@ You can cancel an asynchronous request before a response is received by calling 
 * When setting `responseType` to a particular value, the author should make sure that the server is actually sending a response compatible to that format. If the server returns data that is not compatible to the responseType that was set, the value of response will be `null`.
 * Setting responseType for synchronous requests will throw an `InvalidAccessError` exception. 实际测试并未发现。
 * [兼容性不好](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType#Browser_compatibility)
+
+Value | Response type
+-- | --
+"" | DOMString(dafault)
+"arraybuffer" | ArrayBuffer
+"blob" | Blob
+"document" | Document
+"json" | JavaScript object, parsed from a JSON string returned by the server
+"text" | DOMString
+
+<mark>不懂设置这个属性的意义。在请求一个二进制文件的时候，不管是否设置这个属性为"blob"，服务器都会回应相同的类型，但不设置却不能正确的接受响应</mard>
 
 ### `response`
 * Returns the response's body. It can be of the type ArrayBuffer, Blob, Document, JavaScript object, or a DOMString, depending of the value of `XMLHttpRequest.responseType` property.
