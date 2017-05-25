@@ -80,6 +80,33 @@ You can cancel an asynchronous request before a response is received by calling 
 * 不同于表单提交数据，XHR提交的参数名和参数值在必要的时候都需要通过`encodeURIComponent`进行编码。例如提交“1+2+3”，如果通过表单，后台接收到的仍然是“1+2+3”，但如果通过`XHR`且不编码，后台接收到的就变成了“1 2 3”。
 * 至少在火狐中，如果手动模拟post发送时，触发事件不能是点击submit
 
+###  `responseURL`
+* Returns the serialized URL of the response or the empty string if the URL is null.
+* If the URL is returned, URL fragment if present in the URL will be stripped away.
+* The value of responseURL will be the final URL obtained after any redirects.
+  ```
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "http://www.abc.cn/index.html#123?name=22");
+  xhr.onload = function() {
+  	console.log(xhr.responseURL); // http://www.abc.cn/index.html
+  }
+  xhr.send(null);
+  ```
+
+### `responseType`
+* The `XMLHttpRequest.responseType` property is an enumerated value that returns the type of the response.
+* It also lets the author change the response type to one "arraybuffer", "blob", "document", "json", or "text".
+* If an empty string is set as the value of responseType, it is assumed as type "text".
+* Setting the value of responseType to "document" is ignored if done in a  Worker environment.
+* When setting `responseType` to a particular value, the author should make sure that the server is actually sending a response compatible to that format. If the server returns data that is not compatible to the responseType that was set, the value of response will be `null`.
+* Setting responseType for synchronous requests will throw an `InvalidAccessError` exception. 实际测试并未发现。
+* [兼容性不好](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType#Browser_compatibility)
+
+### `response`
+* Returns the response's body. It can be of the type ArrayBuffer, Blob, Document, JavaScript object, or a DOMString, depending of the value of `XMLHttpRequest.responseType` property.
+* Value of response is null if the request is not complete or was not successful.
+* However, if the value of responseType was set to "text" or the empty string, `response` can contain the partial text response while the request is still in the `loading` state.
+
 
 ***
 ## POST Blob
