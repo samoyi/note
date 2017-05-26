@@ -37,3 +37,6 @@ xhr.onload = function() {
 }
 xhr.send(null);
 ```
+
+***
+## Building Blobs
