@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+</head>
+<body>
+    <div id="one">
+        <input type="text" />
+        <span></span>
+    </div>
+    <div id="second">
+        <input type="text" />
+        <span></span>
+    </div>
+</body>
+<script>
+"use strict";
+
+document.querySelector('#one input').onkeydown = function(ev) {
+    document.querySelector('#one span').innerHTML = this.value;
+    console.log( this.value );
+};
+
+document.querySelector('#second input').onkeydown = function() {
+    let self = this;
+    setTimeout(function() {
+        document.querySelector('#second span').innerHTML = self.value;
+    }, 0);
+};
+
+
+
+
+
+
+</script>
+</html>
