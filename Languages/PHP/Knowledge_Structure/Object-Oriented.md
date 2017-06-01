@@ -7,6 +7,10 @@
 * A token that allows access to static, constant, and overridden properties or methods of a class.
 * [Mannual](http://php.net/manual/en/language.oop5.paamayim-nekudotayim.php#language.oop5.paamayim-nekudotayim)
 
+### Magic constants
+* `__CLASS__` The class name. The class name includes the namespace it was declared in (e.g. Foo\\Bar).
+* `__METHOD__` The class method name.
+
 
 ***
 ## Attributes and Operations
@@ -36,7 +40,19 @@
     echo Foo::bar(); // 22
     ```
 
+### Per-Class Constants
+This constant can be used without your needing to instantiate the class
+```
+class Foo
+{
+    const name = 'aaa';
+}
+echo Foo::name; // 'aaa'
+```
 
+### `__toString()`
+1. If you implement a function called `__toString()` in your class, it will be called when you try to print the class, as in this example:
+2. Whatever the `__toString()` function returns will be printed by echo.
 ***
 ## Inheritance
 ### Overriding
@@ -93,12 +109,56 @@
     class Bar extends Foo{}
     ```
 
+### Late Static Binding
+<mark>不懂</mark>
+
+### Overloading
+1. Overloading in PHP provides means to dynamically "create" properties and methods.
+2. These dynamic entities are processed via magic methods one can establish in a class for various action types.
+3. The overloading methods are invoked when interacting with properties or methods that have not been declared or are not visible in the current scope.
+
+#### Property overloading
+Property overloading only works in object context. These magic methods will not be triggered in static context. Therefore these methods should not be declared static.
+* `__set()` is run when writing data to inaccessible properties.
+* `__get()` is utilized for reading data from inaccessible properties.
+* `__isset()` is triggered by calling `isset()` or `empty()` on inaccessible properties.
+* `__unset()` is invoked when `unset()` is used on inaccessible properties.
+
+#### Method overloading
+All overloading methods must be defined as public.  
+None of the arguments of these magic methods can be passed by reference.  
+* `__call()` is triggered when invoking inaccessible methods in an object context.
+* `__callStatic()` is triggered when invoking inaccessible methods in a static context.
+
+```
+class Foo
+{
+	public function fn(){
+		echo 'fn';
+	}
+
+	public function __call($name, $arguments){
+		echo '__call ' . $name . '. Arguments: ' . implode(', ', $arguments);
+	}
+
+	public static function __callStatic($name, $arguments){
+		echo '__callStatic ' . $name . '. Arguments: ' . implode(', ', $arguments);
+	}
+}
+
+$foo = new Foo;
+
+$foo->fn(); // 'fn'
+$foo->callTest('h', 2, 'o'); // __call callTest. Arguments: h, 2, o
+Foo::callStaticTest('o', 2);  // __callStatic callStaticTest. Arguments: o, 2
+```
+
 
 ***
 ## Interfaces
 1. Object interfaces allow you to create code which specifies which methods a class must implement, without having to define how these methods are handled.
 2. All methods declared in an interface must be public; this is the nature of an interface.
-3. All methods in the interface must be implemented within a class; failure to do so will result in a fatal error.
+3. All methods in the interface must be implemented within a class; failure to do so will result in a fatal error. 如果一个新类继承了一个已经实现了接口的类，则该新类不用再重复实现一遍接口。
 4. Classes may implement more than one interface if desired by separating each interface with a comma.
 ```
 interface I1
@@ -129,144 +189,140 @@ class Multi implements I1, I2
 ```
 
 
-
-
-
-
-
-
-
-
-
-
-
-使用`__call()`重载方法
-class Foo{
-    function __call($name,$arguments)
-    {
-        echo "I'm $name!";
+***
+## Checking Class Type
+The `instanceof` keyword allows you to check the type of an object.You can check whether an object is an instance of a particular class, whether it inherits from a class, or whether it implements an interface.
+```
+interface I1
+{
+    function foo();
+    function bar();
+}
+interface I2
+{
+    function baz();
+    function qux();
+}
+class Multi1 implements I1, I2
+{
+    function foo(){
+        echo 'foo';
+    }
+    function bar(){
+        echo 'bar';
+    }
+    function baz(){
+        echo 'baz';
+    }
+    function qux(){
+        echo 'qux';
     }
 }
-$foo = new Foo();
-$foo->doStuff(); // I'm doStuff!
-$foo->fancy_stuff(); // I'm fancy_stuff!
-1. 类中不能定义传递给$name的方法。这个例子里，Foo类中不能定义doStuff和fancy_stuff
+class Multi2 extends Multi1{}
+
+$multi2 = new Multi2;
+
+$multi2 instanceof Multi2; // true
+$multi2 instanceof Multi1; // true
+$multi2 instanceof I1; // true
+$multi2 instanceof I2; // true
+```
 
 
-__CLASS__ 引用当前类名
-__METHOD__引用当前方法名
-
-
-
-__toString方法
-当尝试打印该类时，会调用该方法。该方法必须要返回一个字符串
-class Foo
+***
+## Class Type Hinting
+```
+interface I1
 {
- private $bar = 22;
- public function __toString()
- {
-  return '33';
- }
+    function foo();
+    function bar();
 }
-
-$foo = new Foo();
-echo $foo; // 33;
-
-
-
-
-声明对象属性时不能使用变量等以及不能计算赋值的原因
-They are defined by using one of the keywords public, protected, or private, followed by a normal variable declaration. This declaration may include an initialization, but this initialization must be a constant value--that is, it must be able to be evaluated at compile time and must not depend on run-time information in order to be evaluated.
-如果一定要使用变量的话，可以如下
-class Foo
+interface I2
 {
-    public function __construct()
-    {
-        $this->bar = $this->name;
+    function baz();
+    function qux();
+}
+class Multi1 implements I1, I2
+{
+    function foo(){
+        echo 'foo';
     }
-    public $name = 'aaa';
+    function bar(){
+        echo 'bar';
+    }
+    function baz(){
+        echo 'baz';
+    }
+    function qux(){
+        echo 'qux';
+    }
 }
-
-
-Per-Class 常量
-不用初始化一个类就可以使用在类中定义的Per-Class常量
-class Foo
+class Multi2 extends Multi1
 {
-    const name = 'aaa';
-}
-echo Foo::name; // 'aaa'
 
-
-
-
-
-
-
-
-
-
-
-
-
-Object Interfaces————————————————
-1. Object interfaces allow you to create code which specifies which methods a class must implement, without having to define how these methods are handled.
-2. Interfaces can be extended like classes using the extends operator.
-3. The class implementing the interface must use the exact same method signatures as are defined in the interface. Not doing so will result in a fatal error.
-4. It's possible for interfaces to have constants. Interface constants works exactly like class constants except they cannot be overridden by a class/interface that inherits them.
-
-不懂。接口具体有什么用
-
-
-延迟静态绑定 late static binding————————————
-不懂
-
-
-
-
-克隆对象——————————————————
-$b = clone $a;
-1. $b会继承$a所有的属性和方法
-2. 如果在$a的类总定义了 __clone()方法，在进行克隆行为的时候会触发该方
-
-
-抽象类————————————————————
-不懂
-
-
-__autoload()函数 自动加载类文件—————————
-
-function __autoload( $classname )
-{
-    include_once( "$classname.class.php" );
-}
-$foo = new Foo(); // 不会报错，因为会先自动加载 Foo.class.php 文件
-
- 在初始化一个未经声明类时，会先自动调用该函数。
-
-
-
-迭代和迭代器————————————————————————
-
-一. 可以使用foreach迭代对象
-$class = new MyClass();
-foreach($class as $key => $value) {
-    print "$key => $value\n";
 }
 
+$multi1 = new Multi1;
+$multi2 = new Multi2;
 
-二. Iterator（迭代器）接口
-不懂
+function checkClassType1(Multi1 $class){} // 参数必须是Multi1的实例
+checkClassType1($multi1); // 正常
+checkClassType1($multi2); // 正常
+function checkInterfaceType1(I1 $class){} // 参数必须是实现了I1接口的类的实例
+checkInterfaceType1($multi1); // 正常
+checkInterfaceType1($multi2); // 正常
+function checkInterfaceType2(I2 $class){} // 参数必须是实现了I2接口的类的实例
+checkInterfaceType2($multi1); // 正常
+checkInterfaceType2($multi2); // 正常
+function checkClassType2(Multi2 $class){} // 参数必须是Multi2的实例
+checkClassType2($multi2); // 正常
+// checkClassType2($multi1); // 报错
+```
 
 
+***
+## Cloning Objects
+<mark>不懂</mark>
 
-Reflection API
+
+***
+## Abstract Classes
+<mark>不懂</mark>
+
+
+***
+## Autoloading Classes
+ 1. The `spl_autoload_register()` function registers any number of autoloaders, enabling for classes and interfaces to be automatically loaded if they are currently not defined.
+ 2. By registering autoloaders, PHP is given a last chance to load the class or interface before it fails with an error.
+```
+    spl_autoload_register(function($classname){
+    	if( is_file('class/' .$classname. '.class.php') ){
+    		require_once 'class/' .$classname. '.class.php';
+    	}
+    });
+    /*
+     * 在还没有所需class的情况下就试图对其实例化的时候，会先执行
+     * `spl_autoload_register`参数中的函数。如果这个函数可以加载
+     * 需要的class，程序就不会报错
+     */
+    $foo = new Foo;
+```
+
+***
+## Iterators and Iteration
+<mark>不懂 没看</mark>
+
+
+***
+## Reflection API
 通过访问已有类和对象来找到类和对象的结构和内容
-class Foo
-{
- public function call()
- {
-  echo "call";
- }
+```
+<pre><?php
+
+class Foo{
+	public function call(){
+		echo "call";
+	}
 }
 
 $foo = new Foo();
@@ -276,47 +332,66 @@ $class1 = new ReflectionClass( $foo );
 
 
 var_dump( $class0 );
-var_dump( $class1 );
-var_dump( $class0 == $class1 );
-echo $class0;
+/*
+	object(ReflectionClass)#2 (1) {
+	  ["name"]=>
+	  string(3) "Foo"
+	}
+*/
 
-/* 以上四行打印下面的
+print_r( $class0 );
+/*
+	ReflectionClass Object
+	(
+	    [name] => Foo
+	)
+*/
 
- Class [  class Foo ] {
-  @@ F:\Wj\wamp\www\PathTest\test.php 6-12
+echo($class0);
+/*
+Class [  class Foo ] {
+@@ E:\WWW\temp\test.php 3-7
 
-  - Constants [0] {
-  }
+- Constants [0] {
+}
 
-  - Static properties [0] {
-  }
+- Static properties [0] {
+}
 
-  - Static methods [0] {
-  }
+- Static methods [0] {
+}
 
-  - Properties [0] {
-  }
+- Properties [0] {
+}
 
-  - Methods [1] {
-    Method [  public method call ] {
-      @@ F:\Wj\wamp\www\PathTest\test.php 8 - 11
-    }
-  }
+- Methods [1] {
+Method [  public method call ] {
+  @@ E:\WWW\temp\test.php 4 - 6
+}
+}
 }
 */
 
+var_dump( $class0 == $class1 ); // bool(true)
 
-Predefined Classes ——————————————————
-http://php.net/manual/en/reserved.classes.php
+var_dump( $class0 === $class1 ); // bool(false)
 
-stdClass
-1. 空类。但不同于JS中，stdClass并不是对象实例的基类。
+?></pre>
+```
+
+
+## Predefined Classes
+[Mannual](http://php.net/manual/en/reserved.classes.php)
+
+### stdClass
+空类。但不同于JS中，stdClass并不是对象实例的基类。
+```
 $object = new StdClass;
+```
 
 
-
-
-判断函数————————————————
-
-class_exists() 检查一个class是否已经被加载
-该函数的第二个参数默认为true，功能是如果检测的类没有被加载，则通过 __autoload() 进行加载。但是，因为 __autoload() 并不被推荐使用，因此最好明确将该参数设为false并手动加载class
+***
+## 其他相关函数
+### `class_exists()`
+* 检查一个class是否已经被加载
+* 该函数的第二个参数默认为`true`，功能是如果检测的类没有被加载，则通过 `__autoload()` 进行加载。但是，因为 `__autoload()` 并不被推荐使用，因此最好明确将该参数设为`false`并手动加载class
