@@ -386,38 +386,96 @@ array array_splice ( array &$input , int $offset [, int $length = count($input) 
 * If `offset` is negative then it starts that far from the end of the `input` array.
 * If `length` is specified and is negative then the end of the removed portion will be that many elements from the end of the array.
 * If `length` is specified and is zero, no elements will be removed.
+* 如果 `length` 设定的已经超过了可删除的数量了，则会把后面的全部删除。所以如果要把后面的全部都替换的话，`length`参数就应该设定为数组的项数，这样就可以保证后面的全部被删除
+* If `offset` and `length` are such that nothing is removed, then the elements from the `replacement` array are inserted in the place specified by the `offset`.
+* If `replacement` is just one element it is not necessary to put `array()` around it, unless the element is an array itself, an object or `NULL`.
+* If `replacement` is not an array, it will be typecast to one (i.e. `(array) $replacement`). This may result in unexpected behavior when using an object or `NULL` `replacement`.
+* Returns an array consisting of the extracted elements.
+* 不管是删除还是替换，索引数组的序号都要重新排序
 
-替换数组项
-一. array_splice()
-arrayarray_splice ( array&$input , int$offset [, int$length = count($input) [, mixed$replacement = array() ]] )
+
+***
+## 替换数组项
+### `array_splice()`
 
 
-清空数组
+***
+## 清空数组
+```
 $array = array();
+```
 
 
-合并数组
-array_merge()函数
-关联数组还可以用“+”或“+=”
+***
+## 合并数组
+### `array_merge()`
+```
+array array_merge ( array $array1 [, array $... ] )
+```
+* If the input arrays have the same string keys, then the later value for that key will overwrite the previous one. If, however, the arrays contain numeric keys, the later value will not overwrite the original value, but will be appended.
+    ```
+    $arr1 = array(
+        'name'=>'⑨',
+        'age'=>22
+    );
+    $arr2 = array(
+        'name'=>'33',
+        'sex'=>'female'
+    );
+    $arr = array_merge($arr1, $arr2);
+    echo json_encode($arr); // {"name":"33","age":22,"sex":"female"}
 
-反转数组键值
-array_flip() 函数
+    $arr1 = array('a', 'b', 'c', 'd');
+    $arr2 = array('d', 'e', 'f', 'g');
+    $arr = array_merge($arr1, $arr2);
+    echo json_encode($arr); // ["a","b","c","d","d","e","f","g"]
+    ```
+* Returns the resulting array.
+* Values in the input array with numeric keys will be renumbered with incrementing keys starting from zero in the result array.
+
+### 关联数组还可以用“+”或“+=”
+相加的数组出现相同的键时，与`array_merge()`后面的覆盖前面的不同，这里是前者覆盖后者。
 
 
+***
+## 反转数组键值
+array_flip()
 
 
-数组和字符串互相转化——————————
-一.explode()将字符串分割为数组。
-1.第一个参数是用何种字符分割，第二个参数是待分割字符串。
-2.还有第三个可选参数limit
-If limit is set and positive, the returned array will contain a maximum of limit elements with the last element containing the rest of string.
-If the limit parameter is negative, all components except the last -limit are returned.
-If the limit parameter is zero, then this is treated as 1.
+***
+## 数组转化为其他数据形式
+### `implode()`  Join array elements with a string
+```
+string implode ( string $glue , array $pieces )
+```
 
-二.implode()和join()将数组合并为字符串
-1.第一个参数是拼接字符，第二个参数是数组
-
-
-用关联数组转化为多个变量————————————
+### `extract()` Import variables into the current symbol table from an array
 int extract ( array &$array [, int $flags = EXTR_OVERWRITE [, string $prefix = NULL ]] )
-1. 第二个可选参数用来指定，如果舒祖建生成的变量和已有变量冲突该如何处理。
+* 最简单的使用情况：
+    ```
+    $arr = array(
+        'name'=>'33',
+        'age'=>22,
+        'sex'=>'female'
+    );
+
+    extract($arr);
+
+    echo $name; // '33'
+    echo $age;  // 22
+    echo $sex;  // 'female'
+    ```
+* You must use an associative array; a numerically indexed array will not produce results unless you use EXTR_PREFIX_ALL or EXTR_PREFIX_INVALID.
+* `flags`:  The way invalid/numeric keys and collisions are treated is determined by the extraction `flags`. See [Mannual](http://php.net/manual/en/function.extract.php)
+    ```
+    $size = 'large'; // 已有一个 size 变量
+    $var_array = array('color' => 'blue',
+    			   'size'  => 'medium', // 这里将要再生成一个 size 变量，因此会产生冲突
+    			   'shape' => 'sphere');
+
+    // 通过 EXTR_PREFIX_SAME 和 wddx 表明在发生冲突时，加上前缀 wddx_
+    extract($var_array, EXTR_PREFIX_SAME, 'wddx');
+
+    echo $wddx_size; // 'medium'
+    echo $size; // 'large'
+    ```
