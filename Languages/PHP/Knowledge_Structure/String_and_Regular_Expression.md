@@ -237,49 +237,39 @@ string strrchr ( string $haystack , mixed $needle )
 ```
 mixed str_replace ( mixed $search , mixed $replace , mixed $subject [, int &$count ] )
 ```
-1.注意前三个参数都可以是数组
+* If `search` and `replace` are arrays, then` str_replace()` takes a value from each array and uses them to search and replace on `subject`.
+* If `replace` has fewer values than `search`, then an empty string is used for the rest of replacement values.
+* If `search` is an array and `replace` is a string, then this replacement string is used for every value of `search`.
+* If `search` or `replace` are arrays, their elements are processed first to last.
+* If `subject` is an array, then the search and replace is performed with every entry of `subject`, and the return value is an array as well.
+* If `count` is passed, this will be set to the number of replacements performed.
+
+### `substr_replace()` 把一个子字符串替换为给的字符串
+```
+mixed substr_replace ( mixed $string , mixed $replacement , mixed $start [, mixed $length ] )
+```
+* An array of strings can be provided, in which case the replacements will occur on each string in turn. In this case, the `replacement`, `start` and `length` parameters may be provided either as scalar values to be applied to each input string in turn, or as arrays, in which case the corresponding array element will be used for each input string.
+* The result string is returned. If string is an array then array is returned.
 
 
-
-
-substr_replace() 把一个子字符串替换为给的字符串
-mixedsubstr_replace(mixed$string,mixed$replacement,mixed$start[,mixed$length])
-1.第三个参数决定是从子字符串的什么位置开始替换
-2.第四个可选参数决定替换多长，默认替换到子字符串结束；如果该值为0，相当于只插入；如果该值为负数，
-    $str='helloShanghai';
-    echosubstr_replace($str,'www',2,-5);//hewwwnghai
-3. replaces a copy of string
-
-
+***
 ## 复制
+### `str_repeat()` 批量复制字符串
+```
+string str_repeat ( string $input , int $multiplier )
+```
+* If the multiplier is set to 0, the function will return an empty string.
 
-str_repeat() 批量复制字符串
-1.param1isthestringtoberepeated,para2isthenumberoftimetheinputstringshouldberepeated.
 
+***
 ## 正则表达式
-
-#### ```preg_match()```
-```
-int preg_match ( string $pattern , string $subject [, array &$matches [, int $flags = 0 [, int $offset = 0 ]]] )
-```
-* If ```matches``` is provided, then it is filled with the results of search. ```$matches[0]``` will contain the text that matched the full pattern, ```$matches[1]``` will have the text that matched the first captured parenthesized subpattern, and so on.
-* preg_match() returns 1 if the pattern matches given subject, 0 if it does not, or FALSE if an error occurred.
-*
-
-## POSIX风格正则表达式
-不懂没看
+<mark>不懂</mark>没看
 
 
-
+***
 ## 其他
-
-### eval()  
-同JS中的
-
-
-
 ### 花括号定界符 （[转载来源](http://www.cnblogs.com/jayleke/archive/2011/11/08/2241609.html)）
-1. #### 简单句法规则（用花括号界定变量名，适用于PHP所有版本）：
+#### 简单句法规则
   ```    
   $a = 'flower';
   echo "She received some $as";   // 无效；字母s会被当成有效的变量名组成元素，但是这里的变量是$a
@@ -297,7 +287,7 @@ int preg_match ( string $pattern , string $subject [, array &$matches [, int $fl
   echo "She received some { $a}s";   // 输出的结果为：She received some { flower}s
   ```
 
-2. #### 复杂句法规则（用花括号界定表达式等，使用与PHP4+）：
+#### 复杂句法规则
     ```  
     echo "有效的写法： {$arr[4][3]}";    // 有效；界定多维数组
     echo "有效的写法： {$arr['foo'][3]}"; // 有效；当在字符串中使用多维数组时，一定要用括号将它括起来
