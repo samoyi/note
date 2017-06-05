@@ -1,25 +1,61 @@
-
-## 词法阶段
-
-### 所谓词法作用域
-简单地说，词法作用域就是定义在词法阶段的作用域。换句话说，词法作用域是由你在写代码时将变量和块作用域写在哪里来决定的，因此当词法分析器处理代码时会保持作用域不变（大部分情况下是这样的）。
-
-### 查找作用域
-1. 作用域查找会在找到第一个匹配的标识符时停止。在多层的嵌套作用域中可以定义同名的标识符，这叫作“遮蔽效应”（内部的标识符“遮蔽”了外部的标识符）。
-2. 全局变量会自动成为全局对象（比如浏览器中的window对象）的属性，因此可以不直接通过全局对象的词法名称，而是间接地通过对全局对象属性的引用来对其进行访问。
-3. 无论函数在哪里被调用，也无论它如何被调用，它的词法作用域都只由函数被声明时所处的位置决定
+# Lexical Scope
 
 
-## 欺骗词法
-欺骗词法作用域会导致性能下降
+## Lex-time
+1. The first traditional phase of a standard language compiler is called lexing (aka, tokenizing).
+2. The lexing process examines a string of source code characters and assigns semantic meaning to the tokens as a result of some stateful parsing.
+3. It is this concept which provides the foundation to understand what lexical scope is and where the name comes from.
 
-### 非严格模式下的eval()
-它是如何通过代码欺骗和假装成书写时（也就是词法期）代码就在那，来实现修改词法作用域环境的
 
-### 非严格模式下才能使用的的with()
-==不懂这里讲到的作用域原理《你不知道的JavaScript》==
+## Lexical Scope
+* To define it somewhat circularly, lexical scope is scope that is defined at lexing time.
+* In other words, lexical scope is based on where variables and blocks of scope are authored, by you, at write time, and thus is (mostly) set in stone by the time the lexer processes your code.
+* Lexical scope is write-time, whereas dynamic scope (and this!) are runtime. Lexical scope cares where a function was declared, but dynamic scope cares where a function was called from.
+    ```
+    let age = 22;
 
-### 欺骗词法导致的性能问题
-* JavaScript引擎会在编译阶段进行数项的性能优化。其中有些优化依赖于能够根据代码的词法进行静态分析，并预先确定所有变量和函数的定义位置，才能在执行过程中快速找到标识符。
-* 但如果引擎在代码中发现了eval(..)或with，它只能简单地假设关于标识符位置的判断都是无效的，因为无法在词法分析阶段明确知道eval(..)会接收到什么代码，这些代码会如何对作用域进行修改，也无法知道传递给with用来创建新词法作用域的对象的内容到底是什么。
-* 最悲观的情况是如果出现了eval(..)或with，所有的优化可能都是无意义的，因此最简单的做法就是完全不做任何优化，从而导致代码运行的速度会变慢。
+    // 词法阶段，foo函数是处在全局作用域。全局作用域的age是22
+    function foo(){
+        console.log(age);
+    }
+
+    function bar(){
+        let age = 33;
+        // 调用阶段，foo函数处在bar作用域，bar作用域的age是33
+        foo();
+    }
+
+    bar(); // 22
+    ```
+    即使是作为其他对象的方法调用，也依然是使用词法作用域
+    ```
+    let age = 22;
+
+    function foo(){
+        console.log(age);
+    }
+
+    let o = {
+        age: 33,
+        bar: foo
+    };
+
+    o.bar(); // 22
+    ```
+
+
+
+## Cheating Lexical
+* It is considered best practice to treat lexical scope as, in fact, lexical-only, and thus entirely author-time in nature.
+* Cheating lexical scope leads to poorer performance.
+* use strict mode.
+
+### `eval()` without strict mode
+
+### `with()`  without strict mode
+
+### Performance
+* The JavaScript Engine has a number of performance optimizations that it performs during the compilation phase.
+* Some of these boil down to being able to essentially statically analyze the code as it lexes, and pre-determine where all the variable and function declarations are, so that it takes less effort to resolve identifiers during execution.
+* But if the Engine finds an `eval(..)` or with in the code, it essentially has to assume that all its awareness of identifier location may be invalid, because it cannot know at lexing time exactly what code you may pass to `eval(..)` to modify the lexical scope, or the contents of the object you may pass to `with` to create a new lexical scope to be consulted.
+* In other words, in the pessimistic sense, most of those optimizations it would make are pointless if eval(..) or with are present, so it simply doesn't perform the optimizations at all.

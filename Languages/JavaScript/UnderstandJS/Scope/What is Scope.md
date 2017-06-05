@@ -1,4 +1,9 @@
+There are two predominant models for how scope works.
+    * The first of these is by far the most common, used by the vast majority of programming languages. It's called Lexical Scope.
+    * The other model, which is still used by some languages (such as Bash scripting, some modes in Perl, etc.) is called Dynamic Scope.
 
+
+    
 ## 编译原理
 * JavaSccipt实际上也是编译语言，但并不是提前编译的，编译结果也不能在分布式系统中进行移植。
 * 尽管如此，JavaScript引擎进行编译的步骤和传统的编译语言非常相似，在某些环节可能比预想的要复杂。
@@ -56,7 +61,7 @@ var a = 2; 的抽象语法树中可能会有一个叫作VariableDeclaration的�
 
     其中对a的引用是一个RHS引用，因为这里a并没有赋予任何值（其实也可以理解为将a的值赋给log()方法的参数）。相应地，需要查找并取得a的值，这样才能将值传递给`console.log(..)`。
     相比之下，例如：  
-    
+
     ```a = 2;```
     这里对a的引用则是LHS引用，因为实际上我们并不关心当前的值是什么，只是想要为= 2这个赋值操作找到一个目标。
 4. 函数声明并不是LHS查询  
@@ -80,75 +85,3 @@ var a = 2; 的抽象语法树中可能会有一个叫作VariableDeclaration的�
 6. 函数内部存在一个 console 引擎不知道是什么，需要到作用域中进行RHS查询
 7. 作用域中存在该内置对象，引擎找到该对象并从中找到了 log() 方法
 8. 将a传给该方法的参数时，还要进行一次RHS来确定a的值。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
