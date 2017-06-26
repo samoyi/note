@@ -19,4 +19,10 @@ console.log( 0xB0.toString(2) );        // 1011 0000                 11个16 => 
 console.log( 0xA00.toString(2) );       // 1010 0000 0000            10*(16^2) => (2^9)*5 => 2^9左移2位再加2^9
 console.log( 0xA000.toString(2) );      // 1010 0000 0000 0000       10*(16^3) => (2^13)*5 => 2^13左移2位再加2^13
 console.log( 0xA0000.toString(2) );     // 1010 0000 0000 0000 0000      10*(16^4) => (2^17)*5 => 2^17左移2位再加2^17
+
+console.log( 0x100.toString(10) );        // 256
+console.log( 0x1000.toString(10) );       //  4096
+console.log( 0x10000.toString(10) );      // 65546
+console.log( 0x100000.toString(10) );     // 1048576
+
 ```

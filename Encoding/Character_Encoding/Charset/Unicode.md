@@ -1,32 +1,47 @@
-
-## Unicode
+# Unicode
 
 
 ## Unique
-1. 不同的字符集有可能用两个不同的二进制数字表示相同的字符，或者用相同的二进制数字表示不同的字符，而且某些字符集收录了一些其他字符集没有的字符。这就导致一个字符集系统接到另一个其他字符集系统的一串数字时，会将其转变为非预期的其他字符。
-2. 为了避免这种问题，一个系统需要能具备不同的字符集解码规则，并且在处理表示字符的二进制数字时还需要知道是什么编码规则。
-3. Unicode要收录世界上所有的字符，让所有的字符集编码解码都是用同一个规则。每一个字符在Unicode字符集中对应一个唯一的数字code point。
-4. Unicode code point 一共有1,114,112个。Unicode一般用U+前缀的十六进制表示这些code point，即从U+0到U+10FFFF。
+1. 不同的字符集有可能用两个不同的二进制数字表示相同的字符，或者用相同的二进制数字表示不同
+   的字符，而且某些字符集收录了一些其他字符集没有的字符。这就导致一个字符集系统接到另一个
+   其他字符集系统的一串数字时，会将其转变为非预期的其他字符。
+2. 为了避免这种问题，一个系统需要能具备不同的字符集解码规则，并且在处理表示字符的二进制数
+   字时还需要知道是什么编码规则。
+3. Unicode要收录世界上所有的字符，让所有的字符集编码解码都是用同一个规则。每一个字符在
+   Unicode字符集中对应一个唯一的数字code point。
+4. Unicode code point 一共有1,114,112个。Unicode一般用U+前缀的十六进制表示这些
+   code point，即从U+0到U+10FFFF。
 4. 2016年的Unicode 9.0 一共有 128,172个字符，所以对应Unicode中的128,172个code point。
 
 
 ## plane
-1. Unicode将1,114,112个code point分组成了17个plane。包括一个Basic Multilingual Plane（BMP）和16个其他的plane。
-2. BMP中的code point范围是四位十六进制数，从0000到FFFF；其他16个plane，每个plane有0x10000个code point，其中14个是五位十六进制数，后两个因为进位了，所以是六位十六进制数。
+1. Unicode将1,114,112个code point分组成了17个plane。包括一个
+   Basic Multilingual Plane（BMP）和16个其他的plane。
+2. BMP中的code point范围是四位十六进制数，从0000到FFFF；其他16个plane，每个plane有
+   0x10000个code point，其中14个是五位十六进制数，后两个因为进位了，所以是六位十六进制数。
+
 
 ## Mapping and encodings
-1. Unicode defines two mapping methods: the Unicode Transformation Format (UTF) encodings, and the Universal Coded Character Set (UCS) encodings
-2. An encoding maps (possibly a subset of) the range of Unicode code points to sequences of values in some fixed-size range, termed *code values*.
-3. The numbers in the names of the encodings indicate the number of bits per code value (for UTF encodings) or the number of bytes per code value (for UCS encodings).
+1. Unicode defines two mapping methods: the Unicode Transformation Format (UTF)
+   encodings, and the Universal Coded Character Set (UCS) encodings
+2. An encoding maps (possibly a subset of) the range of Unicode code points to
+   sequences of values in some fixed-size range, termed *code values*.
+3. The numbers in the names of the encodings indicate the number of bits per
+   code value (for UTF encodings) or the number of bytes per code value
+   (for UCS encodings).
+
 
 ## utf-32 utf-24
 1. Unicode的1,114,112个code point，用二进制表示需要从`0`到`10000 11111111 11111111`
-2. 以byte为单位，要保存任意一个字符code point，需要3个byte。UTF-24就可以了，为什么还要指定UTF-32
-3. 一个可能的主要原因就是计算机更适应翻倍式的存储方式，现实中的产品也主要都是16、32、64这种规格的。虽然现在不知道这样的原因。
-4. UTF-32使用固定的32bit来表示code point的，四个字节对应一个code point，一一对应，简单粗暴。粗暴的就是，我们用到的大多数的字符都是BMP的，而BMP的字符只需要两个字节就够了（从`0`到`11111111 11111111`），但如果用UTF-32编码，就会产生大量的浪费。
+2. 以byte为单位，要保存任意一个字符code point，需要3个byte。UTF-24就可以了，为什么还要
+   制定UTF-32
+3. 一个可能的主要原因就是计算机更适应翻倍式的存储方式，现实中的产品也主要都是16、32、64这
+   种规格的。虽然现在不知道这样的原因。
+4. UTF-32使用固定的32bit来表示code point的，四个字节对应一个code point，一一对应，简单
+   粗暴。粗暴的就是，我们用到的大多数的字符都是BMP的，而BMP的字符只需要两个字节就够了
+   （从`0`到`11111111 11111111`），但如果用UTF-32编码，就会产生大量的浪费。
 5. 还有一些其他缺点，所以基本不使用。
 6. utf-24也是基于相似的原因以及其他一些原因，同样基本不使用。
-
 
 
 ## utf-16 and UCS-2
