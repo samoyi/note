@@ -55,36 +55,28 @@
     * Supplementary plane中的code point的前半部分
     * Supplementary plane中的code point的后半部分
 怎么识别？
-7. Supplementary plane总共有2^20个(0x110000-0x10000，也就是从0到1111 11111111 11111111，改一下格式，就是从0000000000 0000000000到1111111111 1111111111)code point，将它们拆分成2byte形式，则前半部分有2^10(0x400)种可能，后半部分同样有2^10(0x400)种可能，也就是说BMP中有没有多出来的2*2^10（0x800）的名额？
-8. BMP中U+D800到U+DFFF这0x800个位置正好是空的。
-9. 将之前拆分出来的前半部分的2^10个code point依次映射到U+D800~U+DBFF（高位），将后半部分的2^10个code point依次映射到U+DC00~U+DFFF（低位）。
-12. 将在，在使用UTF16规则解码时，当看到一个2byte数字，看看它的code point：如果不在中U+D800到U+DFFF这个范围，就证明它独自代表一个字符；如他在U+D800到U+DBFF的范围，则表示它表示Supplementary plane的4byte code point的前半部分，需要再组合上后一个2byte数字共同组成一个code point。
-13. 例如U+10000的code point在使用UTF-16编码时是第一个需要拆分的。它的二进制是`1 00000000 00000000`。如果直接拆成两部分就是```1000000```和```0000000000```，但是UTF-16的编码规则并不是把前一部分存到0xd800+0b1000000以及把第二部分存到0xdc00+0b0
-14. 而是将2^20个 code point转换成一个以0x400为进制、从0到0x10FFFF-0x10000的两位数（不算前面从0到0xffff的0x10000个数）。将第一位和第二位数依次排到0x800和0xdc00后面。
-15. 因为是从0到0x10FFFF，所以U+10000转换成上面的两位数就是00，再依次排就是0xd800和0xdc00.
-16. 而最后一个code point是U+10FFFF，转换成上面的两位数之后，十位数是Math.floor((0x10ffff-0x10000)/0x400)=0x3ff，个位数也是(0x10ffff-0x10000)%0x400=0x3ff。再依次排到0x800和0xdc00后面就是0xdbff 和 0xdbff。
+7. utf16的规则是，先从所有的code point里删掉BMP的code point，只留下 Supplementary plane的 code point，总共有2^20个（从0x10000到0x10ffff）。
+8. 将这些code point 重新编号，0到1111 11111111 11111111，改一下格式，就是从0000000000 0000000000到1111111111 1111111111，总共20位)
+9. 将它们拆分成2byte形式，则前半部分有2^10(0x400)种可能，后半部分同样有2^10(0x400)种可能。
+10. BMP中U+D800到U+DFFF这0x800个位置正好是空的。
+11. 将之前拆分出来的前半部分的2^10(0x400)个code point依次映射到U+D800~U+DBFF（高位），将后半部分的2^10(0x400)个code point依次映射到U+DC00~U+DFFF（低位）。
+12. 例如U+10000的code point在使用UTF-16编码时是第一个需要拆分的。它的code point 二进制是`1 00000000 00000000`。按照上面的规则，先删掉BMP后再重新排序，则它的编号就成了第一个，`0000000000`和`0000000000`
+13. 所以，在高位区间和低位区间，它都排第一个，即它的utf16编码为 0xd800 0xdc00
+14. 另一个双字节字符，它的code point是U+1D306。现在，先删掉BMP的code point，再重新排序（0x1d306 - 0x10000），它的序号是 0xd306，转换为二进制就是 `0000110100 1100000110`
+15. 它的高位，在0xd800的基础上加上`0b110100`，得出的结果转换为十六进制就是 0xd834
+16. 它的低位，在0xdc00的基础上加上`0b1100000110`，得出的结果转换为十六进制就是 0xdf06
+17. 所以，code point为U+1D306的双字节字符，用utf16来表示，两个字节为0xd834和0xdf06
 17. 普遍的公式:
     ```
-    function utf16_32to16( nHex )
+    function unicode2utf16( nHexCodePoint )
     {
-    	let nHeigh = Math.floor( (nHex - 0x10000)/0x400 ) + 0x800,
-    		nLow = (nHex - 0x10000)%0x400 + 0xdc00;
-    	let sHeightHex = "0x" + nHeigh.toString(16),
-    		sLowHex = "0x" + nLow.toString(16);
-    	return [sHeightHex, sLowHex];
+        let nHeigh = Math.floor( (nHexCodePoint - 0x10000)/1024 ) + 0xd800,
+            nLow = (nHexCodePoint - 0x10000)%1024 + 0xdc00;
+        let sHeightHex = "0x" + nHeigh.toString(16),
+            sLowHex = "0x" + nLow.toString(16);
+        return [sHeightHex, sLowHex];
     }
     ```
-0001000000 0000000000
-0xd840 0xcd000  错误的 不是0xd800再加上0b1000000
-拆分之后，0001000000实际上是高位最小的数，其他的双字节字符的高位都大于0001000000，
-所以0001000000是映射到0xd800
-```
-console.log(0x1d306.toString(2)); // 0001110100 1100000110
-console.log( 0b1110100 - 0b1000000 );   // 52
-console.log( 0b1100000110 ); // 774
-console.log( (0xd800+75).toString(16) );
-console.log( (0xdc00+774).toString(16) );
-```
 
 ## utf-8
 1. An 8-bit variable-width encoding which maximizes compatibility with ASCII
