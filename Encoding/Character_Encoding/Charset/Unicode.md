@@ -66,7 +66,7 @@
 15. 它的高位，在0xd800的基础上加上`0b110100`，得出的结果转换为十六进制就是 0xd834
 16. 它的低位，在0xdc00的基础上加上`0b1100000110`，得出的结果转换为十六进制就是 0xdf06
 17. 所以，code point为U+1D306的双字节字符，用utf16来表示，两个字节为0xd834和0xdf06
-17. 普遍的公式:
+18. 普遍的公式:
     ```
     function unicode2utf16( nHexCodePoint )
     {
@@ -77,6 +77,7 @@
         return [sHeightHex, sLowHex];
     }
     ```
+19. UCS-2是已经被淘汰的2byte编码形式，它只能表示BMP的字符，因为它没有UTF-16那样用4个byte来表示Supplementary plane的机制。
 
 ## utf-8
 1. An 8-bit variable-width encoding which maximizes compatibility with ASCII
