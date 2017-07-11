@@ -68,51 +68,55 @@
 17. 所以，code point为U+1D306的双字节字符，用utf16来表示，两个字节为0xd834和0xdf06
 18. 普遍的公式:
     ```
-    function unicode2utf16( nHexCodePoint )
-    {
-        let nHeigh = Math.floor( (nHexCodePoint - 0x10000)/1024 ) + 0xd800,
-            nLow = (nHexCodePoint - 0x10000)%1024 + 0xdc00;
-        let sHeightHex = "0x" + nHeigh.toString(16),
-            sLowHex = "0x" + nLow.toString(16);
-        return [sHeightHex, sLowHex];
+    function unicode2utf16( nHexCodePoint ){
+    	let nHeigh = Math.floor( (nHexCodePoint - 0x10000)/1024 ) + 0xd800,
+    		nLow = (nHexCodePoint - 0x10000)%1024 + 0xdc00;
+    	return [nHeigh.toString(16), nLow.toString(16)];
     }
     ```
 19. UCS-2是已经被淘汰的2byte编码形式，它只能表示BMP的字符，因为它没有UTF-16那样用4个byte来表示Supplementary plane的机制。
+
 
 ## utf-8
 1. An 8-bit variable-width encoding which maximizes compatibility with ASCII
 2. UTF-8 uses one to four bytes per code point
 3. 对于单字节字符，和ASCII一样。
 4. 对于n字节的符号（n>1），第一个字节的前n位都设为1，第n+1位设为0，后面字节的前两位一律设为10。剩下的没有提及的二进制位，全部为这个符号的unicode码。
-```
-function utf8_hexEncode( nHex )
-{
-	function utf8_insert0( sL, sR ){
-		return sL + "0000".slice(sL.length+sR.length-8) + sR;
-	}
 
-	let sBin = nHex.toString(2),
-		sUTF8_bin = "";
-	if( nHex<0x80 ){
-		sUTF8_bin = ("0" + sBin);
+Unicode符号范围 | UTF-8编码方式
+-|-
+(十六进制) | （二进制）
+0000 0000-0000 007F | 0xxxxxxx
+0000 0080-0000 07FF | 110xxxxx 10xxxxxx
+0000 0800-0000 FFFF | 1110xxxx 10xxxxxx 10xxxxxx
+0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+
+```
+function unicode2utf8( nHexCodePoint ){
+	let sBin = nHexCodePoint.toString(2),
+		aUTF8 = "";
+
+	if( nHexCodePoint<0x80 ){
+		aUTF8 = [sBin.padStart(8, "0")];
 	}
-	else if( nHex<0x800 ){
-		sUTF8_bin = utf8_insert0("110", sBin.slice(0, -6) ) + "10"+sBin.slice(-6);
+	else if( nHexCodePoint<0x800 ){
+		aUTF8 = ["110"+sBin.slice(0, -6).padStart(5, "0"), "10"+sBin.slice(-6)];
 	}
-	else if( nHex<0x10000 ){
-		sUTF8_bin = utf8_insert0("1110", sBin.slice(0, -12) ) + "10"+sBin.slice(-12, -6) + "10"+sBin.slice(-6);
+	else if( nHexCodePoint<0x10000 ){
+		aUTF8 = ["1110"+sBin.slice(0, -12).padStart(4, "0"), "10"+sBin.slice(-12, -6), "10"+sBin.slice(-6)];
 	}
 	else{
-		sUTF8_bin = utf8_insert0("11110", sBin.slice(0, -18) ) + "10"+sBin.slice(-18, -12) + "10"+sBin.slice(-12, -6) + "10"+sBin.slice(-6);
+		aUTF8 = ["11110"+sBin.slice(0, -18).padStart(3, "0"), "10"+sBin.slice(-18, -12), "10"+sBin.slice(-12, -6), "10"+sBin.slice(-6)];
 	}
-	return Number.parseInt(sUTF8_bin, 2).toString(16);
+
+	return aUTF8.map(function(item){
+		return Number.parseInt(item, 2).toString(16);
+	});
 }
 ```
 
 
 ## References
-
-
 * [阮一峰Unicode简介](http://www.ruanyifeng.com/blog/2014/12/unicode.html)
 * [阮一峰 ASCII，Unicode和UTF-8](http://www.ruanyifeng.com/blog/2007/10/ascii_unicode_and_utf-8.html)
 * [Unicode Wiki](https://en.wikipedia.org/wiki/Unicode)
