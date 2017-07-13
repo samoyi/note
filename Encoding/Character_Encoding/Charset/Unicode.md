@@ -11,8 +11,9 @@
    Unicode字符集中对应一个唯一的数字code point。
 4. Unicode code point 一共有1,114,112个。Unicode一般用U+前缀的十六进制表示这些
    code point，即从U+0到U+10FFFF。
-4. 2016年的Unicode 9.0 一共有 128,172个字符，所以对应Unicode中的128,172个code point。
+5. 2016年的Unicode 9.0 一共有 128,172个字符，所以对应Unicode中的128,172个code point。
 
+[根据字符查code point](https://codepoints.net/)，对每个字符都会有一个简介，简直就是人类字符全集字典。
 
 ## plane
 1. Unicode将1,114,112个code point分组成了17个plane。包括一个
