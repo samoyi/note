@@ -30,6 +30,21 @@ console.log( 0 === -0 );         // true
 `true`不知道是处于什么考虑，因为`Object.is`的算法是SameValue，但`NaN`其实严格来说根本
 就不算一个值。感觉出现`NaN`的情况应该改为直接抛出错误。<mark>有待深入</mark>
 
+
+## Loose equality using ==
+It is pretty much never a good idea to use loose equality. The result of a comparison using strict equality is easier to predict, and as no type coercion
+takes place the evaluation may be faster.
+
+
+## Same-value equality
+* Same-value equality addresses a final use case: determining whether two values are functionally identical in all contexts.
+* Same-value equality is provided by the Object.is method.
+
+
+## Same-value-zero equality
+* Similar to same-value equality, but considered +0 and -0 equal.
+
+
 ## References
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness)
-[](https://stackoverflow.com/questions/10034149/why-is-nan-not-equal-to-nan)
+* [stackoverflow](https://stackoverflow.com/questions/10034149/why-is-nan-not-equal-to-nan)
