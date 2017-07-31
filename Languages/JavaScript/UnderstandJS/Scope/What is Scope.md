@@ -3,12 +3,14 @@ There are two predominant models for how scope works.
     * The other model, which is still used by some languages (such as Bash scripting, some modes in Perl, etc.) is called Dynamic Scope.
 
 
-    
-## 编译原理
-* JavaSccipt实际上也是编译语言，但并不是提前编译的，编译结果也不能在分布式系统中进行移植。
-* 尽管如此，JavaScript引擎进行编译的步骤和传统的编译语言非常相似，在某些环节可能比预想的要复杂。
 
-### 传统编译过程
+## Compiler Theory
+* Despite the fact that JavaScript falls under the general category of "dynamic" or "interpreted" languages, it is in fact a compiled language. It is not compiled well in advance, as are many traditionally-compiled languages, nor are the results of compilation portable among various distributed systems.
+* But, nevertheless, the JavaScript engine performs many of the same steps, albeit in more sophisticated ways than we may commonly be aware, of any traditional language-compiler.
+
+
+
+### Traditional compiled-language process
 
 #### 第一步：分词/词法分析（Tokenizing/Lexing）
 1. 这个过程会将由字符组成的字符串分解成（对编程语言来说）有意义的代码块，这些代码块被称为词法单元（token）。
