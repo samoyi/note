@@ -3,41 +3,44 @@ There are two predominant models for how scope works.
     * The other model, which is still used by some languages (such as Bash scripting, some modes in Perl, etc.) is called Dynamic Scope.
 
 
-
+***
 ## Compiler Theory
 * Despite the fact that JavaScript falls under the general category of "dynamic" or "interpreted" languages, it is in fact a compiled language. It is not compiled well in advance, as are many traditionally-compiled languages, nor are the results of compilation portable among various distributed systems.
 * But, nevertheless, the JavaScript engine performs many of the same steps, albeit in more sophisticated ways than we may commonly be aware, of any traditional language-compiler.
 
 
-
 ### Traditional compiled-language process
 
-#### 第一步：分词/词法分析（Tokenizing/Lexing）
-1. 这个过程会将由字符组成的字符串分解成（对编程语言来说）有意义的代码块，这些代码块被称为词法单元（token）。
-例如，考虑程序var a = 2;。这段程序通常会被分解成为下面这些词法单元：var、a、=、2 、;。
-2. 空格是否会被当作词法单元，取决于空格在这门语言中是否具有意义。
-3. 分词（tokenizing）和词法分析（Lexing）之间的区别
-    主要差异在于词法单元的识别是通过有状态还是无状态的方式进行的。简单来说，如果词法单元生成器在判断a是一个独立的词法单元还是其他词法单元的一部分时，调用的是有状态的解析规则，那么这个过程就被称为词法分析。不懂
+#### 1. Tokenizing/Lexing
+* Breaking up a string of characters into meaningful (to the language) chunks, called tokens.  
+For instance, consider the program: `var a = 2;`, this program would likely be
+broken up into the following tokens: `var`, `a`, `=`, `2`, and `;`.
+* Whitespace may or may not be persisted as a token, depending on whether it's meaningful or not.  
+* A tokenizer breaks a stream of text into tokens, usually by looking for whitespace (tabs, spaces, new lines). A lexer is basically a tokenizer, but it usually attaches extra context to the tokens -- this token is a number, that token is a string literal, this other token is an equality operator.
 
-#### 第二步： 解析/语法分析（Parsing）
-1. 这个过程是将词法单元流（数组）转换成一个由元素逐级嵌套所组成的代表了程序语法结构的树。这个树被称为“抽象语法树”（Abstract Syntax Tree，AST）。
-var a = 2; 的抽象语法树中可能会有一个叫作VariableDeclaration的顶级节点，接下来是一个叫作Identifier（它的值是a）的子节点，以及一个叫作AssignmentExpression的子节点。AssignmentExpression节点有一个叫作NumericLiteral（它的值是2）的子节点。
+#### 2. Parsing
+Taking a stream (array) of tokens and turning it into a tree of nested elements, which collectively represent the grammatical structure of the program. This tree
+is called an "AST" (Abstract Syntax Tree).  
+The tree for `var a = 2;` might start with a top-level node called `VariableDeclaration`, with a child node called `Identifier` (whose value is a),
+and another child called `AssignmentExpression` which itself has a child called `NumericLiteral` (whose value is 2).
 
-#### 第三部： 代码生成
-1. 将AST转换为可执行代码的过程称被称为代码生成。这个过程与语言、目标平台等息息相关。
-抛开具体细节，简单来说就是有某种方法可以将var a = 2;的AST转化为一组机器指令，用来创建一个叫作a的变量（包括分配内存等），并将一个值储存在a中。
-
-
-###  JavaScript引擎的编译要复杂得多
-
-1. JavaScript引擎不会有大量的（像其他语言编译器那么多的）时间用来进行优化，因为与其他语言不同，JavaScript的编译过程不是发生在构建之前的。JavaScript引擎用尽了各种办法来保证性能最佳。
-2. 对于JavaScript来说，大部分情况下编译发生在代码执行前的几微秒（甚至更短）的时间内。
-3. 在语法分析和代码生成阶段有特定的步骤来对运行性能进行优化，包括对冗余元素进行优化等。
+#### 3. Code-Generation
+* The process of taking an AST and turning it into executable code. This part varies greatly depending on the language, the platform it's targeting, etc.
+* This is a way to take our above described AST for `var a = 2;` and turn it into
+a set of machine instructions to actually create a variable called `a` (including reserving memory, etc.), and then store a value into `a`.
 
 
+###  JavaScript engine
+* The JavaScript engine is vastly more complex than just those three steps, as are most other language compilers.
+* For one thing, JavaScript engines don't get the luxury (like other language compilers) of having plenty of time to optimize, because JavaScript compilation doesn't happen in a build step ahead of time. For JavaScript, the compilation that occurs happens, in many cases, mere microseconds (or less) before the code is executed.
+* To ensure the fastest performance, JS engines use all kinds of tricks (like JITs, which lazy compile and even hot re-compile, etc.)
+* Any snippet of JavaScript has to be compiled before (usually right before) it's executed. So, the JS compiler will take the program `var a = 2;` and compile it first, and then be ready to execute it, usually right away.
+* In the process of parsing and code-generation, there are certainly steps to optimize the performance of the execution, including collapsing redundant elements, etc.
 
 
-## 理解作用域
+
+***
+## Understanding Scope
 
 ### 一. 涉及到的三个对象：
 1. 引擎 ：从头到尾负责整个JavaScript程序的编译及执行过程。
@@ -87,3 +90,7 @@ var a = 2; 的抽象语法树中可能会有一个叫作VariableDeclaration的�
 6. 函数内部存在一个 console 引擎不知道是什么，需要到作用域中进行RHS查询
 7. 作用域中存在该内置对象，引擎找到该对象并从中找到了 log() 方法
 8. 将a传给该方法的参数时，还要进行一次RHS来确定a的值。
+
+## Reference
+* [You Don't Know JS: Scope & Closures](https://github.com/getify/You-Dont-Know-JS/blob/master/scope%20%26%20closures/ch1.md)
+* [stackoverflow](https://stackoverflow.com/questions/380455/looking-for-a-clear-definition-of-what-a-tokenizer-parser-and-lexers-are)
