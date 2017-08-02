@@ -41,24 +41,26 @@ a set of machine instructions to actually create a variable called `a` (includin
 
 ***
 ## Understanding Scope
+### The Cast
+* **Engine**: Responsible for start-to-finish compilation and execution of our JavaScript program.
+* **Compiler**: Handles all the dirty work of parsing and code-generation.
+* **Scope**: Collects and maintains a look-up list of all the declared identifiers (variables), and enforces a strict set of rules as to accessibility to currently executing code.
 
-### 一. 涉及到的三个对象：
-1. 引擎 ：从头到尾负责整个JavaScript程序的编译及执行过程。
-2. 编译器 ：负责语法分析及代码生成等。
-3. 作用域 ：负责收集并维护由所有声明的标识符（变量）组成的一系列查询，并实施一套非常严格的规则，确定当前执行的代码对这些标识符的访问权限。
-
-### 二. 以代码 var a = 2; 为例讲解引擎编译代码时的作用域概念
+### 以代码 var a = 2; 为例讲解引擎编译代码时的作用域概念
 对于引擎来说，这里有两个完全不同的过程，一个由编译器在编译时处理，另一个则由引擎在运行时处理。即，首先编译器会在当前作用域中声明一个变量（如果之前没有声明过），然后在运行时引擎会在作用域中查找该变量，如果能够找到就会对它赋值。详见如下过程：
-1. 首先由引擎解析为词法单元
-2. 然后将词法单元解析为一个树结构然后进入开始代码生成阶段。
-3. 对于var a，编译器会询问作用域是否已经有一个该名称的变量存在于同一个作用域的集合中。如果是，编译器会忽略该声明，继续进行编译；否则它会要求作用域在当前作用域的集合中声明一个新的变量，并命名为a。
-4. 接下来编译器会为引擎生成运行时所需的代码，这些代码被用来处理a = 2这个赋值操作。
-引擎运行时会首先询问作用域，在当前的作用域集合中是否存在一个叫作a的变量。如果是，引擎就会使用这个变量；如果不是，引擎会继续查找该变量。
-5. 如果引擎最终找到了a变量，就会将2赋值给它。否则引擎就会举手示意并抛出一个异常。
+1. The first thing Compiler will do with this program is perform lexing to break it down into tokens.
+2. Parse these tokens into a tree.
+3. Encountering var `a`, Compiler asks Scope to see if a variable `a` already exists for that particular scope collection. If so, Compiler ignores this declaration and moves on. Otherwise, Compiler asks Scope to declare a new variable called `a` for that scope collection.
+4. Compiler then produces code for Engine to later execute, to handle the `a = 2` assignment.
+5. The code Engine runs will first ask Scope if there is a variable called a accessible in the current scope collection. If so, Engine uses that variable. If not, Engine looks elsewhere.
+6. If Engine eventually finds a variable, it assigns the value `2` to it. If not, Engine will throw an error.  
+**To summarize**: Two distinct actions are taken for a variable assignment:
+1. First, Compiler declares a variable (if not previously declared in the current scope)
+2. Second, when executing, Engine looks up the variable in Scope and assigns to it, if found.
 
-### 三. LHS 和 RHS
-1. 编译器在编译过程的第二步中生成了代码，引擎执行它时，会通过查找变量a来判断它是否已声明过。查找的过程由作用域进行协助，但是引擎执行怎样的查找，会影响最终的查找结果。
-2. 当变量出现在赋值操作的左侧时进行LHS查询，出现在右侧时进行RHS查询。
+### LHS 和 RHS
+* When Engine executes the code that Compiler produced for step (2), it has to look-up the variable a to see if it has been declared, and this look-up is consulting Scope. But the type of look-up Engine performs affects the outcome of the look-up.
+* An LHS look-up is done when a variable appears on the left-hand side of an assignment operation, and an RHS look-up is done when a variable appears on the right-hand side of an assignment operation.
     RHS查询与简单地查找某个变量的值别无二致，而LHS查询则是试图找到变量的容器本身，从而可以对其赋值。从这个角度说，RHS并不是真正意义上的“赋值操作的右侧”，更准确地说是“非左侧”。
     可以将RHS理解成retrieve his source value（取到它的源值），这意味着“得到某某的值”。
 3. 考虑以下代码：
