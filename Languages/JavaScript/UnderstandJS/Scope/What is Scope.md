@@ -47,30 +47,46 @@ a set of machine instructions to actually create a variable called `a` (includin
 * **Scope**: Collects and maintains a look-up list of all the declared identifiers (variables), and enforces a strict set of rules as to accessibility to currently executing code.
 
 ### 以代码 var a = 2; 为例讲解引擎编译代码时的作用域概念
-对于引擎来说，这里有两个完全不同的过程，一个由编译器在编译时处理，另一个则由引擎在运行时处理。即，首先编译器会在当前作用域中声明一个变量（如果之前没有声明过），然后在运行时引擎会在作用域中查找该变量，如果能够找到就会对它赋值。详见如下过程：
 1. The first thing Compiler will do with this program is perform lexing to break it down into tokens.
 2. Parse these tokens into a tree.
 3. Encountering var `a`, Compiler asks Scope to see if a variable `a` already exists for that particular scope collection. If so, Compiler ignores this declaration and moves on. Otherwise, Compiler asks Scope to declare a new variable called `a` for that scope collection.
 4. Compiler then produces code for Engine to later execute, to handle the `a = 2` assignment.
-5. The code Engine runs will first ask Scope if there is a variable called a accessible in the current scope collection. If so, Engine uses that variable. If not, Engine looks elsewhere.
+5. The code Engine runs will first ask Scope if there is a variable called a accessible in the current scope collection. If so, Engine uses that variable. If
+not, Engine looks elsewhere.
 6. If Engine eventually finds a variable, it assigns the value `2` to it. If not, Engine will throw an error.  
 **To summarize**: Two distinct actions are taken for a variable assignment:
 1. First, Compiler declares a variable (if not previously declared in the current scope)
-2. Second, when executing, Engine looks up the variable in Scope and assigns to it, if found.
+2. Second, when executing, Engine looks up the variable in Scope and assigns to
+it, if found.
 
 ### LHS 和 RHS
-* When Engine executes the code that Compiler produced for step (2), it has to look-up the variable a to see if it has been declared, and this look-up is consulting Scope. But the type of look-up Engine performs affects the outcome of the look-up.
-* An LHS look-up is done when a variable appears on the left-hand side of an assignment operation, and an RHS look-up is done when a variable appears on the right-hand side of an assignment operation.
-    RHS查询与简单地查找某个变量的值别无二致，而LHS查询则是试图找到变量的容器本身，从而可以对其赋值。从这个角度说，RHS并不是真正意义上的“赋值操作的右侧”，更准确地说是“非左侧”。
-    可以将RHS理解成retrieve his source value（取到它的源值），这意味着“得到某某的值”。
-3. 考虑以下代码：
-    ```console.log( a );```
-
-    其中对a的引用是一个RHS引用，因为这里a并没有赋予任何值（其实也可以理解为将a的值赋给log()方法的参数）。相应地，需要查找并取得a的值，这样才能将值传递给`console.log(..)`。
-    相比之下，例如：  
-
-    ```a = 2;```
-    这里对a的引用则是LHS引用，因为实际上我们并不关心当前的值是什么，只是想要为= 2这个赋值操作找到一个目标。
+1. When Engine executes the code that Compiler produced for step (2), it has to look-up the variable a to see if it has been declared, and this look-up is consulting Scope. But the type of look-up Engine performs affects the outcome of the look-up.
+2. An LHS look-up is done when a variable appears on the left-hand side of an assignment operation, and an RHS look-up is done when a variable appears on the right-hand side of an assignment operation.
+3. An RHS look-up is indistinguishable from simply a look-up of the value of some variable, whereas the LHS look-up is trying to find the variable container itself, so that it can assign.
+4. In this way, RHS doesn't really mean "right-hand side of an assignment" per se, it just, more accurately, means "not left-hand side". Being slightly glib for a moment, you could also think "RHS" instead means "retrieve his/her source (value)", implying that RHS means "go get the value of...".
+```
+console.log( a );
+```
+The reference to `a` is an RHS reference, because nothing is being assigned to `a` here. Instead, we're looking-up to retrieve the value of `a`, so that the value
+can be passed to `console.log()`.
+By contrast:
+```
+a = 2;
+```
+The reference to `a` here is an LHS reference, because we don't actually care what the current value is, we simply want to find the variable as a target for the `= 2` assignment operation.
+5. LHS and RHS meaning "left/right-hand side of an assignment" doesn't necessarily literally mean "left/right side of the = assignment operator". There are several other ways that assignments happen.
+```
+function foo(a) {
+	console.log( a ); // 2
+}
+foo( 2 );
+```
+    * The last line that invokes foo(..) as a function call requires an RHS reference to foo, meaning, "go look-up the value of foo
+    * There's a subtle assignment here, it happens when the value `2` is assigned
+    to the parameter `a`, an LHS look-up is performed.
+    * There's also an RHS reference for the value of `a`, and that resulting value is passed to `console.log()`.
+    * `console.log()` also needs a reference to execute. It's an RHS look-up for
+    the `console` object, then a property-resolution occurs to see if it has a method called `log`.
 4. 函数声明并不是LHS查询  
 
     ```function foo(a) {}```
