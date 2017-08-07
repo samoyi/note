@@ -39,11 +39,23 @@ Time spent completing a SSL handshake.
 ### Request Sent / Sending
 Time spent issuing the network request. Typically a fraction of a millisecond.
 
+### ServiceWorker Preparation
+The browser is starting up the service worker.
+
+### Request to ServiceWorker
+The request is being sent to the service worker.
+
 ### Waiting (TTFB)
 Time spent waiting for the initial response, also known as the Time To First Byte. This time captures the latency of a round trip to the server in addition to the time spent waiting for the server to deliver the response.
 
 ### Content Download / Downloading
 Time spent receiving the response data.
+
+### Receiving Push
+The browser is receiving data for this response via HTTP/2 Server Push.
+
+### Reading Push
+The browser is reading the local data previously received.
 
 
 
