@@ -16,8 +16,8 @@ To view the full timing information for a given entry of the Network Panel you h
 A request being queued indicates that:
 * The request was postponed by the rendering engine because it's considered lower priority than critical resources (such as scripts/styles). This often happens with images.
 * The request was put on hold to wait for an unavailable TCP socket that's about to free up. <mark>不懂什么意思，和下面这一项有些像</mark>
-* The request was put on hold because the browser only allows six TCP connections per origin on HTTP 1.
-* Time spent making disk cache entries (typically very quick.)
+* There are already six TCP connections open for this origin, which is the limit. Applies to HTTP/1.0 and HTTP/1.1 only.
+* The browser is briefly allocating space in the disk cache
 
 ### Stalled/Blocking
 * Time the request spent waiting before it could be sent.
@@ -73,4 +73,5 @@ If you see lots of time spent in the Content Download phases, then improving ser
 
 
 ## References
+[Network Analysis Reference](https://developers.google.com/web/tools/chrome-devtools/network-performance/reference#timing-breakdown)
 [Understanding Resource Timing](https://developers.google.com/web/tools/chrome-devtools/network-performance/understanding-resource-timing)
