@@ -5,6 +5,7 @@
 * ES6的新类型中只检测了是否可拷贝`Symbol`
 * 能不能检测浅拷贝po和node
 * w为什么要检测到第三层
+* consoleCloneTypePO中的三个inner也要从函数中提出来，下面des函数里面要用inner而不是source
 
 
 ***
