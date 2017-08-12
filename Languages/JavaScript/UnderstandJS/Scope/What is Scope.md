@@ -87,10 +87,11 @@ foo( 2 );
     * There's also an RHS reference for the value of `a`, and that resulting value is passed to `console.log()`.
     * `console.log()` also needs a reference to execute. It's an RHS look-up for
     the `console` object, then a property-resolution occurs to see if it has a method called `log`.
-4. 函数声明并不是LHS查询  
-
-    ```function foo(a) {}```
-    编译器可以在代码生成的同时处理声明和值的定义。在引擎执行代码时，并不会有线程专门用来将一个函数值“分配给”foo。
+6. 函数声明并不是LHS查询  
+```
+function foo(a) {}
+```
+ Compiler handles both the declaration and the value definition during code-generation, such that when Engine is executing code, there's no processing necessary to "assign" a function value to `foo`.
 
 
 ### 四. 引擎对作用域的查找过程
