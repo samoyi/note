@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title></title>
+</head>
+<body>
+    <img src="test.php?src=http://mmbiz.qpic.cn/mmbiz_jpg/AVicaWTaPV5PdvFDM1HaUiaCncKNag9Poxlx0OT4ePEOUI19eaxzsfMZZabzTRbWQEK0gy3UyxFbrlubliaibpSSJg/0?wx_fmt=jpeg" />
+
+
+    RewriteEngine on
+    RewriteCond %{HTTP_REFERER} !^$
+    RewriteCond %{HTTP_REFERER} !^http://(www\.)?www.funca.org(/)?.*$     [NC]
+    RewriteRule .*\.(gif|jpg|jpeg|bmp|png)$ http://www.funca.org/test/deny.jpg [R,NC,L]
+
+
+
+
+
+</body>
+</html>
