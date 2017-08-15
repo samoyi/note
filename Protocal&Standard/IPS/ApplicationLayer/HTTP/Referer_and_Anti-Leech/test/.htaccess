@@ -1,4 +1,0 @@
-RewriteEngine on
-RewriteCond %{HTTP_REFERER} !^$
-RewriteCond %{HTTP_REFERER} !^http://(www\.)?funca.org(/)?.*$     [NC]
-RewriteRule .*\.(webp|jpg|jpeg|png)$ http://www.funca.org/test/deny.jpg [R,NC,L]
