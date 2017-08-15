@@ -1,38 +1,6 @@
 # HTTP Referer 与 反盗链
 
-***
-## 访问一个URI时，普通情况下，referer 的三种情况
-* 通过浏览器直接访问该 URI，没有 referer
-* 通过链接访问资源 URI，referer 为链接所在页面的 URI
-    * referer 的域名和该 URI 为同一个域
-    * referer 的域名和该 URI 不是一个域
 
-***
-## Referrer-Policy
-Note that `Referer` is actually a misspelling of the word "referrer". The
-Referrer-Policy header does not share this misspelling
-* ### no-referrer
-The Referer header will be omitted entirely. No referrer information is sent along with requests.
-* ### no-referrer-when-downgrade (default)
-This is the user agent's default behavior if no policy is specified. The origin is sent as referrer to a-priori as-much-secure destination (HTTPS->HTTPS), but isn't sent to a less secure destination (HTTPS->HTTP).
-* ### origin
-    * Only send the origin of the document as the referrer in all cases.
-    * The document `https://example.com/page.html` will send the referrer `https://example.com/`.
-* ### origin-when-cross-origin
-Send a full URL when performing a same-origin request, but only send the origin of the document for other cases.
-* ### same-origin
-A referrer will be sent for same-site origins, but cross-origin requests will contain no referrer information.
-* ### strict-origin
-Only send the origin of the document as the referrer to a-priori as-much-secure destination (HTTPS->HTTPS), but don't send it to a less secure destination (HTTPS->HTTP).
-* ### strict-origin-when-cross-origin
-Send a full URL when performing a same-origin request, only send the origin of the document to a-priori as-much-secure destination (HTTPS->HTTPS), and send no header to a less secure destination (HTTPS->HTTP).
-* ### unsafe-url
-    * Send a full URL (stripped from parameters) when performing a same-origin or cross-origin request.
-    * This policy will leak origins and paths from TLS-protected resources to insecure origins. Carefully consider the impact of this setting.
-
-
-
-***
 ## referer反盗链
 ### 反盗链规则
     * 允许直接访问特定的资源
@@ -92,7 +60,7 @@ RewriteRule .*\.(webp|jpg|jpeg|png)$ - [F]
 因为上面防盗链起效的规则是必须要有referer才行，所以如果我设置请求不发送referer就可以  
 在HTML中，可以直接设置如下meta标签即可
 ```
-<meta name="referrer" content="never">
+<meta name="referrer" content="no-referrer">
 ```
 在上面的防盗链设置中，为了可以让浏览器直接打开图片可以访问，不会限制referer为空的情
 况，所以这里通过这样的设置就可以成功链接。
