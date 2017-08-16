@@ -1,11 +1,9 @@
-// 各种对象拷贝方法
+# Plain Object clone
 
 
 ## TODO
 * ES6的新类型中只检测了是否可拷贝`Symbol`
-* 能不能检测浅拷贝po和node
-* w为什么要检测到第三层
-* consoleCloneTypePO中的三个inner也要从函数中提出来，下面des函数里面要用inner而不是source
+* 忘了深拷贝为什么要检测到第三层
 
 
 ***
@@ -94,7 +92,7 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
          source.p6 = ["a"]; // 检测是否可拷贝数组
          source.p7 = function(){return "p7";}; // 检测是否可拷贝函数
          source.p8 = /2/; // 检测是否可拷贝正则
-         source.p9 = new Date("1997"); // 检测是否拷贝Date对象
+         source.p9 = new Date(); // 检测是否拷贝Date对象
          source.p10 = innerNode; // 检测是否可拷贝DOM节点
          source[symbol] = "sym"; // 检测是否可拷贝Symbol类型
 
@@ -181,7 +179,7 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
              sDisabledType += "RegExp/";
              bAnyDisabledType = true;
          }
-         if( target.p9 instanceof Date !== true || (target.p9).getFullYear()!==1997 ){
+         if( target.p9 instanceof Date !== true ){
              sDisabledType += "Date/";
              bAnyDisabledType = true;
          }
@@ -195,8 +193,8 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
              else
              {
                  let newNode = document.createElement("BR"),
-                 oFirstEChild = source.p10.firstElementChild;
-                 oFirstEChild.replaceChild(newNode, oFirstEChild.firstElementChild);
+                 oParaNode = source.p10.firstElementChild;
+                 oParaNode.replaceChild(newNode, oParaNode.firstElementChild);
                  if( target.p10.firstElementChild.nodeName === "P" &&
                  target.p10.firstElementChild.firstElementChild.nodeName === "SPAN")
                  {
@@ -232,13 +230,14 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
 ***
 ## 拷贝方法
 ### 方法一：`Object.assign(target, source)`
-`PlainObject`浅拷贝 + `Array`浅拷贝 + `Node`浅拷贝 + 仅实例 + 仅可枚举 + ES6
+`PlainObject`浅拷贝 + `Array`浅拷贝 + `Node`浅拷贝 + 仅实例 + 仅可枚举
 
 ### 方法二：`JSON.parse( JSON.stringify( source ) )`
 `PlainObject`深拷贝 + `Array`深拷贝 + 仅实例 + 仅可枚举 + 不可拷贝类型：`Undefined/NaN/RegExp/Function/Date/Node/Symbol`
 
 ### 方法三：自定义方法1
 `PlainObject`深拷贝 + `Array`深拷贝 + `Node`深拷贝 + 可拷贝原型属性 + 仅可枚举  
+
 #### 来源：
 在[这篇文章](https://davidwalsh.name/javascript-clone)的`clone`函数中加入了对`Symbol`的支持
 ```
