@@ -1,18 +1,205 @@
 # Array clone
 
+## TODO
+* ES6的新类型中只检测了是否可拷贝`Symbol`
+
+## 测试代码
+```
+// 保证自己的拷贝函数接受待拷贝对象作为参数，并返回拷贝后的对象。例如：
+function fnClone(source){
+    return source.slice(0);
+}
+// 将该拷贝函数作为参数传入consoleCloneType即可在Console中看到结果
+consoleCloneType(fnClone); // PlainObject浅拷贝 Array浅拷贝 Node浅拷贝
+
+// 如果不检测是否可拷贝Node类型，consoleCloneType第二个参数传false
+
+
+
+/*
+ * 测试思路：
+ * 不检测能否拷贝数组的属性，一般情况下使用数组只关心数组项，再检测数组属性比较麻烦
+ * 只检测能否拷贝特定类型的数组项，以及是否能深拷贝 plain object、array 和 node 数
+ *   组项
+ *
+ * consoleCloneType函数中有一个包含各种数据类型的source数组，通过待测试函数拷贝后会
+ *  生成一个新数组，对比两者分析可以进行怎样的拷贝
+ *
+ * 与检测 plain object 不同，因为数组拷贝方法有可能会改变数组项的序号，也就是说键值
+ * 对不是固定的，因此没办法确定 source 中一个 plain object 被拷贝后在 target 数组中
+ * 的位置。同时，某些拷贝方法比如 JSON.parse( JSON.stringify( source ) ) 可能会改
+ * 变数组元素类型。例如这个方法会把 Node 类型转换为 {}，即使你在数组里查找到一个
+ * plain object，你也不能确定它在 source 中对应的是 plain object 还是 node。
+ * 因此这里的检测，不会被各种数据类型都放在同一个数组里，而是每个数据类型都放在独立的
+ * 数组里，这样每个数组都只有一项，不存在混淆的问题
+ */
+function consoleCloneType(fnClone, bCheckNodeType=true){
+
+    // PlainObject Array Node 三个存在深拷贝的对象
+    let innerObj = { name: 33 },
+        innerArr = [33],
+        innerNode = null;
+    if( bCheckNodeType ){
+        let divNode = document.createElement("div"),
+        paraNode = document.createElement("p");
+        divNode.appendChild( paraNode );
+        innerNode = divNode;
+    }
+
+    // 各种数据类型都放进单独的数组里
+    let aSources = [
+        [innerObj],
+        [innerArr],
+        ["str"],
+        [12.3],
+        [true],
+        [undefined],
+        [null],
+        [NaN],
+        [function(){return "foo";}],
+        [/2/],
+        [new Date()],
+        [Symbol()]
+    ];
+
+    if( bCheckNodeType ){
+        aSources.push([innerNode]);
+    }
+    let aTargets = aSources.map(value=>fnClone(value));
+
+
+
+    // 建立source数组，并使用待测试的拷贝方法生成target数组
+    let source = [innerObj, innerArr, innerNode],
+        target = fnClone(source);
+
+    // 改变source数组项引用的对象，看看target中的数组项是否也会跟着改变
+    innerObj.name = 22;
+    innerArr[0] = 22;
+    if( bCheckNodeType ){
+        let newNode = document.createElement("SPAN"),
+        oParaNode = innerNode.firstElementChild;
+        innerNode.replaceChild(newNode, oParaNode);
+    }
+
+    // 检测target数组项是否随之改变
+    {
+        let cloneTypeDes = '',
+            sDisabledType = ''
+
+        if(  aTargets[0][0] instanceof Object === true )
+        {
+            if(  aTargets[0][0].name === 22 ){
+                cloneTypeDes += 'PlainObject浅拷贝';
+            }
+            else if(  aTargets[0][0].name === 33 ){
+                cloneTypeDes += 'PlainObject深拷贝';
+            }
+        }
+        else{
+            sDisabledType += ' PlainObject';
+        }
+
+        if( aTargets[1][0] instanceof Array === true ){
+            if( aTargets[1][0][0] === 22 ){
+                cloneTypeDes += ' Array浅拷贝';
+            }
+            else if( aTargets[1][0][0] === 33 ){
+                cloneTypeDes += ' Array深拷贝';
+            }
+        }
+        else{
+            sDisabledType += ' Array';
+        }
+
+        if( bCheckNodeType ){
+            if( aTargets[12][0] instanceof Node === true ) {
+                if( aTargets[12][0].firstElementChild.nodeName === 'SPAN' ){
+                    cloneTypeDes += ' Node浅拷贝';
+                }
+                else if(aTargets[12][0].firstElementChild.nodeName === 'P' ){
+                    cloneTypeDes += ' Node深拷贝';
+                }
+            }
+            else{
+                sDisabledType += ' Node';
+            }
+        }
+
+        if( aTargets[2][0] !== 'str'){
+            sDisabledType += ' String';
+        }
+
+        if( aTargets[3][0] !== 12.3){
+            sDisabledType += ' Number';
+        }
+
+        if( aTargets[4][0] !== true){
+            sDisabledType += ' Boolean';
+        }
+
+        if( aTargets[5][0] !== undefined){
+            sDisabledType += ' Undefine';
+        }
+
+        if( aTargets[6][0] !== null){
+            sDisabledType += ' Null';
+        }
+
+        if( !Object.is(aTargets[7][0], NaN)){
+            sDisabledType += ' NaN';
+        }
+
+        if( typeof aTargets[8][0] !== 'function'){
+            sDisabledType += ' Function';
+        }
+
+        if( aTargets[9][0] instanceof RegExp !== true ){
+            sDisabledType += ' RegExp';
+        }
+
+        if( aTargets[10][0] instanceof Date !== true ){
+            sDisabledType += ' Date';
+        }
+
+        if( typeof aTargets[11][0] !== 'symbol'){
+            sDisabledType += ' Symbol';
+        }
+
+        if(sDisabledType){
+            sDisabledType = ' 不可拷贝的数组项类型：' + sDisabledType;
+        }
+        console.log( cloneTypeDes + sDisabledType );
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
 ***
 ## 拷贝方法
-### 方法一：`Object.assign(target, source)`
-`PlainObject`浅拷贝 + `Array`浅拷贝 + `Node`浅拷贝 + 仅实例 + 仅可枚举
+### 方法一：`source.slice(0)` / `source.concat()` / `Array.of.apply(null, source)`
+`PlainObject`浅拷贝 `Array`浅拷贝 `Node`浅拷贝
 
 ### 方法二：`JSON.parse( JSON.stringify( source ) )`
-`PlainObject`深拷贝 + `Array`深拷贝 + 仅实例 + 仅可枚举 + 不可拷贝类型：`Undefined/NaN/RegExp/Function/Date/Node/Symbol`
+`PlainObject`深拷贝 `Array`深拷贝 不可拷贝的数组项类型： `Node` `Undefine` `NaN` `Function` `RegExp` `Date` `Symbol`
 
-### 方法三：自定义方法1
-`PlainObject`深拷贝 + `Array`深拷贝 + `Node`深拷贝 + 可拷贝原型属性 + 仅可枚举  
+### 方法三：`[...array]`
+`PlainObject`浅拷贝 + `Array`浅拷贝 + `Node`浅拷贝
 
+### 方法四：自定义方法1
+`PlainObject`深拷贝 + `Array`深拷贝 + `Node`深拷贝
 #### 来源：
-在[这篇文章](https://davidwalsh.name/javascript-clone)的`clone`函数中加入了对`Symbol`的支持
+* 在[这篇文章](https://davidwalsh.name/javascript-clone)的`clone`函数中加入了对`Symbol`的支持
+* 在 [plain_object_clone](plain_object_clone.md) 这篇中有对这个函数的分析
+
 ```
 function clone(src)
 {
@@ -34,61 +221,6 @@ function clone(src)
             // inherited from Object.prototype.	 For example, if dest has a custom toString() method,
             // don't overwrite it with the toString() method that source inherited from Object.prototype
 
-			/*
-			 * 分析下面的 if condition
-             * 简写以下condition为 A || (B&&(C||D))
-             * A：!(name in dest)：为true则表明dest实例和原型中都没有和name同名
-             *                     的属性，为false则表明dest的实例和原型两个对象
-             *                     中，至少其中之一是有和name同名的属性。
-             * B：dest[name] !== s：如果为true则可能有以下两种可能：
-             *                       1.dest里有name属性但值不等于source中name
-             *                         属性的值
-             *                       2.dest里面没有name属性（值为undefined），
-             *                         source里name属性的值不为undefined。但
-             *                         这种情况在这里并不会发生，因为如果发生，则
-             *                         !(name in dest)就会是 true。则整个判断
-             *                         就是true了。
-             *                      如果为false则有以两下种可能：
-             *                       1.dest里有name属性，且值和source里name
-             *                         属性的值相同
-             *                       2.dest里没有name属性或name属性值为
-             *                         undefined，且source里name属性值为
-             *                         undefined
-             * C：!(name in empty)：进入 for...in 的属性都不是Object原型属性
-             *                     （Object原型属性不可枚举），!(name in empty)
-             *                      为true则说明原型中没有这个属性，为false则
-             *                      说明原型中有属性与name同名
-             * D：empty[name] !== s：如果为true，则有以下两种可能：
-             *                       1.原型中有name属性，但值和source中name属性
-             *                         的值不同。
-             *                       2.原型中没有name属性，且source中name属性的
-             *                         值不为undefined。这个情况也不会发生，因为
-             *                         只有C为false才会对D进行判断，而C为false
-             *                         的话，empty中就一定有name属性。
-             *                      如果为false，则有以下两种可能：
-             *                       1.原型中有name属性且和source的name属性值
-             *                         相同
-             *                       2.原型中没有name属性，且source中name属性的
-             *                         值为undefined。同理，这个情况也不会发生，
-             * C||D：如果为true则有以下两种情况：1.原型中没有与source中的name属性
-             *                                  同名的属性；
-             *                                2.原型中有和与source中的name属性
-             *                                  同名但不同值的属性
-             *       如果为false则说明原型中有和name同名且同值的属性 。
-             * B&&(C||D)：如果为true则必须同时满足以下两个条件：
-             *             1.原型中不能存在和source中name属性同名且同值的属性
-             *             2.dest有name属性的情况下，值不等于source中name属性值
-             *            如果为false，则以上两个条件至少有一个不能满足
-             * A || (B&&(C||D))：如果为true，则必须满足一下两个条件之一：
-             *                    1.dest实例和原型中都没有和name同名的属性
-             *                    2.B&&(C||D)为true
-             *
-			 * A || (B&&(C||D))：相当于(A||B)&&(A||(C||D))
-             * A||B：原型里没有和name同名的属性，dest里没有和name同名且同值的属性
-             * A||(C||D)：原型中没有和name同名同值的属性，dest没有和name同名的属性
-             * A || (B&&(C||D))：原型中没有和name同名同值的属性，dest里没有和name
-			 *					 同名同值的属性
-			 */
             s = source[name];
             if( !(name in dest) || (dest[name] !== s && (!(name in empty) || empty[name] !== s)) ){
                 dest[name] = copyFunc ? copyFunc(s) : s; // 如果没有copyFunc则执行浅拷贝
@@ -131,19 +263,7 @@ function clone(src)
     return mixin(r, src, clone);
 }
 ```
-#### 逻辑分析：
-1. 如果不是引用类型或者是函数，则直接返回本身
-2. 如果是Node类型，则使用该类型的 `cloneNode()` 方法并传参`true`进行深拷贝
-3. 如果是Date类型，则创建一个与当前Date对象相同时间（通过`getTime()`方法获得当前Date对象的时间）的新Date对象
-4. 如果是RegExp对象，使用RegExp构造函数复制该对象
-5. 如果是以上四种情况，则不存在深入一层进行拷贝的问题，直接返回拷贝后的结果即可。
-6. 如果是Array或PlainObject类型，就不能直接拷贝，而是需要深入其内部再遍历数组项或对象属性。如果是Symbol属性，则需要通过`Object.getOwnPropertySymbols()`方法进行遍历。
 
-### 方法四：`Array.prototype.slice()` 拷贝数组
-`PlainObject`浅拷贝 + `Array`浅拷贝 + `Node`浅拷贝 + 仅实例
-
-### 方法五：`[...array]` 拷贝数组
-`PlainObject`浅拷贝 + `Array`浅拷贝 + `Node`浅拷贝 + 仅实例
 
 
 ***
@@ -155,10 +275,4 @@ function clone(src)
 
 ***
 ## References
-* [也来谈一谈js的浅复制和深复制](http://www.imooc.com/article/11253)
 * [Clone Anything with JavaScript](https://davidwalsh.name/javascript-clone)
-
-
-***
-## 附：
-* [The structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm)

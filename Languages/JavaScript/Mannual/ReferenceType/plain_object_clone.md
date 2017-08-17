@@ -27,6 +27,7 @@ function fnClone(source){
 // 将该拷贝函数作为参数传入consoleCloneType即可在Console中看到结果
 consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷贝 + 仅实例 + 仅可枚举
 
+// 如果不检测是否可拷贝Node类型，consoleCloneType第二个参数传false
 
 /*
  * 测试思路：
@@ -87,13 +88,16 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
          source.p1 = innerArr; // 检测是否深拷贝 Array
          source.p2 = bCheckNodeType && innerNode; // 检测是否深拷贝 Node
          source.p3 = undefined; // 检测是否可拷贝undefined
-         source.p4 = null; // 检测是否可拷贝null
-         source.p5 = NaN; // 检测是否可拷贝NaN
-         source.p6 = ["a"]; // 检测是否可拷贝数组
-         source.p7 = function(){return "p7";}; // 检测是否可拷贝函数
-         source.p8 = /2/; // 检测是否可拷贝正则
-         source.p9 = new Date(); // 检测是否拷贝Date对象
-         source.p10 = innerNode; // 检测是否可拷贝DOM节点
+         source.p4 = 1.23; // 检测是否可拷贝Number
+         source.p5 = 'str'; // 检测是否可拷贝String
+         source.p6 = true; // 检测是否可拷贝Boolean
+         source.p7 = null; // 检测是否可拷贝null
+         source.p8 = NaN; // 检测是否可拷贝NaN
+         source.p9 = ["a"]; // 检测是否可拷贝数组
+         source.p10 = function(){return "p10";}; // 检测是否可拷贝函数
+         source.p11 = /2/; // 检测是否可拷贝正则
+         source.p12 = new Date(); // 检测是否拷贝Date对象
+         source.p13 = innerNode; // 检测是否可拷贝DOM节点
          source[symbol] = "sym"; // 检测是否可拷贝Symbol类型
 
          return source;
@@ -148,15 +152,27 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
              sDisabledType += "Undefined/";
              bAnyDisabledType = true;
          }
-         if( !("p4" in target) || (target.p4 !== null) ){
+         if( !("p4" in target) || (target.p4 !== 1.23) ){
+             sDisabledType += "Number/";
+             bAnyDisabledType = true;
+         }
+         if( !("p5" in target) || (target.p5 !== 'str') ){
+             sDisabledType += "String/";
+             bAnyDisabledType = true;
+         }
+         if( !("p6" in target) || (target.p6 !== true) ){
+             sDisabledType += "Boolean/";
+             bAnyDisabledType = true;
+         }
+         if( !("p7" in target) || (target.p7 !== null) ){
              sDisabledType += "Null/";
              bAnyDisabledType = true;
          }
-         if( !("p5" in target) || !Number.isNaN(target.p5) ){
+         if( !("p8" in target) || !Number.isNaN(target.p8) ){
              sDisabledType += "NaN/";
              bAnyDisabledType = true;
          }
-         if( !Array.isArray( target.p6 ) || (target.p6)[0]!=="a" ){
+         if( !Array.isArray( target.p9 ) || (target.p9)[0]!=="a" ){
              sDisabledType += "Array/";
              bAnyDisabledType = true;
 
@@ -171,21 +187,21 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
                  sDeepOrShallow += " + Array浅拷贝";
              }
          }
-         if( typeof target.p7 !== "function" || (target.p7)()!=="p7" ){
+         if( typeof target.p10 !== "function" || (target.p10)()!=="p10" ){
              sDisabledType += "Function/";
              bAnyDisabledType = true;
          }
-         if( target.p8 instanceof RegExp !== true ){
+         if( target.p11 instanceof RegExp !== true ){
              sDisabledType += "RegExp/";
              bAnyDisabledType = true;
          }
-         if( target.p9 instanceof Date !== true ){
+         if( target.p12 instanceof Date !== true ){
              sDisabledType += "Date/";
              bAnyDisabledType = true;
          }
          if( bCheckNodeType )
          {
-             if( !(target.p10 instanceof HTMLDivElement) )
+             if( !(target.p13 instanceof HTMLDivElement) )
              {
                  sDisabledType += "Node/";
                  bAnyDisabledType = true;
@@ -195,8 +211,8 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
                  let newNode = document.createElement("BR"),
                  oParaNode = source.p10.firstElementChild;
                  oParaNode.replaceChild(newNode, oParaNode.firstElementChild);
-                 if( target.p10.firstElementChild.nodeName === "P" &&
-                 target.p10.firstElementChild.firstElementChild.nodeName === "SPAN")
+                 if( target.p13.firstElementChild.nodeName === "P" &&
+                 target.p13.firstElementChild.firstElementChild.nodeName === "SPAN")
                  {
                      sDeepOrShallow += " + Node深拷贝";
                  }
@@ -366,11 +382,6 @@ function clone(src)
 5. 如果是以上四种情况，则不存在深入一层进行拷贝的问题，直接返回拷贝后的结果即可。
 6. 如果是Array或PlainObject类型，就不能直接拷贝，而是需要深入其内部再遍历数组项或对象属性。如果是Symbol属性，则需要通过`Object.getOwnPropertySymbols()`方法进行遍历。
 
-### 方法四：`Array.prototype.slice()` 拷贝数组
-`PlainObject`浅拷贝 + `Array`浅拷贝 + `Node`浅拷贝 + 仅实例
-
-### 方法五：`[...array]` 拷贝数组
-`PlainObject`浅拷贝 + `Array`浅拷贝 + `Node`浅拷贝 + 仅实例
 
 
 ***
