@@ -1,42 +1,3 @@
-There are two predominant models for how scope works.
-    * The first of these is by far the most common, used by the vast majority of programming languages. It's called Lexical Scope.
-    * The other model, which is still used by some languages (such as Bash scripting, some modes in Perl, etc.) is called Dynamic Scope.
-
-
-***
-## Compiler Theory
-* Despite the fact that JavaScript falls under the general category of "dynamic" or "interpreted" languages, it is in fact a compiled language. It is not compiled well in advance, as are many traditionally-compiled languages, nor are the results of compilation portable among various distributed systems.
-* But, nevertheless, the JavaScript engine performs many of the same steps, albeit in more sophisticated ways than we may commonly be aware, of any traditional language-compiler.
-
-
-### Traditional compiled-language process
-
-#### 1. Tokenizing/Lexing
-* Breaking up a string of characters into meaningful (to the language) chunks, called tokens.  
-For instance, consider the program: `var a = 2;`, this program would likely be
-broken up into the following tokens: `var`, `a`, `=`, `2`, and `;`.
-* Whitespace may or may not be persisted as a token, depending on whether it's meaningful or not.  
-* A tokenizer breaks a stream of text into tokens, usually by looking for whitespace (tabs, spaces, new lines). A lexer is basically a tokenizer, but it usually attaches extra context to the tokens -- this token is a number, that token is a string literal, this other token is an equality operator.
-
-#### 2. Parsing
-Taking a stream (array) of tokens and turning it into a tree of nested elements, which collectively represent the grammatical structure of the program. This tree
-is called an "AST" (Abstract Syntax Tree).  
-The tree for `var a = 2;` might start with a top-level node called `VariableDeclaration`, with a child node called `Identifier` (whose value is a),
-and another child called `AssignmentExpression` which itself has a child called `NumericLiteral` (whose value is 2).
-
-#### 3. Code-Generation
-* The process of taking an AST and turning it into executable code. This part varies greatly depending on the language, the platform it's targeting, etc.
-* This is a way to take our above described AST for `var a = 2;` and turn it into
-a set of machine instructions to actually create a variable called `a` (including reserving memory, etc.), and then store a value into `a`.
-
-
-###  JavaScript engine
-* The JavaScript engine is vastly more complex than just those three steps, as are most other language compilers.
-* For one thing, JavaScript engines don't get the luxury (like other language compilers) of having plenty of time to optimize, because JavaScript compilation doesn't happen in a build step ahead of time. For JavaScript, the compilation that occurs happens, in many cases, mere microseconds (or less) before the code is executed.
-* To ensure the fastest performance, JS engines use all kinds of tricks (like JITs, which lazy compile and even hot re-compile, etc.)
-* Any snippet of JavaScript has to be compiled before (usually right before) it's executed. So, the JS compiler will take the program `var a = 2;` and compile it first, and then be ready to execute it, usually right away.
-* In the process of parsing and code-generation, there are certainly steps to optimize the performance of the execution, including collapsing redundant elements, etc.
-
 
 
 ***
@@ -87,29 +48,28 @@ foo( 2 );
     * There's also an RHS reference for the value of `a`, and that resulting value is passed to `console.log()`.
     * `console.log()` also needs a reference to execute. It's an RHS look-up for
     the `console` object, then a property-resolution occurs to see if it has a method called `log`.
-6. 函数声明并不是LHS查询  
+6. Function declaration is not an LHS look-up
 ```
 function foo(a) {}
 ```
  Compiler handles both the declaration and the value definition during code-generation, such that when Engine is executing code, there's no processing necessary to "assign" a function value to `foo`.
 
 
-### 四. 引擎对作用域的查找过程
-    ```
-    function foo(a) {
-        console.log( a ); // 2
-    }
-    foo( 2 );
-    ```
-1. 引擎执行到 foo( 2 ); 时， 需要对 foo 进行RHS，因此查询作用域
+### How engine looks up elements in scope
+```
+function foo(a) {
+    console.log( a ); // 2
+}
+foo( 2 );
+```
+1. 引擎执行到 `foo( 2 )` 时， 需要对 `foo` 进行RHS，因此查询作用域
 2. 因为之前编译器在正确的作用域里声明了该函数，因此引擎可以查询到该函数的值
-3. 引擎执行该函数
+3. engine executes `foo`
 4. 执行该函数时因为进行了2的传参，因此要进行LHS，看看把2赋值给了谁
 5. 因为编译器在正确的作用域里创建了该形参，因此引擎得以找到该变量，成功传参。
-6. 函数内部存在一个 console 引擎不知道是什么，需要到作用域中进行RHS查询
-7. 作用域中存在该内置对象，引擎找到该对象并从中找到了 log() 方法
+6. 函数内部存在一个 `console` 引擎不知道是什么，需要到作用域中进行RHS查询
+7. 作用域中存在该内置对象，引擎找到该对象并从中找到了 `log()` 方法
 8. 将a传给该方法的参数时，还要进行一次RHS来确定a的值。
 
 ## Reference
 * [You Don't Know JS: Scope & Closures](https://github.com/getify/You-Dont-Know-JS/blob/master/scope%20%26%20closures/ch1.md)
-* [stackoverflow](https://stackoverflow.com/questions/380455/looking-for-a-clear-definition-of-what-a-tokenizer-parser-and-lexers-are)
