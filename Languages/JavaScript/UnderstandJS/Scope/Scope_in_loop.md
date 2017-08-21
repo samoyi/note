@@ -1,10 +1,9 @@
-
-涉及 *for循环* 、*let作用域*、*闭包*
+# Scope in loop
 
 ## 一个常见的非预期for循环
 ```
 var arr = [];
-for (var i = 0; i < 3; i++) 
+for (var i = 0; i < 3; i++)
 {
 	arr[i] = function(){console.log(i)};
 }
@@ -33,7 +32,7 @@ arr[1](); // 期望1，实际3
 
 ## 一个常见的解决方法
 ```
-for (var i = 0; i < 3; i++) 
+for (var i = 0; i < 3; i++)
 {
 	(function(i){
 		arr[i] = function(){console.log(i)};
@@ -45,7 +44,7 @@ arr[1](); // 1
 ## 使用let定义循环序号
 ```
 var arr = [];
-for (let i = 0; i < 3; i++) 
+for (let i = 0; i < 3; i++)
 {
     arr[i] = function(){console.log(i)};
 }

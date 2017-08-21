@@ -1,16 +1,16 @@
-
+# Understanding Scope
 
 ***
-## Understanding Scope
-### The Cast
+## The Cast
 * **Engine**: Responsible for start-to-finish compilation and execution of our JavaScript program.
 * **Compiler**: Handles all the dirty work of parsing and code-generation.
 * **Scope**: Collects and maintains a look-up list of all the declared identifiers (variables), and enforces a strict set of rules as to accessibility to currently executing code.
 
-### 以代码 var a = 2; 为例讲解引擎编译代码时的作用域概念
+***
+## 以代码 var a = 2; 为例讲解引擎编译代码时的作用域概念
 1. The first thing Compiler will do with this program is perform lexing to break it down into tokens.
 2. Parse these tokens into a tree.
-3. Encountering var `a`, Compiler asks Scope to see if a variable `a` already exists for that particular scope collection. If so, Compiler ignores this declaration and moves on. Otherwise, Compiler asks Scope to declare a new variable called `a` for that scope collection.
+3. Encountering `var a`, Compiler asks Scope to see if a variable `a` already exists for that particular scope collection. If so, Compiler ignores this declaration and moves on. Otherwise, Compiler asks Scope to declare a new variable called `a` for that scope collection.
 4. Compiler then produces code for Engine to later execute, to handle the `a = 2` assignment.
 5. The code Engine runs will first ask Scope if there is a variable called a accessible in the current scope collection. If so, Engine uses that variable. If
 not, Engine looks elsewhere.
@@ -20,7 +20,8 @@ not, Engine looks elsewhere.
 2. Second, when executing, Engine looks up the variable in Scope and assigns to
 it, if found.
 
-### LHS 和 RHS
+***
+## LHS 和 RHS
 1. When Engine executes the code that Compiler produced for step (2), it has to look-up the variable a to see if it has been declared, and this look-up is consulting Scope. But the type of look-up Engine performs affects the outcome of the look-up.
 2. An LHS look-up is done when a variable appears on the left-hand side of an assignment operation, and an RHS look-up is done when a variable appears on the right-hand side of an assignment operation.
 3. An RHS look-up is indistinguishable from simply a look-up of the value of some variable, whereas the LHS look-up is trying to find the variable container itself, so that it can assign.
@@ -54,8 +55,8 @@ function foo(a) {}
 ```
  Compiler handles both the declaration and the value definition during code-generation, such that when Engine is executing code, there's no processing necessary to "assign" a function value to `foo`.
 
-
-### How engine looks up elements in scope
+***
+## How engine looks up elements in scope
 ```
 function foo(a) {
     console.log( a ); // 2

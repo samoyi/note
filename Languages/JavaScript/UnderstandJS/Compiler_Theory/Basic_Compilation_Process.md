@@ -38,6 +38,25 @@ a set of machine instructions to actually create a variable called `a` (includin
 * In the process of parsing and code-generation, there are certainly steps to optimize the performance of the execution, including collapsing redundant elements, etc.
 
 
+***
+## Hoisting
+1. For the declaration of a variable ( declared by `var`. Variable declared by
+    `let` will not be hoisted ) or a function，JS engine will handle that
+in compilation process.
+2. As this reason, a variable or a function is already exsiting in its scope and
+can be accessed, before the variable is assigned or the function is invoked in
+the runtime.
+```
+foo(); // not ReferenceError, but TypeError
+var foo = function bar() {};    
+```
+JavaScript engine considers the code above as 3 steps:
+    1. `var foo`
+    2. `foo()`
+    3. `foo = function bar() {}`
+
+
+
 
 ## Reference
 * [You Don't Know JS: Scope & Closures](https://github.com/getify/You-Dont-Know-JS/blob/master/scope%20%26%20closures/ch1.md)

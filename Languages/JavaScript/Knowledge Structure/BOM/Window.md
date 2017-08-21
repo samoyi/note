@@ -44,35 +44,44 @@ console.log( window.xyz ); // undefined
 4. The second argument of `setTimeout()` tells the JavaScript engine to add this task onto the queue after a set number of milliseconds.
 5. If the queue is empty, then that code is executed immediately; if the queue is not empty, the code must wait its turn.
 
-```
-<body>
-    <div id="first">
-        <input type="text" />
-        <span></span>
-    </div>
-    <div id="second">
-        <input type="text" />
-        <span></span>
-    </div>
-</body>
-<script>
-"use strict";
+    ```
+    <body>
+        <div id="first">
+            <input type="text" />
+            <span></span>
+        </div>
+        <div id="second">
+            <input type="text" />
+            <span></span>
+        </div>
+    </body>
+    <script>
+    "use strict";
 
-document.querySelector('#first input').onkeydown = function(ev) {
-    document.querySelector('#first span').innerHTML = this.value;
-    console.log( this.value );
-};
+    document.querySelector('#first input').onkeydown = function(ev) {
+        document.querySelector('#first span').innerHTML = this.value;
+        console.log( this.value );
+    };
 
-document.querySelector('#second input').onkeydown = function() {
-    let self = this;
-    setTimeout(function() {
-        document.querySelector('#second span').innerHTML = self.value;
-    }, 0);
-};
+    document.querySelector('#second input').onkeydown = function() {
+        let self = this;
+        setTimeout(function() {
+            document.querySelector('#second span').innerHTML = self.value;
+        }, 0);
+    };
+    ```
+    1. 在第一个输入框中输入字符，只有再次输入的时候，才会更新显示上一次输入之后的内容；但第二个输入框就是输入的之后就立刻更新显示。
+    2. 在第一个显示输入代码中，通过`console.log`每次输出的也是上一次输入之后的内容，证明在事件处理函数的执行之前，输入框的`value`并没有改变，而事件处理函数执行过程中占据着唯一的线程，输入框的`value`更新也不会改变，而显示内容正好就是在事件处理函数执行过程中，所以此时不可能显示当次输入的内容。
+    3. 在第二个显示输入代码中，将显示的代码放到了`setTimeout`中。所以，现在占据线程的任务就不再是“显示输入”而是“将显示输入的任务排到线程队列里面”。现在立即执行的是排队这个任务，而不是显示的任务。虽然不知道具体的顺序，但排到显示这个任务的时候，更新`value`的任务也已经完成了，所以这是再显示就是有新的输入了。
+6. `setTimeout` in loop will not be excuted before the loop ends
 ```
-1. 在第一个输入框中输入字符，只有再次输入的时候，才会更新显示上一次输入之后的内容；但第二个输入框就是输入的之后就立刻更新显示。
-2. 在第一个显示输入代码中，通过`console.log`每次输出的也是上一次输入之后的内容，证明在事件处理函数的执行之前，输入框的`value`并没有改变，而事件处理函数执行过程中占据着唯一的线程，输入框的`value`更新也不会改变，而显示内容正好就是在事件处理函数执行过程中，所以此时不可能显示当次输入的内容。
-3. 在第二个显示输入代码中，将显示的代码放到了`setTimeout`中。所以，现在占据线程的任务就不再是“显示输入”而是“将显示输入的任务排到线程队列里面”。现在立即执行的是排队这个任务，而不是显示的任务。虽然不知道具体的顺序，但排到显示这个任务的时候，更新`value`的任务也已经完成了，所以这是再显示就是有新的输入了。
+for (var i=0; i<10; i++) {
+    setTimeout( function timer() {
+        console.log( i ); // 全是10
+    });
+}
+```
+
 
 ### 使用`setTimeout()` 替代 `setInterval()`
 True intervals are rarely used in production environments because the time between the end of one interval and the beginning of the next is not necessarily guaranteed, and some intervals may be skipped. Using timeouts  ensures that can’t happen. Generally speaking, it’s best to avoid intervals.
