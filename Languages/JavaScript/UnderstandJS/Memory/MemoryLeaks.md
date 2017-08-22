@@ -19,7 +19,7 @@
 * One common cause for increased memory consumption in connection with globals are **caches**. Caches must have an upper bound for its size. Caches that grow unbounded can result in high memory consumption because their contents cannot be collected.
 
 ### 彻底 `removeChild` 或 `replaceChild` 之后没有清空对其引用
-```
+```js
 var node =  document.querySelector("#node");
 node.parentNode.removeChild( node );
 console.log( document.querySelector("#node") ); // null

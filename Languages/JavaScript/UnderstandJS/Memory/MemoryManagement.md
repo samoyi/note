@@ -32,7 +32,7 @@ This algorithm reduces the definition of "an object is not needed anymore" to "a
 ### 另一个JavaScript已经不使用的垃圾回收算法：Reference-counting
 This is the most naive garbage collection algorithm. This algorithm reduces the definition of "an object is not needed anymore" to "an object has no other object referencing to it". An object is considered garbage collectable if there is zero reference pointing at this object.
 #### 循环引用的bug
-```
+```js
 function f() {
   var o = {};
   var o2 = {};

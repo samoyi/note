@@ -28,7 +28,7 @@ occurring.
 * defer：异步加载，延迟执行
     1. 延迟至文档解析完成之后再执行
     2. 保证先后顺序，b.js会在a.js执行之后再执行，b.js可以依赖a.js
-        ```
+        ```html
         <script defer src="a.js">
         <script defer src="b.js">
         ```    
@@ -36,7 +36,7 @@ occurring.
 * async：异步加载，同步执行
     1. If a `<script>` tag has both attributes, a browser that supports both will honor the async attribute and ignore the defer attribute.
     2. 不保证先后顺序，b.js不一定会在a.js执行之后再执行，b.js不能依赖a.js
-    ```
+    ```html
     <script async src="a.js">
     <script async src="b.js">
     ```

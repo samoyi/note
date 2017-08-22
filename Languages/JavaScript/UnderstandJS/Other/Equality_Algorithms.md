@@ -11,7 +11,7 @@
 * loose equality ("double equals") using ==,
 * and Object.is (new in ECMAScript 2015) , SameValue algorithm
 
-```
+```js
 console.log( Object.is(NaN, NaN) ); // true
 console.log( NaN === NaN );         // false
 

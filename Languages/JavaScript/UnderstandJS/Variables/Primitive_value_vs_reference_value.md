@@ -9,7 +9,7 @@
 * Stored in the variable location is a pointer to a location in memory where the object is stored.
 
 
-```
+```js
 // 内存中保存着数组 [22]
 // 变量 arr 保存着一个指针，指向内存中的数组 [22]
 // arr 把它的指针复制了一份给 a1，a1 也保存一个指针，指向 [22]

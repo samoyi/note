@@ -46,7 +46,7 @@ in compilation process.
 2. As this reason, a variable or a function is already exsiting in its scope and
 can be accessed, before the variable is assigned or the function is invoked in
 the runtime.
-```
+```js
 foo(); // not ReferenceError, but TypeError
 var foo = function bar() {};    
 ```
