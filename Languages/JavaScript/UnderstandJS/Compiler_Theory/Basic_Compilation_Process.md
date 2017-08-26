@@ -33,6 +33,13 @@ a set of machine instructions to actually create a variable called `a` (includin
 ###  JavaScript engine
 * The JavaScript engine is vastly more complex than just those three steps, as are most other language compilers.
 * For one thing, JavaScript engines don't get the luxury (like other language compilers) of having plenty of time to optimize, because JavaScript compilation doesn't happen in a build step ahead of time. For JavaScript, the compilation that occurs happens, in many cases, mere microseconds (or less) before the code is executed.
+* 最初我理解上面这一段话是认为是引擎会完整的编译所有的（一个sciprt标签内的或者一个js文
+件内的）代码，但根据下面这一段（[出处](https://hackernoon.com/execution-context-in-javascript-319dd72e8e2c)）的描述，看起来是一作用域为界限，边执行边编译。而且其实整体编
+译应该也没有那么充分的时间吧，特别是对于很大的JS文件。
+> Creation（creating execution context） phase is the phase in which JS engines
+has called a function but it’s execution has not started. In the creation phase,
+JS engine is in the compilation phase and it scans over the function to compile
+the code.  
 * To ensure the fastest performance, JS engines use all kinds of tricks (like JITs, which lazy compile and even hot re-compile, etc.)
 * Any snippet of JavaScript has to be compiled before (usually right before) it's executed. So, the JS compiler will take the program `var a = 2;` and compile it first, and then be ready to execute it, usually right away.
 * In the process of parsing and code-generation, there are certainly steps to optimize the performance of the execution, including collapsing redundant elements, etc.
@@ -51,9 +58,25 @@ foo(); // not ReferenceError, but TypeError
 var foo = function bar() {};    
 ```
 JavaScript engine considers the code above as 3 steps:
-    1. `var foo`
-    2. `foo()`
-    3. `foo = function bar() {}`
+```js
+var foo;
+foo();
+foo = function bar() {};
+    ```
+3. Hoisting for variable is just hoisting the declaration without initialization,
+but in function declaration's case, the function value initialization
+will also be hoisted.
+```
+var getName = function () { console.log(4);};
+function getName() { console.log(5);}
+getName(); //  4
+```
+equivalent to
+```
+function getName() { console.log(5);}
+var getName = function () { console.log(4);};
+getName(); //  4
+```
 
 
 
