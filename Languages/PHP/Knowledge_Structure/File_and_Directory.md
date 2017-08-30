@@ -339,13 +339,22 @@ rename('666.txt', iconv("utf-8", "gbk", '中國.txt'));
 * 不应该允许任何人都可以上传文件
 * 应该对上传文件的类型作出限制。避免上传恶意脚本等。
 * 使用`is_uploaded_file()`或`move_uploaded_file()`保证文件时用户上传的。
+    1. This is useful to help ensure that a malicious user hasn't tried to trick
+    the script into working on files upon which it should not be working. For
+    instance, `/etc/passwd`.
 * 降低用户浏览服务器目录的风险。可以使用`basename()`来修改接收到的文件名，删除文件名中可能的路径部分
 * 如果是Windows系统，通常要确保文件路径中用“\\”或“/”替代“\”。
 
 ### 相关函数
-#### `is_uploaded_file()` Tells whether the file was uploaded via HTTP POST
-* **```move_uploaded_file(string $filename , string $destination)```**  
-    This function checks to ensure that the file designated by filename is a valid upload file (meaning that it was uploaded via PHP's HTTP POST upload mechanism). If the file is valid, it will be moved to the filename given by destination.
+#### `is_uploaded_file()`
+* Tells whether the file was uploaded via HTTP POST
+* For proper working, the function `is_uploaded_file()` needs an argument like `$_FILES['userfile']['tmp_name']`, the name of the uploaded file on the client's
+machine `$_FILES['userfile']['name']` does not work.
+
+#### `move_uploaded_file(string $filename , string $destination)`
+* This function checks to ensure that the file designated by filename is a valid
+upload file (meaning that it was uploaded via PHP's HTTP POST upload mechanism).
+If the file is valid, it will be moved to the filename given by destination.
 
 
 
