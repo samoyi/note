@@ -3,7 +3,13 @@
 
 ***
 ## 基本概念
-###  Scope Resolution Operator(::)
+### `$this` `self`
+* `$this` refers to the instance of the object
+* `self` returns to the class itself
+* When using static calls, you refer to `self` because you are not-required to have an instance of a class
+
+
+###  Scope Resolution Operator(`::`)
 * A token that allows access to static, constant, and overridden properties or methods of a class.
 * [Mannual](http://php.net/manual/en/language.oop5.paamayim-nekudotayim.php#language.oop5.paamayim-nekudotayim)
 
@@ -29,25 +35,32 @@
 
 ### Static Methods
 1. Static methods can be called without instantiating the class
-2. You cannot use the `this` keyword inside a static method because there may be no object instance to refer to.
-    ```
+2. You cannot use the `$this` keyword inside a static method because there may be no object instance to refer to. Instead, use `self` refers to the class
+```php
+<?php
     class Foo
     {
         static function bar(){
-            echo 22;
+            echo self::baz();
+        }
+        static private function baz(){
+            return 22;
         }
     }
     echo Foo::bar(); // 22
-    ```
+?>
+```
 
 ### Per-Class Constants
 This constant can be used without your needing to instantiate the class
-```
-class Foo
-{
-    const name = 'aaa';
-}
-echo Foo::name; // 'aaa'
+```php
+<?php
+    class Foo
+    {
+        const name = 'aaa';
+    }
+    echo Foo::name; // 'aaa'
+?>
 ```
 
 ### `__toString()`
@@ -58,7 +71,8 @@ echo Foo::name; // 'aaa'
 ### Overriding
 1. Overriding attributes or operations in a subclass dose note affect the superclass.
 2. The `parent` keyword allows you to call the original version of the operation in the parent class.
-    ```
+```php
+<?php
     class Foo
     {
         public function fooMethod(){
@@ -77,11 +91,13 @@ echo Foo::name; // 'aaa'
     $bar = new Bar;
     echo $bar->fooMethod(); // bar
     echo $bar->barMethod(); // foo
-    ```
+?>
+```
 
 ### Preventing Inheritance and Overriding with `final`
 1. When you use this keyword in front of a function declaration, that function cannot be overridden in any subclasses.
-    ```
+```php
+<?php
     class Foo
     {
         final function fooMethod(){
@@ -101,13 +117,16 @@ echo Foo::name; // 'aaa'
     $bar = new Bar;
     echo $bar->fooMethod(); // foo
     echo $bar->barMethod(); // foo
-    ```
+?>
+```
 2. You can also use the `final` keyword to prevent a class from being subclassed at all.
-    ```
+```php
+<?php
     final class Foo{}
     // 下面的继承将报错
     class Bar extends Foo{}
-    ```
+?>
+```
 
 ### Late Static Binding
 <mark>不懂</mark>
@@ -130,27 +149,29 @@ None of the arguments of these magic methods can be passed by reference.
 * `__call()` is triggered when invoking inaccessible methods in an object context.
 * `__callStatic()` is triggered when invoking inaccessible methods in a static context.
 
-```
-class Foo
-{
-	public function fn(){
-		echo 'fn';
-	}
+```php
+<?php
+    class Foo
+    {
+    	public function fn(){
+    		echo 'fn';
+    	}
 
-	public function __call($name, $arguments){
-		echo '__call ' . $name . '. Arguments: ' . implode(', ', $arguments);
-	}
+    	public function __call($name, $arguments){
+    		echo '__call ' . $name . '. Arguments: ' . implode(', ', $arguments);
+    	}
 
-	public static function __callStatic($name, $arguments){
-		echo '__callStatic ' . $name . '. Arguments: ' . implode(', ', $arguments);
-	}
-}
+    	public static function __callStatic($name, $arguments){
+    		echo '__callStatic ' . $name . '. Arguments: ' . implode(', ', $arguments);
+    	}
+    }
 
-$foo = new Foo;
+    $foo = new Foo;
 
-$foo->fn(); // 'fn'
-$foo->callTest('h', 2, 'o'); // __call callTest. Arguments: h, 2, o
-Foo::callStaticTest('o', 2);  // __callStatic callStaticTest. Arguments: o, 2
+    $foo->fn(); // 'fn'
+    $foo->callTest('h', 2, 'o'); // __call callTest. Arguments: h, 2, o
+    Foo::callStaticTest('o', 2);  // __callStatic callStaticTest. Arguments: o, 2
+?>    
 ```
 
 
@@ -160,123 +181,129 @@ Foo::callStaticTest('o', 2);  // __callStatic callStaticTest. Arguments: o, 2
 2. All methods declared in an interface must be public; this is the nature of an interface.
 3. All methods in the interface must be implemented within a class; failure to do so will result in a fatal error. 如果一个新类继承了一个已经实现了接口的类，则该新类不用再重复实现一遍接口。
 4. Classes may implement more than one interface if desired by separating each interface with a comma.
-```
-interface I1
-{
-    function foo();
-    function bar();
-}
-interface I2
-{
-    function baz();
-    function qux();
-}
-class Multi implements I1, I2
-{
-    function foo(){
-        echo 'foo';
+```php
+<?php
+    interface I1
+    {
+        function foo();
+        function bar();
     }
-    function bar(){
-        echo 'bar';
+    interface I2
+    {
+        function baz();
+        function qux();
     }
-    function baz(){
-        echo 'baz';
+    class Multi implements I1, I2
+    {
+        function foo(){
+            echo 'foo';
+        }
+        function bar(){
+            echo 'bar';
+        }
+        function baz(){
+            echo 'baz';
+        }
+        function qux(){
+            echo 'qux';
+        }
     }
-    function qux(){
-        echo 'qux';
-    }
-}
+?>
 ```
 
 
 ***
 ## Checking Class Type
 The `instanceof` keyword allows you to check the type of an object.You can check whether an object is an instance of a particular class, whether it inherits from a class, or whether it implements an interface.
-```
-interface I1
-{
-    function foo();
-    function bar();
-}
-interface I2
-{
-    function baz();
-    function qux();
-}
-class Multi1 implements I1, I2
-{
-    function foo(){
-        echo 'foo';
+```php
+<?php
+    interface I1
+    {
+        function foo();
+        function bar();
     }
-    function bar(){
-        echo 'bar';
+    interface I2
+    {
+        function baz();
+        function qux();
     }
-    function baz(){
-        echo 'baz';
+    class Multi1 implements I1, I2
+    {
+        function foo(){
+            echo 'foo';
+        }
+        function bar(){
+            echo 'bar';
+        }
+        function baz(){
+            echo 'baz';
+        }
+        function qux(){
+            echo 'qux';
+        }
     }
-    function qux(){
-        echo 'qux';
-    }
-}
-class Multi2 extends Multi1{}
+    class Multi2 extends Multi1{}
 
-$multi2 = new Multi2;
+    $multi2 = new Multi2;
 
-$multi2 instanceof Multi2; // true
-$multi2 instanceof Multi1; // true
-$multi2 instanceof I1; // true
-$multi2 instanceof I2; // true
+    $multi2 instanceof Multi2; // true
+    $multi2 instanceof Multi1; // true
+    $multi2 instanceof I1; // true
+    $multi2 instanceof I2; // true
+?>
 ```
 
 
 ***
 ## Class Type Hinting
-```
-interface I1
-{
-    function foo();
-    function bar();
-}
-interface I2
-{
-    function baz();
-    function qux();
-}
-class Multi1 implements I1, I2
-{
-    function foo(){
-        echo 'foo';
+```php
+<?php
+    interface I1
+    {
+        function foo();
+        function bar();
     }
-    function bar(){
-        echo 'bar';
+    interface I2
+    {
+        function baz();
+        function qux();
     }
-    function baz(){
-        echo 'baz';
+    class Multi1 implements I1, I2
+    {
+        function foo(){
+            echo 'foo';
+        }
+        function bar(){
+            echo 'bar';
+        }
+        function baz(){
+            echo 'baz';
+        }
+        function qux(){
+            echo 'qux';
+        }
     }
-    function qux(){
-        echo 'qux';
-    }
-}
-class Multi2 extends Multi1
-{
+    class Multi2 extends Multi1
+    {
 
-}
+    }
 
-$multi1 = new Multi1;
-$multi2 = new Multi2;
+    $multi1 = new Multi1;
+    $multi2 = new Multi2;
 
-function checkClassType1(Multi1 $class){} // 参数必须是Multi1的实例
-checkClassType1($multi1); // 正常
-checkClassType1($multi2); // 正常
-function checkInterfaceType1(I1 $class){} // 参数必须是实现了I1接口的类的实例
-checkInterfaceType1($multi1); // 正常
-checkInterfaceType1($multi2); // 正常
-function checkInterfaceType2(I2 $class){} // 参数必须是实现了I2接口的类的实例
-checkInterfaceType2($multi1); // 正常
-checkInterfaceType2($multi2); // 正常
-function checkClassType2(Multi2 $class){} // 参数必须是Multi2的实例
-checkClassType2($multi2); // 正常
-// checkClassType2($multi1); // 报错
+    function checkClassType1(Multi1 $class){} // 参数必须是Multi1的实例
+    checkClassType1($multi1); // 正常
+    checkClassType1($multi2); // 正常
+    function checkInterfaceType1(I1 $class){} // 参数必须是实现了I1接口的类的实例
+    checkInterfaceType1($multi1); // 正常
+    checkInterfaceType1($multi2); // 正常
+    function checkInterfaceType2(I2 $class){} // 参数必须是实现了I2接口的类的实例
+    checkInterfaceType2($multi1); // 正常
+    checkInterfaceType2($multi2); // 正常
+    function checkClassType2(Multi2 $class){} // 参数必须是Multi2的实例
+    checkClassType2($multi2); // 正常
+    // checkClassType2($multi1); // 报错
+?>
 ```
 
 
@@ -294,7 +321,8 @@ checkClassType2($multi2); // 正常
 ## Autoloading Classes
  1. The `spl_autoload_register()` function registers any number of autoloaders, enabling for classes and interfaces to be automatically loaded if they are currently not defined.
  2. By registering autoloaders, PHP is given a last chance to load the class or interface before it fails with an error.
-```
+ ```php
+ <?php
     spl_autoload_register(function($classname){
     	if( is_file('class/' .$classname. '.class.php') ){
     		require_once 'class/' .$classname. '.class.php';
@@ -306,6 +334,7 @@ checkClassType2($multi2); // 正常
      * 需要的class，程序就不会报错
      */
     $foo = new Foo;
+?>
 ```
 
 ***
@@ -316,67 +345,67 @@ checkClassType2($multi2); // 正常
 ***
 ## Reflection API
 通过访问已有类和对象来找到类和对象的结构和内容
-```
-<pre><?php
+```php
+<?php
 
-class Foo{
-	public function call(){
-		echo "call";
-	}
-}
+    class Foo{
+    	public function call(){
+    		echo "call";
+    	}
+    }
 
-$foo = new Foo();
+    $foo = new Foo();
 
-$class0 = new ReflectionClass( 'Foo' );
-$class1 = new ReflectionClass( $foo );
+    $class0 = new ReflectionClass( 'Foo' );
+    $class1 = new ReflectionClass( $foo );
 
 
-var_dump( $class0 );
-/*
-	object(ReflectionClass)#2 (1) {
-	  ["name"]=>
-	  string(3) "Foo"
-	}
-*/
+    var_dump( $class0 );
+    /*
+    	object(ReflectionClass)#2 (1) {
+    	  ["name"]=>
+    	  string(3) "Foo"
+    	}
+    */
 
-print_r( $class0 );
-/*
-	ReflectionClass Object
-	(
-	    [name] => Foo
-	)
-*/
+    print_r( $class0 );
+    /*
+    	ReflectionClass Object
+    	(
+    	    [name] => Foo
+    	)
+    */
 
-echo($class0);
-/*
-Class [  class Foo ] {
-@@ E:\WWW\temp\test.php 3-7
+    echo($class0);
+    /*
+    Class [  class Foo ] {
+    @@ E:\WWW\temp\test.php 3-7
 
-- Constants [0] {
-}
+    - Constants [0] {
+    }
 
-- Static properties [0] {
-}
+    - Static properties [0] {
+    }
 
-- Static methods [0] {
-}
+    - Static methods [0] {
+    }
 
-- Properties [0] {
-}
+    - Properties [0] {
+    }
 
-- Methods [1] {
-Method [  public method call ] {
-  @@ E:\WWW\temp\test.php 4 - 6
-}
-}
-}
-*/
+    - Methods [1] {
+    Method [  public method call ] {
+      @@ E:\WWW\temp\test.php 4 - 6
+    }
+    }
+    }
+    */
 
-var_dump( $class0 == $class1 ); // bool(true)
+    var_dump( $class0 == $class1 ); // bool(true)
 
-var_dump( $class0 === $class1 ); // bool(false)
+    var_dump( $class0 === $class1 ); // bool(false)
 
-?></pre>
+?>
 ```
 
 
@@ -385,8 +414,10 @@ var_dump( $class0 === $class1 ); // bool(false)
 
 ### stdClass
 空类。但不同于JS中，stdClass并不是对象实例的基类。
-```
-$object = new StdClass;
+```php
+<?php
+    $object = new StdClass;
+?>
 ```
 
 
