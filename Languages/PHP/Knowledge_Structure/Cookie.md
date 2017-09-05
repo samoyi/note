@@ -15,9 +15,6 @@
 
 
 http://www.php.net/manual/zh/session.constants.php
-http://justsee.iteye.com/blog/1570652
-http://blog.csdn.net/fangaoxin/article/details/6952954/
-http://lavasoft.blog.51cto.com/62575/275589/
 http://netsecurity.51cto.com/art/201402/428721.htm
 
 
