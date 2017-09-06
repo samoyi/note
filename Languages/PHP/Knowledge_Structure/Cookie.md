@@ -10,12 +10,13 @@
 
 ***
 ## Session
-[Basic](https://secure.php.net/manual/en/session.examples.php)
+* [Basic](https://secure.php.net/manual/en/session.examples.php)
+* [Predefined Constants ](https://secure.php.net/manual/en/session.constants.php)
 
 
 
-http://www.php.net/manual/zh/session.constants.php
-http://netsecurity.51cto.com/art/201402/428721.htm
+
+
 
 
 
