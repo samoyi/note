@@ -12,90 +12,55 @@ surround the attribute name with two pairs of square brackets, such as
 
 ***
 ## data property attributes
+
 ### `[[Value]]`
-Contains the actual data value for the property. This is the location from which the property’s value is read and the location to which new values are saved.
+* [Table 2: Attributes of a Data Property](https://tc39.github.io/ecma262/#sec-property-attributes)
 
 ### `[[Writable]]`  
-If `false`, attempts by ECMAScript code to change the property's `[[Value]]`
-attribute using `[[Set]]` will not succeed.
+* [Table 2: Attributes of a Data Property](https://tc39.github.io/ecma262/#sec-property-attributes)
 
 ### `[[Enumerable]]`
-If `true`, the property will be enumerated by a `for-in` enumeration. Otherwise,
-the property is said to be non-enumerable.
+* [Table 2: Attributes of a Data Property](https://tc39.github.io/ecma262/#sec-property-attributes)
 
 ### `[[Configurable]]`
-If `false`, attempts below will fail:
-* Delete the property
-* Change the property to be an accessor property
-* Change its attributes, other than `[[Value]]`, or changing `[[Writable]]` to
-`false`.
-    * If a data property is not configurable, you cannot change its writable attribute from false to true, but you can change it from true to false.
+* [Table 2: Attributes of a Data Property](https://tc39.github.io/ecma262/#sec-property-attributes)
+* If a data property is not configurable, you cannot change its writable attribute from false to true, but you can change it from true to false.
     ```js
     let p = Object.defineProperty({}, "x", { writable: true, configurable:false });
     Object.defineProperty(p, "x", { writable: false });
     console.log( Object.getOwnPropertyDescriptor(p, "x").writable ); // false
     Object.defineProperty(p, "x", { writable: true }); // TypeError
     ```
-    * Once a property has been defined as nonconfigurable, it cannot become
+* Once a property has been defined as nonconfigurable, it cannot become
     configurable again.
 
-### Default value
-* If the initial values of a property's attributes are not explicitly specified
-by specification, the default value are:  
-
-Attribute Name | Default Value
---|--
-[[Value]] | `undefined`
-[[Get]] | `undefined`
-[[Set]] | `undefined`
-[[Writable]] | `false`
-[[Enumerable]] | `false`
-[[Configurable]] | `false`
-
-```js
-let obj = {};
-
-Object.defineProperty(obj, 'name', {});
-console.log(Object.getOwnPropertyDescriptor(obj, 'name'));
-
-Object.defineProperty(obj, 'age', { get(){} });
-console.log(Object.getOwnPropertyDescriptor(obj, 'age'));
-
-Object.defineProperty(obj, 'sex', { set(){} });
-console.log(Object.getOwnPropertyDescriptor(obj, 'sex'));
-
-```
-
-* 对于直接在对象上定义属性，并不属于上面说的默认情况，因为这一行为实际上是执行了规范中的
-`CreateDataProperty`（大概是这个） 抽象操作。对于该操作定义的属性，它们的
-`[[Configurable]]`、`[[Enumerable]]`和 `[[Writable]]`特性都被默认设置为`true`
-* 以字符串的形式输出一个对象的时候，只会输出自身的、可枚举的属性
-* Define a constant property
-    ```js
-    var myObject = {};
-
-    Object.defineProperty( myObject, "FAVORITE_NUMBER", {
-    	value: 42,
-    	writable: false,
-    	configurable: false
-    } );
-    ```
 
 
+***
 ## accessor property
-Accessor properties do not contain a data value. Instead, they contain a combination of a getter function and a setter function, though both are not necessary.   
-When an accessor property is read from, the getter function is called, and it’s the function’s responsibility to return a valid value; when an accessor property is written to, a function is called with the new value, and that function must decide how to react to the data.
+### `[[Get]]`
+* [Table 3: Attributes of an Accessor Property](https://tc39.github.io/ecma262/#sec-property-attributes)
 
-#### property attributes
-1. [[Configurable]]：同上
-2. [[Enumerable]]：同上
-3. [[Get]]：The function to call when the property is read from. The default value is undefined.
-4. [[Set]]：The function to call when the property is written to. The default value is undefined.
-    * It’s not necessary to assign both a getter and a setter. Assigning just a getter means that the property cannot be written to.Likewise, a property with only a setter cannot be read
+### `[[Set]]`
+* [Table 3: Attributes of an Accessor Property](https://tc39.github.io/ecma262/#sec-property-attributes)
 
-* 以字符串的形式输出一个对象的时候，只会输出自身的、可枚举的属性
+### `[[Enumerable]]`
+* [Table 3: Attributes of an Accessor Property](https://tc39.github.io/ecma262/#sec-property-attributes)
 
-#### define accessor property
+### ` [[Configurable]]`
+* [Table 3: Attributes of an Accessor Property](https://tc39.github.io/ecma262/#sec-property-attributes)
+
+### Read-only and Write-only properties
+It’s not necessary to assign both a getter and a setter. Assigning just a getter means that the property cannot be written to. Likewise, a property with only a setter cannot be read
+
+### 强大的自定义对象
+通过`[[Get]]`和`[[Set]]`可以捕获到对对象属性和事件的读写请求，并且可以自定义对请求的响
+应。因为你可以任意编写`get`和`set`函数，对对象属性和事件的读写可以响应任何符合语言规范
+的操作，这就使得对象可以无限的扩展其功能，就可以构造出具有各种各样属性和功能的对象。
+
+
+
+#### Define property
 1. The easiest way to define accessor properties is with an extension to the object literal syntax  
 但是11之前的IE版本都不支持
     ```
@@ -139,13 +104,11 @@ book.year =2005;
 alert(book.edition);//2
 ```
 
-读取和设置访问器属性的过程都会执行函数！
-也就是说对于读取或设置属性的这一“事件”，也可以进行“事件处理”！
 
 
 
 
-
+***
 ## Reading Property Attributes
 ```js
 Object.getOwnPropertyDescriptor()
@@ -157,6 +120,7 @@ Object.getOwnPropertyDescriptor()
 
 
 
+***
 ## change or add property attributes
 1. single Property
     ```
@@ -198,6 +162,56 @@ Object.getOwnPropertyDescriptor()
     			}
     });
     ```
+
+
+
+***
+## Default value
+* If the initial values of a property's attributes are not explicitly specified
+by specification, the default value are:  
+
+Attribute Name | Default Value
+--|--
+[[Value]] | `undefined`
+[[Get]] | `undefined`
+[[Set]] | `undefined`
+[[Writable]] | `false`
+[[Enumerable]] | `false`
+[[Configurable]] | `false`
+
+```js
+let obj = {};
+
+Object.defineProperty(obj, 'name', {});
+console.log(Object.getOwnPropertyDescriptor(obj, 'name'));
+
+Object.defineProperty(obj, 'age', { get(){} });
+console.log(Object.getOwnPropertyDescriptor(obj, 'age'));
+
+Object.defineProperty(obj, 'sex', { set(){} });
+console.log(Object.getOwnPropertyDescriptor(obj, 'sex'));
+
+```
+
+* 对于直接在对象上定义属性，并不属于上面说的默认情况，因为这一行为实际上是执行了规范中的
+`CreateDataProperty`（大概是这个） 抽象操作。对于该操作定义的属性，它们的
+`[[Configurable]]`、`[[Enumerable]]`和 `[[Writable]]`特性都被默认设置为`true`
+
+
+
+***
+## 其他
+* 以字符串的形式输出一个对象的时候，只会输出自身的、可枚举的属性
+* Define a "constant property"
+    ```js
+    var myObject = {};
+    Object.defineProperty( {}, "FAVORITE_NUMBER", {
+    	value: 42,
+    	writable: false,
+    	configurable: false
+    } );
+    ```
+
 
 
 ***
