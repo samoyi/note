@@ -1,9 +1,14 @@
 # Iteration protocols
 
-A couple of additions to ECMAScript 2015 aren't new built-ins or syntax, but
+1. A couple of additions to ECMAScript 2015 aren't new built-ins or syntax, but
 protocols. These protocols can be implemented by any object respecting some
 conventions.  
-There are two protocols: The iterable protocol and the iterator protocol.
+2. There are two protocols: The iterable protocol and the iterator protocol.
+3. If an object has a `@@iterator` method, whose key is `Symbol.iterator`, this
+object will be an `iterable` object. So, when an iteration is applied to this
+object, an `iterator` will be returned by the `@@iterator` method, and this
+`iterator` has a 'next' method
+
 
 
 ## Iterable protocol
@@ -44,19 +49,16 @@ following semantics:
     2. The `next` method always has to return an object with appropriate
     properties including `done` and `value`. If a non-object value gets returned
     , a `TypeError` will be thrown.
-    ```js
-    var str = 'hi';
-    var iterator = str[Symbol.iterator]();
-    console.log( iterator.next() ); // {value: "h", done: false}
-    console.log( iterator.next() ); // {value: "i", done: false}
-    console.log( iterator.next() ); // {value: undefined, done: true}
-    ```
+    3. If `next()` never returns a object with a `done` which has value `true`,
+        the iteration will never stop.
 
-
-*If an object has a `@@iterator` method, whose key is `Symbol.iterator`, it will
-be an `iterable` object. So, when an iteration is applied to this object, an
-`iterator` will be returned by the `@@iterator` method, and this `iterator` has
-a 'next' method*
+```js
+var str = 'hi';
+var iterator = str[Symbol.iterator]();
+console.log( iterator.next() ); // {value: "h", done: false}
+console.log( iterator.next() ); // {value: "i", done: false}
+console.log( iterator.next() ); // {value: undefined, done: true}
+```
 
 
 
@@ -90,7 +92,10 @@ console.log( [...someString] ); // ["bye"]
 console.log( someString+'' );   // hi
 ```
 
+
+***
 ## Reference
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols)
 * [Draft ECMA-262](https://tc39.github.io/ecma262/#sec-iteration)
 * [阮一峰](http://es6.ruanyifeng.com/#docs/iterator)
+* [You Don't Know JS: this & Object Prototypes](https://github.com/getify/You-Dont-Know-JS/blob/master/this%20%26%20object%20prototypes/ch3.md)
