@@ -24,13 +24,14 @@ surround the attribute name with two pairs of square brackets, such as
 
 ### `[[Configurable]]`
 * [Table 2: Attributes of a Data Property](https://tc39.github.io/ecma262/#sec-property-attributes)
-* If a data property is not configurable, you cannot change its writable attribute from false to true, but you can change it from true to false.
-    ```js
-    let p = Object.defineProperty({}, "x", { writable: true, configurable:false });
-    Object.defineProperty(p, "x", { writable: false });
-    console.log( Object.getOwnPropertyDescriptor(p, "x").writable ); // false
-    Object.defineProperty(p, "x", { writable: true }); // TypeError
-    ```
+* If a data property is not configurable, you cannot change its writable
+attribute from false to true, but you can change it from true to false.
+```js
+let p = Object.defineProperty({}, "x", { writable: true, configurable:false });
+Object.defineProperty(p, "x", { writable: false });
+console.log( Object.getOwnPropertyDescriptor(p, "x").writable ); // false
+Object.defineProperty(p, "x", { writable: true }); // TypeError
+```
 * Once a property has been defined as nonconfigurable, it cannot become
     configurable again.
 
@@ -59,79 +60,15 @@ It’s not necessary to assign both a getter and a setter. Assigning just a gett
 的操作，这就使得对象可以无限的扩展其功能，就可以构造出具有各种各样属性和功能的对象。
 
 
-
-#### Define property
-1. The easiest way to define accessor properties is with an extension to the object literal syntax  
-但是11之前的IE版本都不支持
-    ```
-    let p = {
-        _innerValue: 22,
-	    get x() {
-	        return this._innerValue + 2;
-	    },
-	    set x(newvalue) {
-	        this._innerValue = newvalue;
-	    }
-    };
-
-    console.log( p.x ); // 24
-    p.x = 33;
-    console.log( p.x ); // 35
-    ```
-2. The second way is  ```Object.defineProperty()``` and ```Object.defineProperties()```
-```
-var book = {
-    _year:2004,
-    edition:1
-};
-Object.defineProperty(book,"year",{
-    get:function()
-    {
-        returnthis._year;
-    },
-    set:function(newValue)
-    {
-        if(newValue >2004)
-        {
-            this._year = newValue;
-            alert("你正在吧year的值设置为" + newValue + "！");
-            this.edition += newValue -2004;
-        }
-    }
-});
-
-book.year =2005;
-alert(book.edition);//2
-```
-
-
-
-
-
 ***
-## Reading Property Attributes
-```js
-Object.getOwnPropertyDescriptor()
-```  
-* This method accepts two arguments: the object on which the property resides and the name of the property whose descriptor should be retrieved.
-* This method can be used on any object in JavaScript, including DOM and BOM objects.
-* 如其名字所示，该方法只能用于实例属性，要取得原型属性的描述符，必须直接在原型对象上调用这一方法方法。
-* ES7有一个提案，提出了Object.getOwnPropertyDescriptors方法，返回指定对象所有自身属性（非继承属性）的描述对象。该方法的提出目的，主要是为了解决Object.assign()无法正确拷贝get属性和set属性的问题。
-
-
-
-***
-## change or add property attributes
-1. single Property
-    ```
-    Object.defineProperty()
-    ```  
-    * This method accepts three arguments: the object on which the property should be added or modified, the name of the property, and a descriptor object.
-    * When you are using Object.defineProperty(), the values for configurable, enumerable, and writable default to false unless otherwise specified.
-    * it will not alter an inherited property
-    ```
+## Methods
+### Define and change
+* `Object.defineProperty()`
+* `Object.defineProperties()`
+* Will not alter an inherited property
+    ```js
     let proto = {
-    	x: 22
+        x: 22
     };
     let obj = Object.create( proto );
     obj.y = 33;
@@ -145,23 +82,14 @@ Object.getOwnPropertyDescriptor()
     let newObj = Object.create( proto );
     console.log( newObj.x ); // 22
     ```
-2. multiple Properties
-    ```
-    Object.defineProperties()
-    ```
-    * allows you to define multiple properties using descriptors at once.
-    * 在调用Object.defineProperties()方法时，如果不指定，configurable、enumerable和writable特性的默认值同样也都是false。
-    ```
-    let p = Object.defineProperties({}, {
-    		x: { value: 1, writable: true, enumerable:true, configurable:true },
-    		y: { value: 1, writable: true, enumerable:true, configurable:true },
-    		z: { value: 9 },
-    		r: {
-    				get: function() { return Math.sqrt(this.x*this.x + this.y*this.y) },
-    				enumerable:true,
-    			}
-    });
-    ```
+
+### Get
+* `Object.getOwnPropertyDescriptor()`
+* 如其名字所示，该方法只能用于实例属性，要取得原型属性的描述符，必须直接在原型对象上调用
+这一方法方法。
+* ES7有一个提案，提出了`Object.getOwnPropertyDescriptors`方法，返回指定对象所有自身属
+性（非继承属性）的描述对象。该方法的提出目的，主要是为了解决`Object.assign()`无法正确拷
+贝`[[Get]]`和`[[Set]]`的问题。
 
 
 
@@ -213,8 +141,7 @@ console.log(Object.getOwnPropertyDescriptor(obj, 'sex'));
     ```
 
 
-
 ***
 ## Reference
-[Draft ECMA-262: Property Attributes](https://tc39.github.io/ecma262/#sec-property-attributes)
-[Draft ECMA-262: The Object Type](https://tc39.github.io/ecma262/#sec-object-type)
+* [Draft ECMA-262: Property Attributes](https://tc39.github.io/ecma262/#sec-property-attributes)
+* [Draft ECMA-262: The Object Type](https://tc39.github.io/ecma262/#sec-object-type)
