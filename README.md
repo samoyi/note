@@ -1,7 +1,16 @@
 # 目录
 
-## 基础信息的组织形式 Encoding
-* ### Character Encoding
 
-## 独立系统的组织形式 Architecture
-* ### Software Architecture
+***
+## Theories
+### Encoding  基础信息的组织形式
+* #### Character Encoding
+
+### Architecture  独立系统的组织形式
+* #### Software Architecture
+
+
+
+***
+## Practices
+### Surveillance
