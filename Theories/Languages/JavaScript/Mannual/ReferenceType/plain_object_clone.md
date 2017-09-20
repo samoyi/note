@@ -19,7 +19,7 @@
 
 ***
 ## 测试代码
-```
+```js
 // 保证自己的拷贝函数接受待拷贝对象作为参数，并返回拷贝后的对象。例如：
 function fnClone(source){
     return Object.assign({}, source);
@@ -245,18 +245,22 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
 
 ***
 ## 拷贝方法
-### 方法一：`Object.assign(target, source)`
+### 方法一：`Object(source)`
+`PlainObject`浅拷贝 + `Array`浅拷贝 + 可拷贝原型属性 + 可拷贝不可枚举  
+（`source`是`object`类型时, `Object(source)`返回`source`）
+
+### 方法二：`Object.assign(target, source)`
 `PlainObject`浅拷贝 + `Array`浅拷贝 + `Node`浅拷贝 + 仅实例 + 仅可枚举
 
-### 方法二：`JSON.parse( JSON.stringify( source ) )`
+### 方法三：`JSON.parse( JSON.stringify( source ) )`
 `PlainObject`深拷贝 + `Array`深拷贝 + 仅实例 + 仅可枚举 + 不可拷贝类型：`Undefined/NaN/RegExp/Function/Date/Node/Symbol`
 
-### 方法三：自定义方法1
+### 方法四：自定义方法1
 `PlainObject`深拷贝 + `Array`深拷贝 + `Node`深拷贝 + 可拷贝原型属性 + 仅可枚举  
 
 #### 来源：
 在[这篇文章](https://davidwalsh.name/javascript-clone)的`clone`函数中加入了对`Symbol`的支持
-```
+```js
 function clone(src)
 {
     function mixin(dest, source, copyFunc)
