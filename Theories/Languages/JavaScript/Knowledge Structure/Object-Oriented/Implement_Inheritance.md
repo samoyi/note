@@ -152,7 +152,7 @@ function SubType(){
     SuperType.call(this);
 }
 
-// 通过原型继承SuperType构造函数和原型的属性
+// 通过Prototype Chain继承SuperType构造函数和原型的属性
 // 虽然SubType实例的原型中依然有共享的colors属性，但因为上面通过构造函数直接实例本身拥
 // 有了colors属性，所以不会用到原型里面的colors属性，因此每个实例都拥有独立的colors属性
 SubType.prototype = new SuperType();
@@ -243,14 +243,40 @@ anotherPerson2.sayAge(); // 22
 
 ***
 ## by Parasitic Combination Inheritance
-不必为了指定子类型的原型而调用超类型的构造函数，我们所需要的无非就是超类型原型的一个副本而已。本质上，就是使用寄生式继承来继承超类型的原型，然后再将结果指定给子类型的原型。
+1. Like Combination Inheritance, use Constructor Stealing to inheritance private properties from  SuperType's consturctor
+2. Unlike Combination Inheritance, this method doesn't use Prototype Chain to
+inheritance SuperType's prototype properties, but just makes a copy of
+SuperType's prototype, augments this copy, and uses it as SubType's prototype.
 
-function inheritPrototype(subType, superType)
-{
-     var prototype = Object(superType.prototype);       //创建对象
-     prototype.constructor = subType;                   //增强对象
-     subType.prototype = prototype;                     //指定对象
+```js
+function SuperType(name){
+    this.name = name;
+    this.colors = ["red", "blue", "green"];
 }
 
-1. 在函数内部，第一步是创建超类型原型的一个副本。第二步是为创建的副本添加constructor属性，从而弥补因重写原型而失去的默认的constructor属性。最后一步，将新创建的对象（即副本）赋值给子类型的原型。
-2. 开发人员普遍认为寄生组合式继承是引用类型最理想的继承范式。
+SuperType.prototype.sayName = function(){
+    console.log(this.name);
+};
+
+function SubType(name){
+    SuperType.call(this, name);
+}
+
+inheritPrototype(SubType, SuperType);
+function inheritPrototype(subType, superType){
+    var prototype = Object(superType.prototype); //create object
+    prototype.constructor = subType; //augment object
+    subType.prototype = prototype; //assign object
+}
+
+let instance1 = new SubType(33);
+let instance2 = new SubType(22);
+instance1.sayName(); // 33
+instance2.sayName(); // 22
+```
+
+
+
+***
+## References
+* [Professional JavaScript for Web Developers](https://book.douban.com/subject/7157249/)
