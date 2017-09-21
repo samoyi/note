@@ -7,7 +7,7 @@ new Set([iterable]);
 ```
 * The `Set` object lets you store unique values of any type, whether primitive values or object references.
 * Set objects are collections of values. You can iterate through the elements of a set **in insertion order**.
-* A value in the Set may only occur once. 只出现一次的相等判断算法，既不是 `===` 的 Strict Equality，也不是 `Object.is` 的 SameValue。
+* A value in the Set may only occur once. 只出现一次的相等判断算法，是  Same-value-zero equality
     ```
     const set = new Set([-0, 0, NaN, NaN]);
     console.log(set); // {0, NaN}
