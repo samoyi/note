@@ -5,7 +5,7 @@ executed.
 
 ***
 ## Three Execution Context types
-### 1. Global exccution context
+### 1. Global excution context
 1. This is the default execution context in which JS code start it’s execution
 when the file first loads in the browser.
 2. All the global code are executed inside global execution context.
