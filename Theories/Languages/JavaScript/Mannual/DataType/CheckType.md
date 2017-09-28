@@ -3,7 +3,7 @@
 
 
 ***
-## Common methods
+## Common checks
 ### `typeof`
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof)
 * [Spec](https://tc39.github.io/ecma262/#sec-typeof-operator)
@@ -48,15 +48,28 @@ corresponding wrapper object.
 
 
 ***
-## Detect Array
+## Check for Array
 ### `Array.isArray`
 
 
 
 ***
-## Detect NaN
-### `Number.isNaN()`
+## Check for Number
+### `Number.isInteger()` & `Number.isSafeInteger()`
+* [Spec: Number.isInteger()](https://tc39.github.io/ecma262/#sec-number.isinteger)
+* [Spec: Number.isSafeInteger()](https://tc39.github.io/ecma262/#sec-number.issafeinteger)
+* [MDN: Number.isSafeInteger()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isSafeInteger)
 
+### `Number.isFinite()` & `isFinite()`    
+* [Spec: Number.isFinite](https://tc39.github.io/ecma262/#sec-number.isfinite)  
+* [Spec: isFinite()](https://tc39.github.io/ecma262/#sec-isfinite-number)
 
+### `Number.isNaN()` & `isNaN ( number )`
+* [Spec: Number.isNaN()](https://tc39.github.io/ecma262/#sec-number.isnan)
+* [Spec: isNaN ( number )](https://tc39.github.io/ecma262/#sec-isnan-number)
+
+https://stackoverflow.com/questions/9716468/is-there-any-function-like-isnumeric-in-javascript-to-validate-numbers
+
+***
 ## References
 * [Spec](https://www.ecma-international.org/ecma-262/5.1/)
