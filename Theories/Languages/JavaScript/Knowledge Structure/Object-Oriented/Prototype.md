@@ -47,7 +47,7 @@ console.log( proto.isPrototypeOf(obj) ); // true
 ### Change instance's prototype
 #### Two ways
 * Reassign `__proto__` property
-* `Object.getPrototypeOf(instance, prototype)`
+* `Object.setPrototypeOf(instance, prototype)`
 
 #### Performance
 * Changing the `[[Prototype]]` of an object is, by the nature of how modern
