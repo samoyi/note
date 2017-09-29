@@ -48,13 +48,86 @@ corresponding wrapper object.
 
 
 ***
-## Check for Array
-### `Array.isArray`
-
-
-
-***
 ## Check for Number
+### isNumber
+```js
+function isNumber(v){
+    return (typeof v === 'number') && !Number.isNaN(v);
+}
+```
+
+### isNumericString
+```js
+function isNumericString(v){
+    // !!(v.trim()): exclude '' and '   '.
+    // Number(v) == v: binary, octal, hexadecimal and exponential could be
+    //                 converted correctly.
+    // Number.parseFloat(v) == v   can exclude '' and '   ', but can not covert  
+    //                             binary, octal, hexadecimal and exponential
+    //                             string correctly.
+    return (typeof v === 'string') && !!(v.trim()) && (Number(v) == v);
+}
+```
+
+### isNumeric
+Number or numeric string
+* Cover ±Infinite
+```js
+function isNumeric(v){
+    return isNumber(v) || isNumericString(v);
+}
+```
+
+* Exclude ±Infinite
+```js
+// From jquery 3.2.1
+function isNumeric(n) {
+    const type = typeof n;
+    return ( type === "number" || type === "string" ) &&
+        !isNaN( n - Number.parseFloat( n ) );
+}
+```
+
+* test code
+```js
+// http://run.plnkr.co/plunks/93FPpacuIcXqqKMecLdk/
+console.log( 'isNumeric("-10")', isNumeric("-10") );
+console.log( 'isNumeric("0")', isNumeric("0") );
+console.log( 'isNumeric("5")', isNumeric("5") );
+console.log( 'isNumeric(-16)', isNumeric(-16) );
+console.log( 'isNumeric(0)', isNumeric(0) );
+console.log( 'isNumeric(32)', isNumeric(32) );
+console.log( 'isNumeric("040")', isNumeric("040") );
+console.log( 'isNumeric("0o144")', isNumeric("0o144") );
+console.log( 'isNumeric(0o144)', isNumeric(0o144) );
+console.log( 'isNumeric("0xFF")', isNumeric("0xFF") );
+console.log( 'isNumeric(0xFFF)', isNumeric(0xFFF) );
+console.log( 'isNumeric("-1.6")', isNumeric("-1.6") );
+console.log( 'isNumeric("4.536")', isNumeric("4.536") );
+console.log( 'isNumeric(-2.6)', isNumeric(-2.6) );
+console.log( 'isNumeric(3.1415)', isNumeric(3.1415) );
+console.log( 'isNumeric(8e5)', isNumeric(8e5) );
+console.log( 'isNumeric("123e-2")', isNumeric("123e-2") );
+console.log( 'isNumeric("")', isNumeric("") );
+console.log( 'isNumeric("        ")', isNumeric("        ") );
+console.log( 'isNumeric("\t\t")', isNumeric("\t\t") );
+console.log( 'isNumeric("abcdefghijklm1234567890")', isNumeric("abcdefghijklm1234567890") );
+console.log( 'isNumeric("xabcdefx")', isNumeric("xabcdefx") );
+console.log( 'isNumeric(true)', isNumeric(true) );
+console.log( 'isNumeric(false)', isNumeric(false) );
+console.log( 'isNumeric("bcfed5.2")', isNumeric("bcfed5.2") );
+console.log( 'isNumeric("7.2acdgs")', isNumeric("7.2acdgs") );
+console.log( 'isNumeric(undefined)', isNumeric(undefined) );
+console.log( 'isNumeric(null)', isNumeric(null) );
+console.log( 'isNumeric(NaN)', isNumeric(NaN) );
+console.log( 'isNumeric(new Date(2009, 1, 1))', isNumeric(new Date(2009, 1, 1)) );
+console.log( 'isNumeric(new Object())', isNumeric(new Object()) );
+console.log( 'isNumeric(function() {})', isNumeric(function() {}) );
+console.log( 'isNumeric(Infinity)', isNumeric(Infinity) );
+console.log( 'isNumeric(Number.POSITIVE_INFINITY)', isNumeric(Number.POSITIVE_INFINITY) );
+console.log( 'isNumeric(Number.NEGATIVE_INFINITY)', isNumeric(Number.NEGATIVE_INFINITY) );
+```
+
 ### `Number.isInteger()` & `Number.isSafeInteger()`
 * [Spec: Number.isInteger()](https://tc39.github.io/ecma262/#sec-number.isinteger)
 * [Spec: Number.isSafeInteger()](https://tc39.github.io/ecma262/#sec-number.issafeinteger)
@@ -69,6 +142,14 @@ corresponding wrapper object.
 * [Spec: isNaN ( number )](https://tc39.github.io/ecma262/#sec-isnan-number)
 
 https://stackoverflow.com/questions/9716468/is-there-any-function-like-isnumeric-in-javascript-to-validate-numbers
+
+
+
+***
+## Check for Array
+### `Array.isArray`
+
+
 
 ***
 ## References
