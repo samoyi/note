@@ -14,3 +14,10 @@
 ***
 ## Practices
 ### Surveillance
+
+
+
+***
+### Progress Record
+* **UnderstandJS** : 该整理[这里](https://github.com/getify/You-Dont-Know-JS/blob/master/this%20%26%20object%20prototypes/ch4.md)
+* **UnderstandVuejs**：该看[这里](https://vuejs.org/v2/guide/components.html#Misc)
