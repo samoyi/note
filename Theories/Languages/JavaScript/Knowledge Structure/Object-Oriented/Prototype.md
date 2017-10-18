@@ -1,6 +1,8 @@
 # Prototype
 
 
+
+***
 ## Prototype
 1. Every function has a prototype object.
 2. If a function is called as a constructor, instances inherit properties and
