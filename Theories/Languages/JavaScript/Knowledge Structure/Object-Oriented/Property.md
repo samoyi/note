@@ -52,12 +52,15 @@ Object.defineProperty(p, "x", { writable: true }); // TypeError
 * [Table 3: Attributes of an Accessor Property](https://tc39.github.io/ecma262/#sec-property-attributes)
 
 ### Read-only and Write-only properties
-It’s not necessary to assign both a getter and a setter. Assigning just a getter means that the property cannot be written to. Likewise, a property with only a setter cannot be read
+It’s not necessary to assign both a getter and a setter. Assigning just a getter
+means that the property cannot be written to. Likewise, a property with only a
+setter cannot be read
 
 ### 强大的自定义对象
-通过`[[Get]]`和`[[Set]]`可以捕获到对对象属性和事件的读写请求，并且可以自定义对请求的响
-应。因为你可以任意编写`get`和`set`函数，对对象属性和事件的读写可以响应任何符合语言规范
-的操作，这就使得对象可以无限的扩展其功能，就可以构造出具有各种各样属性和功能的对象。
+通过`[[Get]]`和`[[Set]]`可以捕获到对对象属性和事件的读写请求，并且可以自定义对请求
+的响应。因为你可以任意编写`get`和`set`函数，对对象属性和事件的读写可以响应任何符合语
+言规范的操作，这就使得对象可以无限的扩展其功能，就可以构造出具有各种各样属性和功能的
+对象。
 
 
 ***
@@ -85,11 +88,11 @@ It’s not necessary to assign both a getter and a setter. Assigning just a gett
 
 ### Get
 * `Object.getOwnPropertyDescriptor()`
-* 如其名字所示，该方法只能用于实例属性，要取得原型属性的描述符，必须直接在原型对象上调用
-这一方法方法。
-* ES7有一个提案，提出了`Object.getOwnPropertyDescriptors`方法，返回指定对象所有自身属
-性（非继承属性）的描述对象。该方法的提出目的，主要是为了解决`Object.assign()`无法正确拷
-贝`[[Get]]`和`[[Set]]`的问题。
+* 如其名字所示，该方法只能用于实例属性，要取得原型属性的描述符，必须直接在原型对象上
+调用这一方法方法。
+* ES7有一个提案，提出了`Object.getOwnPropertyDescriptors`方法，返回指定对象所有自
+身属性（非继承属性）的描述对象。该方法的提出目的，主要是为了解决`Object.assign()`无
+法正确拷贝`[[Get]]`和`[[Set]]`的问题。
 
 
 
@@ -121,9 +124,81 @@ console.log(Object.getOwnPropertyDescriptor(obj, 'sex'));
 
 ```
 
-* 对于直接在对象上定义属性，并不属于上面说的默认情况，因为这一行为实际上是执行了规范中的
-`CreateDataProperty`（大概是这个） 抽象操作。对于该操作定义的属性，它们的
+* 对于直接在对象上定义属性，并不属于上面说的默认情况，因为这一行为实际上是执行了规范
+中的`CreateDataProperty`（大概是这个） 抽象操作。对于该操作定义的属性，它们的
 `[[Configurable]]`、`[[Enumerable]]`和 `[[Writable]]`特性都被默认设置为`true`
+
+
+
+***
+## Shadowing Properties
+When `foo` is not already on `myObject` directly, but is at a higher level of
+`myObject`'s `[[Prototype]]` chain:
+1. If a normal data accessor property named `foo` is found anywhere higher on
+the `[[Prototype]]` chain, and it's not marked as read-only (`writable:false`)
+then a new property called `foo` is added directly to `myObject`, resulting in a
+shadowed property.
+```js
+    let proto = { foo: 22 },
+        myObject = Object.create( proto );
+    myObject.foo = 33;
+    console.log( myObject.foo ); // 33
+```
+
+2. If a `foo` is found higher on the `[[Prototype]]` chain, but it's marked as
+read-only (`writable:false`), then both the setting of that existing property as
+well as the creation of the shadowed property on `myObject` are disallowed.
+```js
+    let proto = {};
+    Object.defineProperty(proto, 'foo', {
+        'value': 22,
+        'writable': false,
+    });
+    let myObject = Object.create( proto );
+    myObject.foo = 33; // TypeError
+```
+
+3. If a `foo` is found higher on the `[[Prototype]]` chain and it's a setter ,
+then the setter will always be called. No foo will be added to `myObject`, nor
+will the foo setter be redefined.
+```js
+    let proto = {name: 22,};
+    Object.defineProperty(proto, 'foo', {
+        get(){
+            return this.name;
+        },
+        set(){
+            this.name = 33;
+        },
+    });
+    let myObject = Object.create( proto );
+    console.log( myObject.foo ); // 22
+    console.log( proto.hasOwnProperty('foo') ); // true
+    myObject.foo = 666;
+    console.log( myObject.foo ); // 33
+    console.log( myObject.hasOwnProperty('foo') ); // false
+```
+
+4. If you want to shadow `foo` in cases 2 and 3, you cannot use `=` assignment,
+but must instead use `Object.defineProperty(..)` to add `foo` to `myObject`.
+
+5. Shadowing can even occur implicitly in subtle ways:
+```js
+    let proto = { a: 2, },
+        myObject = Object.create( proto );
+
+    console.log( proto.hasOwnProperty( "a" ) ); // true
+    console.log( myObject.hasOwnProperty( "a" ) ); // false
+
+    myObject.a++; // implicit shadowing
+
+    console.log( proto.a ); // 2
+    console.log( myObject.a ); // 3
+
+    console.log( myObject.hasOwnProperty( "a" ) ); // true
+```
+The `++` operation corresponds to `myObject.a = myObject.a + 1`.
+<mark>没看明白规范中对于 ++ 操作符的说明</mark>
 
 
 

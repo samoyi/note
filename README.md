@@ -19,5 +19,5 @@
 
 ***
 ### Progress Record
-* **UnderstandJS** : 该整理[这里](https://github.com/getify/You-Dont-Know-JS/blob/master/this%20%26%20object%20prototypes/ch4.md)
+* **UnderstandJS** : 该看《你不知道的JavaScript（中卷）》内容。之后重看《this & object prototypes》的 Chapter 4及之后的.
 * **UnderstandVuejs**：该看[这里](https://vuejs.org/v2/guide/components.html#Misc)
