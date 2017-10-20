@@ -1,16 +1,16 @@
-function Stack(){
+function Queue(){
 	let items = [];
 
-	this.push = function(el){
+	this.enqueue = function(el){
 		items.push( el );
 	};
 
-	this.pop = function(){
-		return items.pop();
+	this.dequeue = function(){
+		return items.shift();
 	};
 
-	this.peek = function(){
-		return items[items.length-1];
+	this.front = function(){
+		return items[0];
 	};
 
 	this.isEmpty = function(){
@@ -30,4 +30,4 @@ function Stack(){
 	};
 }
 
-module.exports = Stack;
+module.exports = Queue;
