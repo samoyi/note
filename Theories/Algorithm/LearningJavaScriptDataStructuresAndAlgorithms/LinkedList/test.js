@@ -1,10 +1,30 @@
-const PriorityQueue = require('./PriorityQueue');
+const CircularLinkedList = require('./CircularLinkedList');
 
-var priorityQueue = new PriorityQueue();
-priorityQueue.enqueue("John", 2);
-priorityQueue.enqueue("Jack", 1);
-priorityQueue.enqueue("Camila", 5);
-priorityQueue.print();
-console.log(priorityQueue.priority(0));
-console.log(priorityQueue.priority(1));
-console.log(priorityQueue.priority(2));
+var circularLinkedList = new CircularLinkedList();
+
+circularLinkedList.append(15);
+circularLinkedList.print();
+
+circularLinkedList.append(16);
+circularLinkedList.print();
+
+
+circularLinkedList.insert(0,14);
+circularLinkedList.print();
+
+
+circularLinkedList.insert(3,17);
+circularLinkedList.print();
+
+circularLinkedList.reverse();
+circularLinkedList.print();
+
+
+// 各种reverse之后的head和tail对不对
+
+
+
+//
+//
+// console.log(circularLinkedList.indexOf(14.5));
+// console.log(circularLinkedList.indexOf(17));

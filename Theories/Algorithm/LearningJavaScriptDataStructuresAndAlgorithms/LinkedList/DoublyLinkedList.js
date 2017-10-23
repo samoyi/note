@@ -3,27 +3,29 @@ function LinkedList() {
     let Node = function(element){
         this.element = element;
         this.next = null;
+        this.prev = null;
     };
 
     let length = 0,
-        head = null;
+        head = null,
+        tail = null;
 
     this.append = function(element){
-        let node = new Node(element),
+        var node = new Node(element),
             current = null;
 
-        if (null === head){
+        if (head === null){
             head = node;
+            tail = node;
         }
         else {
-            current = head;
-            while(current.next!==null){
-                current = current.next;
-            }
-            current.next = node;
+            tail.next = node;
+            node.prev = tail;
+            tail = node;
         }
         length++;
     };
+
 
     this.removeAt = function(position){
         if (position > -1 && position < length){
@@ -33,6 +35,17 @@ function LinkedList() {
 
             if (position === 0){
                 head = current.next;
+                if( 1===length){
+                    tail = null;
+                }
+                else{
+                    head.prev = null;
+                }
+            }
+            else if(position === length-1){
+                current = tail;
+                tail = tail.prev;
+                tail.next = null;
             }
             else {
                 while (index++ < position){
@@ -40,6 +53,7 @@ function LinkedList() {
                     current = current.next;
                 }
                 previous.next = current.next;
+                current.next.prev = previous;
             }
             length--;
             return current.element;
@@ -48,6 +62,7 @@ function LinkedList() {
             return null;
         }
     };
+
 
     this.insert = function(position, element){
         if(position>-1 && position<=length){
@@ -62,11 +77,25 @@ function LinkedList() {
                     current = current.next;
                 }
                 previous.next = node;
+                if( current ){
+                    current.prev = node
+                }
+                else{ // 添加到最后
+                    tail = node;
+                }
+                node.prev = previous;
                 node.next = current;
             }
             else{
-                node.next = current;
-                head = node;
+                if(head){
+                    node.next = current;
+                    current.prev = node;
+                    head = node;
+                }
+                else{
+                    head = node;
+                    tail = node;
+                }
             }
             length++;
             return true;
@@ -111,20 +140,40 @@ function LinkedList() {
     };
 
 
-    this.reverse = function(){
-        if(length>1){
-            let previous = head,
-                current = head.next,
-                next = null;
-            previous.next = null;
+    this.getTail = function(){
+        return tail;
+    };
 
-            while(current){
+
+    this.reverse = function(){
+        let current = head.next,
+            next = null,
+            prev = null;
+
+        if(2===length){
+            let temp = tail;
+            head.next = null;
+            head.prev = temp;
+            tail = head;
+            temp.next = head;
+            temp.prev = null;
+            head = temp;
+        }
+        else if(length>2){
+            while(current !== tail){
                 next = current.next;
-                current.next = previous;
-                previous = current;
-                current = next;
+                prev = current.prev;
+                current.next = prev;
+                current.prev = next;
+                current = current.prev;
             }
-            head = previous;
+            let temp = tail;
+            head.prev = head.next;
+            head.next = null;
+            tail = head;
+            temp.next = temp.prev;
+            temp.prev = null;
+            head = temp;
         }
     };
 
