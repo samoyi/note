@@ -146,34 +146,21 @@ function LinkedList() {
 
 
     this.reverse = function(){
-        let current = head.next,
-            next = null,
-            prev = null;
-
-        if(2===length){
-            let temp = tail;
-            head.next = null;
-            head.prev = temp;
-            tail = head;
-            temp.next = head;
-            temp.prev = null;
-            head = temp;
-        }
-        else if(length>2){
-            while(current !== tail){
-                next = current.next;
-                prev = current.prev;
-                current.next = prev;
-                current.prev = next;
-                current = current.prev;
+        if(length>1){
+            let current = head,
+                aEle = [],
+                index = -1;
+            while(current){
+                aEle.push(current.element);
+                index++;
+                current = current.next;
             }
-            let temp = tail;
-            head.prev = head.next;
-            head.next = null;
-            tail = head;
-            temp.next = temp.prev;
-            temp.prev = null;
-            head = temp;
+
+            current = head;
+            while(current){
+                current.element = aEle[index--];
+                current = current.next;
+            }
         }
     };
 

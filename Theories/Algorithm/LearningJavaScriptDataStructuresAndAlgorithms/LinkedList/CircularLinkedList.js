@@ -24,34 +24,6 @@ function CircularLinkedList() {
         node.next = head;
         length++;
     };
-    /////////////////////////////////
-    // this.append = function(element){
-    //
-    //     var node = new Node(element),
-    //         current;
-    //
-    //     if (head === null){ //first node on list
-    //         head = node;
-    //     } else {
-    //
-    //         current = head;
-    //
-    //         //loop the list until find last item
-    //         while(current.next !== head){ //last element will be head instead of NULL
-    //             current = current.next;
-    //         }
-    //
-    //         //get last item and assign next to added item to make the link
-    //         current.next = node;
-    //     }
-    //
-    //     //set node.next to head - to have circular list
-    //     node.next = head;
-    //
-    //     length++; //update size of list
-    // };
-    /////////////////////////////////
-
 
 
     this.removeAt = function(position){
@@ -156,37 +128,23 @@ function CircularLinkedList() {
 
     this.reverse = function(){
         if(length>1){
-            // let previous = null,
-            //     current = head,
-            //     next = null;
-            //
-            // while(current.next !==head){
-            //     next = current.next;
-            //     next.next = current;
-            //     previous = current;
-            //     current = next;
-            // }
-            // current.next = previous;
-            // head.next = current;
-
             let current = head,
                 aEle = [],
                 index = 0;
-
             while(current.next !==head){
                 aEle.push(current.element);
                 index++;
+                current = current.next;
             }
             aEle.push(current.element);
-            index++;
 
             current = head;
             while(current.next !==head){
                 current.element = aEle[index--];
+                current = current.next;
             }
             current.element = aEle[0];
         }
-
     };
 
 
