@@ -1,42 +1,53 @@
-const SeparateChaining = require('./SeparateChaining');
+const BinarySearchTree = require('./BinarySearchTree');
 
-var hashTableSeparateChaining = new SeparateChaining();
+var tree = new BinarySearchTree();
 
-hashTableSeparateChaining.put('Gandalf', 'gandalf@email.com');
-hashTableSeparateChaining.put('John', 'johnsnow@email.com');
-hashTableSeparateChaining.put('Tyrion', 'tyrion@email.com');
-hashTableSeparateChaining.put('Aaron', 'aaron@email.com');
-hashTableSeparateChaining.put('Donnie', 'donnie@email.com');
-hashTableSeparateChaining.put('Ana', 'ana@email.com');
-hashTableSeparateChaining.put('Jonathan', 'jonathan@email.com');
-hashTableSeparateChaining.put('Jamie', 'jamie@email.com');
-hashTableSeparateChaining.put('Sue', 'sue@email.com');
-hashTableSeparateChaining.put('Mindy', 'mindy@email.com');
-hashTableSeparateChaining.put('Paul', 'paul@email.com');
-hashTableSeparateChaining.put('Nathan', 'nathan@email.com');
+tree.insert(11);
+tree.insert(7);
+tree.insert(15);
+tree.insert(5);
+tree.insert(3);
+tree.insert(9);
+tree.insert(8);
+tree.insert(10);
+tree.insert(13);
+tree.insert(12);
+tree.insert(14);
+tree.insert(20);
+tree.insert(18);
+tree.insert(25);
+tree.insert(6);
 
-console.log('**** Printing Hash **** ');
+// console.log('********* in-order transverse ***********');
+function printNode(value){
+    console.log(value);
+}
+tree.inOrderTraverse(printNode);
+//
+//
+// console.log('********* pre-order transverse ***********');
+// tree.preOrderTraverse(printNode);
+//
+// console.log('********* post-order transverse ***********');
+// tree.postOrderTraverse(printNode);
+//
+// console.log('********* max and min ***********');
+// console.log(tree.max());
+// console.log(tree.min());
+// console.log(tree.check(1) ? 'Key 1 found.' : 'Key 1 not found.');
+// console.log(tree.check(8) ? 'Key 8 found.' : 'Key 8 not found.');
+console.log('********* remove 6 ***********');
+tree.remove(6);
+tree.preOrderTraverse(printNode);
 
-hashTableSeparateChaining.print();
+console.log('********* remove 5 ***********');
+tree.remove(5);
+tree.preOrderTraverse(printNode);
 
-console.log('**** Get **** ');
+console.log('********* remove 15 ***********');
+tree.remove(15);
+tree.preOrderTraverse(printNode);
 
-console.log(hashTableSeparateChaining.get('Jamie'));
-console.log(hashTableSeparateChaining.get('Sue'));
-console.log(hashTableSeparateChaining.get('Jonathan'));
-console.log(hashTableSeparateChaining.get('Loiane'));
 
-console.log('**** Remove **** ');
-
-console.log(hashTableSeparateChaining.remove('Gandalf'));
-console.log(hashTableSeparateChaining.get('Gandalf'));
-hashTableSeparateChaining.print();
-
-console.log(hashTableSeparateChaining.remove('Sue'));
-hashTableSeparateChaining.print();
-
-console.log(hashTableSeparateChaining.remove('Jamie'));
-hashTableSeparateChaining.print();
-
-console.log(hashTableSeparateChaining.remove('Donnie'));
-hashTableSeparateChaining.print();
+console.log('********* raw data structure ***********');
+console.log(tree.getRoot());
