@@ -49,20 +49,6 @@ function BinarySearchTree(){
         }
     }
 
-    // function checkNode(node, key){
-    //     if(node===null) return false;
-    //
-    //     if(node.key>key){
-    //         checkNode(node.left, key);
-    //     }
-    //     else if(node.key<key){
-    //         checkNode(node.right, key);
-    //     }
-    //     else{
-    //         return true;
-    //     }
-    // }
-
     function searchNode(node, key, parent=null){
         if(node===null) return null;
 
@@ -76,6 +62,38 @@ function BinarySearchTree(){
             return [node, parent];
         }
     }
+
+    var removeNode = function(node, key){
+        if (node === null) return null;
+
+        if (key < node.key){
+            node.left = removeNode(node.left, key);
+            return node;
+        }
+        else if (key > node.key){
+            node.right = removeNode(node.right, key);
+            return node;
+        }
+        else {
+            if (node.left === null && node.right === null){
+                node = null;
+                return node;
+            }
+            if (node.left === null){
+                node = node.right;
+                return node;
+
+            } else if (node.right === null){
+                node = node.left;
+                return node;
+            }
+
+            let aux = findMinNode(node.right);
+            node.key = aux.key;
+            node.right = removeNode(node.right, aux.key);
+            return node;
+        }
+    };
 
     let root = null;
 
@@ -144,61 +162,65 @@ function BinarySearchTree(){
 
 
     this.remove = function(key){
-        let result = searchNode(root, key);
-        if(result===null) return null;
-
-        let [node, parent] = result;
-
-        if(node.left===null && node.right===null){
-            if( parent.key>node.key ){
-                parent.left = null;
-            }
-            else{
-                parent.right = null;
-            }
-        }
-        else if(node.right===null){
-            parent.left = node.left;
-        }
-        else if(node.left===null){
-            parent.right = node.right;
-        }
-        else{
-            let currentNode = node.right,
-                lastParent = null;
-            while(currentNode.left){
-                lastParent = currentNode;
-                currentNode = currentNode.left;
-            }
-            let newNode = currentNode;
-
-            if( node.key<parent.key ){
-                parent.left = newNode;
-            }
-            else{
-                parent.right = newNode;
-            }
-            newNode.left = node.left;
-            newNode.right = node.right;
-            currentNode = null;
-            lastParent.left = null;
-
-            // 下面这种方法虽然也可以，但得到的树会多出一级
-            // if( parent.key>node.key ){
-            //     parent.left = node.left;
-            // }
-            // else{
-            //     parent.right = node.left;
-            // }
-            //
-            // let currentNode = node.left;
-            // while(currentNode.right){
-            //     currentNode = currentNode.right;
-            // }
-            // currentNode.right = node.right;
-        }
-        return parent;
+        root = removeNode(root, key);
     };
+    // 下面是我自己写的remove方法，没有书上的好
+    // this.remove = function(key){
+    //     let result = searchNode(root, key);
+    //     if(result===null) return null;
+    //
+    //     let [node, parent] = result;
+    //
+    //     if(node.left===null && node.right===null){
+    //         if( parent.key>node.key ){
+    //             parent.left = null;
+    //         }
+    //         else{
+    //             parent.right = null;
+    //         }
+    //     }
+    //     else if(node.right===null){
+    //         parent.left = node.left;
+    //     }
+    //     else if(node.left===null){
+    //         parent.right = node.right;
+    //     }
+    //     else{
+    //         let currentNode = node.right,
+    //             lastParent = null;
+    //         while(currentNode.left){
+    //             lastParent = currentNode;
+    //             currentNode = currentNode.left;
+    //         }
+    //         let newNode = currentNode;
+    //
+    //         if( node.key<parent.key ){
+    //             parent.left = newNode;
+    //         }
+    //         else{
+    //             parent.right = newNode;
+    //         }
+    //         newNode.left = node.left;
+    //         newNode.right = node.right;
+    //         currentNode = null;
+    //         lastParent.left = null;
+    //
+    //         // 下面这种方法虽然也可以，但得到的树会多出一级
+    //         // if( parent.key>node.key ){
+    //         //     parent.left = node.left;
+    //         // }
+    //         // else{
+    //         //     parent.right = node.left;
+    //         // }
+    //         //
+    //         // let currentNode = node.left;
+    //         // while(currentNode.right){
+    //         //     currentNode = currentNode.right;
+    //         // }
+    //         // currentNode.right = node.right;
+    //     }
+    //     return parent;
+    // };
 
 
     this.getRoot = function(){
