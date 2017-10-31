@@ -1,23 +1,16 @@
-const ArrayList = require('./ArrayList');
-
-const arrayList = new ArrayList();
-
-
-
-// [5, 3, 2, 8, 7, 4, 9, 1, 6, 0].forEach(item=>{
-//     arrayList.insert(item);
-// });
+// const ArrayList = require('./ArrayList');
 //
-// console.log( arrayList.selectionSort().toString() );
+// const arrayList = new ArrayList();
 
 
-let a = [5, 3, 2, 8, 7, 4, 9, 1, 6, 0];
-function insertionSort (){
-    let arr = [a[0]],
-        len = a.length;
 
-    for(let i=1; i<len; i++){
+4
 
-    }
+n = 1 + 1
+n1 = 1
+n2 = 2
 
-}
+f5+f4
+f4+f3 + f3+f2
+f3+f2 + f2+f1 + f2+f1 + f2
+f2+f1 + f2 + f2+f1 + f2+f1 + f2
