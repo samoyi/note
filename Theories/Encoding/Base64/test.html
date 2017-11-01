@@ -3,14 +3,49 @@
 <head>
 <title></title>
 </head>
-<body></body>
+<body>
+</body>
 <script>
+'use strict';
 
-function foo(){
-    var a = b = 2;
+// let str = 'iVBORw0KGgoAAAANSUhEUgAAAJAAAACQAQMAAADdiHD7AAAABlBMVEUAAABTU1OoaSf/AAAAAXRSTlMAQObYZgAAAFJJREFUeF7t0cENgDAMQ9FwYgxG6WjpaIzCCAxQxVggFuDiCvlLOeRdHR9yzjncHVoq3npu+wQUrUuJHylSTmBaespJyJQoObUeyxDQb3bEm5Au81c0pSCD8HYAAAAASUVORK5CYII=';
+// Hello!!  SGVsbG8hSA==
+// 10010110 10101101 10011011 11011110 0100001
+console.log(Base64ToBinary('SGVsbG8h=='));
+
+function Base64ToBinary(str){
+
+
+    let codes = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
+    code = '',
+    len = str.length,
+    // str = (str.length)%4 ? ((str.length)%4) : str
+    index = null,
+    substr = '',
+    sBin = '';
+
+    for(let i=0; i<len-4; i+=4){ // do not include last 4
+        substr = str.substr(i, 4);
+        console.log(substr);
+        [...substr].forEach(char=>{
+            index = codes.indexOf(char);
+            if(index===-1){ throw new Error('Invalid Base64 string'); }
+            sBin += index.toString(2);
+        });
+    }
+
+    let sLast4 = str.slice(-4);
+    console.log(sLast4);
+    [...sLast4].forEach(char=>{
+        if(char!=='='){
+            index = codes.indexOf(char);
+            if(index===-1){ throw new Error('Invalid Base64 string'); }
+            sBin += index.toString(2);
+        }
+    });
+
+    return sBin;
 }
-foo();
-console.log(b);
-console.log(a);
+
 </script>
 </html>
