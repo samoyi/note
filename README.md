@@ -25,6 +25,7 @@
 * 没看第8章的 AVL树和红黑树
 * dfs实现拓扑排序的逻辑分析还不够好
 * 没看明白书上写的快速排序的方法
+* 没看懂动态规划的硬币找零算法
 
 ### UnderstandJS
 * 该看《你不知道的JavaScript（中卷）》内容。之后重看《this & object prototypes》的 Chapter 4及之后的.
