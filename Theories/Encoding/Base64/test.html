@@ -8,43 +8,55 @@
 <script>
 'use strict';
 
-// let str = 'iVBORw0KGgoAAAANSUhEUgAAAJAAAACQAQMAAADdiHD7AAAABlBMVEUAAABTU1OoaSf/AAAAAXRSTlMAQObYZgAAAFJJREFUeF7t0cENgDAMQ9FwYgxG6WjpaIzCCAxQxVggFuDiCvlLOeRdHR9yzjncHVoq3npu+wQUrUuJHylSTmBaespJyJQoObUeyxDQb3bEm5Au81c0pSCD8HYAAAAASUVORK5CYII=';
-// Hello!!  SGVsbG8hSA==
-// 10010110 10101101 10011011 11011110 0100001
-console.log(Base64ToBinary('SGVsbG8h=='));
+
+console.log(Base64ToBinary('SGVsbG8hIQ=='));
+// console.log( BinaryToBase64(Base64ToBinary('SGVsbG8hIQ==')) ); // SGVsbG8hIQ
+
+// 01001000 01100101 01101100 01101100 01101111 00100001
+// 00100001
 
 function Base64ToBinary(str){
 
+    if( str.endsWith('==') ){ str = str.slice(0, -2); }
+    if( str.endsWith('=') ){ str = str.slice(0, -1); }
 
     let codes = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
-    code = '',
-    len = str.length,
-    // str = (str.length)%4 ? ((str.length)%4) : str
-    index = null,
-    substr = '',
-    sBin = '';
+        code = '',
+        len = str.length,
+        index = null,
+        sBin = '',
+        cache = {};
 
-    for(let i=0; i<len-4; i+=4){ // do not include last 4
-        substr = str.substr(i, 4);
-        console.log(substr);
-        [...substr].forEach(char=>{
-            index = codes.indexOf(char);
-            if(index===-1){ throw new Error('Invalid Base64 string'); }
-            sBin += index.toString(2);
-        });
+    for(let i=0; i<len; i++){
+        index = cache[str[i]];
+        if(index===undefined){
+            index = codes.indexOf(str[i]);
+            cache[str[i]] = index;
+        }
+        sBin += index.toString(2).padStart(6, '0'); // 这个需要缓存？
     }
 
-    let sLast4 = str.slice(-4);
-    console.log(sLast4);
-    [...sLast4].forEach(char=>{
-        if(char!=='='){
-            index = codes.indexOf(char);
-            if(index===-1){ throw new Error('Invalid Base64 string'); }
-            sBin += index.toString(2);
-        }
-    });
+    return sBin.slice(0,-sBin.length%8);
+}
 
-    return sBin;
+
+function BinaryToBase64(str){
+    let codes = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
+        len = str.length,
+        index = null,
+        substr = '',
+        sBase64 = '';
+
+    for(var i=0; i<len; i+=6){
+        substr = str.substr(i, 6);
+        index = Number.parseInt(substr, 2);
+        sBase64 += codes[index];
+    }
+    let mod = i%4;
+    console.log(mod)
+    if(mod) sBase64 += ('=').repeat(4-mod);
+
+    return sBase64;
 }
 
 </script>
