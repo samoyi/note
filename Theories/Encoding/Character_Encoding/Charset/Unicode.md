@@ -68,7 +68,7 @@
 16. 它的低位，在0xdc00的基础上加上`0b1100000110`，得出的结果转换为十六进制就是 0xdf06
 17. 所以，code point为U+1D306的双字节字符，用utf16来表示，两个字节为0xd834和0xdf06
 18. 普遍的公式:
-    ```
+    ```js
     function unicode2utf16( nHexCodePoint ){
     	let nHeigh = Math.floor( (nHexCodePoint - 0x10000)/1024 ) + 0xd800,
     		nLow = (nHexCodePoint - 0x10000)%1024 + 0xdc00;
