@@ -29,6 +29,73 @@ bitwise operators) are performed with 32-bit integers.
 
 
 ***
+## Range of Values
+### JS number range
+Not all numbers in the world can be represented in ECMAScript, because of
+memory constraints. The smallest number that can be represented in ECMAScript is stored in `Number.MIN_VALUE`, the largest number is stored in `Number.MAX_VALUE`
+
+### Safe range
+* JavaScript uses double-precision floating-point format numbers as
+specified in IEEE 754 and can only safely represent numbers between
+`-(2^53 - 1)` and `2^53 - 1`, not contained.
+* Safe in this context refers to the ability to represent integers exactly
+and to correctly compare them.
+* `Number.isSafeInteger()` detects whether provided value is a integer in
+safe range.
+* You should not only test whether the result of calculation is within safe
+range, but also test each number of calculation involved.
+
+### Underflow
+1. Underflow occurs when the result of a numeric operation is closer to zero than
+the smallest representable number. In this case, JavaScript returns `0`.
+2. If underflow occurs from a negative number, JavaScript returns a special
+value known as "negative zero". This value is almost completely
+indistinguishable from regular zero and JavaScript programmers rarely need to
+detect it.
+
+### Infinity
+1. Division by zero is not an error in JavaScript: it simply returns `-Infinity`
+ or `Infinity`. There is one exception: zero divided by zero does not have a well defined value, and the result of this operation is `NaN`;
+2. If the result of a calculation is out of range, it will be converted to the corresponding `-Infinity` or `Infinity`
+3. `-Infinity` or `Infinity` are stored in `Number.NEGATIVE_INFINITY` and `Number.POSITIVE_INFINITY`.
+4. `Number.isFinite()` return `true` if the parameter is a finite number. If
+parameter is not a number ,`isFinite()` will convert parameter to a number, but
+`Number.isFinite()` will not.
+    ```js
+    console.log( Number.isFinite(Infinity) );  // false
+    console.log( Number.isFinite(NaN) );       // false
+    console.log( Number.isFinite(-Infinity) ); // false
+
+    console.log( Number.isFinite(0) );         // true
+    console.log( Number.isFinite(2e64) );      // true
+
+    console.log( Number.isFinite('0') );       // false
+    console.log( isFinite('0') );              // true
+    console.log( Number.isFinite(null) );      // false
+    console.log( isFinite(null) );             // true
+    ```
+
+
+***
+## Integers
+```js
+Number.isInteger()
+Number.isSafeInteger()
+```
+### 32-bit (Signed) Integers
+1. While integers can range up to roughly 9 quadrillion safely (53 bits), there
+are some numeric operations (like the bitwise operators) that are only defined
+for 32-bit numbers, so the "safe range" for numbers used in that way must be
+much smaller.
+2. The range then is `Math.pow(-2,31)` up to `Math.pow(2,31)-1`.
+3. To force a number value in `num` to a 32-bit signed integer value, use
+`num | 0`. This works because the `|` bitwise operator only works for 32-bit
+integer values (meaning it can only pay attention to 32 bits and any other bits
+will be lost). 
+
+
+
+***
 ## Floating point
 1. Omission of integer part or fractional part is ok if it is zero, but it is
 not recommended.
@@ -105,52 +172,6 @@ values as integer cents rather than fractional dollars.
 
 
 
-***
-## Range of Values
-### JS number range
-Not all numbers in the world can be represented in ECMAScript, because of
-memory constraints. The smallest number that can be represented in ECMAScript is stored in `Number.MIN_VALUE`, the largest number is stored in `Number.MAX_VALUE`
-
-### Safe range
-* JavaScript uses double-precision floating-point format numbers as
-specified in IEEE 754 and can only safely represent numbers between
-`-(2^53 - 1)` and `2^53 - 1`, not contained.
-* Safe in this context refers to the ability to represent integers exactly
-and to correctly compare them.
-* `Number.isSafeInteger()` detects whether provided value is a integer in
-safe range.
-* You should not only test whether the result of calculation is within safe
-range, but also test each number of calculation involved.
-
-### Underflow
-1. Underflow occurs when the result of a numeric operation is closer to zero than
-the smallest representable number. In this case, JavaScript returns `0`.
-2. If underflow occurs from a negative number, JavaScript returns a special
-value known as "negative zero". This value is almost completely
-indistinguishable from regular zero and JavaScript programmers rarely need to
-detect it.
-
-### Infinity
-1. Division by zero is not an error in JavaScript: it simply returns `-Infinity`
- or `Infinity`. There is one exception: zero divided by zero does not have a well defined value, and the result of this operation is `NaN`;
-2. If the result of a calculation is out of range, it will be converted to the corresponding `-Infinity` or `Infinity`
-3. `-Infinity` or `Infinity` are stored in `Number.NEGATIVE_INFINITY` and `Number.POSITIVE_INFINITY`.
-4. `Number.isFinite()` return `true` if the parameter is a finite number. If
-parameter is not a number ,`isFinite()` will convert parameter to a number, but
-`Number.isFinite()` will not.
-    ```js
-    console.log( Number.isFinite(Infinity) );  // false
-    console.log( Number.isFinite(NaN) );       // false
-    console.log( Number.isFinite(-Infinity) ); // false
-
-    console.log( Number.isFinite(0) );         // true
-    console.log( Number.isFinite(2e64) );      // true
-
-    console.log( Number.isFinite('0') );       // false
-    console.log( isFinite('0') );              // true
-    console.log( Number.isFinite(null) );      // false
-    console.log( isFinite(null) );             // true
-    ```
 
 
 
