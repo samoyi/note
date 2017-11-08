@@ -88,10 +88,10 @@ are some numeric operations (like the bitwise operators) that are only defined
 for 32-bit numbers, so the "safe range" for numbers used in that way must be
 much smaller.
 2. The range then is `Math.pow(-2,31)` up to `Math.pow(2,31)-1`.
-3. To force a number value in `num` to a 32-bit signed integer value, use
-`num | 0`. This works because the `|` bitwise operator only works for 32-bit
-integer values (meaning it can only pay attention to 32 bits and any other bits
-will be lost). 
+3. Certain special values such as `NaN` and `Infinity` are not "32-bit safe," in
+ that those values when passed to a bitwise operator will pass through the
+abstract operation `ToInt32` and become simply the `+0` value for the purpose of
+ that bitwise operation.
 
 
 
@@ -172,64 +172,113 @@ values as integer cents rather than fractional dollars.
 
 
 
-
-
-
-***
-## NaN
-1.NaN，即非数值（Not a Number）是一个特殊的数值，这个数值用于表示一个本来要返回数值的操作数未返回数值的情况（这样就不会抛出错误了）。
-2. 任何涉及NaN的操作都会返回NaN。
-3. NaN does not compare equal to any other value, including itself. 但通过ES6的 Object.is()方法是，它和它本身相等。
-4. isNaN()
-（1）ES6之前这是全局方法，且如果参数不是数字，会先调用Number()函数转换为数字再判断；ES6将其作为Number的方法，且不再转型。
-（2）在接收到一个值后，会尝试转换为数值(ES6之前)，任何不能被转换为数值的值都会导致这个函数返回true：
-```
-alert(isNaN(NaN));      //true
-alert(Number.isNaN(10));       //false
-alert(isNaN("10"));     //false (可以被转换为数值10)
-alert( isNaN(undefined) ); // true Number(undefined) 返回NaN
-alert( Number.isNaN(undefined) ); // false 不调用Number()转型
-alert(isNaN("blue"));   //true  (Number("blue") return NaN)
-alert(Number.isNaN("blue"));   //false  (不发生转型,"blue"显然不是NaN)
-alert(isNaN(true));     //false (可以被转换为数值1）
-```
-可以看出来，因为ES6之前isNaN会转型，所以不能直接用它判断一个值本身是不是NaN，必须再同时确定该值 typeof 为 number才行
-
-
-
 ***
 ## 数值转换
-1.有三个函数可以把非数值转换为数值：Number()、Number.parseInt()和Number.parseFloat()。
+There are three functions that convert non-numeric values to numeric value:
+`Number()`, `Number.parseInt()` and `Number.parseFloat()`
+
+### `Number()`
+The `Number()` function performs conversions based on these rules:
+* When applied to Boolean values, `true` and `false` get converted into `1` and
+`0`, respectively.
+* When applied to numbers, the value is simply passed through and returned its
+decimal format.
+* When applied to `null`, `Number()` returns 0.
+* When applied to `undefined`, `Number()` returns `NaN`;
+* When applied to strings, the following rules are applied:
+    * If the string contains only numbers, optionally preceded by a plus or
+    minus sign, it is always converted to a decimal number, leading zeros are
+    ignored.
+    * If the string contains a valid fl oating-point format, such as, it is
+    converted into the appropriate floating-point numeric value. Once again,
+    leading zeros are ignored.
+    * If the string contains a valid hexadecimal format, octal format or binary
+    format, it is converted into its decimal format.
+    * If the string is empty, it is converted to 0.
+    * If the string contains anything other than these previous formats, it is converted into `NaN`.
+* When applied to objects, the `valueOf()` method is called and the returned
+value is converted based on the previously described rules. If that conversion
+results in `NaN`, the `toString()` method is called and the rules for converting strings are applied.
+
 2.第一个函数，即转型函数可以用于任何数据类型。另外两个函数则专门用于把字符串转换成数值。实测后两个也可以转换首项是数字或数字字符串的数组，但不能转换布尔值。
 3.这三个函数对于同样的输入会有返回不同的结果。
 4.转换极大或极小的整数时会返回个位数，因为使用了e底数的计数法。
 5.一元加操作符的操作与Number()函数相同
 
-6.Number()函数的转换规则如下：
-     （1）如果是Boolean值，true和false将分别被转换为1和0.
-     （2）如果是数字值，只是简单的传入和返回。（其他进制会转换到10进制）
-     （3）如果是null值，返回0。
-     （4）如果是undefined，返回NaN。
-     （5）如果是字符串，遵循下列规则：
-          ①如果字符串只包含数字（包括前面带正负号的情况），则将其转换为十进制数值。（”011“会被转换为11）
-          ②如果字符串中包含有效的浮点格式，则将其转换为对应的浮点数值。（同样忽略前导零）
-          ③如果字符串包含有效的十六进制格式，则将其转换为相同大小的十进制整数值。
-          ④如果字符串是空的，则将其转换为0。parseInt和parseFloat在这种情况下返回NaN
-          ⑤如果字符串包含除上述格式以外的字符，则将其转换为NaN。
-    （6）如果是对象，则调用对象的valueOf()方法，然后依照前面的规则转换返回的值。如果转换的结果是NaN，则调用对象的toString()方法，然后再次依照前面的规则转换返回的字符 串值。不懂
-7.Number.parseInt()。
-（1）ES6之前这是全局方法，ES6将其作为Number的方法
-     （2）parseInt()会忽略字符串前面的空格，直到找到第一个非空格字符
-     （3）如果第一个非空格字符不是数字字符或者正负号，会返回NaN
-     （4）如果第一个字符是数字字符或者正负号，会继续解析下一个，直到解析完后续的所有数字字符或者是遇到一个非数字字符。
-     （5）parseInt()可以默认可以识别八进制和十六进制，并解析返回为十进制。ECMAScript 5已经不能识别八进制。但通过传参可以
-            识别任何进制，而且不用写成八进制或十六进制格式。和toString()效果相反
-     （6）建议无论在什么情况下都明确指定基数。
-8. Number.parseFloat()
-（1）ES6之前这是全局方法，ES6将其作为Number的方法
-（2）如果字符串包含的是一个可解析为整数的数（没有小数点或者小数点后全是0），将会返回整数。
-（3）看起来，不管是ES6的还是之前的该方法，解析精度都比较有限
-var parsedFloat1 = parseFloat( '1.337000012397766117451156851189711');
-console.log( parsedFloat1 );// 1.3370000123977661
-var parsedFloat2 = Number.parseFloat( '1.337000012397766117451156851189711');
-console.log( parsedFloat2 );// 1.337000012397761
+parseInt和parseFloat在这种情况下返回NaN
+
+### `Number.parseInt()`
+* Leading white space in the string is ignored until the first non–white space character is found.
+* If this first character isn’t a number, the minus sign, or the plus sign,  `Number.parseInt()` always returns `NaN`.
+* Empty string returns `NaN` (unlike with `Number()`, which returns `0`)
+* If the first character is a number, plus, or minus, then the conversion goes
+on to the second character and continues on until either the end of the string
+is reached or a nonnumeric character is found.
+* This function can automatically recognizes hexadecimal integer string, but can
+ not recognize octal and binary integer string.
+* If the type of parameter is number, this function will return the decimal
+value of this number.
+
+### `Number.parseFloat()`
+* If the string represents a whole number (no decimal point or only one or more
+zero after the decimal point), `Number.parseFloat()` returns an integer.
+* Empty string returns `NaN`
+* Unlike `Number.parseInt()`, this function can only recognize decimal number
+string. But it can also will return decimal value of the parameter which is a
+number type.
+* Parsing accuracy is limited
+    ````js
+    let result = Number.parseFloat( '1.337000012397766117451156851189711');
+    console.log( result ); // 1.3370000123977661
+    ````
+
+
+***
+## NaN
+1. `NaN`, short for Not a Number, which is used to indicate when an operation
+intended to return a number has failed (as opposed to throwing an error).
+2. Any operation involving `NaN` always returns `NaN`.
+3. `NaN` is not equal to any value, including `NaN`.
+4. `Number.isNaN()` and `isNaN()`
+When a value is passed into `isNaN()`, an attempt is made to convert it into a
+number by `Number()`.
+```js
+console.log( isNaN(undefined) );         // true   Number(undefined) returns NaN
+console.log( Number.isNaN(undefined) );  // false
+console.log( isNaN("blue") );            // true   Number("blue") returns NaN
+console.log( Number.isNaN("blue") );     // false
+```
+Don't use `isNaN()`
+
+
+
+***
+## `-0`
+```js
+console.log( -0 + -0 );  // -0
+console.log( -0 - -0 );  // 0
+console.log( 0 / -3 );   // -0
+console.log( 0 * -3 );   // -0
+
+console.log( 0 * -Infinity );   // NaN
+console.log( -0 * -Infinity );  // NaN
+console.log( 3 / -Infinity );   // -0
+console.log( -3 / Infinity );   // -0
+
+console.log( (-0).toString() );      // '0'
+console.log( String(-0) );           // '0'
+console.log( JSON.stringify(-0) );   // '0'
+
+console.log( Number('-0') );              // -0
+console.log( JSON.parse('-0') );          // -0
+console.log( Number.parseInt('-0') );     // -0
+console.log( Number.parseFloat('-0') );   // -0
+
+console.log( 0 === -0 );          // true
+console.log( 0 > -0 );            // false
+console.log( Object.is(0, -0) );  // false
+
+function isNegZero(n){
+    return Object.is(n, -0);
+}
+```

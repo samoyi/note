@@ -28,7 +28,8 @@
 * 没看懂动态规划的硬币找零算法
 
 ### UnderstandJS
-* 该看《你不知道的JavaScript（中卷）》内容。之后重看《this & object prototypes》的 Chapter 4及之后的.
+* 该看[Chapter 3: Natives](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch3.md)
+* 之后重看《this & object prototypes》的 Chapter 4及之后的.
 
 ### UnderstandVuejs
 * 该看[这里](https://vuejs.org/v2/guide/components.html#Misc)
