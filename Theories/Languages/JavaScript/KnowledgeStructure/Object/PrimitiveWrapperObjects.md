@@ -49,10 +49,32 @@ let n = new Number(22);
 console.log(n + 11); // 33
 console.log(n); // Number {[[PrimitiveValue]]: 22}
 ```
+6. Browsers long ago performance-optimized the common cases like `.length`,
+which means your program will actually go slower if you try to "preoptimize" by
+directly using the object form (which isn't on the optimized path). In general,
+there's basically no reason to use the object form directly. It's better to just
+ let the boxing happen implicitly where necessary.
 
 
 
+***
+### Unboxing
+```js
+let s = new String( "abc" );
+let n = new Number( 42 );
+let b = new Boolean( true );
+
+console.log( s.valueOf() ); // "abc"
+console.log( n.valueOf() ); // 42
+console.log( b.valueOf() ); // true
+
+console.log( s+'' ); // "abc"
+console.log( +n ); // 42
+console.log( !!b ); // true
+```
 
 
+
+***
 ## References
 * [《You Don't Know JS: this & Object Prototypes》 Chapter 3: Objects](https://github.com/getify/You-Dont-Know-JS/blob/master/this%20%26%20object%20prototypes/ch3.md)
