@@ -19,6 +19,13 @@ methods from constructor's prototype.
     ```
 5. `Object.prototype` is one of the rare objects that has no prototype: it does
 not inherit any properties.
+6. Not all native prototypes are plain object
+    ```js
+    console.log( Object.prototype.toString.call(Array.prototype));    // [object Array]
+    console.log( Object.prototype.toString.call(Function.prototype)); // [object Function]
+    console.log( Object.prototype.toString.call(Number.prototype));   // [object Number]
+    console.log( Object.prototype.toString.call(Date.prototype));     // [object Object]
+    ```
 
 
 

@@ -28,8 +28,9 @@
 * 没看懂动态规划的硬币找零算法
 
 ### UnderstandJS
-* 该看[Chapter 3: Natives](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch3.md)
+* 该看[Chapter 5: Grammar](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch5.md)
 * 之后重看《this & object prototypes》的 Chapter 4及之后的.
+* Did not see [Chapter 4: Coercion](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch4.md)，sort it to  `Theories\Languages\JavaScript\UnderstandJS\TypeConversionTypeConversion.md`
 
 ### UnderstandVuejs
 * 该看[这里](https://vuejs.org/v2/guide/components.html#Misc)
