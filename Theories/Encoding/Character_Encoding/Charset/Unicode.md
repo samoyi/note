@@ -83,6 +83,7 @@
 2. UTF-8 uses one to four bytes per code point
 3. 对于单字节字符，和ASCII一样。
 4. 对于n字节的符号（n>1），第一个字节的前n位都设为1，第n+1位设为0，后面字节的前两位一律设为10。剩下的没有提及的二进制位，全部为这个符号的unicode码。
+5. 绝大多数的汉字字符和符号都落在三字节的范围，很少一部分是四字节
 
 Unicode符号范围 | UTF-8编码方式
 -|-
@@ -92,7 +93,7 @@ Unicode符号范围 | UTF-8编码方式
 0000 0800-0000 FFFF | 1110xxxx 10xxxxxx 10xxxxxx
 0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
 
-```
+```js
 function unicode2utf8( nHexCodePoint ){
 	let sBin = nHexCodePoint.toString(2),
 		aUTF8 = "";
