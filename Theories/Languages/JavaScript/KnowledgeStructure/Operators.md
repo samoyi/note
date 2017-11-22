@@ -52,8 +52,8 @@ representing a power of `2`, starting with the first bit (called bit 0),
 representing 2<sup>0</sup> , the second bit represents 2<sup>1</sup>, and so on.
 6. Negative numbers are also stored in binary code but in a format called *two’s
  complement*. The two’s complement of a number is calculated in three steps:
-    1. Determine the binary representation of the absolute value (for example, to
-       find `–18`, first determine the binary representation of `18`).
+    1. Determine the binary representation of the absolute value (for example,
+    to find `–18`, first determine the binary representation of `18`).
     2. Find the `one’s complement` of the number, which essentially means that
     every `0` must be replaced with a `1` and vice versa.
     3. Add `1` to the result.
@@ -84,8 +84,15 @@ converted into a number using the `Number()` function automatically and then the
 
 ### Bitwise NOT
 * `~`: returns the one’s complement of the number.
-* In order to be able to quickly determine the result of bitwise-not, let's
-imagine how computer store a negative number:
+    ```js
+    console.log(~26);        // -27
+    console.log(~-26);       // 25
+    console.log(~0);         // -1
+    console.log(~NaN);       // -1
+    console.log(~Infinity);  // -1
+    ```
+* 可以看出来十进制数的位操作也有着明显的规律，通过再次分析计算机存储负数的方法来探明其中
+的规律。Let's imagine how computer store a negative number:
     1. Found a token, say `-18`
     2. Ignore the negative sign, got `18`
     3. Save this token in memory, as `00000000 00000000 00000000 00010010`
@@ -100,38 +107,21 @@ imagine how computer store a negative number:
         return -n - 1
     }
     ```
-```js
-console.log(~26);        // -27
-console.log(~-26);       // 25
-console.log(~0);         // -1
-console.log(~NaN);       // -1
-console.log(~Infinity);  // -1
-```
+* The summary above is actually not much useful, bitwise operation is not used
+to achieve a faster math calculation.
 
 
-三. 按位与（AND）操作符
-由一个和号字符（&）表示，它有两个操作符数。从本质上讲，按位与操作就是将两个数值的每一位对齐，然后根据下表规则，对相同位置上的两个数执行AND操作
-第一个数值的位	第二个数值的位	结果
-1	1	1
-1	0	0
-0	1	0
-0	0	0
+### Bitwise AND
+* `&`
 
-四. 按位或（OR）操作符
-由一个竖线符号（）表示，同样也有两个操作数，遵循以下真值表：
-第一个数值的位	第二个数值的位	结果
-1	1	1
-1	0	1
-0	1	1
-0	0	0
 
-五. 按位异或（XOR）操作符
-由一个插入符号（^）表示，也有两个操作数，遵循以下真值表：
-第一个数值的位	第二个数值的位	结果
-1	1	0
-1	0	1
-0	1	1
-0	0	0
+### Bitwise OR
+* `|`
+
+
+### Bitwise XOR
+* `^`: when different returns `1`, when same returns `0`
+
 
 
 六. 左移操作符
