@@ -36,13 +36,14 @@ a=+a;   //仍然是12
 ### Basic
 1. All numbers in ECMAScript are stored in IEEE-754 64-bit format, but the
 bitwise operations do not work directly on the 64-bit representation. Instead,
-the value is converted into a 32-bit integer, the operation takes place, and the
- result is converted back into 64 bits. To the developer, it appears that only
-the 32-bit integer exists, because the 64-bit storage format is transparent.
+the value is converted into a 32-bit integer, which in the range of
+`[-2147483648, 2147483647]`,the operation takes place, and the result is
+converted back into 64 bits. To the developer, it appears that only the 32-bit
+integer exists, because the 64-bit storage format is transparent.
 2. A curious side effect of this conversion is that the special values `NaN` and
  `Infinity` both are treated as equivalent to `0` when used in bitwise
 operations.
-3. Signed integers use the fi rst 31 of the 32 bits to represent the numeric
+3. Signed integers use the first 31 of the 32 bits to represent the numeric
 value of the integer. The 32nd bit represents the sign of the number: `0` for
 positive or `1` for negative.
 4. Depending on the value of that bit, called the sign bit, the format of the
@@ -59,8 +60,8 @@ representing 2<sup>0</sup> , the second bit represents 2<sup>1</sup>, and so on.
     3. Add `1` to the result.
     ```js
     function twosComplement( nDecimal ){
-        if( !Number.isInteger(nDecimal) || Math.abs(nDecimal)>4294967295 ){ // 2^32 - 1
-            throw new RangeError('The twosComplement function can only handle integers between [-4294967295, 4294967295]');
+        if( !Number.isInteger(nDecimal) || nDecimal>-1 || nDecimal<-2147483648 ){ // 2^31
+            throw new RangeError('The twosComplement function can only handle integers between [-1, -2147483648]');
         }
 
         let sOnesComplement = Math.abs(nDecimal)
@@ -71,6 +72,14 @@ representing 2<sup>0</sup> , the second bit represents 2<sup>1</sup>, and so on.
         return (Number.parseInt(sOnesComplement, 2) + 1).toString(2);
     }
     ```
+    ```js
+    -1            11111111111111111111111111111111
+    -2            11111111111111111111111111111110
+    -3            11111111111111111111111111111101
+    -2147483646   10000000000000000000000000000010
+    -2147483647   10000000000000000000000000000001
+    -2147483648   10000000000000000000000000000000
+    ```
 7. ECMAScript does its best to keep all of this information from you. When
 outputting a negative number as a binary string, you get the binary code of the
 absolute value preceded by a minus sign:
@@ -80,7 +89,6 @@ absolute value preceded by a minus sign:
 8. If a bitwise operator is applied to a nonnumeric value, the value is first
 converted into a number using the `Number()` function automatically and then the
  bitwise operation is applied. The resulting value is a number.
-
 
 ### Bitwise NOT
 * `~`: returns the one’s complement of the number.
@@ -110,52 +118,27 @@ converted into a number using the `Number()` function automatically and then the
 * The summary above is actually not much useful, bitwise operation is not used
 to achieve a faster math calculation.
 
-
 ### Bitwise AND
 * `&`
-
 
 ### Bitwise OR
 * `|`
 
-
 ### Bitwise XOR
 * `^`: when different returns `1`, when same returns `0`
 
+### Left Shift
+* `<<`
 
+### Signed Right Shift
+* `>>`: The empty bits occur at the left of the number but after the sign bit
 
-六. 左移操作符
-1. 由两个小于号（<<）表示，这个操作符会将数值的所有位向左移动指定的位数。
-2. 类比于十进制的左移，左移一位就是为原数乘以进制数，在这里就是乘以2。
-3. 左移不会影响操作数的符号位。
-
-
-七. 有符号的右移操作符
-1. 由两个大于号（>>）表示，这个操作符会将数值向右移动，但保留符号位。右移后出现的空位，用符号位的值来填充。
-2. 类比于十进制的右移：
-（1）对于正数：右移一位就是为原数除以进制数再向下取整。
-（2）对于负数：观察下面从-9从二进制变成十进制的过程以及-9二进制右移一位再变成十进制的过程
-11111111111111111111111111110111 11111111111111111111111111111011 // -9   -5
-11111111111111111111111111110110 11111111111111111111111111111010 // -10   -6
-00000000000000000000000000001001 00000000000000000000000000000101 //  9     5
-                         // -9    -5
-从-9的二进制表示法开始：
-第一步，右移一位相当于先除以进制数2，然后向下取整   即 Math.floor(-9/2)
-第二步，负数以二进制表示的时候最后一步要加一，这里是相反的过程，所以要减一，进而变成了-6
-第三步，求反码，规则是相反数减一，变成了5
-最后一步，从绝对值还原成负数 -5
-
-以上是操作数是奇数（9）的情况，如果操作数是偶数，二进制最后一位是0，则向下取整并不会有所改变。
-
-以上第二步和第三步加一减一抵消后，有效的操作就是：-(-(Math.floor(x/2)-1)-1)  =>  Math.floor(x/2)
-所以，负数进行有符号右移一位的位操作，也是除以进制数再向下取整
-
-
-
-八. 无符号右移操作符
-1. 由3个大于号(>>>)表示，这个操作符会将数值的所有32位都向右移动，并且用0填充空位。所以
-2. 对负数的无符号右移会变成正数。
-3. 由于负数以其绝对值的二进制补码形式表示，因此无符号右移位数不多的话，会变成一个很大的正数。
+### Unsigned Right Shift
+* `>>>`
+* For numbers that are negative, the empty bits get fi lled with zeros
+regardless of the sign of the number.
+* Because the negative number is the two’s complement of its absolute value, the
+ number becomes very large if not only moved a few bits.
 
 
 布尔操作符————————————————————
