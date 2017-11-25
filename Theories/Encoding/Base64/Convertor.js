@@ -1,4 +1,4 @@
-function Base64ToBinary(str){
+function base64ToBinary(str){
 
     if( str.endsWith('==') ){ str = str.slice(0, -2); }
     if( str.endsWith('=') ){ str = str.slice(0, -1); }
@@ -30,7 +30,20 @@ function Base64ToBinary(str){
 }
 
 
-function BinaryToBase64(str){
+function base64ToASCII(str){
+    let sBin = base64ToBinary(str),
+        len = sBin.length,
+        sASCII = '';
+
+    for(let i=0; i<len; i+=8){
+        sASCII += String.fromCodePoint( Number.parseInt(sBin.slice(i, i+8), 2) );
+    }
+
+    return sASCII;
+}
+
+
+function binaryToBase64(str){
     let codes = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
         code = '',
         len = str.length,
@@ -54,7 +67,7 @@ function BinaryToBase64(str){
 
     let remainder = str.slice(-mod);
 
-    while(remainder>6){
+    while(remainder.length>6){
         index = Number.parseInt(remainder.slice(0, 6), 2);
         sBase64 += codes[index];
         remainder = remainder.slice(6);
@@ -66,4 +79,13 @@ function BinaryToBase64(str){
     return sBase64;
 }
 
-module.export = {Base64ToBinary, BinaryToBase64};
+
+function asciiToBase64(str){
+    let sBin = [...str].map(char=>{
+        return char.codePointAt().toString(2).padStart(8, '0');
+    }).join('');
+    return binaryToBase64(sBin);
+}
+
+
+module.exports = {base64ToBinary, base64ToASCII, binaryToBase64, asciiToBase64};
