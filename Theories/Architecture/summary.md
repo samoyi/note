@@ -19,11 +19,11 @@ WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）
 ### 例子：
 1. 一个最简单的例子
 
-  ```
+  ```js
   // http://www.a.com/test.js www.a.com域的js文件    
   let myName = "li";
   ```
-  ```
+  ```js
   // http://www.b.com/test.html www.b.com域的html文件   
   <script src="http://www.a.com/test.js"></script>
   <script>
@@ -31,8 +31,7 @@ WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）
   </script>
   ```
 2. 更符合JSONP定义的一个例子。其实道理完全一样
-
-  ```
+  ```js
   // http://www.b.com/test.html www.b.com域的html文件
   <script>
   function mycallback(data){
@@ -41,7 +40,7 @@ WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）
   </script>
   <script src="http://www.funca.org/test/test.php?myName"></script>
   ```
-  ```
+  ```js
   // http://www.a.com/test.php www.a.com域的php文件  
   if( isset($_GET["myName"]) ){
     echo 'mycallback({ foo: "bar" });';
@@ -61,7 +60,7 @@ WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）
 `<img>`的`src`属性加载资源不受同源策略的限制
 
 ### 例子：
-  ```
+  ```js
   var img = new Image();
   function imgPing(){
       alert("Done!");

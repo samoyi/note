@@ -2,7 +2,7 @@
 
 
 ## Description
-```
+```js
 new Map([iterable])
 ```
 * 和`Set`一样，`Map`中也把`-0`看做`0`，认为`NaN`和`NaN`相等

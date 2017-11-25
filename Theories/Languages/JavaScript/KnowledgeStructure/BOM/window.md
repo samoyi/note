@@ -9,7 +9,7 @@
 * Despite global variables becoming properties of the  window object, there is a slight difference between defi ning a global variable and defi ning a property directly on  window : global variables cannot be removed using the  delete operator, while properties defi ned directly on window can.   
 
     全局变量的`configurable`值为`false`，而`window`属性的`configurable`值为`true`
-    ```
+    ```js
     window.name = 33;
     var age = 22;
 
@@ -21,7 +21,7 @@
     ```
 
 * 访问未声明的变量会出错，但访问为定义的window属性并不会
-```
+```js
 console.log( window.xyz ); // undefined
 ```
 
@@ -44,7 +44,7 @@ console.log( window.xyz ); // undefined
 4. The second argument of `setTimeout()` tells the JavaScript engine to add this task onto the queue after a set number of milliseconds.
 5. If the queue is empty, then that code is executed immediately; if the queue is not empty, the code must wait its turn.
 
-    ```
+    ```html
     <body>
         <div id="first">
             <input type="text" />
@@ -74,13 +74,13 @@ console.log( window.xyz ); // undefined
     2. 在第一个显示输入代码中，通过`console.log`每次输出的也是上一次输入之后的内容，证明在事件处理函数的执行之前，输入框的`value`并没有改变，而事件处理函数执行过程中占据着唯一的线程，输入框的`value`更新也不会改变，而显示内容正好就是在事件处理函数执行过程中，所以此时不可能显示当次输入的内容。
     3. 在第二个显示输入代码中，将显示的代码放到了`setTimeout`中。所以，现在占据线程的任务就不再是“显示输入”而是“将显示输入的任务排到线程队列里面”。现在立即执行的是排队这个任务，而不是显示的任务。虽然不知道具体的顺序，但排到显示这个任务的时候，更新`value`的任务也已经完成了，所以这是再显示就是有新的输入了。
 6. `setTimeout` in loop will not be excuted before the loop ends
-```
-for (var i=0; i<10; i++) {
-    setTimeout( function timer() {
-        console.log( i ); // 全是10
-    });
-}
-```
+    ```js
+    for (var i=0; i<10; i++) {
+        setTimeout( function timer() {
+            console.log( i ); // 全是10
+        });
+    }
+    ```
 
 
 ### 使用`setTimeout()` 替代 `setInterval()`
@@ -88,7 +88,7 @@ True intervals are rarely used in production environments because the time betwe
 
 ### 更多的参数
 delay参数之后可以传入若干的参数作为该回调函数的参数
-```
+```js
 setTimeout(function(a, b){
     console.log( a*b ); // 15
 }, 1000, 3, 5);
@@ -96,7 +96,7 @@ setTimeout(function(a, b){
 
 ### `this`
 * 一个注意点是，作为`window`对象的方法，这两个方法的回调函数内部的`this`也默认指向`window`对象。但如果回调函数是箭头方式定义的，则其“内部`this`”并不指向`window`对象，而是指向与window.setTimeout相同环境的作用域对象
-```
+```js
 var obj = {
     foo: function(){
         window.setTimeout(()=>{

@@ -56,7 +56,7 @@ when an error occurs。目前看到的触发情况是，服务端脚本没有维
 
 #### Custom event
 默认情况下，前端通过`message`事件来接收数据。但也可是使用自定义的事件来发送和接收数据
-  ```
+  ```php
   // PHP 后端定义一个 customEvent 事件
   <?php
       echo 'event: customEvent';
@@ -64,7 +64,8 @@ when an error occurs。目前看到的触发情况是，服务端脚本没有维
       echo 'data: customEvent data' ;
       echo "\n\n";
   ?>
-
+  ```
+  ``` js
   // JS 前端通过该事件接受数据
   evtSource.addEventListener("customEvent", function(ev){
       console.log( ev.data ); // customEvent data
@@ -76,7 +77,7 @@ when an error occurs。目前看到的触发情况是，服务端脚本没有维
 * The event stream must be encoded using UTF-8.
 * The format of the response is plain text and, in its simplest form, is made up of the prefix `data:` followed by text
 * Messages in the event stream are ended by a pair of newline characters.
-    ```
+    ```php
     <?php
         echo 'data: foo';
         echo "\n\n";
@@ -90,14 +91,15 @@ when an error occurs。目前看到的触发情况是，服务端脚本没有维
         echo 'data: qux';
         echo "\n\n";
     ?>
-    // 因为有4个 \n\n，所以会发送四次数据，EventSource将接收到四条信息，分别为
+    /* 因为有4个 \n\n，所以会发送四次数据，EventSource将接收到四条信息，分别为
         1. foo
         2. bar
         3. bar\nqux
         4. bazdata: qux
+    */
     ```
 * A colon as the first character of a line is in essence a comment, and is ignored.
-    ```
+    ```php
     <?php
         echo 'data: normal data' ;
         echo "\n\n";
@@ -106,7 +108,7 @@ when an error occurs。目前看到的触发情况是，服务端脚本没有维
     ?>
     ```
 * You can also associate an ID with a particular event by including an `id: line` before or after the `data: line(s)`
-    ```
+    ```php
     <?php
         echo 'data: normal data' ;
         echo "\n";

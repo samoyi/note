@@ -36,7 +36,7 @@ The HTTP response sent by a server has three parts:
 
 ### `setRequestHeader()`
 * `POST` requests  need a `Content-Type` header to specify the MIME type of the request body
-    ```
+    ```js
     // 模拟表单POST时的设置：
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     ```
@@ -84,7 +84,7 @@ You can cancel an asynchronous request before a response is received by calling 
 * Returns the serialized URL of the response or the empty string if the URL is null.
 * If the URL is returned, URL fragment if present in the URL will be stripped away.
 * The value of responseURL will be the final URL obtained after any redirects.
-  ```
+  ```js
   var xhr = new XMLHttpRequest();
   xhr.open("GET", "http://www.abc.cn/index.html#123?name=22");
   xhr.onload = function() {
@@ -141,7 +141,7 @@ Value | Response type
 * This encoding involves the use of long “boundary” strings to separate the body of the request into multiple parts.
 * For textual data, it is possible to create “multipart/form-data” request bodies by hand, but it is tricky.
 * XHR2 defines a new FormData API that makes multipart request bodies simple. With FormData, the `send()` method will define an appropriate boundary string and set the “Content-Type” header for the request.
-  ```
+  ```js
     let fd = new FormData(),
         xhr = new XMLHttpRequest();
 
@@ -185,11 +185,11 @@ Value | Response type
 
 ### Create  FormData instance
 * 创建空的`FormData`实例
-    ```
+    ```js
     var formData = new FormData();
     ```
 * 使用已有表单来创建一个实例  
-    ```
+    ```html
     // HTML
     <form id="myForm" action="" method="post">
         <input type="text" name="name" value="33" />
@@ -203,18 +203,18 @@ Value | Response type
     ```
 
 ### Get data
-  ```
+  ```js
   console.log( formData.get('name') ); // 33
   // 获取一键多值数据
   console.log( formData.getAll('age') ); // ["22", "233"]
   ```
 ### Append data
-  ```
+  ```js
   formData.append("sex", "female");
   console.log( formData.get('sex') ); // female
   ```
 即使是相同的键名，也不会覆盖，而是重复添加
-  ```
+  ```js
   let formData = new FormData();
 
   formData.append("name", "li");
@@ -231,7 +231,7 @@ Value | Response type
 所以在多次提交数据时，每次都要初始化。
 
 ### Update data
-  ```
+  ```js
   formData.set("sex", "male");
   console.log( formData.get('sex') ); // male
   // 如果要修改的key不存在，将创建该key并赋值
@@ -240,33 +240,33 @@ Value | Response type
   ```
 
 ### Check if a key exists
-  ```
+  ```js
   console.log( formData.has("height") ); // true
   console.log( formData.has("weight") ); // false
   ```
 
 ### Delete data
-  ```
+  ```js
   formData.delete("height");
   console.log( formData.has("height") ); // false
   ```
 
 ### Iterator
 * Go through all key/value pairs
-    ```
+    ```js
     var i = formData.entries();
     for (var pair of i) {
        console.log(pair); // 分别为：["name", "33"]、["age", "22"]、["age", "233"]、["sex", "male"]
     }
     ```
 * Go through all keys
-    ```
+    ```js
     for (var key of formData.keys()) {
        console.log(key); // 分别为：name、age、age、sex
     }
     ```
 *  Go through all values
-    ```
+    ```js
     for (var value of formData.values()) {
        console.log(value);  // 分别为：33、22、233、male
     }
@@ -274,7 +274,7 @@ Value | Response type
 
 ### Post data    
 使用FormData的方便之处体现在不必明确地在XHR对象上设置请求头部。XHR对象能够识别传入的数据类型是FormData的实例，并配置适当的头部信息。
-  ```
+  ```js
   var xhr = new XMLHttpRequest();
   xhr.open("post", "test.php", true);
   xhr.send(formData);

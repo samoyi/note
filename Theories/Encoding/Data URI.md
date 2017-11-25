@@ -5,7 +5,6 @@
 2. 虽然也可以用来编码文本及其他类型信息，但意义不大。编码图片才具有使用的价值。
 
 ## Syntax
-
 ```
 data:[<media type>][;base64],<data>
 ```
@@ -36,11 +35,11 @@ data:[<media type>][;base64],<data>
 ### JavaScript
 #### `FileReader.readAsDataURL()` 方法
 该方法适用于所有类型的文件，而不限于图片
-```
+```html
 <!--通过表单获取图片文件-->
 <input type="file" id="chooseImage" />
 ```
-```
+```js
 /*
  * 接受获取到的文件后，使用FileReader类型实例的readAsDataURL方法读取DataURI，
  * 在读取完成的回调函数中，实例的result属性就是图片的readAsDataURL
@@ -82,7 +81,8 @@ document.querySelector("#chooseImage").addEventListener("change", function(ev)
 1. PHP的`base64_encode`函数编码后只是base64部分，还需要自己加上前面的内容
 2. 以图片为例，但文件类型并不限于图片  
 
-```
+```php
+<?php
 $sFilePath = "image/test.jpg";
 getDataURI($sFilePath); // 返回DataURI
 
@@ -118,7 +118,7 @@ function getDataURI($sFilePath)
 * Throws a DOMException if the length of passed-in string is not a multiple of 4.
 
 #### dataURI to Blob
-```
+```js
 function dataURItoBlob(dataURI) {
 
 	// convert base64/URLEncoded data component to raw binary data held in a string
@@ -138,7 +138,7 @@ function dataURItoBlob(dataURI) {
 ```
 Blob 可以转为FormData或者img
 ##### to FormData
-```
+```js
 let blob = dataURItoBlob(dataURI),
 	fd = new FormData();
 fd.append("image", blob);
@@ -150,7 +150,7 @@ fd.append("image", blob);
 * The new object URL represents the specified File object or Blob object.
 * `URL.revokeObjectURL()`: releases an existing object URL which was previously created by calling URL.createObjectURL().
 
-```
+```js
 let blob = dataURItoBlob(dataURI),
 	img = document.createElement("img");
 
@@ -166,7 +166,8 @@ document.body.appendChild(img);
 
 ### PHP
 PHP的`base64_decode`函数只能解码DataURI的base64部分，所以需要自己提取其中的Base64部分
-```
+```php
+<?php
 $sDataURI = 'data: image/jpeg;base64,/9j/4QAYR省略省略省略';
 $sBase64 = explode(';base64,', $sDataURI)[1];
 file_put_contents('image.jpg', base64_decode($sBase64) );

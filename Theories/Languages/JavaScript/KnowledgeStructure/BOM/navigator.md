@@ -3,7 +3,7 @@
 
 ***
 ## 属性和方法
-```
+```js
 for(let attr in navigator){
     console.log( attr + " : " + navigator[attr] );
 }

@@ -30,7 +30,7 @@ Finding all prime numbers up to any given limit.
 7. 剩下的数都是素数  
 
 按照上面的算法，实现一个最基本的函数
-```
+```js
 function SieveOfEratosthenes(nMax){
   let arr = [2],
       index = 0;

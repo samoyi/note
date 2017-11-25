@@ -5,14 +5,12 @@
 1. 一个网页可以从任何网页中加载图像，不用担心跨域不跨域。
 2. 图像 Ping 是与服务器进行简单、单向的跨域通信的一种方式。 请求的数据是通过查询字符串形式发送的，而响应可以是任意内容，但通常是像素图或 204 响应。
 3. 通过图像Ping，浏览器得不到任何具体的数据，但通过侦听 load 和 error 事件，它能知道响应是什么时候接收到的。图像Ping最常用于跟踪用户点击页面或动态广告曝光次数。
-    ```
+    ```js
     var img = new Image();
-    function imgPing()
-    {
+    function imgPing(){
         alert("Done!");
     }
-    function imgPingFail()
-    {
+    function imgPingFail(){
         alert("Fail!");
     }
     img.addEventListener('load', imgPing, false);
