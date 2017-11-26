@@ -1,3 +1,12 @@
+/*
+ * 其他参考:
+ * * [JS家的排序算法](http://www.jianshu.com/p/1b4068ccd505)
+ *
+ *
+ *
+ *
+ */
+
 function ArrayList(){
 
     let array = [];
@@ -72,7 +81,7 @@ function ArrayList(){
         let index = null,
             len = array.length;
 
-        if(array.length > 1)
+        if(array.length > 1){
             index = partition(array, left, right)
             if(left < index - 1) {
                 quick(array, left, index - 1);
@@ -95,15 +104,20 @@ function ArrayList(){
     };
 
 
+    // 每次遍历都把未排序的最大的项排到最右边
+    let counttttt = 0;
     this.bubbleSort = function(){
         let len = array.length;
         while(len--){
+            counttttt++;
             for(let i=0; i<len; i++){
+                counttttt++;
                 if( array[i]>array[i+1] ){
                     swap(i, i+1);
                 }
             }
         }
+        console.log(counttttt);
         return array;
     };
 
@@ -177,7 +191,7 @@ function ArrayList(){
             nMidIndex = null,
             nMidEle = null;
 
-        while (nLowIndex <= nHighIndex)
+        while (nLowIndex <= nHighIndex){
             nMidIndex = Math.floor((nLowIndex + nHighIndex) / 2)
             nMidEle = array[nMidIndex];
             if(item>nMidEle) {
@@ -194,4 +208,4 @@ function ArrayList(){
     };
 }
 
-module.exports = ArrayList;
+// module.exports = ArrayList;
