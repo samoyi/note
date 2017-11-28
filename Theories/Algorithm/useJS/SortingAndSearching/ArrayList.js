@@ -105,23 +105,20 @@ function ArrayList(){
 
 
     // 每次遍历都把未排序的最大的项排到最右边
-    let counttttt = 0;
     this.bubbleSort = function(){
         let len = array.length;
-        while(len--){
-            counttttt++;
+        while(len-- > 1){
             for(let i=0; i<len; i++){
-                counttttt++;
                 if( array[i]>array[i+1] ){
                     swap(i, i+1);
                 }
             }
         }
-        console.log(counttttt);
         return array;
     };
 
 
+    // 每轮在剩余的项里找出最小的
     this.selectionSort = function(){
         let len = array.length,
             indexMin = null;

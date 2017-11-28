@@ -34,3 +34,7 @@
 
 ### UnderstandVuejs
 * 该看[这里](https://vuejs.org/v2/guide/components.html#Misc)
+* JS算法代码不要用书上的形式，做成module的形式
+
+### http://www.jianshu.com/p/1b4068ccd505
+* 该看插入排序了
