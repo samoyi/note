@@ -50,7 +50,7 @@
     let arr = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
     // selectionSort(arr); // 9 45 25 5 84
-    selectionSort(arr.reverse()); // 9 45 0 0 54
+    // selectionSort(arr.reverse()); // 9 45 0 0 54
 
     function selectionSort(arr){
         let len = arr.length,
@@ -71,6 +71,36 @@
             }
         }
         console.log('selectionSort: ', count1, count2, count3, count4, count1+count2+count3+count4);
+    }
+}
+
+
+// insertion sort
+{
+    let count1 = 0,
+        count2 = 0;
+
+    let arr = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+
+    insertionSort(arr);
+
+    function insertionSort(arr){
+        let len = arr.length,
+            current = null,
+            j = null;
+        for(let i=1; i<len; i++){
+            count1++;
+            current = arr[i];
+            j = i;
+            while(j>0 && arr[j-1]>current){
+                count2++;
+                arr[j] = arr[j-1];
+                j--;
+            }
+            arr[j] = current;
+            count2++;
+        }
+        console.log('insertionSort: ', count1, count2, count1+count2);
     }
 }
 

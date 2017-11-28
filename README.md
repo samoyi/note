@@ -26,6 +26,8 @@
 * dfs实现拓扑排序的逻辑分析还不够好
 * 没看明白书上写的快速排序的方法
 * 没看懂动态规划的硬币找零算法
+* insertion sort 怎么统计出n^2的复杂度
+* http://www.jianshu.com/p/1b4068ccd505 该看希尔排序（Shell Sort）
 
 ### UnderstandJS
 * 该看[Chapter 5: Grammar](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch5.md)
@@ -35,6 +37,3 @@
 ### UnderstandVuejs
 * 该看[这里](https://vuejs.org/v2/guide/components.html#Misc)
 * JS算法代码不要用书上的形式，做成module的形式
-
-### http://www.jianshu.com/p/1b4068ccd505
-* 该看插入排序了

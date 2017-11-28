@@ -136,19 +136,23 @@ function ArrayList(){
         return array;
     };
 
-
+    // 每轮将最左边的未排序的数逐个向左比较，将它排到第一不比它大的数后面，或者排到首位
     this.insertionSort = function(){
         let len = array.length,
-            temp = null,
+            current = null, // 最左边的未排序的数
             j = null;
         for(let i=1; i<len; i++){
-            temp = array[i];
+            current = array[i];
             j = i;
-            while(temp<array[j-1] && j>0){
-                array[j] = array[j-1];
+            // 直到发现一个不大与它的；或者没发现，它最小
+            while(j>0 && array[j-1]>current){
+                // 逐个向左
+                array[j] = array[j-1]; // 它逐个向左，就要逐个和它左边的交换位置
                 j--;
             }
-            array[j] = temp;
+            // array[j-1]不比current小了，所以current放到它右边
+            // 或者 j已经为0了，current就是目前最小的
+            array[j] = current;
         }
     };
 
