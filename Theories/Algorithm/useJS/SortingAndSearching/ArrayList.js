@@ -7,14 +7,13 @@
  *
  */
 
-function ArrayList(){
+function SortingAndSearching(){
 
-    let array = [];
-
-    function swap(index1, index2){
-        var aux = array[index1];
-        array[index1] = array[index2];
-        array[index2] = aux;
+    // Swap two array items
+    function swap(arr, index1, index2){
+        var aux = arr[index1];
+        arr[index1] = arr[index2];
+        arr[index2] = aux;
     };
 
     function merge(left, right){
@@ -39,37 +38,37 @@ function ArrayList(){
         return result;
     };
 
-    function mergeSortRec(array){
-        let len = array.length;
-        if(len===1)  return array;
+    function mergeSortRec(arr){
+        let len = arr.length;
+        if(len===1)  return arr;
 
         let mid = Math.floor(len / 2),
-            left = array.slice(0, mid),
-            right = array.slice(mid, len);
+            left = arr.slice(0, mid),
+            right = arr.slice(mid, len);
 
         return merge(mergeSortRec(left), mergeSortRec(right));
     }
 
-    swapQuickSort = function(array, index1, index2){
-        let aux = array[index1];
-        array[index1] = array[index2];
-        array[index2] = aux;
+    swapQuickSort = function(arr, index1, index2){
+        let aux = arr[index1];
+        arr[index1] = arr[index2];
+        arr[index2] = aux;
     }
 
-    function partition(array, left, right) {
-        let pivot = array[Math.floor((right + left) / 2)],
+    function partition(arr, left, right) {
+        let pivot = arr[Math.floor((right + left) / 2)],
             i = left,
             j = right;
 
         while (i <= j) {
-            while (array[i] < pivot) {
+            while (arr[i] < pivot) {
                 i++;
             }
-            while (array[j] > pivot) {
+            while (arr[j] > pivot) {
                 j--;
             }
             if(i <= j) {
-                swapQuickSort(array, i, j);
+                swapQuickSort(arr, i, j);
                 i++;
                 j--;
             }
@@ -77,88 +76,101 @@ function ArrayList(){
         return i;
     }
 
-    function quick(array, left, right){
+    function quick(arr, left, right){
         let index = null,
-            len = array.length;
+            len = arr.length;
 
-        if(array.length > 1){
-            index = partition(array, left, right)
+        if(arr.length > 1){
+            index = partition(arr, left, right)
             if(left < index - 1) {
-                quick(array, left, index - 1);
+                quick(arr, left, index - 1);
             }
             if(index < right) {
-                quick(array, index, right);
+                quick(arr, index, right);
             }
         }
     }
 
 
-
-    this.insert = function(item){
-        array.push(item);
-    };
-
-
-    this.toString= function(){
-        return array.join();
-    };
-
-
     // 每次遍历都把未排序的最大的项排到最右边
-    this.bubbleSort = function(){
-        let len = array.length;
+    this.bubbleSort = function(arr){
+        let len = arr.length;
         while(len-- > 1){
             for(let i=0; i<len; i++){
-                if( array[i]>array[i+1] ){
-                    swap(i, i+1);
+                if( arr[i]>arr[i+1] ){
+                    swap(arr, i, i+1);
                 }
             }
         }
-        return array;
+        return arr;
     };
 
 
     // 每轮在剩余的项里找出最小的
-    this.selectionSort = function(){
-        let len = array.length,
+    this.selectionSort = function(arr){
+        let len = arr.length,
             indexMin = null;
         for (let i=0; i<len-1; i++){
             indexMin = i;
             for (let j=i+1; j<len; j++){
-                if(array[indexMin]>array[j]){
+                if(arr[indexMin]>arr[j]){
                     indexMin = j;
                 }
             }
             if(i !== indexMin){
-                swap(i, indexMin);
+                swap(arr, i, indexMin);
             }
         }
-        return array;
+        return arr;
     };
 
+
     // 每轮将最左边的未排序的数逐个向左比较，将它排到第一不比它大的数后面，或者排到首位
-    this.insertionSort = function(){
-        let len = array.length,
+    this.insertionSort = function(arr){
+        let len = arr.length,
             current = null, // 最左边的未排序的数
             j = null;
         for(let i=1; i<len; i++){
-            current = array[i];
+            current = arr[i];
             j = i;
             // 直到发现一个不大与它的；或者没发现，它最小
-            while(j>0 && array[j-1]>current){
+            while(j>0 && arr[j-1]>current){
                 // 逐个向左
-                array[j] = array[j-1]; // 它逐个向左，就要逐个和它左边的交换位置
+                arr[j] = arr[j-1]; // 它逐个向左，就要逐个和它左边的交换位置
                 j--;
             }
-            // array[j-1]不比current小了，所以current放到它右边
+            // arr[j-1]不比current小了，所以current放到它右边
             // 或者 j已经为0了，current就是目前最小的
-            array[j] = current;
+            arr[j] = current;
         }
     };
 
+// [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+    this.shellSort = function(arr) {
+        var len = arr.length,
+            temp = null,
+            gap = 1;
+        while(gap < len/3){ // 动态定义间隔序列
+            gap = gap*3+1;
+        }
+        for(; gap>0; gap=Math.floor(gap/3)){
+            for(let i=gap; i<len; i++){
+                temp = arr[i];
+                // console.log(i, temp, gap);
+                let j = 0;
+                for(j=i-gap; j>=0 && arr[j]>temp; j-=gap){
+                    arr[j+gap] = arr[j];
+                    console.log(arr);
+                }
+                arr[j+gap] = temp;
+            }
+        }
+        return arr;
+    };
 
-    this.mergeSort = function(){
-        array = mergeSortRec(array);
+
+    this.mergeSort = function(arr){
+        arr = mergeSortRec(arr);
     };
 
 
@@ -171,30 +183,30 @@ function ArrayList(){
      * smaller than pivot value, elements on their right are bigger than pivot
      * value. And value on this position is also smaller than pivot value, so
      * put pivot here by swapping it with this element. Now pivot element
-     * dividing this array into 2 subarray, all elements in left subarray are
+     * dividing this arrar into 2 subarray, all elements in left subarray are
      * smaller than pivot, elements in right subarray are bigger than pivot.
      */
 
      this.quickSort = function(){
-         quick(array,  0, array.length - 1);
+         quick(array,  0, arr.length - 1);
      };
 
 
      this.sequentialSearch = function(item){
-        return array.indexOf(item);
+        return arr.indexOf(item);
     };
 
     this.binarySearch = function(item){
         this.quickSort();
 
         let nLowIndex = 0,
-            nHighIndex = array.length - 1
+            nHighIndex = arr.length - 1
             nMidIndex = null,
             nMidEle = null;
 
         while (nLowIndex <= nHighIndex){
             nMidIndex = Math.floor((nLowIndex + nHighIndex) / 2)
-            nMidEle = array[nMidIndex];
+            nMidEle = arr[nMidIndex];
             if(item>nMidEle) {
                 nLowIndex = nMidIndex + 1;
             }
@@ -209,4 +221,4 @@ function ArrayList(){
     };
 }
 
-// module.exports = ArrayList;
+module.exports = new SortingAndSearching();

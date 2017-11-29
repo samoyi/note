@@ -27,7 +27,9 @@
 * 没看明白书上写的快速排序的方法
 * 没看懂动态规划的硬币找零算法
 * insertion sort 怎么统计出n^2的复杂度
-* http://www.jianshu.com/p/1b4068ccd505 该看希尔排序（Shell Sort）
+* 正在看Shell Sort
+    http://www.jianshu.com/p/1b4068ccd505
+    https://www.cnblogs.com/chengxiao/p/6104371.html
 
 ### UnderstandJS
 * 该看[Chapter 5: Grammar](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch5.md)
@@ -37,3 +39,9 @@
 ### UnderstandVuejs
 * 该看[这里](https://vuejs.org/v2/guide/components.html#Misc)
 * JS算法代码不要用书上的形式，做成module的形式
+
+### 其他
+* shuffle和解构赋值交换数组元素
+    https://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array
+    https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+    https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle

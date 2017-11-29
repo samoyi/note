@@ -1,5 +1,6 @@
 'use strict';
 
+const sas = require('./ArrayList');
 
 // bubble sort
 /*
@@ -82,7 +83,7 @@
 
     let arr = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
-    insertionSort(arr);
+    // insertionSort(arr);
 
     function insertionSort(arr){
         let len = arr.length,
@@ -101,6 +102,30 @@
             count2++;
         }
         console.log('insertionSort: ', count1, count2, count1+count2);
+    }
+}
+
+
+// Shell sort
+{
+    let arr = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+    // console.log(sas.shellSort(arr));
+
+    // 9 8 7 6 5 4 3 2 1 0
+    // 4 3 2 1 0 9 8 7 6 5
+
+    console.log(shuffle(arr));
+    function shuffle(arr){
+        let len = arr.length,
+            j = 0,
+            x = 0;
+        for(let i=len; i>0; i--){
+            j = parseInt(Math.random() * i);
+            x = arr[i-1];
+            arr[i] = arr[j];
+            arr[j] = x;
+        }
+        return arr;
     }
 }
 

@@ -3,41 +3,25 @@
 <head>
     <meta charset="utf-8">
     <title></title>
+    <style>
+        div{
+            width: 2em; height: 1em; float: left; margin-left: 1em;
+        }
+    </style>
 </head>
 <body>
 
 </body>
-<script src="ArrayList.js"></script>
 <script>
 'use strict';
 
-// let arr = new ArrayList();
-//
-//
-// [1, 2, 3, 4, 5].reverse().forEach(item=>arr.insert(item));
-// arr.bubbleSort();
-// console.log(arr.toString())
+let arr = [13, 14, 94, 33, 82, 25, 59, 94, 65, 23, 45, 27, 73, 25, 39, 10];
 
-4 5 3 2 1
-
-
+let aColor = ['red', 'gray', 'pink', 'yellow', 'orange'];
+let sHtml = '';
+for(let i=0; i<arr.length; i++){
+    sHtml += '<div style="background: ' +aColor[i%5]+ '">' +arr[i]+ '</div>';
+}
+document.body.innerHTML = sHtml;
 </script>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EOF
