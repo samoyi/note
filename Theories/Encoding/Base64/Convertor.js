@@ -32,9 +32,8 @@ function base64ToBinary(str){
 }
 
 
-
-function base64ToUTF8(sUTF8String){
-    let sBin = base64ToBinary(sUTF8String),
+function base64ToUTF8(str){
+    let sBin = base64ToBinary(str),
         nBinLen = sBin.length,
         nDecCodePoint = "",
         sResult = '';
@@ -57,7 +56,7 @@ function base64ToUTF8(sUTF8String){
             sBin = sBin.slice(32);
         }
         else{
-            throw new TypeErrow(sUTF8String + ' is not a valid UTF8 or ASCII string');
+            throw new TypeErrow(str + ' is not a encoded from a UTF8 string');
         }
         sResult += String.fromCodePoint(nDecCodePoint);
     }
@@ -105,16 +104,34 @@ function binaryToBase64(str){
 }
 
 
-function unicodeStringToBase64(str, encode='utf8'){
+function UTF8ToBase64(str, encode='utf8'){
     let sBinStr = [...str].map(char=>{
-        let sBin = char.codePointAt().toString(2),
-            nByte = Math.ceil(sBin.length/8);
-        // console.log(sBin.padStart(nByte*8, '0'));
-        return sBin.padStart(nByte*8, '0');
+        let nCodePoint = char.codePointAt(0); // 每个字符的unicode
+        return unicodeToUTF8( nCodePoint ); // 每个字符的UTF8编码
     }).join('');
 
     return binaryToBase64(sBinStr);
 }
 
+function unicodeToUTF8( nCodePoint ){
+	let sBin = nCodePoint.toString(2),
+		sResult = "";
 
-module.exports = {base64ToBinary, base64ToUTF8, binaryToBase64, unicodeStringToBase64};
+	if( nCodePoint<0x80 ){
+		sResult = sBin.padStart(8, "0");
+	}
+	else if( nCodePoint<0x800 ){
+		sResult = "110"+sBin.slice(0, -6).padStart(5, "0") + "10"+sBin.slice(-6);
+	}
+	else if( nCodePoint<0x10000 ){
+		sResult = "1110"+sBin.slice(0, -12).padStart(4, "0") + "10"+sBin.slice(-12, -6) + "10"+sBin.slice(-6);
+	}
+	else{
+		sResult = "11110"+sBin.slice(0, -18).padStart(3, "0") + "10"+sBin.slice(-18, -12) + "10"+sBin.slice(-12, -6) + "10"+sBin.slice(-6);
+	}
+
+	return sResult;
+}
+
+
+module.exports = {base64ToBinary, base64ToUTF8, binaryToBase64, UTF8ToBase64};

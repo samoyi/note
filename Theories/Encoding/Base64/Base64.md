@@ -39,9 +39,7 @@ outside the range `0x00` to `0xFF`.
  problems, transmit it, then use the `atob()` method to decode the data again.
 For example, you can encode control characters such as ASCII values 0 through 31
 
-
-
-#### `HTMLCanvasElement.toDataURL()` 方法  
+#### `HTMLCanvasElement.toDataURL()` 将图片转化为DataURL
 [MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataURL)
 2. 使用这个方法对图片进行编码后的返回值并不是图片真实的base64数据组成的Data URI，
  而是有更多的数据。下面以一个36.6KB的图片为例，其真正的Data URI字符串长度是50083：
@@ -56,43 +54,15 @@ For example, you can encode control characters such as ASCII values 0 through 31
 	3. 其次要在服务器设置对被请求的图片进行`CORS`设置。  
 		目前知道的一个方法是在图片所在目录或者其包含目录设置如下`.htaccess`文件：`Header set Access-Control-Allow-Origin "*"`
 
+
 ### PHP
-1. PHP的`base64_encode`函数编码后只是base64部分，还需要自己加上前面的内容
-2. 以图片为例，但文件类型并不限于图片  
+`base64_encode()`
 
-```php
-<?php
-$sFilePath = "image/test.jpg";
-getDataURI($sFilePath); // 返回DataURI
 
-function getDataURI($sFilePath)
-{
-	$sBase64 = base64_encode( file_get_contents($sFilePath) );
 
-	if( function_exists('mime_content_type') )  // PHP6中断了对该函数的支持
-	{
-		$sMIMEType = mime_content_type($sFilePath);
-	}
-	else
-	{
-		function getMIMEType($sFilePath)
-		{
-			$finfo = finfo_open(FILEINFO_MIME_TYPE);
-			$sMIMEType = finfo_file($finfo, $sFilePath);
-			finfo_close($finfo);
-			return $sMIMEType;
-		}
-		$sMIMEType = getMIMEType($sFilePath);
-	}
-
-	$sDataURI = 'data: ' . $sMIMEType . ';base64,' . $sBase64;
-	return $sDataURI;
-}
-```
-
-## 二进制文件解码
+## 解码
 ### JS
-#### `WindowOrWorkerGlobalScope.atob()`方法
+#### `WindowOrWorkerGlobalScope.atob()`
 * Decodes a string of data which has been encoded using base-64 encoding.
 * Throws a `DOMException` if the length of passed-in string is not a multiple of
  4
