@@ -54,6 +54,9 @@ For example, you can encode control characters such as ASCII values 0 through 31
 	3. 其次要在服务器设置对被请求的图片进行`CORS`设置。  
 		目前知道的一个方法是在图片所在目录或者其包含目录设置如下`.htaccess`文件：`Header set Access-Control-Allow-Origin "*"`
 
+### Nodejs
+https://stackoverflow.com/questions/6182315/how-to-do-base64-encoding-in-node-js
+https://nodejs.org/api/buffer.html#buffer_buffers_and_character_encodings
 
 ### PHP
 `base64_encode()`
@@ -69,7 +72,7 @@ For example, you can encode control characters such as ASCII values 0 through 31
 
 #### dataURI to Blob
 ```js
-function dataURItoBlob(dataURI) {
+function dataURI2Blob(dataURI) {
 
 	// convert base64/URLEncoded data component to raw binary data held in a string
 	var byteString = atob(dataURI.split(',')[1]);
@@ -89,36 +92,24 @@ function dataURItoBlob(dataURI) {
 Blob 可以转为FormData或者img
 ##### to FormData
 ```js
-let blob = dataURItoBlob(dataURI),
+let blob = dataURI2Blob(dataURI),
 	fd = new FormData();
 fd.append("image", blob);
 ```
 ##### to img
-`URL.createObjectURL()`
-* Creates a DOMString containing a URL representing the object given in the parameter.
-* The URL lifetime is tied to the document in the window on which it was created.
-* The new object URL represents the specified File object or Blob object.
-* `URL.revokeObjectURL()`: releases an existing object URL which was previously created by calling URL.createObjectURL().
-
 ```js
-let blob = dataURItoBlob(dataURI),
+let blob = dataURI2Blob(dataURI),
 	img = document.createElement("img");
 
-img.addEventListener("load", function(e)
-{
-	window.URL.revokeObjectURL(img.src); // 清除释放
+img.addEventListener("load", function(e){
+	URL.revokeObjectURL(img.src); // 清除映射
 });
 
-img.src = window.URL.createObjectURL(blob);
+img.src = URL.createObjectURL(blob);
 document.body.appendChild(img);
 ```
 
+### Nodejs
 
 ### PHP
-PHP的`base64_decode`函数只能解码DataURI的base64部分，所以需要自己提取其中的Base64部分
-```php
-<?php
-$sDataURI = 'data: image/jpeg;base64,/9j/4QAYR省略省略省略';
-$sBase64 = explode(';base64,', $sDataURI)[1];
-file_put_contents('image.jpg', base64_decode($sBase64) );
-```
+`base64_decode`

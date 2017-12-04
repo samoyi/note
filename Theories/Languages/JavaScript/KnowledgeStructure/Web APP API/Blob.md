@@ -1,5 +1,5 @@
 # Binary Large Object
-
+[MDN](https://developer.mozilla.org/en-US/docs/Web/API/Blob)
 
 
 ## Basic
@@ -79,30 +79,47 @@ xhr.send(null);
 
 ***
 ## Building Blobs
-Blobs often represent chunks of data from an external source such as a local
+1. Blobs often represent chunks of data from an external source such as a local
 file, a URL, or a database. But sometimes a web application wants to create its
 own Blobs to be uploaded to the Web or stored in a file or database or passed to
  another thread.  
-
-<mark>不懂</mark>
+2. `BlobBuilder` is obsolete, use `Blob` constructor.
+Use DataURL t build a blob and generate the corresponding Blob URL
 ```js
-// Create a new BlobBuilder
-var bb = new BlobBuilder();
-// Append a string to the blob, and mark the end of the string with a NUL char
-bb.append("This blob contains this text and 10 big-endian 32-bit signed ints.");
-bb.append("\0"); // NUL-terminate the string to mark its end
-// Store some data into an ArrayBuffer
-var ab = new ArrayBuffer(4*10);
-var dv = new DataView(ab);
-for(var i = 0; i < 10; i++) dv.setInt32(i*4,i);
-// Append the ArrayBuffer to the Blob
-bb.append(ab);
-// Now get the blob from the builder, specifying a made-up MIME type
-var blob = bb.getBlob("x-optional/mime-type-here");
+let sDataURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXA'
+              +'vmHAAACrElEQVR42u2Xz2sTQRSAX8VSb1K8iNqKooJH2Ux6Ksn+iPQqxZMIehJB'
+              +'0do/IMhmQWsvHr2KSEGk0tSLIoWIYNUKij20F2/N7iaUZnYT0kYzzhMKs0HDJiT'
+              +'dLcwHDwKZSd63781LBiQSSW9JZdkhzfKm1Rz9mjZp/W9YdEU3vXv4HsQZ40FtNG'
+              +'36q5rls//Ej4tmbSS2T15Mvp3ExOPmEMQNbBtMMEyoljcFcQN7PqyAlqNfIG7gY'
+              +'Q0tYNIaxA1MrJPY3wImbUqBKAXSFv0tBSIVMOkvKRDtGKWN/T6FdqRAxFNoWwpE'
+              +'PIXqUqBT6ALU/UVgu8GW4GD3f6f9TRDYNJTDrk7YbtiqUumHwIYoUJuHERDAS0r'
+              +'4CvgFECgbY+cFAR7KT+g1POmCKFDNw6WggHc3fBtVb4CAoyauBgXIG+g1Xh5mRA'
+              +'Gah6cggBd11fK/h7lOprIs0H6uRl6KAo5O7kOv4QmPiwJ4Jqqv4FiwCtXjvD2+t'
+              +'RmfK6kZ/ygI2HritK0rDVGgrClJ6DWMwYC/AGuCBMYcIC2V0CzvjmbRz3j3xUjn'
+              +'6CfeYreUJ2wQkGD75INPX1mFfsEFrrcIYCvdhC4paWQakxajpJMr0C9YFg54i7A'
+              +'sClRmh9/xnr0NHcInzZStk2aLwAcGMAD9pPIazvFKVDD5rdnhJeHLX5RTyRPQHp'
+              +'z5o66emMc9wdlPtvA8wF7Aq2BUHh1525qEo5JtR1WeOXpickO9cJIpyuD6xJmhY'
+              +'iZ5ytWSl3mlnuOaf+2zDaLDXmJrSgZ/MYVEugo+gSh+FkSBa4yd5Ul87DZ5XpFl'
+              +'/AyIEjzYjkau8WqshU2cr13HPbgX4gJOD97n465GZlyVvC9mSKloKI2iTnbwNT+'
+              +'gBX54H+IaXAtxJzE3ycSAFqSAFJACUkAikXD+AHj5/wx2o5osAAAAAElFTkSuQm'
+              +'CC';
+
+console.log(URL.createObjectURL(dataURI2Blob(sDataURI)));
+
+function dataURI2Blob(dataURI) {
+
+    let byteString = atob(dataURI.split(',')[1]),
+        mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+    // write the bytes of the string to a typed array
+    let ia = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ia], {type:mimeString});
+}
 ```
-We saw at the beginning of this section that Blobs have a `slice()` method that
-breaks them into pieces. You can join Blobs together by passing Blobs to the
-`append()` method of a BlobBuilder.
 
 
 
