@@ -119,16 +119,124 @@ browser in memory or on the disk.
 3. `blob://` URLs are also quite different from `file://` URLs, which refer
 directly to a file in the local filesystem, exposing the path of the file,
 allowing directory browsing, and otherwise raising security issues.
-```
+```html
 <input type="file" />
-<img src="" />
-</body>
-<script>
-'use strict';
-
-
+<img src="" id="thumbnail" />
+```
+```js
 document.querySelector('input').addEventListener('change', function(ev){
-
     document.querySelector('img').src = URL.createObjectURL(ev.target.files[0]);
 });
+```
+4. Blob URLs have the same origin as the script that creates them. This makes
+them much more versatile than `file:// URLs`, which have a distinct origin and
+are therefore difficult to use within a web application.
+5. A Blob URL is only valid in documents of the same origin. If, for example,
+you passed a Blob URL via `postMessage()` to a window with a different origin,
+the URL would be meaningless to that window.
+6. Blob URLs are not permanent. A Blob URL is no longer valid once the user has
+closed or navigated away from the document whose script created the URL. It is
+not possible, for example, to save a Blob URL to local storage and then reuse it
+ when the user begins a new session with a web application.
+
+#### Revoke a Blob url
+1. It is also possible to manually revoke the validity of a Blob URL by calling `URL.revokeObjectURL()`.
+2. In the above example, once thumbnail image has been displayed, the Blob is no
+ longer needed and it should be allowed to be garbage collected.
+3. If the web browser is maintaining a mapping from the Blob URL we’ve created
+to the Blob, that Blob cannot be garbage collected even if we’re not using it.
+The JavaScript interpreter cannot track the usage of strings, and if the URL is
+still valid, it has to assume that it might still be used. This means that it
+cannot garbage collect the Blob until the URL has beenrevoked.
+4. This example uses local files that don’t require any cleanup, but you can
+imagine a more serious memory management issue if the Blob in question were one
+that had been built in memory with a BlobBuilder or one that had been downloaded
+ with XMLHttpRequest and stored in a temporary file.
+
+
+
+***
+## Reading Blobs
+1. The `FileReader` object allows us read access to the characters or bytes
+contained in a Blob, and you can think of it as the opposite of a `BlobBuilder`.
+(A better name would be BlobReader, since it works with any Blob, not just
+Files.)  
+2. Since Blobs can be very large objects stored in the filesystem, the API for
+reading them is asynchronous, much like the XMLHttpRequest API. A synchronous
+version of the API, FileReaderSync, is available in worker threads, although
+workers can also use the asynchronous version.
+3. To use a FileReader, first create an instance with the `FileReader()`
+constructor. Next, define event handlers. Typically you’ll define handlers for
+load and error events and possibly also for progress events. You can do this
+with `onload`, `onerror` , and `onprogress` or with the standard
+`addEventListener()` method. FileReader objects also trigger `loadstart`,
+`loadend`, and `abort` events, which are like the XMLHttpRequest events with the
+ same names.
+4. Once you’ve created a FileReader and registered suitable event handlers, you
+must pass the Blob you want to read to one of four methods: `readAsText()`,
+`readAsArrayBuffer()`, `readAsDataURL()`, and `readAsBinaryString()`.
+5. As the FileReader reads the Blob you’ve specified, it updates its `readyState`
+ property. The value starts off at `0`, indicating that nothing has been read.
+It changes to `1` when some data is available, and changes to `2` when the read
+has completed. The `result` property holds a partial or complete result as a
+string or ArrayBuffer. You do not normally poll the `state` and `result`
+properties, but instead use them from your `onprogress` or `onload` event
+handler.
+6. In worker threads, you can use `FileReaderSync` instead of `FileReader`. The
+synchronous API defines the same `readAsText()` and `readAsArrayBuffer()`
+methods that take the same arguments as the asynchronous methods. The difference
+ is that the synchronous methods block until the operation is complete and
+return the resulting string or ArrayBuffer directly, with no need for event
+handlers.
+
+### readAsText()
+Read local text files that the user selects
+```html
+Select the file to display:
+<input type="file" onchange="readfile(this.files[0])"></input>
+<pre id="output"></pre>
+```
+```js
+// Read the specified text file and display it in the <pre> element below
+function readfile(f) {
+    var reader = new FileReader(); // Create a FileReader object
+    reader.readAsText(f); // Read the file
+    reader.onload = function() { // Define an event handler
+        var text = reader.result; // This is the file contents
+        var out = document.getElementById("output"); // Find output element
+        out.innerHTML = ""; // Clear it
+        out.appendChild(document.createTextNode(text)); // Display file contents
+    }
+    reader.onerror = function(e) { // If anything goes wrong
+        console.log("Error", e); // Just log it
+    };
+}
+```
+
+### readAsArrayBuffer()
+Read the first four bytes of a file as a big-endian integer.
+```html
+<input type="file" onchange="typefile(this.files[0])"></input>
+```
+```js
+// Examine the first 4 bytes of the specified blob. If this "magic number"
+// identifies the type of the file, asynchronously set a property on the Blob.
+function typefile(file) {
+    var slice = file.slice(0,4); // Only read the start of the file
+    var reader = new FileReader(); // Create an asynchronous FileReader
+    reader.readAsArrayBuffer(slice); // Read the slice of the file
+    reader.onload = function(e) {
+        var buffer = reader.result; // The result ArrayBuffer
+        var view = new DataView(buffer); // Get access to the result bytes
+        var magic = view.getUint32(0, false); // Read 4 bytes, big-endian
+        switch(magic) { // Determine file type from them
+            case 0x89504E47: file.verified_type = "image/png"; break;
+            case 0x47494638: file.verified_type = "image/gif"; break;
+            case 0x25504446: file.verified_type = "application/pdf"; break;
+            case 0x504b0304: file.verified_type = "application/zip"; break;
+            default:         file.verified_type = "other";
+        }
+        console.log(file.name, file.verified_type);
+    };
+}
 ```
