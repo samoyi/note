@@ -9,13 +9,6 @@
 
 function SortingAndSearching(){
 
-    // Swap two array items
-    function swap(arr, index1, index2){
-        var aux = arr[index1];
-        arr[index1] = arr[index2];
-        arr[index2] = aux;
-    };
-
     function merge(left, right){
         let result = [],
             il = 0,
@@ -98,7 +91,7 @@ function SortingAndSearching(){
         while(len-- > 1){
             for(let i=0; i<len; i++){
                 if( arr[i]>arr[i+1] ){
-                    swap(arr, i, i+1);
+                    [arr[i], arr[i+1]] = [arr[i+1], arr[i]];
                 }
             }
         }
@@ -118,7 +111,7 @@ function SortingAndSearching(){
                 }
             }
             if(i !== indexMin){
-                swap(arr, i, indexMin);
+                [arr[i], arr[indexMin]] = [arr[indexMin], arr[i]];
             }
         }
         return arr;
