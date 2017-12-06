@@ -139,6 +139,12 @@ function SortingAndSearching(){
     };
 
 // [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+    // https://www.cnblogs.com/chengxiao/p/6104371.html
+    // 和quick sort的思路有些像，都是不断地粗糙但是快速的使数组大体上更有序，以降低之
+    // 后排序的时间消耗。shell sort的最后一步也是使用效率较低的insertion sort，但因
+    // 为之前已经若干次快速的将数组排的比较有序，最后的insertion sort会很快的完成，从
+    // 而整体的排序用时较少。
+    // TODO: 虽然知道了思路，但还不能量化的理解它的速度
     this.shellSort = function(arr) {
         var len = arr.length,
             temp = null,
@@ -149,11 +155,14 @@ function SortingAndSearching(){
         for(; gap>0; gap=Math.floor(gap/3)){
             for(let i=gap; i<len; i++){
                 temp = arr[i];
-                // console.log(i, temp, gap);
                 let j = 0;
+                // console.log(gap, i);
                 for(j=i-gap; j>=0 && arr[j]>temp; j-=gap){
+                    // console.log(gap, i);
+                    // console.log('===============');
                     arr[j+gap] = arr[j];
-                    console.log(arr);
+                    console.log(gap, j+gap, j);
+                    // console.log(arr);
                 }
                 arr[j+gap] = temp;
             }
