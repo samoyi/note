@@ -9,39 +9,6 @@
 
 function SortingAndSearching(){
 
-    function merge(left, right){
-        let result = [],
-            il = 0,
-            ir = 0;
-
-        while(il < left.length && ir < right.length) {
-            if(left[il] < right[ir]) {
-                result.push(left[il++]);
-            } else{
-                result.push(right[ir++]);
-            }
-        }
-        while (il < left.length){
-             result.push(left[il++]);
-        }
-        while (ir < right.length){
-            result.push(right[ir++]);
-        }
-
-        return result;
-    };
-
-    function mergeSortRec(arr){
-        let len = arr.length;
-        if(len===1)  return arr;
-
-        let mid = Math.floor(len / 2),
-            left = arr.slice(0, mid),
-            right = arr.slice(mid, len);
-
-        return merge(mergeSortRec(left), mergeSortRec(right));
-    }
-
     swapQuickSort = function(arr, index1, index2){
         let aux = arr[index1];
         arr[index1] = arr[index2];
@@ -138,13 +105,12 @@ function SortingAndSearching(){
         }
     };
 
-// [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+
     // https://www.cnblogs.com/chengxiao/p/6104371.html
     // 和quick sort的思路有些像，都是不断地粗糙但是快速的使数组大体上更有序，以降低之
     // 后排序的时间消耗。shell sort的最后一步也是使用效率较低的insertion sort，但因
     // 为之前已经若干次快速的将数组排的比较有序，最后的insertion sort会很快的完成，从
     // 而整体的排序用时较少。
-    // TODO: 虽然知道了思路，但还不能量化的理解它的速度
     this.shellSort = function(arr) {
         var len = arr.length,
             temp = null,
@@ -156,13 +122,8 @@ function SortingAndSearching(){
             for(let i=gap; i<len; i++){
                 temp = arr[i];
                 let j = 0;
-                // console.log(gap, i);
                 for(j=i-gap; j>=0 && arr[j]>temp; j-=gap){
-                    // console.log(gap, i);
-                    // console.log('===============');
                     arr[j+gap] = arr[j];
-                    console.log(gap, j+gap, j);
-                    // console.log(arr);
                 }
                 arr[j+gap] = temp;
             }
@@ -171,8 +132,41 @@ function SortingAndSearching(){
     };
 
 
+    // 直接看《学习JavaScript数据结构与算法》就很明确了
     this.mergeSort = function(arr){
-        arr = mergeSortRec(arr);
+        return mergeSortRec(arr);
+    };
+    function mergeSortRec(arr){
+        let len = arr.length;
+        if(len===1)  return arr;
+
+        let mid = Math.floor(len / 2),
+            left = arr.slice(0, mid),
+            right = arr.slice(mid, len);
+
+        return merge(mergeSortRec(left), mergeSortRec(right));
+    }
+    function merge(left, right){
+
+        let result = [],
+            il = 0,
+            ir = 0;
+
+        while(il < left.length && ir < right.length) {
+            if(left[il] < right[ir]) {
+                result.push(left[il++]);
+            } else{
+                result.push(right[ir++]);
+            }
+        }
+        while (il < left.length){
+             result.push(left[il++]);
+        }
+        while (ir < right.length){
+            result.push(right[ir++]);
+        }
+
+        return result;
     };
 
 
