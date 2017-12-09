@@ -9,48 +9,6 @@
 
 function SortingAndSearching(){
 
-    swapQuickSort = function(arr, index1, index2){
-        let aux = arr[index1];
-        arr[index1] = arr[index2];
-        arr[index2] = aux;
-    }
-
-    function partition(arr, left, right) {
-        let pivot = arr[Math.floor((right + left) / 2)],
-            i = left,
-            j = right;
-
-        while (i <= j) {
-            while (arr[i] < pivot) {
-                i++;
-            }
-            while (arr[j] > pivot) {
-                j--;
-            }
-            if(i <= j) {
-                swapQuickSort(arr, i, j);
-                i++;
-                j--;
-            }
-        }
-        return i;
-    }
-
-    function quick(arr, left, right){
-        let index = null,
-            len = arr.length;
-
-        if(arr.length > 1){
-            index = partition(arr, left, right)
-            if(left < index - 1) {
-                quick(arr, left, index - 1);
-            }
-            if(index < right) {
-                quick(arr, index, right);
-            }
-        }
-    }
-
 
     // 每次遍历都把未排序的最大的项排到最右边
     this.bubbleSort = function(arr){
@@ -179,13 +137,53 @@ function SortingAndSearching(){
      * smaller than pivot value, elements on their right are bigger than pivot
      * value. And value on this position is also smaller than pivot value, so
      * put pivot here by swapping it with this element. Now pivot element
-     * dividing this arrar into 2 subarray, all elements in left subarray are
+     * dividing this array into 2 subarray, all elements in left subarray are
      * smaller than pivot, elements in right subarray are bigger than pivot.
      */
 
-     this.quickSort = function(){
-         quick(array,  0, arr.length - 1);
+     this.quickSort = function(arr){
+         quick(arr,  0, arr.length - 1);
+         return arr;
      };
+     function quick(arr, left, right){
+         let index = null,
+             len = arr.length;
+
+         if(arr.length > 1){
+             index = partition(arr, left, right);
+             console.log(index);
+             if(left < index - 1) {
+                 quick(arr, left, index - 1);
+             }
+             if(index < right) {
+                 quick(arr, index, right);
+             }
+         }
+     }
+     // [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+     function partition(arr, left, right) {
+
+         let pivot = arr[Math.floor((right + left) / 2)],
+             i = left,
+             j = right;
+
+         while (i <= j) {
+             while (arr[i] < pivot) {
+                 i++;
+             }
+             while (arr[j] > pivot) {
+                 j--;
+             }
+             console.log(i, j, pivot);
+             if(i <= j) {
+                 [arr[i], arr[j]] = [arr[j], arr[i]];
+                 i++;
+                 j--;
+             }
+         }
+         return i;
+     }
+
 
 
      this.sequentialSearch = function(item){
