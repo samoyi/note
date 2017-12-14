@@ -151,32 +151,39 @@ function SortingAndSearching(){
 
          if(arr.length > 1){
              index = partition(arr, leftIndex, rightIndex);
-             if(leftIndex < index - 1) {
+             if(leftIndex < index - 1) { // partition之后左边的数组项不止一个
                  quick(arr, leftIndex, index - 1);
              }
-             if(index < rightIndex) {
+             if(index < rightIndex) { // partition之后右边的数组项不止一个
                  quick(arr, index, rightIndex);
              }
          }
      }
-     // [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-     // [4, 6, 1, 7, 8, 2, 5, 3, 9, 0]
-     // [4, 6, 1, 7, 0, 2, 5, 3, 9, 8]
      /* partition函数的作用
+      * 对于一个数组arr，通过leftIndex和rightIndex指明一个子数组，对该子数组进行二分：
+      *   1. 选定一个pivot，通过与其他子数组项进行比较，以及相应的位置交换，将该子数组
+      *      分为两部分，前一部分的项都小于pivot，后一部分的项都大于等于pivot。
+      *   2. 然后返回后一部分的第一项的index，表明划分的位置。
+      *   3. 通过quick函数的递归来递归调用partition函数对数组进行拆分排序，最终拆到只
+      *      剩两项或一项的时候，就完成了排序
       *
-      * 对于一个数组arr，通过leftIndex和rightIndex指明一个子数组，对该子数组进行排序
-      * 选定一个pivot，通过对字数组排序，是的子数组的第i项之前的项都小于pivot
-      
-      * 首先在子数组中选定一个pivot项，然后从子数组左右两端分辨渐进和pivot比较大小；
-      * 左右两边都找到一个不小于pivot的项时，停止渐进。比较当前左项序号i和右项序号j，
-      * 如果 i<=j，交换两项的值，然后i和j分别再递增和递减一次
+      * 在分析大小比较和位置交换的过程中，虽然arr[i]和arr[j]是和数组的某一项的值比较，
+      * 但是不要想着是和某一项比较。虽然pivot的值是从某一项选出来的，但选出来之后它就独
+      * 立于数组，并且会和数组里每一项的值比较，包括它所由来的那一项。以这个数组为例：
+      * [4, 6, 1, 7, 8, 2, 5, 3, 9, 0]。
+      * 不是其他项和第五项8比较，而是说，选出一个pivot值为8，然后数组中每一项进行位置
+      * 变化，变化为之后，在某一现在还不确定的位置，该位置左边都是小于8，右边都是大于等
+      * 8。如果要把pivot插入排好的数组，就会插到这个位置。当然pivot不需要也不能插进数
+      * 组，因为它本身就不属于数组。数组项8属于数组，但pivot不属于数组。
+      *
+      * 如果想象成数组其他项和一个基准项比较，而当该基准项也发生了位置交换，就会显得有
+      * 些混乱。
       */
      function partition(arr, leftIndex, rightIndex) {
 
          let pivot = arr[Math.floor((rightIndex + leftIndex) / 2)],
              i = leftIndex,
              j = rightIndex;
-        console.log(arr);
          while (i <= j) {
              while (arr[i] < pivot) {
                  i++;
@@ -184,17 +191,12 @@ function SortingAndSearching(){
              while (arr[j] > pivot) {
                  j--;
              }
-             // console.log(i, j);
              if(i <= j) {
                  [arr[i], arr[j]] = [arr[j], arr[i]];
                  i++;
                  j--;
              }
          }
-         console.log(pivot);
-         console.log(arr);
-         console.log(arr[i]);
-         console.log('==========================');
          return i;
      }
 
