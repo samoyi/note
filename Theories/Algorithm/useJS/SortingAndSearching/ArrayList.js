@@ -145,28 +145,38 @@ function SortingAndSearching(){
          quick(arr,  0, arr.length - 1);
          return arr;
      };
-     function quick(arr, left, right){
+     function quick(arr, leftIndex, rightIndex){
          let index = null,
              len = arr.length;
 
          if(arr.length > 1){
-             index = partition(arr, left, right);
-             console.log(index);
-             if(left < index - 1) {
-                 quick(arr, left, index - 1);
+             index = partition(arr, leftIndex, rightIndex);
+             if(leftIndex < index - 1) {
+                 quick(arr, leftIndex, index - 1);
              }
-             if(index < right) {
-                 quick(arr, index, right);
+             if(index < rightIndex) {
+                 quick(arr, index, rightIndex);
              }
          }
      }
      // [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-     function partition(arr, left, right) {
+     // [4, 6, 1, 7, 8, 2, 5, 3, 9, 0]
+     // [4, 6, 1, 7, 0, 2, 5, 3, 9, 8]
+     /* partition函数的作用
+      *
+      * 对于一个数组arr，通过leftIndex和rightIndex指明一个子数组，对该子数组进行排序
+      * 选定一个pivot，通过对字数组排序，是的子数组的第i项之前的项都小于pivot
+      
+      * 首先在子数组中选定一个pivot项，然后从子数组左右两端分辨渐进和pivot比较大小；
+      * 左右两边都找到一个不小于pivot的项时，停止渐进。比较当前左项序号i和右项序号j，
+      * 如果 i<=j，交换两项的值，然后i和j分别再递增和递减一次
+      */
+     function partition(arr, leftIndex, rightIndex) {
 
-         let pivot = arr[Math.floor((right + left) / 2)],
-             i = left,
-             j = right;
-
+         let pivot = arr[Math.floor((rightIndex + leftIndex) / 2)],
+             i = leftIndex,
+             j = rightIndex;
+        console.log(arr);
          while (i <= j) {
              while (arr[i] < pivot) {
                  i++;
@@ -174,13 +184,17 @@ function SortingAndSearching(){
              while (arr[j] > pivot) {
                  j--;
              }
-             console.log(i, j, pivot);
+             // console.log(i, j);
              if(i <= j) {
                  [arr[i], arr[j]] = [arr[j], arr[i]];
                  i++;
                  j--;
              }
          }
+         console.log(pivot);
+         console.log(arr);
+         console.log(arr[i]);
+         console.log('==========================');
          return i;
      }
 
