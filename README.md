@@ -28,7 +28,7 @@
 * 没看懂动态规划的硬币找零算法
 * insertion sort 怎么统计出n^2的复杂度
 * Shell Sort 虽然知道了思路，但还不能量化的理解它的速度
-* 该看quicksort了 http://www.jianshu.com/p/1b4068ccd505
+* 该看heap sort了 http://www.jianshu.com/p/1b4068ccd505
 
 ### UnderstandJS
 * 该看[Chapter 5: Grammar](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch5.md)
