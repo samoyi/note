@@ -201,6 +201,21 @@ function SortingAndSearching(){
      }
 
 
+     // heap sort
+
+     // 二叉树完整的一行的节点数是该行之上所有节点数的总和加一的证明过程
+     // 设某一行节点数为 n;
+     // 则该行之前的所有行的节点的总和数量为：
+     //     (n/2)/(2^0) + (n/2)/(2^1) + (n/2)/(2^2) +...+ (n/2)/(2^m), 变形为：
+     //     n/(2^1)     + n/(2^2)     + n/(2^3)     +...+ n/(2^(m+1))
+     // 并且第一行是一个节点，即 n/(2^(m+1)) = 1
+     // 等比数列。求和的三个系数如下：
+     //     nFirst = n/2,
+     //     nLength = Math.log2(n),
+     //     nCommonRatio = 1/2;
+     // 根据求和公式，和为：n/2 * (1-Math.pow(1/2, Math.log2(n))) / (1-1/2)
+     // 其中 Math.pow(1/2, Math.log2(n)) 的结果为 1/n
+     // 最终结果为 n-1
 
      this.sequentialSearch = function(item){
         return arr.indexOf(item);
