@@ -202,6 +202,13 @@ function SortingAndSearching(){
 
 
      // heap sort
+     // 参考 https://www.cnblogs.com/chengxiao/p/6129630.html
+
+     // [4, 6, 1, 7, 8, 2, 5, 3, 9, 0, 10, 12, 18, 11, 15]
+     //            4
+     //     6            1
+     //  7     8     2      5
+     // 3 9  0 10  12 18  11 15
 
      // 二叉树完整的一行的节点数是该行之上所有节点数的总和加一的证明过程
      // 设某一行节点数为 n;
@@ -216,6 +223,61 @@ function SortingAndSearching(){
      // 根据求和公式，和为：n/2 * (1-Math.pow(1/2, Math.log2(n))) / (1-1/2)
      // 其中 Math.pow(1/2, Math.log2(n)) 的结果为 1/n
      // 最终结果为 n-1
+
+     // 最后一个内部节点（非叶节点）的index值为 Math.floor(len/2)-1 的证明
+     // 对于完整的树，根据上面的证明过程，是很明显的。完整树对应的数组每少两个元素，最
+     // 后一个内部节点的位置也就会向左移动一个，符合Math.floor(len/2)-1的规律
+     
+     let heapSortLen = 0;
+     this.heapSort = function(arr){
+         buildMaxHeap(arr);
+         for(let i = arr.length-1; i > 0; i--){
+             [arr[0], arr[i]] = [arr[i], arr[0]];
+             heapSortLen--;
+             // 交换位置并排除了最大的元素之后，现在的大顶堆的根节点的位置是错误的，但
+             // 其他节点的位置还是正确的大顶堆顺序。现在需要使用heapify把当前根节点的
+             // 值放到合适的位置，把根节点的位置让给剩余节点中最大的。
+             // 然后进入下一轮循环，根节点的值和最后一个节点的值交换，并再次重复上述过
+             // 程
+             heapify(arr, 0);
+         }
+         return arr;
+     };
+
+     function buildMaxHeap(arr){ // 建立大顶堆
+         heapSortLen = arr.length;
+         // 从最后一个内部节点开始排序来建立大顶堆
+         for(let i = Math.floor(heapSortLen/2)-1; i >= 0; i--){
+             heapify(arr, i);
+         }
+     }
+     function heapify(arr, i){ // 堆调整
+         let leftChildIndex = 2*i + 1,
+             rightChildIndex = 2*i + 2,
+             largestIndex = i;
+
+         if(leftChildIndex<heapSortLen && arr[leftChildIndex]>arr[largestIndex]){
+             largestIndex = leftChildIndex;
+         }
+         if(rightChildIndex<heapSortLen && arr[rightChildIndex]>arr[largestIndex]){
+             largestIndex = rightChildIndex;
+         }
+         if(largestIndex !== i){
+             [arr[largestIndex], arr[i]] = [arr[i], arr[largestIndex]];
+             // 截至上一步，在一父二子的结构里，保证了父节点的值是最大的
+             // 注意在交换的时候index并没有交换，因此此时largestIndex对应的节点是某
+             // 一个子节点，对应的值是最初父节点的值
+             // 下面的递归，将继续给这个当初父节点的值向下寻找合适的位置，直到它在一个
+             // 一父二子（一父一子）的结构里可以成为最大的父节点，即largestIndex===i；
+             // 或者它向下找到最后也没有成为一个父节点，而成为了一个没有子节点的末尾结
+             // 点
+             heapify(arr, largestIndex);
+         }
+     }
+
+
+
+
 
      this.sequentialSearch = function(item){
         return arr.indexOf(item);
