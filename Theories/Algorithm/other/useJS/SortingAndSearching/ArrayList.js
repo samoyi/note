@@ -282,15 +282,15 @@ function SortingAndSearching(){
         let nLowIndex = 0,
             nHighIndex = arr.length - 1
             nMidIndex = null,
-            nMidEle = null;
+            nMidItem = null;
 
         while (nLowIndex <= nHighIndex){
             nMidIndex = Math.floor((nLowIndex + nHighIndex) / 2)
-            nMidEle = arr[nMidIndex];
-            if(item>nMidEle) {
+            nMidItem = arr[nMidIndex];
+            if(item>nMidItem) {
                 nLowIndex = nMidIndex + 1;
             }
-            else if(item<nMidEle) {
+            else if(item<nMidItem) {
                 nHighIndex = nMidIndex - 1;
             }
             else {
