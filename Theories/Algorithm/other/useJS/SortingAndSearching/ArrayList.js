@@ -227,7 +227,7 @@ function SortingAndSearching(){
      // 最后一个内部节点（非叶节点）的index值为 Math.floor(len/2)-1 的证明
      // 对于完整的树，根据上面的证明过程，是很明显的。完整树对应的数组每少两个元素，最
      // 后一个内部节点的位置也就会向左移动一个，符合Math.floor(len/2)-1的规律
-     
+
      let heapSortLen = 0;
      this.heapSort = function(arr){
          buildMaxHeap(arr);
@@ -275,13 +275,6 @@ function SortingAndSearching(){
          }
      }
 
-
-
-
-
-     this.sequentialSearch = function(item){
-        return arr.indexOf(item);
-    };
 
     this.binarySearch = function(item){
         this.quickSort();
