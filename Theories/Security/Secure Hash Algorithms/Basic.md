@@ -1,5 +1,10 @@
 # Secure Hash Algorithms
 
+## Hash function
+[Wiki](https://en.wikipedia.org/wiki/Hash_function)
+
+
+
 ## SHA
 * [Wiki Secure Hash Algorithms](https://en.wikipedia.org/wiki/Secure_Hash_Algorithms)
 * [Wiki MD5](https://en.wikipedia.org/wiki/MD5)
