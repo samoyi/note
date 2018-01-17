@@ -21,7 +21,7 @@ let promise = new Promise((resolve, reject)=>{
     }, 2000);
 });
 
-// 如果异步的结果是失败，这里会在失败之后立刻捕获失败
+// 这里会在异步完成之后立刻获得结果
 promise.then(res=>{
         console.log('异步操作刚结束时读取异步操作结果 success: ' + res);
     }, err=>{
