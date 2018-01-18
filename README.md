@@ -40,4 +40,7 @@
 * 没看懂[Async Components](https://vuejs.org/v2/guide/components.html#Async-Components)
 * 该看[Recursive Components](https://vuejs.org/v2/guide/components.html#Recursive-Components)
 
+### 《ECMAScript 6 入门》Promise 章节没看 Promise.try
+
+
 ### 其他
