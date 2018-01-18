@@ -42,7 +42,29 @@ setTimeout(()=>{
 并且，在异步操作执行完成后，根据成功或失败，调用`resolve`或`reject`永久的记录异步
 结果。
 “永久”的意思，就是不仅在异步操作完成时可以捕获结果，在之后的任何时间，都可以通过该
-`promise`实例反复获得异步操作的结果。
+`promise`实例反复获得异步操作的结果。  
+因为这个特性，所以`then`和`catch`其实并不仅仅是`promise`异步操作的回调函数。
+
+
+## Nested promise
+The result of a promise is another promise, the first promise will have the
+asynchoronous result of the second one.
+
+```js
+let p1 = new Promise(function (resolve, reject) {
+    setTimeout(() => reject(new Error('fail')), 3000)
+});
+
+let p2 = new Promise(function (resolve, reject) {
+    setTimeout(() => resolve(p1), 1000)
+});
+
+p2 // After 3 secondes to get the fail
+.then(result => console.log(result))
+.catch(error => console.log(error));
+```
+
+##
 
 ## References
 * [ECMAScript 6 入门](http://es6.ruanyifeng.com/#docs/promise)
