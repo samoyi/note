@@ -19,3 +19,4 @@ wraps it into a resolved promise with that value.
 ## References
 [Async/await](https://javascript.info/async-await)
 [JavaScript ES 2017: Learn Async/Await by Example](https://codeburst.io/javascript-es-2017-learn-async-await-by-example-48acc58bad65)
+[async 函数的含义和用法](http://www.ruanyifeng.com/blog/2015/05/async.html)
