@@ -46,6 +46,7 @@ app.listen(3000);
 
 
 ## References
+* [Guide](https://github.com/koajs/koa/blob/master/docs/guide.md)
 * [Koa](http://koajs.com/)
 * [Koa 框架教程](http://www.ruanyifeng.com/blog/2017/08/koa.html)
 * [Koa2 源码赏析](http://maples7.com/2017/04/09/koa2-src/)
