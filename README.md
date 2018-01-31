@@ -19,6 +19,11 @@
 
 ***
 ## Progress Record
+### 其他
+* 正在整理fetch
+* 正在整理principles of TEST
+
+
 ### LearningJavaScriptDataStructuresAndAlgorithms
 * 实现任意层数的汉诺塔算法（例子中的三层算法似乎不对）
 * differences between map and hashtable ?
@@ -41,6 +46,3 @@
 * 该看[Recursive Components](https://vuejs.org/v2/guide/components.html#Recursive-Components)
 
 ### 《ECMAScript 6 入门》Promise 章节没看 Promise.try
-
-
-### 其他
