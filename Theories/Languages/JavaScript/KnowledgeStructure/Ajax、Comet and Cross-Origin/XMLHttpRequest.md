@@ -117,7 +117,7 @@ Value | Response type
 * Returns the response's body. It can be of the type ArrayBuffer, Blob, Document, JavaScript object, or a DOMString, depending of the value of `XMLHttpRequest.responseType` property.
 * Value of response is null if the request is not complete or was not successful.
 * However, if the value of responseType was set to "text" or the empty string, `response` can contain the partial text response while the request is still in the `loading` state.
-* If your cross-origin request requires these kinds of credentials to succeed, you must set the withCredentials property of the XMLHttpRequest to true before you send() the request.
+* If your cross-origin request requires these kinds of credentials to succeed, you must set the `withCredentials` property of the `XMLHttpRequest` to true before you `send()` the request.
 
 
 ***
