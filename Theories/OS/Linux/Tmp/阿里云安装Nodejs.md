@@ -1,5 +1,5 @@
 
-https://npm.taobao.org/mirrors/node/v8.9.3/node-v8.9.3.tar.gz
+参考这篇文章
 
 1. `cd /usr/src`
 2. 从Nodejs官网复制源代码文件链接
