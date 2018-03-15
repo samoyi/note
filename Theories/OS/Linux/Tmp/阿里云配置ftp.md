@@ -55,5 +55,10 @@ sudo touch /etc/allowed_users
 
 15. 发现服务一起无法启动，最后找到原因是vsftpd.conf中多写了空格
 
-
+ftpuser中注释了root
 http://blog.csdn.net/liyinsen2333/article/details/69241282
+
+
+https://www.2cto.com/net/201306/221473.html
+http://blog.csdn.net/px_528/article/details/53931647
+http://blog.csdn.net/mgsky1/article/details/77825386
