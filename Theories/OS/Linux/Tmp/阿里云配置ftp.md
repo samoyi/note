@@ -55,6 +55,25 @@ sudo touch /etc/allowed_users
 
 15. 发现服务一起无法启动，最后找到原因是vsftpd.conf中多写了空格
 
+16. 按照这里的方法添加了新用户并设置了访问目录，但使用ftp工具链接不成功
+https://jingyan.baidu.com/article/67508eb4d6c4fd9ccb1ce470.html
+
+17. 进入ftp测试内网是否可以连接
+http://blog.csdn.net/u013319480/article/details/51946947?locationNum=10
+```bash
+# ftp
+ftp > open 127.0.0.1
+```
+出错提示
+```bash
+500 OOPS: vsftpd: cannot locate user specified in 'ftp_username':ftp
+```
+
+18. 修改 vsftpd.conf后内网连接成功
+从注释 `#anonymous_enable=YES` 改为 `anonymous_enable=NO`
+
+19. 输入刚才创建的用户名和密码，内网链接成功
+
 ftpuser中注释了root
 http://blog.csdn.net/liyinsen2333/article/details/69241282
 
