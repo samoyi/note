@@ -3,7 +3,6 @@ What inheritance achieves is that a class of objects have the same properties
 and methods as another class of objects, or another object.
 
 
-***
 ## by Prototype Chain
 SubType's `prototype` property reference SuperType's instance, so SubType's
 instance gets properties in SuperType's constructor and prototype.
@@ -18,10 +17,11 @@ SuperType.prototype.getName = function(){
 };
 
 function SubType(){}
-SubType.prototype = new SuperType();
+let foo = new SuperType()
+SubType.prototype = foo;
 
-let instance = new SubType();
-console.log( instance.getName() ); // is SuperType
+let bar = new SubType();
+console.log( bar.getName() ); // is SuperType
 ```
 When executing `bar.getName()`:
 1. Instance `bar` has neither property `name` nor method `getName`.
@@ -40,8 +40,8 @@ properties and methods in `Object.prototype`.
 1. Instances in prototype chain have not their own methods, they share same one
 function, this is what we want.
 2. But they also inherit the same reference properties, that means, if your
-modify a inherited reference property in a instance, all this property in other instances will be modified.
-
+modify an inherited reference property in an instance, all this property in
+other instances will be modified.
 ```js
 function SuperType(){
     this.colors = ['red'];
@@ -62,11 +62,27 @@ console.log(instance1.colors === instance2.colors); // true
 
 
 
-***
 ## by Constructor Stealing
 Copy constructor properties of SuperType into SubType's constructor
 
 ### Process of inheritance
+1. 继承原理
+```js
+function SuperType(){
+	this.colors = ["red"];
+}
+function SubType(){
+	SuperType.call(this);
+}
+
+let foo = new SubType();
+console.log(foo.colors); // ["red"]
+console.log(foo.hasOwnProperty('colors')); // true
+```
+`SubType`作为构造函数被调用时，内部`this`指向被创建的对象（该对象随后赋值给`foo`）。
+这个对象又作为`SuperType`的`this`，因此随后的`foo`之上就新加了`colors`属性。
+2. 和Prototype Chain继承方法不同，这里是按照父类的own属性直接在子类实例上创建属性，每
+个实例都有自己独立的属性
 ```js
 function SuperType(){
 	this.colors = ["red"];
@@ -83,9 +99,6 @@ instance1.colors.push("black");
 console.log(instance1.colors); // [ 'red', 'black' ]
 console.log(instance2.colors); // [ 'red' ]
 ```
-Defferent from Prototype Chain, by this method, `SubType` inherits `colors` by
-generating it own properties which are same as `SuperType`'s.
-
 
 ### Can not inherit prototype properties and methods
 This method actually is not really inheritance, it's just copy properties and
@@ -107,12 +120,10 @@ console.log(instance.name); // undefined
 
 
 
-***
 ## by Combination Inheritance
-
 ### 有缺陷的组合继承
-Put shared properties into prototype, put private properties into `SuperType` constructor, set prototype in `SubType` constructor.
-
+Put shared properties into prototype, put private properties into `SuperType`
+constructor, set prototype in `SubType` constructor.
 ```js
 function SuperType(){
 	this.colors = ["red"];
@@ -132,11 +143,16 @@ instance1.colors.push("black");
 console.log(instance1.colors); // [ 'red', 'black' ]
 console.log(instance2.colors); // [ 'red' ]
 console.log(instance1.name); // 33
+console.log(instance2.name); // 33
+instance2.name = 22;
+console.log(instance1.name); // 22
 
 console.log(instance1 instanceof SubType); // false
+console.log(instance1 instanceof SuperType); // true
 console.log(instance1.__proto__.constructor === SubType); // false
+console.log(instance1.__proto__.constructor === SuperType); // true
 ```
-通过直接在`SubType`设定实例的原型引用，让实例可以应用到`SuperType`的原型，但这导致了
+通过直接在`SubType`设定实例的原型引用，让实例可以引用到`SuperType`的原型，但这导致了
 SubType的实例原型和构造函数原型不一致的情况
 
 ### 完备的组合继承
@@ -154,7 +170,8 @@ function SubType(){
 
 // 通过Prototype Chain继承SuperType构造函数和原型的属性
 // 虽然SubType实例的原型中依然有共享的colors属性，但因为上面通过构造函数直接实例本身拥
-// 有了colors属性，所以不会用到原型里面的colors属性，因此每个实例都拥有独立的colors属性
+// 有了colors属性，所以不会用到原型里面的colors属性，因此每个实例都拥有独立的colors属
+// 性
 SubType.prototype = new SuperType();
 SubType.prototype.constructor = SubType;
 
@@ -183,10 +200,9 @@ console.log( instance1 instanceof SubType); // true
 ```
 
 
-***
-## by Prototypal Inheritance
-Create objects using a object as prototype
 
+## by Prototypal Inheritance
+Create objects using an object as prototype
 ```js
 Object.create()
 ```
@@ -195,23 +211,21 @@ reference properties in prototype object.
 
 
 
-***
 ## by Parasitic Inheritance
 1. Create a function that does the inheritance, augments the object in some way,
-and then returns the object.
-2. The Prototypal Inheritance method's logic is set a object as new objects'
+and then returns the object.  
+The Prototypal Inheritance method's logic is set an object as new objects'
 prototype, while this method's logic is just modifying the proto object and
 return it. So, every returned object is actually just the same one object.
 
 ```js
 function createAnother(original){
-    var clone = Object(original);    //通过调用函数创建一个新对象
-	clone.age = 32;
-    clone.sayAge = function(){        //以某种方式来增强这个对象
+	// augments original object
+	original.age = 32;
+    original.sayAge = function(){        
         console.log( this.age );
     };
-
-    return clone;
+    return original;
 }
 
 var person = {
@@ -225,17 +239,17 @@ var anotherPerson2 = createAnother(person);
 console.log( anotherPerson1 === anotherPerson2); // true
 
 console.log( anotherPerson1.name ); // 'Nicholas'
-console.log( anotherPerson1.friends ); // ['Shelby', 'Court', 'Van']
 console.log( anotherPerson1.age ); // 32
+console.log( anotherPerson1.friends ); // ['Shelby', 'Court', 'Van']
 anotherPerson1.sayAge(); // 32
 
-anotherPerson1.name = 33;
+anotherPerson1.name = '33';
 anotherPerson1.age = 22;
 anotherPerson1.friends = [];
 
-console.log( anotherPerson2.name ); // 33
-console.log( anotherPerson2.friends ); // []
+console.log( anotherPerson2.name ); // '33'
 console.log( anotherPerson2.age ); // 22
+console.log( anotherPerson2.friends ); // []
 anotherPerson2.sayAge(); // 22
 ```
 
@@ -243,11 +257,11 @@ anotherPerson2.sayAge(); // 22
 
 ***
 ## by Parasitic Combination Inheritance
-1. Like Combination Inheritance, use Constructor Stealing to inheritance private properties from  SuperType's consturctor
+1. Like Combination Inheritance, use Constructor Stealing to inheritance private
+ properties from SuperType's consturctor
 2. Unlike Combination Inheritance, this method doesn't use Prototype Chain to
 inheritance SuperType's prototype properties, but just makes a copy of
 SuperType's prototype, augments this copy, and uses it as SubType's prototype.
-
 ```js
 function SuperType(name){
     this.name = name;
@@ -264,9 +278,9 @@ function SubType(name){
 
 inheritPrototype(SubType, SuperType);
 function inheritPrototype(subType, superType){
-    var prototype = Object(superType.prototype); //create object
-    prototype.constructor = subType; //augment object
-    subType.prototype = prototype; //assign object
+	var prototype = superType.prototype;
+    prototype.constructor = subType;
+    subType.prototype = prototype;
 }
 
 let instance1 = new SubType(33);
