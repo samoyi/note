@@ -1,6 +1,4 @@
 
-参考这篇文章
-
 1. `cd /usr/src`
 2. 从Nodejs官网复制源代码文件链接
 3. 下载文件
@@ -92,7 +90,7 @@
     make
     ```
 9. 编译完成后执行`node -v`提示没有安装。
-10. 按照上述文章说的
+10. 按照这篇文章说的
     > 当编译完成后，我们需要使之在系统范围内可用, 编译后的二进制文件将被放置到系统路
     > 径，默认情况下，Node二进制文件应该放在/user/local/bin/node文件夹下:  
 
@@ -100,8 +98,47 @@
     ```bash
     make install
     ```
-11. 按照文章上说的建立超级链接时出错
+11. 按照文章上说的建立超级链接时出错，跳过这一步
     ```bash
     sudo: unable to resolve host iZuf68ip0m748xlwi572g0Z
     ```
-跳过这一步
+12. 在阿里云实例里添加了80端口的安全组规则
+13. 之后我将测试的js文件上传并远程运行，监听80
+14. 使用非root用户运行js文件是出错：
+```bash
+Error: listen EACCES 0.0.0.0:80
+```
+[参考](https://stackoverflow.com/questions/35068712/error-listen-eacces-0-0-0-080-osx-node-js)
+15. 改为监听阿里云实例本来就有的3389端口后，可以正常运行。或者用root监听80端口也可以正
+常。阿里云安全组删了不用的80，新建了3000。
+16. 之后的问题是关闭远程ssh链接，则不能正常访问。
+17. 使用`nohup`模式启动node服务器之后可以解决该问题。不过要停止比较麻烦，而且没有
+[forever](https://github.com/foreverjs/forever)好用。
+18. 本来要尝试查询node的PID并结束进程，不慎`pkill -u root`。只好重启服务器，也就不用
+结束进程了。
+19. 安装`forever`，启动应用，正常。  
+启动时提示没有设置`minUptime`和`spinSleepTime`，从而使用了默认的1000ms。结合文档和[这
+个回答](https://stackoverflow.com/questions/18390870/what-is-the-minuptime)，这两
+个参数的意思可能如下：  
+    * spinning状态就是一个应用重启后会有短暂的不可用状态。spinning状态是正常的，不能
+    被当做启动失败。
+    * 如果应用重启后等待了`minUptime`这么久的时间还是不可用，那就认为它已经不再是
+    spining，而是真的出了问题。
+    * 应用重启后进入spinning状态，如果等待了`spinSleepTime`这么久还在spinning，则再
+    次重启。
+20. 还有一个问题是，如果不是root时，使用forever会报错。
+    ```bash
+    fs.js:646
+      return binding.open(pathModule._makeLong(path), stringToFlags(flags), mode);
+                     ^
+
+    Error: ENOENT: no such file or directory, open '/home/uftp/.forever/_1cE.log'
+        at Object.fs.openSync (fs.js:646:18)
+        at Object.forever.startDaemon (/usr/local/lib/node_modules/forever/lib/forever.js:460:14)
+        at /usr/local/lib/node_modules/forever/lib/forever/cli.js:319:15
+        at /usr/local/lib/node_modules/forever/lib/forever/cli.js:162:5
+        at /usr/local/lib/node_modules/forever/lib/forever.js:412:11
+        at FSReqWrap.oncomplete (fs.js:152:21)
+
+    ```
+不知道什么原因，`su`切换身份启动
