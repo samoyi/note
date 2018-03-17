@@ -1,4 +1,6 @@
 
+参考[这篇文章](https://segmentfault.com/a/1190000004051670)
+
 1. `cd /usr/src`
 2. 从Nodejs官网复制源代码文件链接
 3. 下载文件
