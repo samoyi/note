@@ -36,12 +36,12 @@ preflighted like this since they may have implications to user data.
 3. Along with the OPTIONS request, two other request headers are sent:
     * `Access-Control-Request-Method`: notifies the server which HTTP method
     will be used when the actual request is made.
-    * ` Access-Control-Request-Headers`: notifies the server which HTTP headers
+    * `Access-Control-Request-Headers`: notifies the server which HTTP headers
     will be used when the actual request is made.
 4. 服务器通过设置response首部的`Access-Control-Allow-Methods`和/或
 `Access-Control-Allow-Headers`来设置允许的跨域方法和首部字段。
-5. 如果实际请求的方法`GET`、`HEAD`或`POST`，即使因为其他原因触发了Preflight，服务器端
-所设置的`Access-Control-Allow-Methods`也不会对着三个安全的方法进行限制。也就是说
+5. 如果实际请求的方法是`GET`、`HEAD`或`POST`，即使因为其他原因触发了Preflight，服务
+器端所设置的`Access-Control-Allow-Methods`也不会对着三个安全的方法进行限制。也就是说
 `Access-Control-Allow-Methods`设置的是：不安全的方法中，哪些是被允许的。
 6. `Access-Control-Max-Age` gives the value in seconds for how long the response
  to the preflight request can be cached for without sending another preflight
