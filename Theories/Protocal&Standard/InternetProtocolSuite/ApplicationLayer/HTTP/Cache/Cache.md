@@ -1,6 +1,6 @@
 # Cache
+以[文官方档](https://tools.ietf.org/html/rfc7234)为准
 
-***
 ## **Etag**:  Validating cached responses with ETags
 1. 浏览器第一次发起一个请求时，服务器可以在响应中设置一个注明缓存有效期的header，并
 同时设置随机字符串（比如一个hash值）作为`Etag` header 的值。
@@ -12,43 +12,74 @@
 `If-None-Match` header 的值发送给服务器，服务器检查和当前的Etag是否一致，如果一致就
 表明所请求的数据一致没有变，则会返回304告知，浏览器可以继续使用缓存的数据。
 
-<mark>服务器会自动设置Etag？我用PHPStudy随便加载一张图片都会有</mark>
 
 
-***
 ## **Cache-Control**: Define its caching policy
+[文官方档](https://tools.ietf.org/html/rfc7234#section-5.2)
+
+### Request
+### `max-age`
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.1.1)
+* 应用`HTTP/1.1`版本的缓存服务器遇到同时存在`Expires`首部字段的情况时，会优先处理
+`max-age`指令，而忽略掉`Expires`首部字段。而`HTTP/1.0`版本的缓存服务器的情况却相反，
+`max-age`指令会被忽略掉。
+
+### `max-stale`
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.1.2)
+* <mark>不懂<mark>。这个指令的意思看起来是说：我可以接受缓存的条件是，这个资源不仅在当
+前是没过期的，而且在未来的指定时间内，它也不会过期。有些像买东西看保质期的意思，即我要买
+的这个东西不仅今天没有到期，而且在未来的若干天内也不会到期，我才会买这个东西（我才会接受
+这个缓存文件）。但这个指令的应用场景是什么？
+
 ### `no-cache`
-1. `no-cache` indicates that the returned response can't be used to satisfy a
-subsequent request to the same URL without first checking with the server if the
-response has changed.  
-2. As a result, if a proper validation token (ETag) is present,
-`no-cache` incurs a roundtrip to validate the cached response, but can eliminate
-the download if the resource has not changed.
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.1.4)
+* As a result, if a proper validation token(ETag) is present, `no-cache` incurs
+ a roundtrip to validate the cached response, but can eliminate the download if
+the resource has not changed.
 
 ### `no-store`
-1. By contrast, `no-store` is much simpler. It simply disallows the browser and
-all intermediate caches from storing any version of the returned response.  
-2. For example, one containing private personal or banking data. Every time the
-user requests this asset, a request is sent to the server and a full response is
-downloaded.
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.1.5)
+* 注意，不仅是不应缓存对该请求的相应，该请求本身的信息也不应存储。
+
+### `no-transform`
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.1.6)
+
+### `only-if-cached`
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.1.7)
+* 看起来是用于一个系统中的多个成员使用同样的共享缓存，这样的好处似乎不仅仅是不用重复请求
+，更重要的是保证每个成员都可以加载到同一个版本的资源。
+
+
+## Response
+### `must-revalidate`
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.2.1)
+
+### `no-cache`
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.2.2)
+
+### `no-store`
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.2.3)
+
+### `no-transform`
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.2.4)
 
 ### `public`
-1. If the response is marked as `public`, then it can be cached, even if it has
-HTTP authentication associated with it, and even when the response status code
-isn't normally cacheable.
-2. Most of the time, `public` isn't necessary, because explicit caching
-information (like "max-age") indicates that the response is cacheable anyway.
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.2.5)
 
 ### `private`
-1. By contrast, the browser can cache `private` responses. However, these
-responses are typically intended for a single user, so an intermediate cache is
-not allowed to cache them.
-2. For example, a user's browser can cache an HTML page with private user
-information, but a CDN can't cache the page.
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.2.6)
+
+### `proxy-revalidate`
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.2.7)
 
 ### `max-age`
-This directive specifies the maximum time in seconds that the fetched response
-is allowed to be reused from the time of the request.
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.2.8)
+
+### `s-maxage`
+* [文档](https://tools.ietf.org/html/rfc7234#section-5.2.2.9)
+
+
+
 
 ***
 ## Defining optimal Cache-Control policy
@@ -115,4 +146,5 @@ minimizes the amount of downloaded content whenever an update is fetched.
 
 ***
 ## References
+* [图解HTTP](https://book.douban.com/subject/25863515/)
 * [Google Developers - HTTP Caching](https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching)
