@@ -66,8 +66,8 @@ ES2015+ environment with two things: a slew of polyfills as provided by
 [core-js](https://github.com/zloirock/core-js), as well as a complete
 [regenerator runtime](https://github.com/facebook/regenerator).
 2. `babel-polyfill`的方法是直接在全局环境下添加对象和方法，以及直接在built-in对象的原
-型上添加方法，所以它只适合应在封闭的应用中，而不适合用于供他人使用的库或工具里，否则有可能
-会和他人的使用环境冲突。
+型上添加方法，所以它只适合应在封闭的应用中，而不适合用于供他人使用的库或工具里，否则有可
+能会和他人的使用环境冲突。
 3. `transform-runtime`不会污染全局环境，但也不能polyfill实例方法。不懂原理。
 
 ## References

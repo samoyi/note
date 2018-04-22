@@ -23,6 +23,8 @@
 * 正在整理fetch
 * 正在整理principles of TEST
 
+### 通过Vuex学习状态管理
+文档： `Theories\Architecture\StateManagement\byVuex.md`
 
 ### LearningJavaScriptDataStructuresAndAlgorithms
 * 实现任意层数的汉诺塔算法（例子中的三层算法似乎不对）

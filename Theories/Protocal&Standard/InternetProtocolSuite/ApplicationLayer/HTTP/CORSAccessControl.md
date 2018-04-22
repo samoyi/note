@@ -41,7 +41,7 @@ preflighted like this since they may have implications to user data.
 4. 服务器通过设置response首部的`Access-Control-Allow-Methods`和/或
 `Access-Control-Allow-Headers`来设置允许的跨域方法和首部字段。
 5. 如果实际请求的方法是`GET`、`HEAD`或`POST`，即使因为其他原因触发了Preflight，服务
-器端所设置的`Access-Control-Allow-Methods`也不会对着三个安全的方法进行限制。也就是说
+器端所设置的`Access-Control-Allow-Methods`也不会对这三个安全的方法进行限制。也就是说
 `Access-Control-Allow-Methods`设置的是：不安全的方法中，哪些是被允许的。
 6. `Access-Control-Max-Age` gives the value in seconds for how long the response
  to the preflight request can be cached for without sending another preflight
@@ -57,6 +57,23 @@ precedence when the `Access-Control-Max-Age` is greater.
 2. 如果发送credentials，则响应首部`Access-Control-Allow-Origin`不能设置为通配符，必
 须填具体的origin。
 3. 不过携带credentials的跨域请求并不会触发preflight。
+
+
+## Chrome中跨域POST请求localhost时的问题
+### 问题情况
+1. 我从`localhost:8080`发送`POST`请求到`localhost`,`Content-Type`为
+`application/json`
+2. 如果我只设置`Access-Control-Allow-Origin`，提示我没有设置`Access-Control-Allow-
+Headers`，这很正常。
+3. 但当我也设置了`Access-Control-Allow-Headers`之后，又告诉我没有设置`Access-
+Control-Allow-Origin`。
+4. 在Firefox则可以正常请求。
+
+### 原因及解决方法
+1. 没有看到很明确的问题描述，但找到了chromium的一个issue:
+[Access-Control-Allow-Origin: * doesn't match localhost](https://bugs.chromium.org/p/chromium/issues/detail?id=67743)
+2. 没有找到从代码上解决的方法，但上面的issue中提到Chrome[跨域插件](https://chrome.google.com/webstore/detail/allow-control-allow-origi/nlfbmbojpeacfghkpbjhddihlkkiljbi)可以在开发时避免该问题的出现。
+3. 因为不能从代码上解决，所以在应用上线时不要跨域请求localhost。（127.0.0.1也一样）
 
 
 ## References
