@@ -135,9 +135,13 @@ integer values, ECMAScript always looks for ways to convert values into integers
 
 ***
 ## Binary Floating-Point and Rounding Errors
-* There are infinitely many real numbers, but only a finite number of them (18437736874454810627, to be exact) can be represented exactly by the JavaScript floating-point format. This means that when you’re working with real numbers in JavaScript, the representation of the number will often be an approximation of
+* There are infinitely many real numbers, but only a finite number of them
+(18437736874454810627, to be exact) can be represented exactly by the JavaScript
+ floating-point format. This means that when you’re working with real numbers in
+ JavaScript, the representation of the number will often be an approximation of
 the actual number.
-* The IEEE-754 floating-point representation used by JavaScript is a binary representation, which can exactly represent fractions like `1/2`, `1/8`, and
+* The IEEE-754 floating-point representation used by JavaScript is a binary
+representation, which can exactly represent fractions like `1/2`, `1/8`, and
 `1/1024`. Unfortunately, the fractions we use most commonly are decimal
 fractions `1/10`, `1/100`, and so on. Binary floating-point representations
 cannot exactly represent numbers as simple as `0.1`.
@@ -154,21 +158,23 @@ of `0.2` and `0.1`.
 * The computed values are adequate for almost any purpose: the problem arises
 when we attempt to compare values for equality
 * A future version of JavaScript may support a decimal numeric type that avoids
-these rounding issues. Until then you might want to perform critical financial calculations using scaled integers. For example, you might manipulate monetary
+these rounding issues. Until then you might want to perform critical financial
+calculations using scaled integers. For example, you might manipulate monetary
 values as integer cents rather than fractional dollars.
 * The most commonly accepted practice is to use a tiny "rounding error" value as
  the tolerance for comparison. This tiny value is often called "machine epsilon"
-  which is commonly `2^-52 (2.220446049250313e-16)` for the kind of numbers in JavaScript. `Number.EPSILON` is predefined with this tolerance value:
-    ```js
-    let x = 0.3 - 0.2;
-    let y = 0.2 - 0.1;
-    console.log( x === y );    // false
-    console.log( numbersCloseEnoughToEqual(x, y) );  // true
+  which is commonly `2^-52 (2.220446049250313e-16)` for the kind of numbers in
+ JavaScript. `Number.EPSILON` is predefined with this tolerance value:
+```js
+let x = 0.3 - 0.2;
+let y = 0.2 - 0.1;
+console.log( x === y );    // false
+console.log( numbersCloseEnoughToEqual(x, y) );  // true
 
-    function numbersCloseEnoughToEqual(n1, n2) {
-    	return Math.abs( n1 - n2 ) < Number.EPSILON;
-    }
-    ```
+function numbersCloseEnoughToEqual(n1, n2) {
+	return Math.abs( n1 - n2 ) < Number.EPSILON;
+}
+```
 
 
 

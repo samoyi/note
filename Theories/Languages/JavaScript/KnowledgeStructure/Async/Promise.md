@@ -243,7 +243,7 @@ setTimeout(()=>{
     console.log('Promise内部的错误目前(Node v8.9.1)不会影响到外部')
 });
 ```
-不过可以通过自己添加的方法来实现抛出最后一环的错误
+不过可以通过自己添加的方法来实现抛出最后一环的错误。不过这个方法在Mocha的测试脚本中无效。
 ```js
 Promise.prototype.done = function (onFulfilled, onRejected) {
     this.then(onFulfilled, onRejected)

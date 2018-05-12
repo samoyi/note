@@ -1,5 +1,4 @@
 # 目录
-**个人笔记，临时上传，请勿参考**
 
 ***
 ## Theories
@@ -39,8 +38,7 @@
 * 该看counting sort了 http://www.jianshu.com/p/1b4068ccd505
 
 ### UnderstandJS
-* 该看[Chapter 5: Grammar](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch5.md)
-* 之后重看《this & object prototypes》的 Chapter 4及之后的.
+* 重看《this & object prototypes》的 Chapter 4及之后的.
 * Did not see [Chapter 4: Coercion](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch4.md)，sort it to  `Theories\Languages\JavaScript\UnderstandJS\TypeConversionTypeConversion.md`
 
 ### UnderstandVuejs
