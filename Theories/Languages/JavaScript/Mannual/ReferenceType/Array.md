@@ -63,6 +63,16 @@ console.log(arr.includes(NaN)); // true
 * `concat()`         不改变原数组
 * `splice()`         改变原数组
 * spread operator    不改变原数组
+    ```js
+    let arr = [2, 3];
+    let arr1 = [1, ...arr];
+    let arr2 = [...arr, 4];
+    let arr3 = [1, ...arr, 4];
+    console.log(arr); // [2, 3]
+    console.log(arr1); // [1, 2, 3]
+    console.log(arr2); // [2, 3, 4]
+    console.log(arr3); // [1, 2, 3, 4]
+    ```
 
 ### 删除数组项
 * 修改length   改变原数组

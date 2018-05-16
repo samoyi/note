@@ -230,8 +230,39 @@ console.log(-7.2%3.5); // -0.20000000000000018
 * `+0`加`+0`，结果是`+0`；`-0`加`-0`，结果是`-0`；`+0`加`-0`，结果是`+0`;
 * 如果两个操作数都是字符串，则将第二个操作数与第一个操作数拼接起来；
 * 如果只有一个操作数是字符串，则将另一个操作数转换为字符串，然后再将两个字符串拼接起来；
-* 如果有一个操作数是对象、数值或布尔值，则调用它们的`toString()`方法取得相应的字符串值，
-  然后再相加。对于`undefined`和`null`，则分别调用`String()`函数并取得字符串。
+* 如果操作数是对象、布尔值以及`undefined`和`null`：
+  ```js
+  let result1 = undefined + 1;
+    console.log(result1); // NaN
+
+    let result2 = null + 1;
+    console.log(result2); // 1
+    console.log(typeof result2); // number
+
+    let result3 = true + 1;
+    console.log(result3); // 2
+    console.log(typeof result3); // number
+
+    let result4 = false + 1;
+    console.log(result4); // 1
+    console.log(typeof result4); // number
+
+    let result5 = [] + 1;
+    console.log(result5); // 1
+    console.log(typeof result5); // string
+
+    let result6 = [2] + 1;
+    console.log(result6); // 21
+    console.log(typeof result6); // string
+
+    let result7 = {} + 1;
+    console.log(result7); // [object Object]1
+    console.log(typeof result7); // string
+
+    let result8 = {name: '33'} + 1;
+    console.log(result8); // [object Object]1
+    console.log(typeof result8); // string
+  ```
 
 ### 减法
 * 如果有一个操作数是`NaN`，则结果是`NaN`；

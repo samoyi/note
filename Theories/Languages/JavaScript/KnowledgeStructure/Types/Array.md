@@ -19,6 +19,9 @@ var arr1 = new Array( 1 );
 var arr2 = [undefined];
 console.log( 0 in arr1 ); // false
 console.log( 0 in arr2 ); // true
+console.log( arr1.length ); // 1
+console.log( arr2.length ); // 1
+// 因为 new Array()会设定数组的length属性
 ```
     * `forEach()`、 `filter()`、 `every()`和`some()`都会跳过空位，`map()`会跳过
     空位，但会保留这个值，`join()`和`toString()`会将空位视为`undefined`，而
