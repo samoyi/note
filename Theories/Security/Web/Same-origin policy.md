@@ -2,17 +2,24 @@
 
 
 ## same-origin policy 限制范围
-### Cookie无法读取
-    * A page can set a cookie for its own domain or any parent domain.
-    * The browser will make a cookie available to the given domain including any
-     sub-domains.
+### Cookie 无法读取
 
-### LocalStorage和IndexDB无法读取
+### LocalStorage 和 IndexDB 无法读取
 
-### DOM无法获得
+### DOM 无法获得
 
-### AJAX请求不能发送  
-防止CSRF
+### AJAX 请求不能发送
+为了防止CSRF。如果 AJAX 没有同源限制，后果如下：
+1. 我想让张三把银行账户的钱转给李四
+2. 但只有银行验证了张三的身份后才会进行转账，即请求的 cookie 必须包含张三的身份信息
+3. 我制作一个网页，网址为 `www.my.com`。内部会自动发起到银行网页
+`www.bank.com/transfer`的 `get` 或 `post` AJAX 请求，请求携带参数：转账金额和收款人
+李四
+4. 诱导张三进入我的网页，由于没有同源限制，该 AJAX 请求可以发送成功。
+5. 因为请求会自动发送请求域所设置的 cookie，所以张三浏览器里保存的银行的身份信息也同时
+发送
+6. 银行核对了身份信息，并不能区分这是张三在银行网站的转账请求还是在其他域的跨域请求，所
+以会执行转账。
 
 
 ## Definition
