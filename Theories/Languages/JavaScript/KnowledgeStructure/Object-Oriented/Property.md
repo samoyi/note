@@ -44,6 +44,47 @@ Object.defineProperty(p, "x", { writable: true }); // TypeError
 
 ### `[[Set]]`
 * [Table 3: Attributes of an Accessor Property](https://tc39.github.io/ecma262/#sec-property-attributes)
+* 只有属性的修改才能触发 setter，属性的删除以及子属性的变动都不会触发。
+```js
+let data = {
+    _info: {
+        _age: 22,
+    },
+};
+
+Object.defineProperty(data._info, 'age', {
+    get(){
+        return this._age;
+    },
+    set(newAge){
+        this._age = newAge;
+        console.log('modify age');
+    },
+    enumerable: true,
+    configurable: true,
+});
+
+Object.defineProperty(data, 'info', {
+    get(){
+        return this._info;
+    },
+    set(newInfo){
+        this._info = newInfo;
+        console.log('modify info');
+    },
+    configurable: true,
+});
+
+console.log(data.info.age);     // 22
+data.info.age = 33;             // "modify age"   不会输出"modify info"
+console.log(data.info.age);     // 33
+delete data.info.age;           // 不会有输出
+console.log(data.info.age);     // undefined
+data.info = {};                 // "modify info"
+data.info.newProp = 'newProp';  // 不会有输出
+console.log(data.info.newProp); // "newProp"
+delete data.info;               // 不会有输出
+```
 
 ### `[[Enumerable]]`
 * [Table 3: Attributes of an Accessor Property](https://tc39.github.io/ecma262/#sec-property-attributes)
