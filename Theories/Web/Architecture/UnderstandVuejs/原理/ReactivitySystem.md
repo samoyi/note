@@ -16,7 +16,7 @@ records any properties “touched” during the component’s render as dependen
 Later on when a dependency’s setter is triggered, it notifies the watcher, which
  in turn causes the component to re-render.
 
-![Reactivity System](./images/ReactivitySystem.png)
+![Reactivity System](../images/ReactivitySystem.png)
 
 
 ## Change Detection Caveats

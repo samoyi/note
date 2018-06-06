@@ -66,7 +66,5 @@ architecting a component-based app.
 
 
 
-
-
 ## References
 * [What’s The Deal With Vue’s Virtual DOM?](https://medium.com/js-dojo/whats-the-deal-with-vue-s-virtual-dom-3ed4fc0dbb20)

@@ -2,21 +2,10 @@
 Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过 `Object.defineProperty()` 来劫
 持各个属性的 setter、getter，在数据变动时发布消息给订阅者，触发相应的监听回调。
 
-**完整代码位置**: `./codes/easyTwoWayBinding`
+**完整代码位置**: `../codes/easyTwoWayBinding`
 
 ## 预备知识
 * `./ReactivitySystem.md`
-
-
-## 基本实现原理
-1. When you pass a plain JavaScript object to a Vue instance as its `data`
-option, Vue will walk through all of its properties and convert them to
-getter/setters using `Object.defineProperty`.
-2. 这样，setter 就可以捕获 model 的更新，然后以此去更新 view 。
-3. view 如果有变化，就会触发相应的事件，藉由事件处理程序，就可以更新 model 相应的数据。
-
-最简单的双向绑定原理展示：  
-![easy two-way binding demo](./images/easyTwo-wayBindingDemo.png)
 
 
 ## 实现功能
