@@ -46,7 +46,8 @@ Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过 `Obje
 Compiler 模块
 
 ### 实现逻辑
-扫描节点，将模板中的文本变量替换成数据，给 `v-model` 节点的`value` 属性赋值
+1. 扫描节点，识别其中的 Mustache syntax 和 `v-model` 指令。
+2. 将模板中的文本变量替换成数据，给 `v-model` 节点的`value` 属性赋值
 
 html：
 ```html
@@ -162,6 +163,10 @@ Observer 模块 、Publisher 模块和 Subscriber 模块
 ### Observer
 * Observer 的作用是将一个对象的所有属性转化为访问器属性，这样就可以监听其属性值的变化，
 然后再进行相应的 DOM 更新操作。（Vue 实际上是先更新虚拟 DOM ）
+* 从[vm.$data的文档说明](https://vuejs.org/v2/api/index.html#vm-data)也可以看出来
+Observer的作用：The data object that the Vue instance is observing. The Vue
+instance proxies access to the properties on its data object. 其实不光是 `data`，
+`props`、`methods`等属性也都是通过 Observer 被 Vue 实例代理了。
 * Observer 由以下两个函数组成：
 
 ```js

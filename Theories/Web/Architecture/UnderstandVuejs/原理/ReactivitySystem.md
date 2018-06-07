@@ -7,7 +7,8 @@ Two-wayBinding.md**
 ## How Changes Are Tracked
 1. When you pass a plain JavaScript object to a Vue instance as its `data`
 option, Vue will walk through all of its properties and convert them to
-getter/setters using `Object.defineProperty`.
+getter/setters using `Object.defineProperty`. The Vue instance proxies access to
+ the properties on its data object.
 2. The getter/setters are invisible to the user, but under the hood they enable
 Vue to perform dependency-tracking and change-notification when properties are
 accessed or modified.

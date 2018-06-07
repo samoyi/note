@@ -1,0 +1,57 @@
+# Components
+
+**这篇总结不涉及组件的用法，主要通过 Vuejs 来学习组件化系统的设计思想**
+
+## TODO
+* 组件注册的内部流程
+
+
+
+## Misc
+### 一个组件也是一个 Vue 实例
+* 定义组件相当于定义一个组件的构造函数，使用组件相当于实例化。
+* TODO：关于组件的 `data` 必须定义为函数的内部原因，要看源码。
+* 它不是通过 `el` 来把已有的 HTML 节点定义为模板，而是自定义 HTML 并通过
+`template` 将其指定为模板。
+
+
+## *functional* component -- decoupled
+* 类比于函数式编程的“纯函数”思想，Vue 也把组件设计的尽量独立。
+* The API for a Vue component comes in three parts: props, events, and slots
+    * Props allow the external environment to pass data into the component
+    * Events allow the component to trigger side effects in the external
+      environment
+    * Slots allow the external environment to compose the component with
+      extra content
+
+### 影响组件的只能是其参数，即 props 和 slots
+* Unless a component exposes a specific prop or slot explicitly, it will not
+be affected by external environment.
+* Reusable components should define a clean public interface and make no
+assumptions about the context it’s used in.
+* 虽然可以通过 `$parent` 之类的绕过这个限制，但还是能不用尽量就不用。保持组件的独立
+性对于维护显然很有好处。
+
+### 组件不能有副作用
+* A component can not directly change the external environment, it can only
+throw a event which exteranl environment may receive.
+* However, if the `prop` that is passed is a reference type, the value
+passed in fact is a pointer instead of the real value pointed by the pointer.
+So if the `prop` is assigned to a variable `var` inside the child component,
+the corresponding property outside the component is also modified when
+modifying the `var`'s property in child component.
+
+### 愿意被改变，才能被改变
+* 如果子组件愿意被父组件改变，它就要设置一个 prop 作为接口，父组件可以使用这个 prop
+ 改变子组件内容。而且子组件可以约束这个 prop 的类型、范围等。
+* 如果父组件愿意被子组件改变，它就要设置一个事件监听作为接口，子组件可以发射这个事件
+来申请改变。
+
+### 不限于软件开发方面的管理
+* 说到底，组件化本质上也是一种管理。就如同管理一个大的公司，需要划分各种部门，各个
+部分既要分工明确，也要配合流畅。既要有严格的规定（通过 prop 和 event 交互），但也存
+在潜规则（$parent 和 $refs）。
+* 不管管理什么，这种组件化的思想都是存在的，但又不尽相同。
+
+
+##

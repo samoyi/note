@@ -10,6 +10,13 @@
 * `./ReactivitySystem.md` 对 Vuejs 的响应式数据绑定做了进一步的说明
 * `./Two-wayBinding.md` 实现了一个简单的 ViewModel 构造器
 
+## Summary
+1. Technically, Vue.js is focused on the **ViewModel** layer of the MVVM pattern.
+It connects the **View** and the **Model** via two way data bindings.
+2. Actual DOM manipulations and output formatting are abstracted away into
+ **Directives** and **Filters**. 用 Vue 的时候并没有明确的意识到这一点，不过确实是任
+ 何对 DOM 的改变都要通过 Directives（包括 Mustache syntax） 和 Filters。
+
 
 ## ViewModel
 1. An object that syncs the Model and the View. In Vue.js, every Vue instance is
@@ -27,6 +34,9 @@ View 用数据表现出来，将 View 数据化。
 6. 这中间是不需要控制的！ViewModel 是 View 抽象化之后的模型，但它同时也是 Model 眼里的
 模板，所以才可以很方便的把数据作为变量插入。ViewModel 既是 View 层的 model，也是 Model
 层的 view。
+7. 所以 VM 其实和 DOM 的功能有些类似，都是根据 HTML（View）建立一个可供 JS 操作的
+Model。只不过 DOM 这个模型体现的仍然是 HTML 的结构逻辑，而 VM 体现的则是 HTML 的数据
+逻辑。所以 VM 可以直接作为数据层的 View，而 DOM 则不行。
 
 
 ## View
@@ -64,6 +74,17 @@ views, and externalize the data manipulation logic into a more discrete store
 layer. 这里的意思可能就是上面在解释 ViewModel 说的那样，把 ViewModel 当做 Model 层的
 view。尽量只是往里面插入变量，至于数据层面的各种计算，不要放到 ViewModel 里面来进行。
 因为 ViewModel 只是 Model 层的 view，在 view 层进行复杂的运算显然只会添加混乱。
+
+
+## Directives
+1. ViewModel 上的所有数据变动和计算，最终都要通过 View 中的内置或自定义指令（包括
+Mustache syntax）才能实现对View 的改变。
+2. 不同的指令意味着对 View 有不同的改变方式。除了内置的指令，自定义指令可以实现对 View
+更丰富的改变方式。
+
+
+## Filters
+只是对 Directives 的修饰。
 
 
 ## References
