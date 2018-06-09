@@ -12,6 +12,15 @@
 cookie。
 
 
+## 防御手段
+* 验证码：保证只有用户明确交互才会发送请求
+* Referer Check：通过检查请求的 `Referer` 首部来确定请求页面“来路正当”
+* Anti CSRF Token：大意就是设置 cookie 时生成一个随机 token，同时保存在用户表单隐藏域
+    和 cookie 里。用户提交表单时，服务器会检查这两个 token 是否一致。如果有人 CSRF ，
+    除非他看到了用户的前端代码，否则不会知道这个 token，因而即使发送了请求，服务器也可
+    以发现请求中没有 token 或者和 cookie 中的 token 不同。
+
+
 ## References
 * [白帽子讲Web安全](https://book.douban.com/subject/10546925/)
 * <a href="https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)">WASP</a>

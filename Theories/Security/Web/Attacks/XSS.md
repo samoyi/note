@@ -3,6 +3,10 @@
 ## 基本原理
 简单来说，就是通过 HTML 注入，插入恶意脚本进行攻击。
 
+## XSS 类型
+### 反射型 XSS
+### 存储型 XSS
+### DOM Based XSS
 
 ## XSS Payload
 用以完成各种具体功能的恶意脚本，被称为 XSS Payload。XSS Payload 实际上就是 JS 脚本，
@@ -38,6 +42,10 @@ document.body.appendChild(img);
 ```
 2. 只要有用户进入这个帖子，上述脚本就会获取用户的 cookie 并发送
 
+
+## 防御手段
+* `HttpOnly`
+* 输入检查
 
 ## References
 * [白帽子讲Web安全](https://book.douban.com/subject/10546925/)

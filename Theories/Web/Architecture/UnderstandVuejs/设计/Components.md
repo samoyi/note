@@ -31,6 +31,28 @@ be affected by external environment.
 assumptions about the context it’s used in.
 * 虽然可以通过 `$parent` 之类的绕过这个限制，但还是能不用尽量就不用。保持组件的独立
 性对于维护显然很有好处。
+* 组件的事件也应该由组件自己来处理。正常情况下，你不能在组件的标签上随便监听组件 emit
+出来的以外的事件，即 [native 事件](https://vuejs.org/v2/guide/components-custom-events.html#Binding-Native-Events-to-Components)。
+比如这样：
+```html
+<parent-component>
+    <child-component @click="handleClick"></child-component>
+</parent-component>
+```
+如果 `child-component` 组件内部没有 emit 一个 `click` 事件，这种在组件外的点击监听是
+没有效果的。因为组件的应该由组件内部来处理，如果父组件需要，可以 emit 给父组件:
+```js
+Vue.component('child-component', {
+    template: `<div @click="emitClick" />`,
+    methods: {
+        emitClick(){
+            this.$emit('click');
+        },
+    },
+});
+```
+当然，Vue 仍然提供了 `.native` modifier 来绕过这个限制。但还是不要在非必要的情况下进行
+绕过，应该让组件尽可能的独立，和环境解耦。
 
 ### 组件不能有副作用
 * A component can not directly change the external environment, it can only
@@ -54,4 +76,17 @@ modifying the `var`'s property in child component.
 * 不管管理什么，这种组件化的思想都是存在的，但又不尽相同。
 
 
-##
+## `props` 不是传递数据，而是建立数据通道，维持长效交流
+1. 使用一个 prop 并不是传递一个数据进去就完事了。
+2. 如果只是传递数据，那 `props` 只是相当于子组件的初始化选项，之后父组件就不再影响子组
+件。Vue 就会允许子组件修改 prop。
+3. 但实际的情况是，父组件数据只要更新，就会通知到子组件，所以一个 prop 就是一项数据的传
+递通道，用来维持长效交流。
+4. 因此，子组件为了接收到父组件正确的数据更新，内部不能随便更改对接用的 prop，只能将其
+复制一份拷贝到自己的 data 或计算属性中才能进行修改。
+
+
+## Events
+* TODO：需要看源码。不知道仅仅是约定还是其他原因，对于子组件发出的事件的监听，只能放在子
+组件标签上，而不能放在父组件标签上。当然这样逻辑会清晰，而且也没有必要放到父组件标签上。
+但是为什么不能放到父组件标签上？
