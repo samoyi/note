@@ -114,6 +114,43 @@ const vm = new Vue({
 组件有 `slot` 时，组件标签之间的作用域仍然是外部作用域。
 
 
+## 异步组件
+在指定的时间加载组件并渲染
+
+### 基本用法
+```html
+<div id="components-demo">
+    <!-- 在组件异步加载完成之前，不会被渲染 -->
+    <async-component></async-component>
+</div>
+```
+```js
+Vue.component('async-component', (resolve, reject) => {
+    // 这里指定三秒后再加载组件，加载完成后会进行渲染
+    setTimeout(() => {
+        resolve({
+            template: '<div>I am {{ name }}</div>',
+            data(){
+                return {name: '33'};
+            },
+        })
+    }, 3000)
+});
+
+const vm = new Vue({
+    el: '#components-demo',
+    data: {
+    },
+    methods: {
+
+    },
+});
+```
+可以看出来，注册异步组件时，第二个参数实际上会作为 `Promise` 构造函数的参数。异步操作
+完成之后，组件对象会作为异步操作的结果，被真正注册为组件并渲染。
+
+
+
 ## Demo
 ### 表单子组件和父组件数据双向绑定
 表单子组件可以使用自己的数据进行双向绑定(把 `v-model` 写在模板内的 `input`)。但如果

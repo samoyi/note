@@ -1,68 +1,68 @@
 # Promise
 
-
 ## Basic
-1. 作为构造函数的参数是一个函数，该函数是一个异步操作。例如异步请求数据。  
-函数的两个参数分别为`Promise`用来记录异步操作的成功或失败的函数
+### 给你一个承诺（promise）：
+1. 你不用管，我帮你做这个事情：异步操作
+2. 到时候不管成功或失败，都会告诉你情况：异步操作成功时调用 `resolve`，结果作为参数；异
+步操作失败时调用 `reject`，错误作为参数。
+3. 你记住我这个承诺，等待我的消息：获得 Promise 实例，通过 `then` 和 `catch` 监听成
+功或失败。
+
+### 基本用法
+1. 作为构造函数的参数是一个函数，记为 `executor` 。
+2. `executor` 有两个参数，两个参数都是函数。记为 `resolve` 和 `reject`。
+3. `executor` 内部会进行异步操作。
+4. 调用构造函数返回一个 Promise 实例，记为 `promise`。
+5. 为了监听异步操作的结果，实例需要调用 `then` 方法和 `catch` 方法。
+6. `then` 方法接受参数 `onFulfilled`，以及一个可选的参数 `onRejected`。`catch` 方法
+接收一个参数 `onRejected`。这三个参数都是函数。
+7. 如果 `executor` 内部的异步操作成功，需要调用 `resolve` 通知 `promise`。`resolve`
+的参数应当设为异步操作的结果。当该方法被调用时，`onFulfilled` 会被自动调用，参数和
+`resolve`的参数相同。
+8. 如果 `executor` 内部的异步操作失败，需要调用 `reject` 通知 `promise`。`reject`
+的参数应当设为错误信息。当该方法被调用时，第一个 `onRejected` 会被自动调用，参数和
+`reject` 的参数相同。
+9. 因为异步操作结果会被永久保存，所以之后依然可以从实例中读取结果。
+
 ```js
 let promise = new Promise((resolve, reject)=>{
     // 这里模拟一个耗时两秒的异步数据请求
     setTimeout(()=>{
         let n = Math.random();
-        if(n>0.5){ // 模拟请求成功
-            // 如果异步操作的结果是成功的，通过resolve函数会记录下该成功，同时可以接
-            // 收一个参数
+        if(n > 0.5){ // 模拟请求成功
             resolve('200 ' + n);
         }
         else{ // 模拟请求失败
-            // 如果异步操作的结果是失败的，通过reject函数会记录下该失败，同时可以接收
-            // 一个参数
             reject('404 ' + n);
         }
     }, 2000);
 });
 
 // 这里会在异步完成之后立刻获得结果
-promise.then(res=>{
-        console.log('异步操作刚结束时读取异步操作结果 success: ' + res);
-    }, err=>{
-        console.log('异步操作刚结束时读取异步操作结果 fail: ' + err);
-    });
-
-// 这里会在异步完成两秒之后再通过`promise`实例读取异步操作结果，仍然可以读取成功
-setTimeout(()=>{
-    promise.then(res=>{
-            console.log('之后再次读取异步操作结果 success: ' + res);
-        }, err=>{
-            console.log('之后再次读取异步操作结果 fail: ' + err);
-        });
-}, 4000)
-```
-2. 上面的构造函数会返回一个`Promise`实例，同时会立刻执行其参数中的函数。  
-并且，在异步操作执行完成后，根据成功或失败，调用`resolve`或`reject`永久的记录异步
-结果。
-“永久”的意思，就是不仅在异步操作完成时可以捕获结果，在之后的任何时间，都可以通过该
-`promise`实例反复获得异步操作的结果。  
-因为这个特性，所以`then`和`catch`其实并不仅仅是`promise`异步操作的回调函数。
-
-3. 因为`then`的回调性质，所以注意代码的执行顺序：
-```js
-let arr = [];
-
-new Promise((res, rej)=>{
-    res(1);
-})
+promise
 .then(res=>{
-    arr.push(res);
+    console.log('异步操作刚结束时读取异步操作结果 success: ' + res);
+}, err=>{
+    // then 一般不需要添加这个第二个参数，直接交给最后的 catch 就行了
+    console.log('异步操作刚结束时读取异步操作结果 fail: ' + err);
+})
+.catch(err=>{
+    // 如果 then 没有第二个参数，这个函数会被调用
+    console.log('异步操作刚结束时读取异步操作结果 fail: ' + err);
 });
 
-arr.push(2);
-console.log(arr); // [ 2 ]
-
+// 这里会在异步完成两秒之后再通过实例读取异步操作结果，仍然可以读取成功
 setTimeout(()=>{
-    console.log(arr); // [ 2, 1 ]
-});
+    promise
+    .then(res=>{
+        console.log('之后再次读取异步操作结果 success: ' + res);
+    })
+    .catch(err=>{
+        console.log('之后再次读取异步操作结果 fail: ' + err);
+    });
+}, 2000)
 ```
+
 
 ## Nested promise
 The result of a promise is another promise, the first promise will have the
