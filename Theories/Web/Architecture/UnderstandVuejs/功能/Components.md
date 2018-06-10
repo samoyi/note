@@ -76,6 +76,44 @@ const vm = new Vue({
 ```
 
 
+## Slots
+### Compilation Scope
+[文档](https://vuejs.org/v2/guide/components-slots.html#Compilation-Scope)说的没
+看懂，直接看例子：
+```html
+<div id="components-demo">
+    <child-component>
+        {{ name }}
+        <!-- 在这里无法访问到 text -->
+    </child-component>
+</div>
+```
+```js
+Vue.component('child-component', {
+    template: `<div>
+        {{text}}
+        <slot></slot>
+    </div>`,
+    data(){
+        return {
+            text: 'hello',
+        };
+    },
+    methods: {
+
+    },
+});
+
+const vm = new Vue({
+    el: '#components-demo',
+    data: {
+        name: '33',
+    },
+});
+```
+组件有 `slot` 时，组件标签之间的作用域仍然是外部作用域。
+
+
 ## Demo
 ### 表单子组件和父组件数据双向绑定
 表单子组件可以使用自己的数据进行双向绑定(把 `v-model` 写在模板内的 `input`)。但如果
@@ -234,3 +272,57 @@ const vm = new Vue({
 4. Using `v-bind.sync` with a literal object, such as in
 `v-bind.sync="{ title: doc.title }"`, will not work, because there are too many
 edge cases to consider in parsing a complex expression like this.
+
+### `keep-alive` with Dynamic Components
+子组件会在 `input-component` 和 `textarea-component` 之间切换。如果不加
+`<keep-alive>`，对 `input` 或 `textarea` 的修改再切换之后不会保存，切换回来之后会重新
+实例化组件。加上 `<keep-alive>` 就不会重新实例化，而是保存组件状态。
+```html
+<div id="components-demo">
+    <input type="button" value="切换" @click="changeComponent" /><br />
+    <keep-alive>
+        <component :is="curComponent"></component>
+    </keep-alive>
+</div>
+```
+```js
+Vue.component('input-component', {
+    template: `<input type="text" :value="inputText" />`,
+    data(){
+        return {
+            inputText: '这是个 input',
+        };
+    },
+    methods: {
+
+    },
+});
+Vue.component('textarea-component', {
+    template: `<textarea>{{ areaText }}</textarea>`,
+    data(){
+        return {
+            areaText: '这是个 textarea',
+        };
+    },
+    methods: {
+
+    },
+});
+
+const vm = new Vue({
+    el: '#components-demo',
+    data: {
+        curComponent: 'input-component',
+    },
+    methods: {
+        changeComponent(){
+            if (this.curComponent === 'input-component'){
+                this.curComponent = 'textarea-component';
+            }
+            else {
+                this.curComponent = 'input-component';
+            }
+        }
+    },
+});
+```

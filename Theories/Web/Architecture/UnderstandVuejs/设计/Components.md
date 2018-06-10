@@ -53,6 +53,7 @@ Vue.component('child-component', {
 ```
 当然，Vue 仍然提供了 `.native` modifier 来绕过这个限制。但还是不要在非必要的情况下进行
 绕过，应该让组件尽可能的独立，和环境解耦。
+* prop 和 slot 也和函数参数一样，可以提供默认值。
 
 ### 组件不能有副作用
 * A component can not directly change the external environment, it can only
