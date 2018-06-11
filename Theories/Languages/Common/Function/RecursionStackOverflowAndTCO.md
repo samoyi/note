@@ -31,8 +31,8 @@ function f(x){
     g(x);
 }
 ```
-下面的函数中的`m`虽然lexically不是在函数最后一行，但在函数执行上则是最后一步，所以属于
-尾调用
+下面的函数中的 `m` 虽然 lexically 不是在函数最后一行，但在函数执行上则是最后一步，所以
+属于尾调用
 ```js
 function f(x) {
     if (x > 0) {
@@ -90,12 +90,12 @@ function Fibonacci(n , ac1 = 0 , ac2 = 1){
     }
 }
 ```
-6. 因为并不是所有语言及其实现都支持TCO，例如虽然ES6的规范要求实现在严格模式下支持TCO，
-但至少截至Chrome66.0.3359.139及Node 8.1.2，并没有支持TCO。
+6. 因为并不是所有语言及其实现都支持TCO，例如虽然 ES6 的规范要求实现在严格模式下支持
+TCO，但至少截至 Chrome66.0.3359.139 及 Node 8.1.2，并没有支持 TCO。
 
 
-## Trampoline解决递归导致的栈溢出
-在不支持尾递归的环境下，可以使用Trampoline将递归调用变为循环调用
+## Trampoline 解决递归导致的栈溢出
+在不支持尾递归的环境下，可以使用 Trampoline 将递归调用变为循环调用
 ```js
 // 参数fn为要循环调用的函数
 // 执行fn后如果返回值为函数，则继续执行；否则返回该非函数返回值
@@ -120,7 +120,7 @@ function Fibonacci(n , ac1 = 0 , ac2 = 1){
 }
 ```
 
-## 模拟TCO
+## 模拟 TCO
 如果需要使用尾递归的写法但是环境暂不支持，可以用如下方法，将一个尾递归函数进行“TCO化”：
 ```js
 function TCO(fn) {
@@ -184,7 +184,7 @@ Fibonacci(100);
 `while`循环结束。返回`value`中保存的最终累加值。`accumulator`调用结束。
 
 
-## JS中使用`setTimeout`防止递归栈溢出
+## JS中使用 `setTimeout` 防止递归栈溢出
 ```js
 let list = readHugeList(); // list 是一个很大的数组
 function nextListItem() {
@@ -195,7 +195,7 @@ function nextListItem() {
     }
 };
 ```
-如果`list`足够大，上述递归将导致栈溢出。只需要把`nextListItem`做如下修改就可以避免：
+如果 `list` 足够大，上述递归将导致栈溢出。只需要把 `nextListItem` 做如下修改就可以避免：
 ```js
 function nextListItem() {
     let item = list.pop();
@@ -204,7 +204,7 @@ function nextListItem() {
     }
 };
 ```
-这样`nextListItem`就可以直接返回`undefined`从而释放栈内存。
+这样 `nextListItem` 就可以直接返回 `undefined` 从而释放栈内存。
 
 
 ## References

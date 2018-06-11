@@ -1,6 +1,6 @@
 # 目录
 
-***
+
 ## Theories
 ### Encoding  基础信息的组织形式
 * #### Character Encoding
@@ -9,14 +9,6 @@
 * #### Software Architecture
 
 
-
-***
-## Practices
-### Surveillance
-
-
-
-***
 ## Progress Record
 ### 其他
 * 正在整理fetch

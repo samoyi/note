@@ -115,17 +115,15 @@ const sas = require('./ArrayList');
     // 4 3 2 1 0 9 8 7 6 5
 
     console.log(shuffle(arr));
-    function shuffle(arr){
-        let len = arr.length,
-            j = 0,
-            x = 0;
-        for(let i=len; i>0; i--){
-            j = parseInt(Math.random() * i);
-            x = arr[i-1];
-            arr[i] = arr[j];
-            arr[j] = x;
+    function shuffle(a) {
+        var j, x, i;
+        for (i = a.length - 1; i > 0; i--) {
+            j = Math.floor(Math.random() * (i + 1));
+            x = a[i];
+            a[i] = a[j];
+            a[j] = x;
         }
-        return arr;
+        return a;
     }
 }
 
