@@ -16,7 +16,7 @@ request, so they can worsen performance (especially for mobile data connections)
 
 ## Creating cookies
 1. When receiving an HTTP request, a server can send a `Set-Cookie` header with
-the response. 以 Nodejs 为例：
+the response.
 2. The cookie is usually stored by the browser, and then the cookie is sent with
  requests made to the same server inside a Cookie HTTP header.
 3. An expiration date or duration can be specified, after which the cookie is no
@@ -28,15 +28,26 @@ previously stored cookies to the server using the `Cookie` header.
 
 ### Session cookies
 1. A cookie without `Expires` or `Max-Age` directive is a session cookie: it is
-deleted when the client shuts down
-2. However, web browsers may use **session restoring**, which makes most session
+deleted when the client shuts down.
+2. Note that this is a subtly different lifetime than `sessionStorage`: cookies
+are not scoped to a single window, and their default lifetime is the same as the
+ entire browser process, not the lifetime of any one window.
+3. However, web browsers may use **session restoring**, which makes most session
  cookies permanent, as if the browser was never closed.
 
 ### Permanent cookies
 1. Instead of expiring when the client closes, permanent cookies expire at a
 specific date (`Expires`) or after a specific length of time (`Max-Age`).
-2. When an expiry date is set, the time and date set is relative to the client
+2. If a response includes both an `Expires` header and a `max-age` directive,
+the `max-age` directive overrides the `Expires` header, even if the `Expires`
+header is more restrictive.
+3. When an expiry date is set, the time and date set is relative to the client
 the cookie is being set on, not the server.
+
+```js
+// 如果设置为小数，则向下取整
+document.cookie = "minCookieName=minCookieValue;max-age=60";
+```
 
 ### `Secure` and `HttpOnly` cookies
 * A secure cookie is only sent to the server with a encrypted request over the
@@ -141,6 +152,11 @@ They are using the Web storage API, Flash Local Shared Objects and other
 techniques to recreate themselves whenever the cookie's absence is detected.
 * [Evercookie by Samy Kamkar](https://github.com/samyk/evercookie)
 * [Zombie cookies on Wikipedia](https://en.wikipedia.org/wiki/Zombie_cookie)
+
+
+## Misc
+* 可以使用 `navigator.cookieEnabled` 来检测浏览器是否禁用了 cookie。如果为 `true` 则
+说明启用 cookie，如果为 `false` 则表示禁用。
 
 
 ## References
