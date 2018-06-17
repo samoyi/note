@@ -10,7 +10,8 @@ Multilingual Plane of Unicode.
 
 ## Example
 ### `String.prototype.charCodeAt` and `String.fromCharCode`
-Specification:  [String.prototype.charCodeAt](https://tc39.github.io/ecma262/#sec-string.prototype.charcodeat) and [String.fromCharCode](https://tc39.github.io/ecma262/#sec-string.fromcharcode).
+Specification:  [String.prototype.charCodeAt](https://tc39.github.io/ecma262/#sec-string.prototype.charcodeat)
+and [String.fromCharCode](https://tc39.github.io/ecma262/#sec-string.fromcharcode).
 * The unicode of `𝑒` is `U+1D452`, when using UTF-8, its code is `d835dc52`. For
 JS, `d835dc52` are two 2-byte characters.
 ```js

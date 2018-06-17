@@ -97,10 +97,10 @@ window.document.getElementById("myIFrame").contentWindow.document.body.style
 #### JSONP
 #### Proxy server
 
-### 跨域读取LocalStorage和IndexDB
+### 跨域读取 LocalStorage 和 IndexDB
 #### `window.postMessage()`
 
-### 跨域读取Cookie
+### 跨域读取 Cookie
 #### `window.postMessage()`
 
 
