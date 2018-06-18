@@ -50,9 +50,11 @@ Table，等待被 JS 执行。
 
 
 ## Event Table and Event Queue
-在没有异步操作的情况下，JS 就会按照上面 `Stack` 说明中的方式，不断的线性执行，直到程序
-结束。但如果程序中执行了一个异步操作，就会涉及到另外两个数据结构：Event Table and
+1. 在没有异步操作的情况下，JS 就会按照上面 `Stack` 说明中的方式，不断的线性执行，直到
+程序结束。但如果程序中执行了一个异步操作，就会涉及到另外两个数据结构：Event Table and
 Event Queue。（似乎这两者合起来统称 Message Queue）
+2. 并不是所有的异步操作都会被加入到 Message Queue 中，详见下面的 【Macrotask 和
+Microtask】
 
 ### Event Table
 1. This is a data structure which knows that a certain function should be
@@ -157,6 +159,127 @@ console.log('end');
 的 0ms 回调。因为这样重复操作会等到调用栈清空时才被执行。
 
 
+## Macrotask 和 Microtask
+判断一下下面的输出顺序：
+```js
+setTimeout(function(){
+     console.log(3)
+ });
+
+ new Promise(function(resolve){
+     console.log(1);
+     for(var i = 0; i < 10000; i++){
+         i == 99 && resolve();
+     }
+ }).then(function(){
+     console.log(4)
+ });
+
+ console.log(2);
+ ```
+ 上面的输出顺序不是 1 2 3 4，而是 1 2 4 3。同样是异步操作，为什么在后面的反而比前面的
+ 更早执行。这就是 Macrotask 和 Microtask 的区别。
+
+
+1. 向 Message Queue 加入的一个异步回调任务，称为一个 Macrotask。最初的主程序（不是异
+步回调中的执行的）也可以算作一个 Macrotask。
+2. 并不是所有的异步任务都会被加到 Message Queue，有些异步任务会被加入到另一个 queue，
+加入这一 queue 的任务称为 Microtask。
+3. 在没有 Microtask Queue 时候，JS 的事件循环机制是：
+    `主程序Macrotask —— Macrotask1 —— Macrotask2 —— ……`
+4. 有 Microtask Queue 时候，JS 的事件循环机制是：
+    ```
+    主程序Macrotask —— 主程序的Microtask —— Macrotask1 —— Macrotask的Microtask
+    —— Macrotask2 —— Macrotask2的Microtask ——……
+    ```  
+
+**macrotasks 包括：**
+    * `setTimeout`
+    * `setInterval`
+    * `setImmediate`
+    * `I/O`
+    * `UI渲染`
+**microtasks 包括：**
+    * `process.nextTick`
+    * `promise`
+    * `Object.observe`
+    * `MutationObserver`
+
+TODO 不懂：一个异步操作依据什么被定义为 Macrotask 或 Microtask？  
+
+再分析上面的例子：`setTimeout` 的回调属于 Macrotask，相当于上面的 `Macrotask1`；而
+`promise` 的 `then` 回调属于 Microtask，相当于上面的 `主程序的Microtask`。  
+再看一个更复杂的例子：
+```js
+const interval = setInterval(() => {
+    console.log('setInterval')
+}, 0)
+
+setTimeout(() => {
+    console.log('setTimeout 1')
+    Promise.resolve()
+    .then(() => {
+        console.log('promise 3')
+    })
+    .then(() => {
+        console.log('promise 4')
+    })
+    .then(() => {
+        setTimeout(() => {
+            console.log('setTimeout 2')
+            Promise.resolve()
+            .then(() => {
+                console.log('promise 5')
+            })
+            .then(() => {
+                console.log('promise 6')
+            })
+            .then(() => {
+                clearInterval(interval)
+            })
+        }, 0)
+    })
+}, 0)
+
+Promise.resolve()
+.then(() => {
+    console.log('promise 1')
+})
+.then(() => {
+    console.log('promise 2')
+})
+```
+1. `setInterval` 和 `setTimeout` 都是 Macrotask，先后加入到 Macrotask Queue。
+2. `Promise` 是 Microtask，所以先打印出 `promise 1` 和 `promise 2`。
+3. 然后执行 `setInterval` 的 Macrotask，打印 `setInterval`。
+4. `setInterval` 会再次加入到 Macrotask Queue，但它前面还有之前的 `setTimeout`。
+5. 执行 `setTimeout`  的 Macrotask，打印 `setTimeout 1`。此时 Macrotask Queue 中
+只剩下 `setInterval`。
+6. 之后的 `Promise` 由于是 Microtask，所以会先执行其所有的 `then`，打印出
+`promise 3` 和 `promise 4`。
+7. 第三个 `then` 内部是 `setTimeout`，加入到 Macrotask Queue。
+8. 调用栈清空，此时 Macrotask Queue 排在最前面的是第二个 `setInterval`，
+打印 `setInterval`。
+9. `setInterval` 会第三次加入到 Macrotask Queue，但它前面还有一个的 `setTimeout`。
+10. 执行 `setTimeout` 回调，打印 `setTimeout 2`。
+11. 之后又是 `Promise` 的 Microtask，打印出 `promise 5` 和 `promise 6`，并结束
+`interval`, Macrotask Queue 中现在唯一的任务 `setInterval` 回调没有机会执行。
+
+
+```shell
+promise 1
+promise 2
+setInterval
+setTimeout 1
+promise 3
+promise 4
+setInterval
+setTimeout 2
+promise 5
+promise 6
+```
+
+
 ## Several runtimes communicating together
 1. A web worker or a cross-origin iframe has its own stack, heap, and message
 queue.
@@ -170,3 +293,5 @@ queue.
 * [JavaScript Event Loop Explained](https://medium.com/front-end-hacking/javascript-event-loop-explained-4cd26af121d4)
 * [Understanding JS: The Event Loop](https://hackernoon.com/understanding-js-the-event-loop-959beae3ac40)
 * [Philip Roberts: What the heck is the event loop anyway? | JSConf EU](https://www.youtube.com/watch?v=8aGhZQkoFbQ)
+* [10分钟理解JS引擎的执行机制](https://segmentfault.com/a/1190000012806637)
+* [event loop js事件循环 microtask macrotask](https://blog.csdn.net/sjn0503/article/details/76087631)
