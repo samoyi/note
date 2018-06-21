@@ -2,7 +2,19 @@
 
 ![Runtime concepts](./images/RuntimeConcepts.svg)
 
-## Call stack
+
+## The JavaScript Engine
+A popular example of a JavaScript Engine is Google’s V8 engine. The V8 engine is
+ used inside Chrome and Node.js for example. Here is a very simplified view of
+what it looks like:  
+
+![V8 Engine](./images/V8Engine.png)  
+
+The Engine consists of two main components:
+* Memory Heap — this is where the memory allocation happens
+* Call Stack — this is where your stack frames are as your code executes
+
+### Call stack
 1. JavaScript has a single call stack in which it keeps track of what function
 we’re currently executing and what function is to be executed after that. 因为只
 有一个调用栈所以是单线程？
@@ -28,7 +40,7 @@ first one containing `foo`'s arguments and local variables.
  only `bar`'s call frame).
 6. When `bar` returns, the stack is empty.
 
-**Heap**:
+### Memory Heap
 Objects are allocated in a heap which is just a name to denote a large mostly
 unstructured region of memory.（日文：オブジェクトはヒープに割り当てられています。
 ヒープは、メモリの大規模で大部分は構造化されていない領域を意味する名前です。）
@@ -52,7 +64,9 @@ Table，等待被 JS 执行。
 ## Event Table and Event Queue
 1. 在没有异步操作的情况下，JS 就会按照上面 `Stack` 说明中的方式，不断的线性执行，直到
 程序结束。但如果程序中执行了一个异步操作，就会涉及到另外两个数据结构：Event Table and
-Event Queue。（似乎这两者合起来统称 Message Queue）
+Event Queue。
+2. 似乎这两者合起来统称 Message Queue。另外，结合上面的图片，看起来也可以成为
+Callback Queue。
 2. 并不是所有的异步操作都会被加入到 Message Queue 中，详见下面的 【Macrotask 和
 Microtask】
 
@@ -293,5 +307,6 @@ queue.
 * [JavaScript Event Loop Explained](https://medium.com/front-end-hacking/javascript-event-loop-explained-4cd26af121d4)
 * [Understanding JS: The Event Loop](https://hackernoon.com/understanding-js-the-event-loop-959beae3ac40)
 * [Philip Roberts: What the heck is the event loop anyway? | JSConf EU](https://www.youtube.com/watch?v=8aGhZQkoFbQ)
+* [How JavaScript works: an overview of the engine, the runtime, and the call stack](https://blog.sessionstack.com/how-does-javascript-actually-work-part-1-b0bacc073cf)
 * [10分钟理解JS引擎的执行机制](https://segmentfault.com/a/1190000012806637)
 * [event loop js事件循环 microtask macrotask](https://blog.csdn.net/sjn0503/article/details/76087631)
