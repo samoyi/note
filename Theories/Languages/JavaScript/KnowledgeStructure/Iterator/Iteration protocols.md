@@ -7,8 +7,7 @@ conventions.
 3. If an object has a `@@iterator` method, whose key is `Symbol.iterator`, this
 object will be an `iterable` object. So, when an iteration is applied to this
 object, an `iterator` will be returned by the `@@iterator` method, and this
-`iterator` has a 'next' method
-
+`iterator` has a `next` method
 
 
 ## Iterable protocol
@@ -33,7 +32,6 @@ console.log( str[Symbol.iterator]()); // StringIterator {}
 ```
 
 
-***
 ## Iterator protocol
 1. The iterator protocol defines a standard way to produce a sequence of values
 (either finite or infinite).
@@ -44,7 +42,7 @@ following semantics:
         * `value`: any JavaScript value returned by the iterator. Can be omitted
         when `done` is `true`.
         * `done`: Has the value `true` if the iterator is past the end of the
-        iterated sequence. Has the value false if the iterator was able to
+        iterated sequence. Has the value `false` if the iterator was able to
         produce the next value in the sequence.
     2. The `next` method always has to return an object with appropriate
     properties including `done` and `value`. If a non-object value gets returned
@@ -61,34 +59,32 @@ console.log( iterator.next() ); // {value: undefined, done: true}
 ```
 
 
-
-***
 ## Built-in iteration constructs
 Some built-in constructs, such as the spread operator, use the same iteration
 protocol under the hood. 下面通过给一个字符串实例添加`@@iterator`方法使其覆盖原型中的
 相应方法来改变该字符串对象的迭代规则
 ```js
 var someString = new String('hi');
-// var someString = 'hi'; // tye using primitive value, see what happens
+// var someString = 'hi'; // try using primitive value, see what happens
 
 console.log( [...someString] ); // ["h", "i"]
 
 someString[Symbol.iterator] = function() {
 	return {
 		next: function() {
-			if (this._first) {
-				this._first = false;
-				return { value: 'bye', done: false };
+			if (this._index !==3) {
+				return { value: this._chars[this._index++], done: false };
 			}
 			else {
 				return { done: true };
 			}
 		},
-		_first: true
+		_chars: ['hello ', 'world ', '!'],
+        _index: 0,
 	};
 };
 
-console.log( [...someString] ); // ["bye"]
+console.log( [...someString] ); // ["hello ", "world ", "!"]
 console.log( someString+'' );   // hi
 ```
 

@@ -2,8 +2,8 @@
 
 **收录原则：**  
 如果实现同一目的的两种方法，一种方法和另一种相比没有任何优点而只有缺点，则不收录。例如，
-使用`Set`数据结构可以很好地实现数组去重，替代了之前需要自己编写去重函数，则这里不收录自
-编写的去重函数。对自编写去重函数的研究会放在算法研究部分。
+使用 `Set` 数据结构可以很好地实现数组去重，替代了之前需要自己编写去重函数，则这里不收录
+自编写的去重函数。对自编写去重函数的研究会放在算法研究部分。
 
 
 ##  创建数组
@@ -27,7 +27,6 @@ assert.deepEqual(arr1, arr2); // AssertionError
 ### 使用字面量
 
 ### `Array.of()`
-
 
 
 ## 查询数组
@@ -102,7 +101,7 @@ Array.prototype.push.apply( arr0, arr1 ); // ES6之前
 ```
 * 字面量合并
 ```js
-[0, 1, 2, ...arr]
+[0, 1, 2, ...arr1, ...arr2]
 ```
 
 ### 归并数组
@@ -127,7 +126,7 @@ Array.prototype.push.apply( arr0, arr1 ); // ES6之前
 
 
 ## 数组去重与搜重
-### `Set`去重  不改变原数组
+### `Set` 去重  不改变原数组
 `Set`中对相等性判断的算法为 Same-value-zero equality
 ```js
 const arr1 = [-0, NaN, NaN];
@@ -156,7 +155,7 @@ function duplicateItems(arr){
 }
 ```
 
-### 找出所有重复的index
+### 找出所有重复的 index
 ```js
 function findDuplicateIndexes(arr){
     let oSameIndexes = {};
@@ -179,6 +178,159 @@ function findDuplicateIndexes(arr){
     return oSameIndexes;
 }
 ```
+
+
+## 空数组项和 `undefined` 项
+### 空数组项和 `undefined` 项的区别
+```js
+console.log(arr1); // ["a", empty, "c"]
+console.log(arr2); // ["a", undefined, "c"]
+console.log( arr1.length ); // 3  length 属性并不是根据数组项的个数来决定的
+console.log( arr2.length ); // 3
+console.log(arr1[1] === arr2[1]); // true
+console.log('1' in arr1); // false
+console.log('1' in arr2); // true
+```
+
+### 各种数组方法对空数组项和 `undefined` 项的处理
+* `forEach()`、 `filter()`、 `every()` 和 `some()` 都会跳过空数组项；`map()` 会跳过
+空数组项，但会保留这个值
+    ```js
+    let arr = [ "a", , "c"],
+        num = 0,
+        result = [];
+
+    function reset(sFnName){
+        console.log("\n" + sFnName + "---------------------------");
+        num = 0;
+        result = [];
+    }
+
+    reset("forEach");
+    arr.forEach(item=>{
+        num++;
+    });
+    console.log(num); // 2
+
+    reset("every");
+    arr.every(item=>{
+        num++;
+        return true;
+    });
+    console.log(num); // 2
+
+    reset("filter");
+    result = arr.filter(item=>{
+        num++;
+        return true;
+    });
+    console.log(num); // 2
+    console.log(result); // ["a", "c"]
+    console.log(result.length); // 2
+
+    reset("some");
+    arr.some(item=>{
+        num++;
+        return false;
+    });
+    console.log(num); // 2
+
+    reset("map");
+    result = arr.map(item=>{
+        num++;
+        return item;
+    });
+    console.log(num); // 2
+    console.log(result); // ["a", empty, "c"]
+    console.log(result.length); // 3
+    ```
+
+* `Object.keys()`、`Object.values()` 和 `Object.entries()` 会忽略空数组项：
+    ```js
+    const arr1 = [ "a", , "c"];
+
+    console.log(Object.keys(arr1).length);    // 2
+    console.log(Object.values(arr1).length);  // 2
+    console.log(Object.entries(arr1).length); // 2
+    ```
+
+* 实例方法 `entries()`、`keys()` 和 `values()` 会遍历空数组项：
+    ```js
+    const arr1 = [ "a", , "c"];
+
+    const keys = arr1.keys();
+    const values = arr1.values();
+    const entries = arr1.entries();
+
+    console.log(keys.next().value); // 0
+    console.log(keys.next().value); // 1
+    console.log(keys.next().value); // 2
+
+    console.log(values.next().value); // a
+    console.log(values.next().value); // undefined
+    console.log(values.next().value); // c
+
+    console.log(entries.next().value); // [0, "a"]
+    console.log(entries.next().value); // [1, undefined]
+    console.log(entries.next().value); // [2, "c"]
+    ```
+
+* `for...in` 不会遍历空数组项，但 `for...of` 会遍历空数组项
+    ```js
+    const arr1 = ["a", , "c"];
+
+    for(let key in arr1){
+        console.log(key); // 输出两次，分别为 0、2
+    }
+
+    for(let item of arr1){
+        console.log(item===undefined); // 输出三次，分别为 false、true、false
+    }
+    ```
+
+* `join()` 和 `toString()` 会将空数组项和 `undefined`（以及`null`） 转化为空字符串：
+    ```js
+    const arr1 = [ "a", , "c"];
+    const arr2 = [ "a", undefined, "c"];
+    const arr3 = [ "a", null, "c"];
+
+    console.log(arr1.join());     // a,,c
+    console.log(arr1.toString()); // a,,c
+    console.log(arr2.join());     // a,,c
+    console.log(arr2.toString()); // a,,c
+    console.log(arr3.join());     // a,,c
+    console.log(arr3.toString()); // a,,c
+    ```
+
+* `Array.from`方法会将数组的空数组项转为 `undefined`：
+    ```js
+    const arr1 = [ "a", , "c"];
+    console.log('1' in arr1); // false
+    const arr2 = Array.from(arr1);
+    console.log('1' in arr2); // true
+    ```
+
+* 扩展运算符（`...`）也会将空数组项转为 `undefined`：
+    ```js
+    const arr1 = [ "a", , "c"];
+    console.log('1' in arr1); // false
+    const arr2 = [...arr1];
+    console.log('1' in arr2); // true
+    ```
+
+* `copyWithin()`会连空数组项一起拷贝，但不会把空数组项转化为：
+    ```js
+    const arr1 = [ "a", , "b" , , "c"];
+    console.log('1' in arr1); // false
+    const arr2 = arr1.copyWithin(2, 0);
+    console.log(arr2); // ["a", empty, "a", empty, "b"]
+    console.log('1' in arr2); // true
+    ```
+
+* `fill()`会将空数组项视为正常的数组位置：
+    ```js
+    new Array(3).fill('a') // ["a","a","a"]
+    ```
 
 
 ## 其他

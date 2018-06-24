@@ -1,26 +1,31 @@
 #String
 
-***
+
 ## String in JS
-1. JavaScript uses the UTF-16 encoding of the Unicode character set, and JS
-strings are sequences of unsigned 16-bit values.
+1. JavaScript uses the USC-2 encoding of the Unicode character set, and JS
+strings are sequences of unsigned 16-bit values.（之前有过疑问“为什么大部分汉字的
+UTF-8 编码是3字节，但 `length` 却是 `1`？”，就是因为这些汉字会先被 JS 引擎解码为
+Unicode 再使用 USC-2 编码，根据 USC-2 的编码规则，编码结果就是两个字节）
 2. The most commonly used Unicode characters (those from the “basic multilingual
  plane”) have codepoints that fit in 16 bits and can be represented by a single
  element of a string. Unicode characters whose codepoints do not fit in 16 bits
- are encoded following the rules of UTF-16 as a sequence (known as a “surrogate
+ are encoded following the rules of USC-2 as a sequence (known as a “surrogate
 pair”) of two 16-bit values. This means that a JS string of `length` 2 (two
 16-bit values) might represent only a single Unicode character
 ```js
 let p = "π"; // π is 1 character with 16-bit codepoint 0x03c0
 let e = "𝑒"; // 𝑒 is 1 character with 17-bit codepoint 0x1d452
 p.length // => 1: p consists of 1 16-bit element
-e.length // => 2: UTF-16 encoding of 𝑒 is 2 16-bit values: "\ud835\udc52"
+e.length // => 2: USC-2 encoding of 𝑒 is 2 16-bit values: "\ud835\udc52"
 ```
+这也证明了 JS 是使用 UCS-2 编码而非 UTF-16 编码，因为 UTF-16 编码可以用两字节表示 BMP
+以外的字符，而 USC-2 只能表示 BMP 的字符。
 3. The `length` of a string is the number of 16-bit values it contains, not the
 number of characters.
 4. The various string-manipulation methods defined by JavaScript operate on
 16-bit values, not on characters. They do not treat surrogate pairs specially,
-perform no normalization of the string, and do not even ensure that a string is well-formed UTF-16.
+perform no normalization of the string, and do not even ensure that a string is
+well-formed USC-2.
 5. ECMAScript strings are immutable.
     * You can access the text at any index of a string, but JavaScript provides
     no way to alter the text of an existing string.

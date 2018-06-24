@@ -28,6 +28,194 @@ retrieve a value they can work with.
 * 一元减操作符主要用于表示负数。而当应用于非数值时，一元减操作符遵循与一元加操作符相同的
 规则，最后再将得到的数值转换为负数。
 
+### Spread syntax
+Spread syntax allows an iterable such as an array expression or string to be
+expanded in places where zero or more arguments (for function calls) or elements
+ (for array literals) are expected, or an object expression to be expanded in
+places where zero or more key-value pairs (for object literals) are expected.
+#### Syntax
+* For function calls:
+```js
+myFunction(...iterableObj);
+```
+* For array literals or strings:
+```js
+[...iterableObj, '4', 'five', 6];
+```
+* For object literals (new in ECMAScript 2018):
+```js
+let objClone = { ...obj };
+```
+
+#### Usage
+##### Replace apply
+Any argument in the argument list can use spread syntax and it can be used
+multiple times:
+```js
+function myFunction(v, w, x, y, z) { }
+var args = [0, 1];
+myFunction(-1, ...args, 2, ...[3]);
+```
+
+##### Apply for `new`
+When calling a constructor with `new`, it's not possible to directly use an
+array and `apply` (`apply` does a `[[Call]]` and not a `[[Construct]]`).
+However, an array can be easily used with `new` thanks to spread syntax:
+```js
+let dateFields = [1970, 0, 1];  // 1 Jan 1970
+let d = new Date(...dateFields);
+```
+
+To use `new` with an array of parameters without spread syntax, you would have
+to do it indirectly through partial application:
+```js
+function applyAndNew(fnConstructor, args) {
+    function partial () {
+       return fnConstructor.apply(this, args);
+    };
+    if (typeof fnConstructor.prototype === "object") {
+       partial.prototype = Object.create(fnConstructor.prototype);
+    }
+    return partial;
+}
+
+function myConstructor () {
+   console.log("arguments.length: " + arguments.length);
+   this.prop1="val1";
+   this.prop2="val2";
+};
+
+var myArguments = ["hi", "how", "are", "you", "mr", null];
+var myConstructorWithArguments = applyAndNew(myConstructor, myArguments);
+
+console.log(new myConstructorWithArguments());
+```
+
+##### 拷贝和拼接数组
+```js
+var arr = [1, 2, 3];
+var arr2 = [...arr]; // like arr.slice()
+
+var parts = ['shoulders', 'knees'];
+var lyrics = ['head', ...parts, 'and', 'toes'];
+// ["head", "shoulders", "knees", "and", "toes"]
+```
+
+##### 结合 destructuring 和 rest syntax
+看下面浅拷贝数组的例子：
+```js
+const arr1 = [1, 2];
+const [...arr2] = arr1;
+```
+`const [x, y] = arr1` 是 destructuring 的形式，`function (...arr2)` 是 rest
+syntax 的形式。上述拷贝就好像是进行了如下的过程：`x` 和 `y` 分别被赋值 `1` 和 `2`，然
+后使用 rest “参数” `arr2` 获得 `x` 和 `y` 的值。结合其他变量的例子：
+```js
+const list = [1, 2, 3];
+const [a, ...rest] = list;
+console.log(a); // 1
+console.log(rest); // [2, 3]
+```
+和 rest syntax 一样，`...rest` 也只能出现在最后一项。如果不是最后 rest 参数没在最后一
+项一样报错：
+```shell
+Uncaught SyntaxError: Rest element must be last element
+```
+从错误信息也可以看出来，这也是 rest syntax，只不过是用于数组项而非函数参数。
+
+##### 将字符串转为数组
+尤其适用于处理多字节字符的情况：
+```js
+const str = '我𝑒你';
+console.log(str.length); // 4
+console.log(str.split('')); // ["我", "�", "�", "你"]
+console.log([...str].length); // 3
+console.log([...str]); // ["我", "𝑒", "你"]
+```
+
+##### 将可遍历（iterable）对象转换为数组
+任何实现了 Iterator 接口的对象，都可以用扩展运算符转为真正的数组
+```js
+let nodeList = document.querySelectorAll('div');
+let array = [...nodeList];
+
+let set = new Set([1, 2, 3]);
+console.log([...set]); // [1, 2, 3]
+```
+
+对于那些没有部署 Iterator 接口的类数组对象，扩展运算符就无法将其转为真正的数组，只能使
+用 `Array.from`
+```js
+let arrayLike = {
+    '0': 'a',
+    '1': 'b',
+    '2': 'c',
+    length: 3,
+};
+
+[...arrayLike]; // Uncaught TypeError: arrayLike is not iterable
+```
+
+##### Spread in object literals
+1. Copies own enumerable properties from a provided object onto a new object.
+Shallow-cloning (excluding prototype) or merging of objects is now possible
+using a shorter syntax than `Object.assign()`.
+```js
+var obj1 = { foo: 'bar', x: 42 };
+var obj2 = { foo: 'baz', y: 13 };
+
+var clonedObj = { ...obj1 };
+// Object { foo: "bar", x: 42 }
+
+var mergedObj = { ...obj1, ...obj2 };
+// Object { foo: "baz", x: 42, y: 13 }
+```
+2. Note that `Object.assign()` triggers `setters` whereas spread syntax doesn't.
+```js
+let obj1 = {};
+let obj2 = {};
+
+Object.defineProperties(obj1, {
+    name: {
+        get(){
+            return '33';
+        },
+        enumerable: true,
+    },
+    age: {
+        get(){
+            return 33;
+        },
+        enumerable: true,
+    },
+});
+Object.defineProperties(obj2, {
+    name: {
+        get(){
+            return '33';
+        },
+        enumerable: true,
+    },
+    age: {
+        get(){
+            return 22;
+        },
+        enumerable: true,
+    },
+    sex: {
+        get(){
+            return 'female';
+        },
+        enumerable: true,
+    },
+});
+
+let obj = {...obj1, ...obj2};
+console.log(obj); // {name: "33", age: 22, sex: "female"}
+
+obj = Object.assign(obj1, obj2); // TypeError: Cannot set property name of #<Object> which has only a getter
+```
+
 
 ## Bitwise Operators
 ### Basic

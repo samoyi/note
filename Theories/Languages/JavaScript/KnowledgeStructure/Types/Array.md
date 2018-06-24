@@ -1,55 +1,19 @@
 # Array
 
 
-***
 ## JS数组区别于其他语言数组的特性
 * JavaScript arrays are general-purpose objects with numeric properties and a
 special `length` property.
 * Array elements can be any JavaScript value.
 * Arrays can grow or shrink dynamically and can be sparse.
 * JavaScript implementations perform lots of optimizations so that typical uses
-of JavaScript arrays are very fast. 在JavaScript中访问数组元素是一个O(1)操作，和简
-单的变量查找效率一样。而访问对象上的属性是一个O(n)操作。
+of JavaScript arrays are very fast. 在 JavaScript 中访问数组元素是一个 O(1) 操作，
+和简单的变量查找效率一样。而访问对象上的属性是一个 O(n) 操作。
 * Arrays can contain a maximum of 4,294,967,295（2^32）items。Trying to create
 an array with an initial size approaching this maximum may cause a long-running
 script error.
-* 空数组项和```undefined```项
-```js
-var arr1 = new Array( 1 );
-var arr2 = [undefined];
-console.log( 0 in arr1 ); // false
-console.log( 0 in arr2 ); // true
-console.log( arr1.length ); // 1
-console.log( arr2.length ); // 1
-// 因为 new Array()会设定数组的length属性
-```
-    * `forEach()`、 `filter()`、 `every()`和`some()`都会跳过空位，`map()`会跳过
-    空位，但会保留这个值，`join()`和`toString()`会将空位视为`undefined`，而
-    `undefined`和`null`会被处理成空字符串。
-    * 在ES6的新方法中，会将空位转为`undefined`。     
-    * `Array.from`方法会将数组的空位，转为`undefined`
-        ```js
-        Array.from(['a',,'b']) // [ "a", undefined, "b" ]
-        ```
-    * 扩展运算符（...）也会将空位转为`undefined。`
-        ```js
-        [...['a',,'b']]  // [ "a", undefined, "b" ]
-        ```
-    * `copyWithin()`会连空位一起拷贝。
-        ```js
-        [,'a','b',,].copyWithin(2,0)     // [,"a",,"a"]
-        ```
-    * `fill()`会将空位视为正常的数组位置。
-        ```js
-        new Array(3).fill('a') // ["a","a","a"]
-        ```
-    * `for...of`循环也会遍历空位。
-    * `entries()`、`keys()`、`values()`、`find()`和`findIndex()`会将空位处理成
-    `undefined`。
 
 
-
-***
 ## `length`
 The name of this property is easy to make people misunderstood. It actual is not
 the length of an array. In the specification:
@@ -69,11 +33,11 @@ console.log(arr[2]); // 3
 console.log( arr.length ); // 3
 ```
 
-***
+
 ## 创建
 Arrays can be created in three basic ways.
 
-### The first is to use the ```Array``` constructor
+### The first is to use the `Array` constructor
 1. If you know the number of items that will be in the array, you can pass the
 count into the constructor, and the length property will automatically be
 created with that value.   
@@ -101,7 +65,20 @@ arr["2"] = 666;
         console.log( Array.isArray(args) ); // true
     }
     ```
-    2. 对于那些没有部署Iterator接口的类似数组的对象，扩展运算符就无法将其转为真正的数组。
+    2. 对于那些没有部署Iterator接口的类似数组的对象，扩展运算符就无法将其转为真正的数
+    组，只能使用 `Array.from`：
+    ```js
+    let arrayLike = {
+        '0': 'a',
+        '1': 'b',
+        '2': 'c',
+        length: 3,
+    };
+
+    console.log(Array.from(arrayLike)); // ["a", "b", "c"]
+    [...arrayLike]; // Uncaught TypeError: arrayLike is not iterable
+    ```
+
 * As with objects, the Array constructor isn’t called when an array is created
 using array literal notation
 
@@ -117,7 +94,7 @@ using array literal notation
 * Note that you can index an array using numbers that are negative or that are not inte-gers. When you do this, the number is converted to a string, and that string is used as the property name.
 * The fact that array indexes are simply a special type of object property name means that JavaScript arrays have no notion of an “out of bounds” error. When you try to query a nonexistent property of any object, you don’t get an error, you simply get undefined . This is just as true for arrays as it is for objects.
 * Since arrays are objects, they can inherit elements from their prototype. In ECMAScript 5, they can even have array elements defined by getter and setter methods. If an array does inherit elements or use getters and setters for elements, you should expect it to use a nonoptimized code path: the time to access an element of such an array would be similar to regular object property lookup times.
-    ```
+    ```js
     let arr = [];
     Object.defineProperty(arr, 0,{
         get: function()
@@ -138,131 +115,185 @@ using array literal notation
 
 
 ## Sparse Arrays
-* A sparse array is one in which the elements do not have contiguous indexes starting at 0.
-* Sparse arrays can be created with the  Array() constructor or simply by assigning to an array index larger than the current array length. You can also make an array sparse with the  delete operator.
-* Arrays that are sufficiently sparse are typically implemented in a slower, more memory-efficient way than dense arrays are, and looking up elements in such an array will take about as much time as regular object property lookup.
-* ==Note that when you omit value in an array literal, you are not creating a sparse array. The omitted element exists in the array and has the value  undefined . This is subtly different than array elements that do not exist at all. You can detect the difference between these two cases with the  in operator. 实测都是false. The difference between  a1 and  a2 is also apparent when you use a  for/in loop:  实测都不会遍历==
-    ```
+```js
+console.log(arr1); // ["a", empty, "c"]
+console.log(arr2); // ["a", undefined, "c"]
+console.log( arr1.length ); // 3  length 属性并不是根据数组项的个数来决定的
+console.log( arr2.length ); // 3
+console.log(arr1[1] === arr2[1]); // true
+console.log('1' in arr1); // false
+console.log('1' in arr2); // true
+```
+
+* A sparse array is one in which the elements do not have contiguous indexes
+starting at 0.
+* Sparse arrays can be created with the `Array()` constructor or simply by
+assigning to an array index larger than the current array length. You can also
+make an array sparse with the  delete operator.
+* Arrays that are sufficiently sparse are typically implemented in a slower,
+more memory-efficient way than dense arrays are, and looking up elements in such
+ an array will take about as much time as regular object property lookup.
+* Note that when you omit value in an array literal, you are not creating a
+sparse array. The omitted element exists in the array and has the value
+`undefined` . This is subtly different than array elements that do not exist at
+all. You can detect the difference between these two cases with the in operator.
+实测都是 `false`. The difference between `a1` and `a2` is also apparent when you
+use a `for`/`in` loop:  实测都不会遍历
+    ```js
     var a1 = [,,,]; // This array is [undefined, undefined, undefined]
     var a2 = new Array(3); // This array has no values at all
     0 in a1 // => true: a1 has an element with index 0
     0 in a2 // => false: a2 has no element with index 0
     ```
-## 读取和设置
-1. 如果设置某个值的索引超过了数组现有项数，数组就会自动增加到该索引加1的长度.
-2. length property is that it’s not read-only. By setting the length property, you can easily remove items from or add items to the end of the array.
 
+### 读取和设置
+1. 如果设置某个值的索引超过了数组现有项数，数组就会自动增加到该索引加1的长度.
+2. `length` property is that it’s not read-only. By setting the `length`
+property, you can easily remove items from or add items to the end of the array.
 
 
 ## Detecting Arrays
-1. ```instanceof```  
-When dealing with a single web page, and therefore a single global scope, the instanceof operator works well. The one problem with instanceof is that it assumes a single global execution context. If you are dealing with multiple frames in a web page, you’re really dealing with two distinct global execution contexts and therefore two versions of the Array constructor. If you were to pass an array from one frame into a second frame, that array has a different constructor function than an array created natively in the second frame.
-2. ```Array.isArray()```  
-The purpose of this method is to definitively determine if a given value is an array regardless of the global execution context in which it was created.
+### `instanceof`
+When dealing with a single web page, and therefore a single global scope, the
+`instanceof` operator works well. The one problem with `instanceof` is that it
+assumes a single global execution context. If you are dealing with multiple
+frames in a web page, you’re really dealing with two distinct global execution
+contexts and therefore two versions of the Array constructor. If you were to
+pass an array from one frame into a second frame, that array has a different
+constructor function than an array created natively in the second frame.
 
-
-
-
-
+### `Array.isArray()`  
+The purpose of this method is to definitively determine if a given value is an
+array regardless of the global execution context in which it was created.
 
 
 ## 转换方法
-#### 将数组转换为其他数据类型
-1. **```join()方法```**  
-    * 使用不同的分隔符来构建输出字符串，该方法的参数即作为分隔符的字符串。如果不给join()方法传入任何值，或者传入undefined，则使用逗号作为分隔符。
-    * 如果数组中的某一项的值是null或者undefined，那么该值在以上方法返回的结果中以空字符串表示
+### 将数组转换为其他数据类型
+#### `join()`
+1. 使用不同的分隔符来构建输出字符串，该方法的参数即作为分隔符的字符串。如果不给
+`join()` 方法传入任何值，或者传入 `undefined`，则使用逗号作为分隔符。
+2. 如果数组中的某一项的值是 `null` 或者 `undefined`，那么该值在以上方法返回的结果中以
+空字符串表示
 
-#### 将其他数据类型转换为数组
-1. ES6 ```Array.from()```：将类数组对象（array-like object）和可遍历（iterable）的对象（包括ES6新增的数据结构Set和Map）转换为数组
-    Array.from(arrayLike[, mapFn[, thisArg]])
-1. 只要是部署了Iterator接口的数据结构，Array.from都能将其转为数组。
-2. Array.from还可以接受第二个参数，作用类似于数组的map方法，用来对每个元素进行处理，将处理后的值放入返回的数组。
+### 将其他数据类型转换为数组
+#### `Array.from()`
+1. 将类数组对象（array-like object）和可遍历（iterable）的对象转换为数组
+2. 只要是部署了 Iterator接口的数据结构，`Array.from` 都能将其转为数组。
+3. `Array.from` 还可以接受第二个参数，作用类似于数组的 `map` 方法，用来对每个元素进行
+处理，将处理后的值放入返回的数组。
+    ```js
     Array.from(arrayLike, x => x * x);
-3. 使用这个方法还可以创建数组
-Array.from({ length: 10 }, a => Math.random() );
-4. 对字符串使用该方法并取得返回数组的长度，可以避免JavaScript将大于\uFFFF的Unicode字符，算作两个字符的bug。
-
-
+    ```
+4. 使用这个方法还可以创建数组
+    ```js
+    Array.from({ length: 10 }, a => Math.random() );
+    ```
+5. 对字符串使用该方法并取得返回数组的长度，可以避免 JavaScript 将大于 `\uFFFF` 的
+Unicode 字符，算作两个字符的 bug。
 
 
 ## Stack Methods
-##### 概述
-An array object can act just like a stack, which is one of a group of data structures that restrict the insertion and removal of items. A stack is referred to as a last-in-fi rst-out (LIFO) structure, meaning that the most recently added item is the fi rst one removed. The insertion (called a push) and removal (called a pop) of items in a stack occur at only one point: the top of the stack. ECMAScript arrays provide  push() and  pop() specifi cally to allow stack-like behavior.
-##### push()
-The  push() method accepts any number of arguments and adds them to the end of the array,returning the array’s new length.
-##### pop()
-The  pop() method, on the other hand, removes the last item in the array, decrements the array’s  length , and returns that item.
+An array object can act just like a stack, which is one of a group of data
+structures that restrict the insertion and removal of items. A stack is referred
+ to as a last-in-fi rst-out (LIFO) structure, meaning that the most recently
+added item is the fi rst one removed. The insertion (called a push) and removal
+(called a pop) of items in a stack occur at only one point: the top of
+the stack. ECMAScript arrays provide `push()` and `pop()` specifi cally to allow
+ stack-like behavior.
 
+### `push()`
+The  `push()` method accepts any number of arguments and adds them to the end of
+ the array,returning the array’s new length.
+
+### `pop()`
+The `pop()` method, on the other hand, removes the last item in the array,
+decrements the array’s `length` , and returns that item.
 
 
 ## Queue Methods
-##### 概述
-Just as stacks restrict access in a LIFO data structure, queues restrict access in a fi rst-in-fi rst-out (FIFO) data structure. A queue adds items to the end of a list and retrieves items from the front of the list.
-##### shift()
-removes the fi rst item in the array and returns itt, decrementing the length of the array by one.
-##### unshift()
-adds any number of items to the front of an array and returns the new array length.
+Just as stacks restrict access in a LIFO data structure, queues restrict access
+in a first-in-first-out (FIFO) data structure. A queue adds items to the end of
+a list and retrieves items from the front of the list.
+
+### `shift()`
+removes the first item in the array and returns itt, decrementing the `length`
+of the array by one.
+
+### `unshift()`
+adds any number of items to the front of an array and returns the new array
+`length`.
 
 
 ## Reordering Methods
-Both ```reverse()``` and ```sort()``` return a reference to the array on which they
+Both `reverse()` and `sort()` return a reference to the array on which they
 were applied.
-##### reverse()
-##### sort()
-1. By default, ```the sort()``` method puts the items in ascending order.  
-To do this, the sort() method calls the String() casting function on every
-item and then compares the strings to determine the correct order. This occurs even if all items in an
-array are numbers
-    ```
+
+### `reverse()`
+
+### `sort()`
+1. By default, `the sort()` method puts the items in ascending order. To do
+this, the `sort()` method calls the `String()` casting function on every item
+and then compares the strings to determine the correct order. This occurs even
+if all items in an array are numbers
+    ```js
     var values = [0, 1, 5, 10, 15];
     values.sort();
     alert(values); //0,1,10,15,5
     ```
-    If an array contains undefined elements, they are sorted to the end of the array.
-2. Clearly, this is not an optimal solution in many cases, so the sort() method allows you to pass in a *comparison function* that indicates which value should come before which.  
-A comparison function accepts two arguments and returns a negative number if the first argument
-should come before the second, a zero if the arguments are equal, or a positive number if the first
-argument should come after the second.
-```
-function compare(value1, value2)
-{
-    if (value1 < value2)
-    {
-        return -1;
+If an array contains undefined elements, they are sorted to the end of the array.
+2. Clearly, this is not an optimal solution in many cases, so the `sort()`
+method allows you to pass in a *comparison function* that indicates which value
+should come before which.  
+3. A comparison function accepts two arguments and returns a negative number if
+the first argument should come before the second, a zero if the arguments are
+equal, or a positive number if the firstargument should come after the second.
+    ```js
+    function compare(value1, value2){
+        if (value1 < value2)
+        {
+            return -1;
+        }
+        else if (value1 > value2)
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
+        }
     }
-    else if (value1 > value2)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
 
-var values = [0, 1, 5, 10, 15];
-values.sort(compare);
-alert(values); //0,1,5,10,15
-```
+    var values = [0, 1, 5, 10, 15];
+    values.sort(compare);
+    alert(values); //0,1,5,10,15
+    ```
 
 
 ## Manipulation Methods
-##### concat()
-1. This method begins by creating a copy of the array and then appending the method arguments to the end and returning the newly constructed array.
-2. When no arguments are passed in, ```concat()``` simply clones the array and returns it.
-3. If one or more arrays are passed in, ```concat()``` appends each item in these arrays to the end of the result. That means,  ```concat()``` does not recursively flatten arrays of arrays
-    ```
+### concat()
+1. This method begins by creating a copy of the array and then appending the
+method arguments to the end and returning the newly constructed array.
+2. When no arguments are passed in, `concat()` simply clones the array and
+returns it.
+3. If one or more arrays are passed in, `concat()` appends each item in these
+arrays to the end of the result. That means, `concat()` does not recursively
+flatten arrays of arrays
+    ```js
     let a = [1, 2, 3];
     console.log( a.concat([4, 5]) ); // [1, 2, 3, 4, 5]
     console.log( a.concat([[4, 5]]) ); // [1, 2, 3, Array[2]]
     ```
 
-##### slice()
+### slice()
 1. returns a slice, or subarray, of the specified array.
 2. does not modify the array on which it is invoked
-3. If either the start or end position of ```slice()``` is a negative number, then the number is subtracted from the length of the array to determine the appropriate locations. For example, calling ```slice(-2, -1)``` on an array with five items is the same as calling ```slice(3, 4)```. If the end position is smaller than the start, then an empty array is returned.
+3. If either the start or end position of `slice()` is a negative number, then
+the number is subtracted from the `length` of the array to determine the
+appropriate locations. For example, calling `slice(-2, -1)` on an array with
+ five items is the same as calling `slice(3, 4)`. If the end position is smaller
+  than the start, then an empty array is returned.
 
-##### splice()
+### splice()
 1. Deletion — Any number of items can be deleted from the array by specifying just two arguments: the position of the first item to delete and the number of items to delete. 如果只有第一个参数，则从该位置开始直到结束的所有数组项都被删除
 2. Insertion — Items can be inserted into a specific position by providing three or more arguments: the starting position, 0 (the number of items to delete), and the item to insert. Optionally, you can specify a fourth parameter, fifth parameter, or any number of other parameters to insert.
 3. Replacement — Items can be inserted into a specific position while simultaneously deleting items, if you specify three arguments: the starting position, the number of items to delete, and any number of items to insert. The number of items to insert doesn’t have to match the number of items to delete.
@@ -322,65 +353,56 @@ fills all the elements of an array from a start index to an end index with a **s
 3. The function passed into one of these methods will receive
 three arguments: the array item value, the position of the item in the array, and the array object
 itself.
-4. 不会遍历数组空项(```undefined```不算空项)，但map方法有个奇怪的地方：虽然不会遍历数组空项，但返回的结果数组却会存在一个空位。
-    ```
-        let arr = [ "a", , "c"],
-        	num = 0,
-        	result = [];
+4. 不会遍历数组空项(`undefined`不算空项)，但 `map` 方法有个奇怪的地方：虽然不会遍历数
+组空项，但返回的结果数组却会存在一个空位。
+    ```js
+    let arr = [ "a", , "c"],
+        num = 0,
+        result = [];
 
-        function reset(sFnName)
-        {
-        	console.log("\n" + sFnName + "---------------------------");
-        	num = 0;
-        	result = [];
-        	arr1 = [];
-        }
+    function reset(sFnName){
+        console.log("\n" + sFnName + "---------------------------");
+        num = 0;
+        result = [];
+    }
 
-        reset("forEach");
-        arr.forEach(function(item)
-        {
-        	num++;
-        });
-        console.log(num); // 2
+    reset("forEach");
+    arr.forEach(item=>{
+        num++;
+    });
+    console.log(num); // 2
 
-        reset("every");
-        arr.every(function(item)
-        {
-        	num++;
-        	return true;
-        });
-        console.log(num); // 2
+    reset("every");
+    arr.every(item=>{
+        num++;
+        return true;
+    });
+    console.log(num); // 2
 
-        reset("filter");
-        result = arr.filter(function(item)
-        {
-        	num++;
-        	return true;
-        });
-        console.log(num); // 2
-        console.log(result); // Array [ "a", "c" ]
-        console.log(result.length); // 2
+    reset("filter");
+    result = arr.filter(item=>{
+        num++;
+        return true;
+    });
+    console.log(num); // 2
+    console.log(result); // ["a", "c"]
+    console.log(result.length); // 2
 
-        reset("some");
-        arr.some(function(item)
-        {
-        	num++;
-        	return false;
-        });
-        console.log(num); // 2
+    reset("some");
+    arr.some(item=>{
+        num++;
+        return false;
+    });
+    console.log(num); // 2
 
-        reset("map");
-        result = arr.map(function(item)
-        {
-        	num++;
-        	return item;
-        });
-        console.log(num); // 2
-        console.log(result); // Array [ "a", <1 empty slot>, "c" ]
-        console.log(result.length); // 3
-        console.log(result[1]); // undefined
-        console.log( 1 in arr ); // false
-        console.log(result[2]); // c
+    reset("map");
+    result = arr.map(item=>{
+        num++;
+        return item;
+    });
+    console.log(num); // 2
+    console.log(result); // ["a", empty, "c"]
+    console.log(result.length); // 3
     ```
 5. By mathematical convention, every() returns true and some returns false when invoked on an empty array.
 6. simulate break  
@@ -414,8 +436,9 @@ function forEachCanBreak(arr,fn,oThis)
 
 
 #### 三. ES6 遍历数组方法  entries()，keys()和values()
-1. 它们都返回一个遍历器对象，可以用```for...of```循环进行遍历，唯一的区别是```keys()```是对键名的遍历、```values()```是对键值的遍历，```entries()```是对键值对的遍历。
-2. 如果不使用```for...of```循环，可以手动调用遍历器对象的```next()```方法进行遍历。
+1. 它们都返回一个遍历器对象，可以用 `for...of` 循环进行遍历，唯一的区别是 `keys()` 是
+对键名的遍历、`values()` 是对键值的遍历，`entries()` 是对键值对的遍历。
+2. 如果不使用 `for...of` 循环，可以手动调用遍历器对象的 `next()` 方法进行遍历。
 
 
 

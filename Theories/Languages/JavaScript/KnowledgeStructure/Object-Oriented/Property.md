@@ -126,6 +126,22 @@ setter cannot be read
     let newObj = Object.create( proto );
     console.log( newObj.x ); // 22
     ```
+* 属性名参数不只可以用字符串字面量，也可以用表达式：
+    ```js
+    let obj = {};
+    let str = 'a';
+
+    Object.defineProperty(obj, str, { value: 'Hello' });
+
+    Object.defineProperties(obj, {
+        [str + 'b']: {
+            value: 'World'
+        }
+    });
+
+    console.log(obj.a); // Hello
+    console.log(obj.ab); // World
+    ```
 
 ### Get
 * `Object.getOwnPropertyDescriptor()`
