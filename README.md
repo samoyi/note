@@ -38,3 +38,6 @@
 * 没看[Handling Edge Cases](https://vuejs.org/v2/guide/components-edge-cases.html)
 
 ### 《ECMAScript 6 入门》Promise 章节没看 Promise.try
+
+### HTTP
+整理各种headers
