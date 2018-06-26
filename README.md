@@ -13,6 +13,7 @@
 ### 其他
 * 正在整理fetch
 * 正在整理principles of TEST
+* `Theories\Languages\JavaScript\KnowledgeStructure\Object-Oriented\ES5CreateClass.md` 没有后三种创建类的方式
 
 ### 通过Vuex学习状态管理
 文档： `Theories\Architecture\StateManagement\byVuex.md`
