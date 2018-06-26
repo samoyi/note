@@ -1,7 +1,7 @@
-# 30X 重定向状态码的分析
+# 3XX Redirection
 
 
-## `301` `Moved Permanently`
+## `301 Moved Permanently`
 1. Indicates that the target resource has been assigned a new **permanent** URI
 and any future references to this resource ought to use one of the enclosed URIs.
 2. The server **should** generate a [`Location`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location)
@@ -21,7 +21,7 @@ sent by the server, where possible.
  the method definition or explicit cache controls
 
 
-## `302` `Found`
+## `302 Found`
 1. The `302` (`Found`) status code indicates that the target resource resides
 **temporarily** under a different URI.
 2. The server's response payload usually contains a short hypertext note with a
@@ -37,7 +37,7 @@ redirection.
 `307` (`Temporary Redirect`) status code can be used instead.
 
 
-## `303` `See Other`
+## `303 See Other`
 `303` 的意思并不是说“我更新了资源，你重新请求新的”，而是“你不应该对我这个 URI 进行
 `POST`，你还是来 `GET` 请求另一个 URI 吧”。比如用户想 `POST` 上传图片，但其实他并没有
 登录，所以服务器返回 `303` 并附上登录页面 URI，告诉用户代理你先 `GET` 这个登录页面进行
@@ -45,7 +45,13 @@ redirection.
 <mark>没看懂rfc7231的说明</mar>
 
 
-## `307` `Temporary Redirect`
+## `304 Not Modified`
+This is used for caching purposes. It tells the client that the response has not
+ been modified, so the client can continue to use the same cached version of the
+ response.
+
+
+## `307 Temporary Redirect`
 和 `302` 唯一的区别是它禁止用户代理在访问重定向 URI 时改变请求方法
 
 
