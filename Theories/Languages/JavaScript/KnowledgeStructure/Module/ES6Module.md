@@ -231,7 +231,14 @@ export default function(x) {
 ## 加载方式
 ### `<script>` 标签加载
 ```html
-<script type="module" src="./foo.js"></script>
+<script type="module">
+import {year} from './test.js';
+console.log(year);
+</script>
+```
+虽然看到过说下面这种加载方式的，但实测并不行：
+```html
+<script type="module" src="./test.js"></script>
 ```
 
 #### `defer` 加载
