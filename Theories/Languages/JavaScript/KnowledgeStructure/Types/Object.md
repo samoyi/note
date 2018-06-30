@@ -160,8 +160,58 @@ console.log(obj + '2233'); // TypeError: Cannot convert object to primitive valu
 
 ## 原型方法
 ### `valueOf()`
-Returns the primitive value of the specified object. If an object has no
+1. Returns the primitive value of the specified object. If an object has no
 primitive value, `valueOf` returns the object itself.
+2. You rarely need to invoke the `valueOf` method yourself; JavaScript
+automatically invokes it when encountering an object where a primitive value is
+expected.
+3. By default, the `valueOf` method is inherited by every object descended from
+`Object`. Every built-in core object overrides this method to return an
+appropriate value.
+4. 看起来除了针对包装类型对象，其他对象都是原样返回
+```js
+let obj = {x:3, y:5};
+console.log(obj.valueOf() === obj); // true
+
+let arr = [1, 2, 3];
+console.log(arr.valueOf() === arr); // true
+
+function fn(){return;}
+console.log(fn.valueOf() === fn); // true
+
+let re = /\d+/g;
+console.log(re.valueOf() === re); // true
+
+let date = new Date();
+console.log(date.valueOf()); // 1474267248866
+console.log(typeof date.valueOf()); // "number"
+
+let str = new String('hello');
+console.log(str.valueOf()); // "hello"
+console.log(typeof str.valueOf()); // "string"
+```
+
+### `toString()`
+1. The `toString()` method returns a string representing the object.
+2. Every object has a `toString()` method that is automatically called when the
+object is to be represented as a text value or when an object is referred to in
+a manner in which a string is expected.
+3. By default, the `toString()` method is inherited by every object descended
+from `Object`.
+4. 不过其他对象类型都会重写自己的`toString()`方法：
+```js
+let arr = [1, 2, 3];
+console.log(arr.toString()); // “1,2,3”
+```
+5. If this method is not overridden in a custom object, `toString()`
+ returns `"[object type]"`, where `type` is the object type. 常用语类型判断：
+    ```js
+    let obj = {};
+    console.log(obj.toString()); // "[object Object]"
+
+    let arr = [1, 2, 3];
+    console.log(Object.prototype.toString.call(arr)); // "[object Array]"
+    ```
 
 
 ## 属性和方法

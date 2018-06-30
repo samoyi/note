@@ -37,11 +37,11 @@ prototype.
 ### References `[[Prototype]]` by 2 ways:
 * `Object.prototype.__proto__`
 * `Object.getPrototypeOf`
-```js
-let obj = {};
-console.log( obj.__proto__ === obj.constructor.prototype); // true
-console.log( Object.getPrototypeOf(obj) === obj.constructor.prototype); // true
-```
+    ```js
+    let obj = {};
+    console.log( obj.__proto__ === obj.constructor.prototype); // true
+    console.log( Object.getPrototypeOf(obj) === obj.constructor.prototype); // true
+    ```
 
 ### Check prototye by `[[Prototype]]`
 The `isPrototypeOf()` method checks if an object exists in another object's
@@ -55,7 +55,13 @@ console.log( proto.isPrototypeOf(obj) ); // true
 ### Change instance's prototype
 #### Two ways
 * Reassign `__proto__` property
-* `Object.setPrototypeOf(instance, prototype)`
+* `Object.setPrototypeOf(instance, prototype)`。该方法等同于下面的函数：
+    ```js
+    function (obj, proto) {
+        obj.__proto__ = proto;
+        return obj;
+    }
+    ```
 
 #### Performance
 * Changing the `[[Prototype]]` of an object is, by the nature of how modern

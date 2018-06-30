@@ -14,6 +14,7 @@
 * 正在整理fetch
 * 正在整理principles of TEST
 * `Theories\Languages\JavaScript\KnowledgeStructure\Object-Oriented\ES5CreateClass.md` 没有后三种创建类的方式
+* `Theories\Languages\JavaScript\KnowledgeStructure\Object-Oriented\ES6Inheritance.md` 没看[原生构造函数的继承](http://es6.ruanyifeng.com/#docs/class-extends#%E5%8E%9F%E7%94%9F%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E7%9A%84%E7%BB%A7%E6%89%BF)和[Mixin 模式的实现](http://es6.ruanyifeng.com/#docs/class-extends#Mixin-%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%AE%9E%E7%8E%B0)
 
 ### 通过Vuex学习状态管理
 文档： `Theories\Architecture\StateManagement\byVuex.md`

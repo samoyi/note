@@ -59,19 +59,24 @@ primitive type value, the values of other objects are still reference type value
  * `valueOf()` 方法返回的是原始值，不是字符串形式  
      ```js
      let obj = {x:3, y:5};
-     console.log( obj.valueOf() ); // Object {x: 3, y: 5}
+     console.log(obj.valueOf() === obj); // true
 
      let arr = [1, 2, 3];
-     console.log( arr.valueOf() ); // [1, 2, 3]
+     console.log(arr.valueOf() === arr); // true
 
      function fn(){return;}
-     console.log( fn.valueOf() ); // function fn(){return;}
-
-     let date = new Date();
-     console.log( date.valueOf() ); // 1474267248866
+     console.log(fn.valueOf() === fn); // true
 
      let re = /\d+/g;
-     console.log( re.valueOf() ); // /\d+/g
+     console.log(re.valueOf() === re); // true
+
+     let date = new Date();
+     console.log(date.valueOf()); // 1474267248866
+     console.log(typeof date.valueOf()); // "number"
+
+     let str = new String('hello');
+     console.log(str.valueOf()); // "hello"
+     console.log(typeof str.valueOf()); // "string"
      ```
      以上返回值的typeof分别是 `object object function number object`
 

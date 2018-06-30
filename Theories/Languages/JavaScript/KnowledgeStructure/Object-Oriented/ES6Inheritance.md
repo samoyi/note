@@ -27,6 +27,8 @@
     ```
 
 ### 作为对象时
+阮一峰的讲解不清晰，看[这个回答](https://www.zhihu.com/question/38292361/answer/105183980)
+
 #### 必须以`super.IdentifierName`的形式出现，不能单独使用`super`对象
 ```js
 class A {
@@ -156,7 +158,7 @@ console.log(ColorPoint.x); // 3
 了定义这种情况下的`this`值：
 
 **子类普通方法中通过`super`调用父类的方法时，方法内部的`this`指向当前的子类实例。**  
-**子类的静态方法中通过super调用父类的方法时，方法内部的this指向当前的子类（构造函数）。**
+**子类的静态方法中通过super调用父类的方法时，方法内部的this指向当前的子类（构造函数）。**  
 
 ```js
 class A {
@@ -183,13 +185,29 @@ B.x = 4;
 B.m() // 4
 ```
 
+**实际上是执行了`Parent.prototype.someMethod.call(this)`**
+```js
+class A {}
 
-## 语法
+class B extends A {
+    constructor() {
+        super();
+        console.log(super.valueOf() instanceof B); // true
+        console.log(A.prototype.valueOf.call(this) instanceof B); // true
+        console.log(A.prototype.valueOf.call(this) === super.valueOf()); // true
+    }
+}
+
+let b = new B();
+```
+
+
+## 继承语法
 ### 子类必须在`constructor`方法中调用`super`方法
 * 用来继承父类`constructor`中的属性
-* 之前说过，如果没有定义`constructor`，也会自动添加一个空的`constructor`。这里又因为子类
-`constructor`必须要调用`super`，所以实际上的效果看起来是，子类自动添加的`constructor`内部也会自
-动调用`super`，并且会把实例化时接收到的参数全部传给`super`。
+* 之前说过，如果没有定义`constructor`，也会自动添加一个空的`constructor`。这里又因为子
+类`constructor`必须要调用`super`，所以实际上的效果看起来是，子类自动添加的
+`constructor`内部也会自动调用`super`，并且会把实例化时接收到的参数全部传给`super`。
     ```js
     class Point {
         constructor(color) {
@@ -210,6 +228,53 @@ B.m() // 4
     console.log(cp.color); // "red"
     cp.foo(); // 555
     ```
+
+
+## 类的`prototype`属性和`__proto__`属性
+Class 作为构造函数的语法糖，同时有`prototype`属性和`__proto__`属性，因此同时存在两条
+继承链：
+
+### 属性指向
+* 子类的`__proto__`属性，表示构造函数的继承，总是指向父类。
+* 子类`prototype`属性的`__proto__`属性，表示方法的继承，总是指向父类的`prototype`属
+性。
+
+```js
+class A {}
+
+class B extends A {}
+
+console.log(B.__proto__ === A); // true
+console.log(B.prototype.__proto__ === A.prototype); // true
+```
+
+### 实现原理
+1. 类的继承是按照下面的模式实现的：
+```js
+class A {}
+
+class B {}
+
+Object.setPrototypeOf(B.prototype, A.prototype);
+
+Object.setPrototypeOf(B, A);
+```
+2. 而`Object.setPrototypeOf`的实现原理如下：
+```js
+Object.setPrototypeOf = function (obj, proto) {
+    obj.__proto__ = proto;
+    return obj;
+}
+```
+3. 所以实际继承的方法如下：
+```js
+B.prototype.__proto__ = A.prototype;
+B.__proto__ = A;
+```
+
+### 实例的`__proto__`属性
+因为`B.prototype.__proto__ === A.prototype`，所以子类实例的`__proto__`等于父类实例
+的`__proto__`。
 
 
 ## 子类`new.target`会返回子类
