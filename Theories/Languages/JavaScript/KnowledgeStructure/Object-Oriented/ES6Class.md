@@ -7,7 +7,7 @@
 看作构造函数的另一种写法
     ```js
     class Point {
-        constructor(x, y) { // 实例属性定义在这里
+        constructor(x, y) {
             this.x = x;
             this.y = y;
         }
@@ -38,6 +38,47 @@
 
 
 ## 语法
+### 实例属性和原型方法
+* `constructor`中定义的是实例属性，之后的方法定义都是原型方法
+    ```js
+    class Point {
+        constructor(color) {
+            this.color = color;
+        }
+
+        foo() {
+            console.log(555);
+        }
+    }
+
+    let p = new Point();
+
+    console.log(p.hasOwnProperty('foo')); // false
+    p.foo = 22;
+    console.log(p.hasOwnProperty('foo')); // true
+    console.log(p.foo); // 22
+    delete p.foo;
+    console.log(p.hasOwnProperty('foo')); // false
+    p.foo(); // 555
+    ```
+* 虽然也可以在中定义实例方法，但好像意义不大
+    ```js
+    class Point {
+        constructor(color) {
+            this.foo = function(){
+                console.log(color);
+            };
+        }
+    }
+
+    let p1 = new Point('red');
+    let p2 = new Point('green');
+
+    p1.foo(); // "red"
+    p2.foo(); // "green"
+    console.log(p1.hasOwnProperty('foo')); // true
+    ```
+
 ### 声明 class
 虽然`class`的用法很像`function`，但它不存在提升。否则下面的代码就会报错：
 ```js
@@ -50,14 +91,14 @@
 因为`let`不会提升，假如`class`会提升，则声明`Bar`的时候`Foo`还不存在。
 
 ### `constructor`
-* 一个类必须有`constructor`方法，如果没有显式定义，一个空的`constructor`方法会被默认添
-加。
+* 一个类必须有`constructor`方法，如果没有显式定义，一个空的`constructor`方法会被默认
+添加。
 * 实例属性定义在`constructor`里
 * [静态属性和新的实例属性定义方法的提案](http://es6.ruanyifeng.com/#docs/class#Class-%E7%9A%84%E9%9D%99%E6%80%81%E5%B1%9E%E6%80%A7%E5%92%8C%E5%AE%9E%E4%BE%8B%E5%B1%9E%E6%80%A7)
 
 ### 方法的定义
 * 不加逗号
-* 可以使用 ES6 的方法定义简写和方法名表达式，但不能使用 `function` 和 扩展运算符`...`：
+* 可以使用 ES6 的方法定义简写和方法名表达式，但不能使用`:`和`...`语法：
     ```js
     let str1 = 'say';
     let str2 = 'Hi';
@@ -77,8 +118,11 @@
             console.log('hi');
         }
 
-        // function foo(){ // SyntaxError: Unexpected identifier
-        //     console.log('bar');
+        // bar: function(){ // SyntaxError: Unexpected token :
+        // }
+
+        // baz: ()=>{ // SyntaxError: Unexpected token :
+        //
         // }
 
         // ...oMthods // SyntaxError: Unexpected token ...
@@ -142,7 +186,8 @@ console.log("set" in descriptor);  // true
 
 
 ## 静态方法
-如果在一个方法前，加上`static`关键字，就表示该方法不会被实例继承，而是直接通过类来调用：
+如果在一个方法前，加上`static`关键字，就表示该方法不会被实例继承，而是直接通过类（构造
+函数）来调用：
 ```js
 class Foo {
     static classMethod() {
@@ -150,7 +195,8 @@ class Foo {
     }
 }
 
-Foo.classMethod() // 'hello'
+Foo.classMethod(); // "hello"
+Foo.prototype.constructor.classMethod(); // "hello"
 
 let foo = new Foo();
 foo.classMethod(); // TypeError: foo.classMethod is not a function
@@ -158,7 +204,7 @@ foo.classMethod(); // TypeError: foo.classMethod is not a function
 
 
 ### `this`
-普通方法中的`this`指向实例，静态方法中的`this`指向类：
+普通方法中的`this`指向实例，静态方法中的`this`指向类（构造函数）：
 ```js
 class Foo {
     static bar () {

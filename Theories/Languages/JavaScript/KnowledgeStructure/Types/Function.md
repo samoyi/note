@@ -1,6 +1,6 @@
 # unction
 
-## ``
+## `new.target`
 ES6 为`new`命令引入了一个`new.target`属性，该属性一般用在构造函数之中，返回`new`命令
 作用于的那个构造函数。如果构造函数不是通过`new`命令调用的，`new.target`会返回
 `undefined`：
