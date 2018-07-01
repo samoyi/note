@@ -1,5 +1,6 @@
 # Cross-site Scripting  跨站脚本攻击
 
+
 ## 基本原理
 简单来说，就是通过 HTML 注入，插入恶意脚本进行攻击。
 
@@ -44,6 +45,8 @@ document.body.appendChild(img);
 
 
 ## 防御手段
+[Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy)
+
 * `HttpOnly`
 * 输入检查
 
