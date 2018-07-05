@@ -1,7 +1,9 @@
 'use strict';
 
-const Stack = require('./Stack');
+// 检查括号是否匹配
 
+
+const Stack = require('./Stack');
 
 function matches(open, close){
     let opens = "([{",

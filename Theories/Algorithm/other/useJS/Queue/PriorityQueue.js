@@ -1,6 +1,10 @@
+// 有优先级的队列（可以根据优先级插队）
+
+
 function PriorityQueue(){
 	let items = [];
 
+	// 优先级元素构造函数，包括元素值和优先级
 	function QueueElement (element, priority){
 		this.element = element;
 		this.priority = priority;
@@ -10,25 +14,18 @@ function PriorityQueue(){
 		let queueElement = new QueueElement(element, priority);
 
 		if (this.isEmpty()){
-			items.push(queueElement);
+			return items.push(queueElement);
 		}
 		else{
 			let added = false;
 			for (let i=0; i<items.length; i++){
 				if (queueElement.priority > items[i].priority){
-					if( i===0 ){
-						items.unshift(queueElement);
-					}
-					else{
-						items.splice(i,0,queueElement);
-					}
+					items.splice(i, 0, queueElement);
 					added = true;
-					break;
+					return items.length + 1;
 				}
 			}
-			if (!added){
-				items.push(queueElement);
-			}
+			return items.push(queueElement);
 		}
 	};
 

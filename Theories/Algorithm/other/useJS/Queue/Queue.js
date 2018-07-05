@@ -2,7 +2,7 @@ function Queue(){
 	let items = [];
 
 	this.enqueue = function(el){
-		items.push( el );
+		return items.push( el );
 	};
 
 	this.dequeue = function(){

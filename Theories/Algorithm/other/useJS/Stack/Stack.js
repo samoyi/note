@@ -2,7 +2,7 @@ function Stack(){
 	let items = [];
 
 	this.push = function(el){
-		items.push( el );
+		return items.push( el );
 	};
 
 	this.pop = function(){
@@ -10,7 +10,7 @@ function Stack(){
 	};
 
 	this.peek = function(){
-		return items[items.length-1];
+		return items[items.length - 1];
 	};
 
 	this.isEmpty = function(){
