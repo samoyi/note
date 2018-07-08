@@ -30,6 +30,7 @@
 * Shell Sort 虽然知道了思路，但还不能量化的理解它的速度
 * JS算法代码不要用书上的形式，做成module的形式
 * 该看counting sort了 http://www.jianshu.com/p/1b4068ccd505
+* 重新整理二叉树部分
 
 ### UnderstandJS
 * 重看《this & object prototypes》的 Chapter 4及之后的.

@@ -1,6 +1,5 @@
 # Set
 
-
 ## Description
 ```js
 new Set([iterable]);
@@ -19,41 +18,96 @@ Same-value-zero equality
 
 
 ## Instance Properties
-#### `size`
+### `size`
 Returns the number of values in the Set object.
+```js
+let set = new Set([1, 2, 3, 1]);
+console.log(set.size); // 3
+```
 
 ## Instance Methods
 ### `add(value)`
 * Returns the Set object.
-
-### `clear()`
-* Removes all elements from the Set object.
-* return `undefined`
 
 ### `delete(value)`
 * removes the specified element from a Set object.
 * `true` if an element in the Set object has been removed successfully;
 otherwise `false`.
 
-### `entries()`
-* Returns a new Iterator object that contains an array of `[value, value]` for
-each element in the Set object
-* In insertion order
-* This is kept similar to the Map object, so that each entry has the same value
-for its key and value here.
-
-### `forEach()`
-
 ### `has(value)`
 
-### `keys()` 、`values()`、 `[@@iterator]()`
+### `clear()`
+* Removes all elements from the Set object.
+* return `undefined`
+
+### 与 Map 不同，没有`get`方法
+
+```js
+let set = new Set();
+set = set.add(1).add(2).add(3);
+console.log(set); // Set(3) {1, 2, 3}
+console.log(set.has(2)); // true
+console.log(set.delete(2)); // true
+console.log(set.has(2)); // false
+console.log(set); // Set(2) {1, 3}
+console.log(set.clear()); // undefined;
+console.log(set); // Set(0) {}
+```
+
+### `forEach()`
+```js
+mySet.forEach(function callback(value, value, set) {
+    //your iterator
+}[, thisArg])
+```
+
+* There are no keys in Set objects. However, the first two arguments are both
+values contained in the Set
+* Each value is visited once, except in the case when it was deleted and
+re-added before `forEach()` has finished. `callback` is not invoked for values
+deleted before being visited. New values added before `forEach()` has finished
+will be visited.
+
+```js
+let set = new Set([1, 4, 9]);
+set.forEach((value, key) => console.log(key, value));
+// 1 1
+// 4 4
+// 9 9
+```
+
+### `keys()` 、`values()`、 `entries()`
 Returns a new Iterator object that contains the values for each element in the
-Set object in insertion order.
+`Set` object in insertion order.
+
+```js
+let set = new Set(['red', 'green', 'blue']);
+
+for (let item of set.keys()) {
+    console.log(item);
+}
+// red
+// green
+// blue
+
+for (let item of set.values()) {
+    console.log(item);
+}
+// red
+// green
+// blue
+
+for (let item of set.entries()) {
+    console.log(item);
+}
+// ["red", "red"]
+// ["green", "green"]
+// ["blue", "blue"]
+```
 
 
 ## WeakSet
-
-### The main differences to the Set object are:
+### The main differences to the `Set` object are:
 #### 成员只能是对象
 WeakSet 的成员只能是对象，而不能是其他类型的值。
 
@@ -71,10 +125,7 @@ WeakSet 内部有多少个成员，取决于垃圾回收机制有没有运行，
 的，而垃圾回收机制何时运行是不可预测的，因此 ES6 规定 WeakSet 不可遍历。
 
 ### Properties and Methods
-和上面Set中的相比，只有 `add`、`delete` 和 `has`
-
-
-
+和上面 Set 中的相比，只有 `add`、`delete` 和 `has`
 
 
 ## Reference

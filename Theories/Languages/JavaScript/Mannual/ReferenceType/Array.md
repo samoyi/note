@@ -52,8 +52,12 @@ console.log(arr.includes(NaN)); // true
 
 ## 改变数组
 ### 改变顺序
-* `reverse()`  改变原数组
+#### 翻转顺序
+`reverse()`  改变原数组
+#### 排序
 * `sort()`     改变原数组
+#### 乱序
+参考 `Theories\Algorithm\Misc\Fisher-Yates shuffle.md`
 
 ### 添加数组项
 * 中括号              改变原数组
