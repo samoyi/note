@@ -44,3 +44,7 @@
 
 ### HTTP
 整理各种headers
+
+### 性能
+* `Theories\Web\Architecture\Performance\CriticalRenderingPath与首屏优化\CriticalRenderingPath.md` 该整理
+[Constructing the Object Model](https://developers.google.com/web/fundamentals/performance/critical-rendering-path/constructing-the-object-model) 了
