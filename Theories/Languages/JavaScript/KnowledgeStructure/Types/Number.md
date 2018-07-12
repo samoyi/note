@@ -12,12 +12,14 @@ by the IEEE 754 standard, which means it can represent numbers as large as
 between `−9007199254740992 (−2^53)` and `9007199254740992 (2^53)`, inclusive.
 However, certain operations in JavaScript (such as array indexing and the
 bitwise operators) are performed with 32-bit integers.
-4. `Number.isInteger()` 判断一个值是否为整数。需要注意的是，在JavaScript内部，整数
-和浮点数是同样的储存方法，所以3和3.0被视为同一个值，都会返回true
+4. `Number.isInteger()` 判断一个值是否为整数。需要注意的是，在 JavaScript 内部，整数
+和浮点数是同样的储存方法，所以`3`和`3.0`被视为同一个值，都会返回`true`
+5. 支持 Scientific notation
+    ```js
+    console.log(3.14e6); // 3140000
+    ```
 
 
-
-***
 ## 进制
 1. ES6提供了二进制数字的写法，使用前缀0b或0B
 2. ES6之前，八进制字面值的第一位必须是0.如果字面值中的数值超出了范围，那么前导0将被忽略，后面的数值将当做十进制数值解析。
@@ -27,8 +29,6 @@ bitwise operators) are performed with 32-bit integers.
 5. 在进行算术计算时，所有以八进制和十六进制表示的数值最终都将被转换为十进制数值。
 
 
-
-***
 ## Range of Values
 ### JS number range
 Not all numbers in the world can be represented in ECMAScript, because of
@@ -76,7 +76,6 @@ parameter is not a number ,`isFinite()` will convert parameter to a number, but
     ```
 
 
-***
 ## Integers
 ```js
 Number.isInteger()
@@ -94,8 +93,6 @@ abstract operation `ToInt32` and become simply the `+0` value for the purpose of
  that bitwise operation.
 
 
-
-***
 ## Floating point
 1. Omission of integer part or fractional part is ok if it is zero, but it is
 not recommended.
@@ -132,8 +129,6 @@ integer values, ECMAScript always looks for ways to convert values into integers
     ```
 
 
-
-***
 ## Binary Floating-Point and Rounding Errors
 * There are infinitely many real numbers, but only a finite number of them
 (18437736874454810627, to be exact) can be represented exactly by the JavaScript
@@ -177,8 +172,6 @@ function numbersCloseEnoughToEqual(n1, n2) {
 ```
 
 
-
-***
 ## 数值转换
 There are three functions that convert non-numeric values to numeric value:
 `Number()`, `Number.parseInt()` and `Number.parseFloat()`
@@ -239,8 +232,7 @@ number type.
     ````
 
 
-***
-## NaN
+## `NaN`
 1. `NaN`, short for Not a Number, which is used to indicate when an operation
 intended to return a number has failed (as opposed to throwing an error).
 2. Any operation involving `NaN` always returns `NaN`.
@@ -257,8 +249,6 @@ console.log( Number.isNaN("blue") );     // false
 Don't use `isNaN()`
 
 
-
-***
 ## `-0`
 ```js
 console.log( -0 + -0 );  // -0

@@ -29,7 +29,7 @@ itself does not exist.
  resource from an unauthorized client.
 
 
-## `Method Not Allowed`
+## `405 Method Not Allowed`
 1. The request method is known by the server but has been disabled and cannot be
  used. For example, an API may forbid DELETE-ing a resource.
 2. 该响应必须返回一个 `Allow` 头信息用以表示出当前资源能够接受的请求方法的列表。 　　

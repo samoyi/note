@@ -142,5 +142,148 @@ with the old rule, “be conservative in what you send, be liberal in what you
 accept.”
 
 
+## GET 和 POST 的区别
+<table>
+    <theader>
+        <tr>
+            <td>Item</td>
+            <td>GET</td>
+            <td>POST</td>
+        </tr>
+    </theader>
+    <tbody>
+        <tr>
+            <td>语义</td>
+            <td>请求数据</td>
+            <td>提交数据</td>
+        </tr>
+        <tr>
+            <td>
+                Side effect
+            </td>
+            <td>
+                因为是请求数据，所以适用于请求不会改变服务器数据的情况
+            </td>
+            <td>
+                因为是提交数据，所以一般都是涉及修改，适用于请求会改变服务器数据的情况
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Cached
+            </td>
+            <td>
+                因为没有副作用，同样的请求每次返回的结果都一样。所以响应的结果可以被缓
+                存
+            </td>
+            <td>
+                因为会改变服务器数据，所以每次请求结果可能不同。例如一个存款请求，每次
+                返回的账户余额都不同。所以响应的结果不应该被缓存。
+            </td>
+        </tr>
+        <tr>
+            <td>
+                History
+            </td>
+            <td>
+                Parameters remain in browser history because they are part of
+                the URL
+            </td>
+            <td>
+                Parameters are not saved in browser history.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Bookmarked
+            </td>
+            <td>
+                Can be bookmarked
+            </td>
+            <td>
+                Can not be bookmarked
+            </td>
+        </tr>
+        <tr>
+            <td>
+                BACK button/re-submit behaviour
+            </td>
+            <td>
+                GET requests are re-executed but may not be re-submitted to server if the HTML is stored in the browser cache
+            </td>
+            <td>
+                The browser usually alerts the user that data will need to be re-submitted
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Encoding type (enctype attribute) 不懂
+            </td>
+            <td>
+                `application/x-www-form-urlencoded`
+            </td>
+            <td>
+                `multipart/form-data` or `application/x-www-form-urlencoded`, use multipart encoding for binary data
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Parameters
+            </td>
+            <td>
+                can send but the parameter data is limited to what we can stuff into the request line (URL). Safest to use less than 2K of parameters, some servers handle up to 64K
+            </td>
+            <td>
+                Can send parameters, including uploading files, to the server.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Security
+            </td>
+            <td>
+                GET is less secure compared to POST because data sent is part of the URL. So it's saved in browser history and server logs in plaintext.
+            </td>
+            <td>
+                POST is a little（应该是可以被忽略的程度） safer than GET because the parameters are not stored in browser history or in web server logs.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Restrictions on form data type
+            </td>
+            <td>
+                Yes, only ASCII characters allowed.不懂，是说其他字符会被编码的情况？
+            </td>
+            <td>
+                No restrictions. Binary data is also allowed.
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Restrictions on form data length
+            </td>
+            <td>
+                Yes, since form data is in the URL and URL length is restricted. A safe URL length limit is often 2048 characters but varies by browser and web server.
+            </td>
+            <td>
+                No restrictions
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Visibility
+            </td>
+            <td>
+                GET method is visible to everyone (it will be displayed in the browser's address bar) and has limits on the amount of information to send.
+            </td>
+            <td>
+                POST method variables are not displayed in the URL.
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
 ## References
 * [HTTP: The Definitive Guide](https://book.douban.com/subject/1440226/)

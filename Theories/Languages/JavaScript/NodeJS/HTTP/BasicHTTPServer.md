@@ -25,11 +25,64 @@ server.listen(3000);
 
 ## 获取请求
 ### Reading request headers
-```js
-request.getHeader(name)
-```
-* Note that the name is case insensitive.
+注意不是`request.getHeader(name)`，这是`http.ClientRequest`的方法
 
+#### message.headers
+```js
+request.headers
+```
+* The request/response headers object.
+* Key-value pairs of header names and values. Header names are lower-cased.
+* Duplicates in raw headers are handled in the following ways, depending on the
+header name. 不懂，文档上说重复设定的`content-type`会被丢弃，但我使用 AJAX 设定了两个
+`content-type`，结果还是以逗号连接了两个值，甚至两个值完全一样时也会直接链接。
+
+#### message.rawHeaders
+```js
+request.rawHeaders
+```
+* The raw request/response headers list exactly as they were received.
+* Note that the keys and values are in the same list. It is not a list of tuples
+. So, the even-numbered offsets are key values, and the odd-numbered offsets are
+ the associated values.
+* Header names are not lowercased, and duplicates are not merged.
+
+### Reading request body
+* request body 通常都比较大，不可能一次发送全部，所以要多次接收
+* 为了避免 request body 过大，需要在接收到的数据超出上限是停止接收
+* 在完整的接收到 POST 数据后，还要解析为对象形式。不懂，如果 POST 是二进制文件呢？
+
+示例参考[这里](https://stackoverflow.com/questions/4295782/how-do-you-extract-post-data-in-node-js)
+```js
+const querystring = require('querystring');
+
+function processPost(req, res, cb) {
+    let queryData = "";
+    if (typeof cb !== 'function') return null;
+
+    if (req.method === 'POST') {
+        req.on('data', (data)=>{
+            queryData += data;
+            if (queryData.length > 1e6) { // 1MB
+                queryData = "";
+                // Payload Too Large
+                res.writeHead(413, {'Content-Type': 'text/plain'}).end();
+                req.connection.destroy(); // 不懂细节
+            }
+        });
+
+        req.on('end', ()=>{
+            req.post = querystring.parse(queryData);
+            cb(req.post);
+        });
+
+    }
+    else {
+        res.writeHead(405, {'Content-Type': 'text/plain'}); // Method Not Allowed
+        res.end();
+    }
+}
+```
 
 ## 设置响应
 1. Node will not automatically write any response back to the client.
@@ -89,6 +142,11 @@ res.end(body);
 ### 整体设定所有的头部信息
 ```js
 response.writeHead(statusCode[, statusMessage][, headers])
+
+response.writeHead(200, {
+    'Content-Length': Buffer.byteLength(body),
+    'Content-Type': 'text/plain'
+});
 ```
 * This method must only be called once on a message and it must be called before
 `response.end()` is called. If `response.write()` or `response.end()` are called

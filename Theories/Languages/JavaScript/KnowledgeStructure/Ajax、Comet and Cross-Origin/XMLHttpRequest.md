@@ -1,52 +1,91 @@
 # XMLHttpRequest
 
-***
+
 ## About HTTP
 ###  HTTP request
 An HTTP request consists of four parts:
 * the HTTP request method or “verb”
 * the URL being requested
-* an optional set of request headers, which may include authentication information
+* an optional set of request headers, which may include authentication
+  information
 * an optional request body
 
 ### HTTP response
 The HTTP response sent by a server has three parts:
-* a numeric and textual status code that indicates the success or failure of the request
+* a numeric and textual status code that indicates the success or failure of the
+  request
 * a set of response headers
 * the response body
 
 
-***
-# `XMLHttpRequest` Object
-* You can also reuse an existing XMLHttpRequest object, but note that doing so will abort any request pending through that object.
-* In theory, it could be made to work with other protocols, such as FTP, but parts of the API, such as the request method and the response status code, are HTTP-specific.
+## `XMLHttpRequest` Object
+1. Browsers define their HTTP API on an `XMLHttpRequest` class.
+2. Each instance of this class represents a single request/response pair, and
+the properties and methods of the object allow you to specify request details
+and extract response data.
+3. You can also reuse an existing XMLHttpRequest object, but note that doing so
+  will abort any request pending through that object.
+4. XMLHttpRequest is designed to work with the HTTP and HTTPS protocols. In
+theory, it could be made to work with other protocols, such as FTP, but parts of
+ the API, such as the request method and the response status code, are
+HTTP-specific.
 
 
-***
-## Methods and Properties
-### `open()`
-* In addition to `GET` and `POST`, the XMLHttpRequest specification also allows `DELETE`, `HEAD`, `OPTIONS`, and `PUT` as the first argument to open(). (The `HTTP CONNECT`, `TRACE`, and `TRACK` methods are explicitly forbidden as security risks.)
+## Use `open()` to specify the method and the URL
+* In addition to `GET` and `POST`, the XMLHttpRequest specification also allows
+`DELETE`, `HEAD`, `OPTIONS`, and `PUT` as the first argument to `open()`. (The
+`HTTP CONNECT`, `TRACE`, and `TRACK` methods are explicitly forbidden as
+security risks.)
+* The second argument to `open()` is the URL that is the subject of the request.
+ This is relative to the URL of the document that contains the script that is
+calling `open()` . If you specify an absolute URL, the protocol, host, and port
+must generally match those of the containing document.
 
-### timeout
-* The XMLHttpRequest.timeout property is an unsigned long representing the number of milliseconds a request can take before automatically being terminated.
-* The default value is 0, which means there is no timeout.
-* Timeout shouldn't be used for synchronous XMLHttpRequests requests used in a document environment or it will throw an InvalidAccessError exception.
-* When a timeout happens, a timeout event is fired.
-* In Internet Explorer, the timeout property may be set only after calling the open() method and before calling the send() method.
 
-### `setRequestHeader()`
-* `POST` requests  need a `Content-Type` header to specify the MIME type of the request body
+## Use `setRequestHeader()` to set the request headers
+* `POST` requests  need a `Content-Type` header to specify the MIME type of the
+request body
     ```js
-    // 模拟表单POST时的设置：
+    // 模拟表单 POST 时的设置：
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     ```
-* If you call `setRequestHeader()` multiple times for the same header, the new value does not replace the previously specified value: instead, the HTTP request will include multiple copies of the header or the header will specify multiple values.
-* You cannot specify the `Content-Length`, `Date`, `Referer`, or `User-Agent` headers yourself: `XMLHttpRequest` will add those automatically for you and will not allow you to spoof them.
-* `XMLHttpRequest` object automatically handles cookies, and connection lifetime, charset, and encoding negotiations, so you’re not allowed to pass any of these headers to `setRequestHeader()`
-* Order Matters:  
-    The parts of an HTTP request have a specific order: the request method and URL must come first, then the request headers, and finally the request body. XMLHttpRequest implementations generally do not initiate any networking until the `send()` method is called. But the XMLHttpRequest API is designed as if each method was writing to a network stream. This means that the XMLHttpRequest method must be called in an order that matches the structure of an HTTP request. `setRequestHeader()`, for example, must be called after you call `open()` and before you call `send()` or it will throw an exception.
+* If you call `setRequestHeader()` multiple times for the same header, the new
+value does not replace the previously specified value: instead, the HTTP request
+ will include multiple copies of the header or the header will specify multiple
+values.
+* You cannot specify the `Content-Length`, `Date`, `Referer`, or `User-Agent`
+headers yourself: `XMLHttpRequest` will add those automatically for you and will
+ not allow you to spoof them.
+* Similarly, `XMLHttpRequest` object automatically handles cookies, and
+connection lifetime, charset, and encoding negotiations, so you’re not allowed
+to pass any of these headers to `setRequestHeader()`:
+    ```
+    Accept-Charset     Content-Transfer-Encoding    TE
+    Accept-Encoding    Date                         Trailer
+    Connection         Expect                       Transfer-Encoding
+    Content-Length     Host                         Upgrade
+    Cookie             Keep-Alive                   User-Agent
+    Cookie2            Referer                      Via
+    ```
+* You can specify an “Authorization” header with your request, but you do not
+normally need to do so. If you are requesting a password-protected URL, pass the
+ username and password as the fourth and fifth arguments to `open()`, and
+XMLHttpRequest will set appropriate headers for you.    
 
-### `readyState`
+
+## Use `send()` to specify the optional request body and send it off to the server
+GET requests never have a body, so you should pass  null or omit the argument.
+POST requests do generally have a body, and it should match the “Content-Type”
+header you specified with `setRequestHeader()`.
+
+### `abort()`
+You can cancel an asynchronous request before a response is received by calling
+the `abort()`
+
+
+## Retrieving the Response
+### Listen the response
+#### `readyState`
 Value | Meaning
 -- | --
 0 | `open()` has not been called yet
@@ -55,26 +94,73 @@ Value | Meaning
 3 | Receiving. Some response data has been retrieved
 4 | Complete. All of the response data has been retrieved and is available
 
-### `status` and `statusText`
+#### `readystatechange` event
+1. In theory, the readystatechange event is triggered every time the `readyState`
+property changes. In practice, the event may not be fired when  readyState
+changes to `0` or `1`.
+2. All browsers do fire the `readystatechange` event when `readyState` has
+changed to the value `4` and the server’s response is complete.
 
-### `abort()`
-You can cancel an asynchronous request before a response is received by calling the `abort()`
+### HTTP status
+`status` and `statusText`
 
-### `getAllResponseHeaders()`
-* Returns all the response headers (except those whose field name is `Set-Cookie` or `Set-Cookie2`) , separated by CRLF, as a string, or null if no response has been received.
-* If a network error happened, an empty string is returned.
+### Response headers
+`getResponseHeader()` and `getAllResponseHeaders()`
+1. XMLHttpRequest handles cookies automatically: it filters cookie headers out of
+the set returned by `getAllResponseHeaders()` and returns `null` if you pass
+“Set-Cookie”  or “Set-Cookie2” to `getResponseHeader()`
+2. 在跨域的情况下，默认只能读取“Simple response header”，即以下六个：
+    * `Cache-Control`
+    * `Content-Language`
+    * `Content-Type`
+    * `Expires`
+    * `Last-Modified`
+    * `Pragma`
+3. 如果想读取相应的其他首部，需要服务器设置`Access-Control-Expose-Headers`。参考：
+`Theories\Protocal&Standard\InternetProtocolSuite\ApplicationLayer\HTTP\CORSAccessControl.md`
 
-### `getResponseHeader()`
-* Returns the string containing the text of the specified header.
-* 必要的时候，可以根据某项首部信息来决定如果作出反应。例如在判断`Content-Type`是`text/html`的时候才做后续的步骤，或者判断其使用的是什么字符集。
-* If there are multiple response headers with the same name, then their values are returned as a single concatenated string, where each value is separated from the previous one by a pair of comma and space.
-* The `getResponseHeader()` method returns the value as a UTF byte sequence. * The search for the header name is case-insensitive.
-* 如果试图获取`Set-Cookie` 或 `Set-Cookie2` 的值，或返回`null`。
+## Response body
+### Handle text response
+The response body is available in textual form from the `responseText` property
+ or in Document form from the `responseXML` property.
 
-### `overrideMimeType()`
-*  If you know the MIME type of a resource better than the server does, pass the type of `overrideMimeType()` before you call `send()`— this will make XMLHttpRequest ignore the content-type header and use the type you specify instead.
-*  虽然服务器的response仍然给出了它的`Content-Type`，但`XMLHttpRequest`会按照`overrideMimeType()`设定的类型来进行解析。  
-例如在请求一个`XML`文件时，如果设定了`overrideMimeType("text/plain")`，则`responseXML`的属性值不是`document`对象，而是`null`
+#### `overrideMimeType()`
+1. If a server sends an XML document without setting the appropriate MIME type,
+for example, the XMLHttpRequest object will not parse it and set the responseXML
+property. Or if a server includes an incorrect “charset” parameter in the
+`content-type` header, the XMLHttpRequest will decode the response using the
+wrong encoding and the characters in  responseText may be wrong.
+2. XHR2 defines an `overrideMimeType()` method to address this problem and a
+number of browsers have already implemented it. If you know the MIME type of a
+resource better than the server does, pass the type of `overrideMimeType()`
+before you call `send()` — this will make XMLHttpRequest ignore the
+`content-type` header and use the type you specify instead.
+3. Suppose you’re downloading an XML file that you’re planning to treat as plain
+text. You can use `setOverrideMimeType()` to let the XMLHttpRequest know that
+it does not need to parse the file into an XML document:
+```js
+// Don't process the response as an XML document
+request.overrideMimeType("text/plain; charset=utf-8")
+```
+
+### Handle binary response
+
+
+## Encoding the Request Body
+
+
+
+### timeout
+* The XMLHttpRequest.timeout property is an unsigned long representing the number of milliseconds a request can take before automatically being terminated.
+* The default value is 0, which means there is no timeout.
+* Timeout shouldn't be used for synchronous XMLHttpRequests requests used in a document environment or it will throw an InvalidAccessError exception.
+* When a timeout happens, a timeout event is fired.
+* In Internet Explorer, the timeout property may be set only after calling the open() method and before calling the send() method.
+
+
+
+
+
 
 ### `post()`
 * 不同于表单提交数据，XHR提交的参数名和参数值在必要的时候都需要通过`encodeURIComponent`进行编码。例如提交“1+2+3”，如果通过表单，后台接收到的仍然是“1+2+3”，但如果通过`XHR`且不编码，后台接收到的就变成了“1 2 3”。
@@ -120,7 +206,18 @@ Value | Response type
 * If your cross-origin request requires these kinds of credentials to succeed, you must set the `withCredentials` property of the `XMLHttpRequest` to true before you `send()` the request.
 
 
-***
+## Order Matters:  
+The parts of an HTTP request have a specific order: the request method and URL
+must come first, then the request headers, and finally the request body.
+XMLHttpRequest implementations generally do not initiate any networking until
+the `send()` method is called. But the XMLHttpRequest API is designed as if each
+ method was writing to a network stream. This means that the XMLHttpRequest
+method must be called in an order that matches the structure of an HTTP request.
+`setRequestHeader()`, for example, must be called after you call `open()` and
+before you call `send()` or it will throw an exception.
+
+
+
 ## CORS
 ### Security Details
 * If you pass a username and password to the XMLHttpRequest open() method, they will never be sent with a cross-origin request (that would enable distributed password-cracking attempts).

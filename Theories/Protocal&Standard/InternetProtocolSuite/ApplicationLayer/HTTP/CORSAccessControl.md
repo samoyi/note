@@ -59,6 +59,30 @@ precedence when the `Access-Control-Max-Age` is greater.
 3. 不过携带credentials的跨域请求并不会触发preflight。
 
 
+## Simple response header
+1. A simple response header (or a CORS-safelisted response header) is an HTTP
+header which has been safelisted so that it will not be filtered when responses
+are processed by CORS, since they're considered safe.
+2. By default, only the 6 simple response headers are exposed:
+    * `Cache-Control`
+    * `Content-Language`
+    * `Content-Type`
+    * `Expires`
+    * `Last-Modified`
+    * `Pragma`
+3. The `Access-Control-Expose-Headers` response header indicates which headers
+can be exposed as part of the response by listing their names. If you want
+clients to be able to access other headers, you have to list them using the
+`Access-Control-Expose-Headers` header:
+    ```
+    'Access-Control-Expose-Headers': 'Age, Etag',
+    ```
+4. 我在 AJAX 中试图通过 `xhr.getResponseHeader('Etag')` 读取响应的 ETag 时，如果服
+务器没有设置相应的`Access-Control-Expose-Headers`，Chrome报错：`Refused to get
+unsafe header "Etag"`
+
+
+
 ## Chrome中跨域POST请求localhost时的问题
 ### 问题情况
 1. 我从`localhost:8080`发送`POST`请求到`localhost`,`Content-Type`为
@@ -80,3 +104,5 @@ Control-Allow-Origin`。
 * [MDN 中文](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Access_control_CORS)
 * [MDN 英文](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
 * [CORS-safelisted request-header](https://fetch.spec.whatwg.org/#cors-safelisted-request-header)
+* [Simple response header](https://developer.mozilla.org/en-US/docs/Glossary/Simple_response_header)
+* [Access-Control-Expose-Headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Expose-Headers)
