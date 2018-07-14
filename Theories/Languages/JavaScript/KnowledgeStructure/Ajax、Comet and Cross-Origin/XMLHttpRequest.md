@@ -124,7 +124,9 @@ the set returned by `getAllResponseHeaders()` and returns `null` if you pass
 The response body is available in textual form from the `responseText` property
  or in Document form from the `responseXML` property.
 
-#### `overrideMimeType()`
+### Handle binary response
+
+### `overrideMimeType()`
 1. If a server sends an XML document without setting the appropriate MIME type,
 for example, the XMLHttpRequest object will not parse it and set the responseXML
 property. Or if a server includes an incorrect “charset” parameter in the
@@ -143,11 +145,140 @@ it does not need to parse the file into an XML document:
 request.overrideMimeType("text/plain; charset=utf-8")
 ```
 
-### Handle binary response
-
 
 ## Encoding the Request Body
+### Form-encoded requests
+#### MIME type
+```js
+xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+```
 
+#### Encoding an object for a form-encoded request
+```js
+/**
+* Encode the properties of an object as if they were name/value pairs from
+* an HTML form, using application/x-www-form-urlencoded format
+*/
+function encodeFormData(data) {
+    if (!data) return ""; // Always return a string
+    var pairs = []; // To hold name=value pairs
+    for(var name in data) { // For each name
+        if (!data.hasOwnProperty(name)) continue; // Skip inherited
+        if (typeof data[name] === "function") continue; // Skip methods
+        var value = data[name].toString(); // Value as string
+        name = encodeURIComponent(name.replace(" ", "+")); // Encode name
+        value = encodeURIComponent(value.replace(" ", "+")); // Encode value
+        pairs.push(name + "=" + value); // Remember name=value pair
+    }
+    return pairs.join('&'); // Return joined pairs separated with &
+}
+```
+
+#### 表单序列化，用于 AJAX 请求
+使用表单来收集数据，但不使用表单提交
+```js
+function serialize(form){
+    var parts = [],
+        field = null,
+        i,
+        len,
+        j,
+        optLen,
+        option,
+        optValue;
+
+    for (i=0, len=form.elements.length; i < len; i++){
+        field = form.elements[i];
+
+        switch(field.type){
+            case "select-one":
+            case "select-multiple":
+
+            if (field.name.length){
+                for (j=0, optLen = field.options.length; j < optLen; j++){
+                    option = field.options[j];
+                    if (option.selected){
+                        optValue = "";
+                        if (option.hasAttribute){
+                            optValue = (option.hasAttribute("value") ?
+                            option.value : option.text);
+                        } else {
+                            optValue = (option.attributes["value"].specified ?
+                            option.value : option.text);
+                        }
+                        parts.push(encodeURIComponent(field.name) + "=" +
+                        encodeURIComponent(optValue));
+                    }
+                }
+            }
+            break;
+
+            case undefined:        //字段集
+            case "file":           //文件输入
+            case "submit":         //提交按钮
+            case "reset":          //重置按钮
+            case "button":         //自定义按钮
+            break;
+
+            case "radio":          //单选按钮
+            case "checkbox":       //复选框
+            if (!field.checked){
+                break;
+            }
+            /* 执行默认操作 */
+
+            default:
+            //不包含没有名字的表单字段
+            if (field.name.length){
+                parts.push(encodeURIComponent(field.name) + "=" +
+                encodeURIComponent(field.value));
+            }
+        }
+    }
+    return parts.join("&");
+}
+```
+
+### JSON-encoded requests
+#### MIME type
+```js
+xhr.setRequestHeader('Content-Type', 'application/json');
+```
+
+#### Encoding an object for a JSON-encoded request
+```js
+JSON.stringify()
+```
+
+### Uploading a file
+```html
+<form action="http://localhost:3000" method="POST">
+    <input type="file" data-uploadto="http://localhost:3000" />
+    <input type="submit" />
+</form>
+```
+```js
+document.addEventListener('DOMContentLoaded', function() { // Run when the document is ready
+    var elts = document.getElementsByTagName("input"); // All input elements
+    for(var i = 0; i < elts.length; i++) { // Loop through them
+        var input = elts[i];
+        if (input.type !== "file") continue; // Skip all but file upload elts
+        var url = input.getAttribute("data-uploadto"); // Get upload URL
+        if (!url) continue; // Skip any without a url
+        input.addEventListener("change", function() { // When user selects file
+            var file = this.files[0]; // Assume a single file selection
+            if (!file) return; // If no file, do nothing
+            var xhr = new XMLHttpRequest(); // Create a new request
+            xhr.open("POST", url); // POST to the URL
+            xhr.send(file); // Send the file as body
+        }, false);
+    }
+});
+```
+
+#### 跨域触发 preflight request
+即使不设置 `Content-Type`，浏览器也会自动设置。例如发送 JPG 时会自动设置
+`Content-Type: image/jpeg`。因此在跨域请求时，会触发 preflight request。
 
 
 ### timeout
