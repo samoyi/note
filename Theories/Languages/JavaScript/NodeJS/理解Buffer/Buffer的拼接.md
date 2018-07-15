@@ -26,6 +26,7 @@ chunk。
 4. 知道了一般不会出错的原因，也可以很方便的模拟出错。假设`test.md`中的文本是
 `床前明月光，疑是地上霜；举头望明月，低头思故乡。`，现在把`highWaterMark`参数设为
 `11`，这样就一定会截断汉字。
+
 ```js
 const fs = require('fs');
 
@@ -40,6 +41,73 @@ rs.on("end", function () {
 });
 ```
 
+
+## 解决
+### 使用 `readable.setEncoding(encoding)`
+1. The `readable.setEncoding()` method sets the character encoding for data read
+ from the `Readable` stream.
+2. By default, no encoding is assigned and stream data will be returned as
+`Buffer` objects. Setting an encoding causes the stream data to be returned as
+strings of the specified encoding rather than as `Buffer` objects.
+3. The `Readable` stream will properly handle multi-byte characters delivered
+through the stream that would otherwise become improperly decoded if simply
+pulled from the stream as `Buffer` objects.
+
+```js
+const fs = require('fs');
+
+let rs = fs.createReadStream('test.md', {highWaterMark: 11});
+rs.setEncoding('utf8');
+
+let data = '';
+
+rs.on("data", function (chunk){
+    // console.log(typeof chunk); // 之前是 object，现在是 string
+    data += chunk;
+});
+rs.on("end", function () {
+    console.log(data); // 床前明月光，疑是地上霜；举头望明月，低头思故乡。
+});
+```
+
+#### 实现原理
+1. 在调用`setEncoding()`时，可读流对象在内部设置了一个`decoder`对象。
+2. 每次`data`事件都通过该`decoder`对象进行`Buffer`到字符串的解码，然后传递给调用者。
+3. `decoder`对象来自于`string_decoder`模块`StringDecoder`的实例对象。When a
+`Buffer` instance is written to the `StringDecoder` instance, an internal buffer
+ is used to ensure that the decoded string does not contain any incomplete
+multibyte characters. These are held in the buffer until the next call to
+`stringDecoder.write()` or until `stringDecoder.end()` is called.
+4. 但`string_decoder`只能处理 UTF-8、Base64 和 UCS-2/UTF-16LE 这3种编码。要处理其他
+类型的编码，还需要借助例如 iconv 和 iconv-lite 这样的外部模块。见
+[《深入浅出Node.js》6.3.3](https://book.douban.com/subject/25768396/)
+
+### 拼接时不转化为字符串
+每次接受的`Buffer`对象先统一保存进数组，最后使用`Buffer.concat`合并为一个完整的
+Buffer，然后再转换为字符串：
+```js
+const fs = require('fs');
+
+let rs = fs.createReadStream('test.md', {highWaterMark: 11});
+let chunks = [];
+let chunksSize = 0;
+
+rs.on("data", function (chunk){
+    chunks.push(chunk);
+    chunksSize += chunk.length;
+});
+rs.on("end", function () {
+    let buffer = Buffer.concat(chunks, chunksSize);
+    console.log(buffer + '');
+});
+```
+
+#### `Buffer.concat(list[, totalLength])`
+* `totalLength`不是`list`的`length`，而是里面所有 Buffer 的`length`的总和。
+* If `totalLength` is not provided, it is calculated from the `Buffer` instances
+in `list`. This however causes an additional loop to be executed in order to
+calculate the `totalLength`, so it is faster to provide the length explicitly if
+ it is already known.
 
 
 

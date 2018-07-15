@@ -51,7 +51,8 @@ console.log(buf.toString('ucs2', 3)); // "好"
     console.log(Buffer.isEncoding('ucs2')); // true
     console.log(Buffer.isEncoding('gb2312')); // false
     ```
-2. 对于不支持的编码类型，可以借助 Node 生态圈中的模块完成转换。例如 iconv 和 iconv-lite
+2. 对于不支持的编码类型，可以借助 Node 生态圈中的模块完成转换。例如 iconv 和
+iconv-lite
 
 
 

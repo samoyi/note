@@ -95,15 +95,18 @@ response using the `res.end()` method.
 
 ### Setting response headers
 ```js
-request.setHeader(name, value)
+response.setHeader(name, value)
 // name <string>
 // value <any>
 ```
 * If this header already exists in the to-be-sent headers, its value will be
 replaced.
 * Use an array of strings here to send multiple headers with the same name.
+    ```js
+    response.setHeader('Set-Cookie', ['type=ninja', 'language=javascript']);
+    ```
 * Non-string values will be stored without modification. Therefore,
-`request.getHeader()` may return non-string values. However, the non-string
+`response.getHeader()` may return non-string values. However, the non-string
 values will be converted to strings for network transmission.
 * You can add and remove headers in any order, but only up to the first
 `response.write()` or `response.end()` call. After the first part of the

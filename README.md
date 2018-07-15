@@ -42,8 +42,9 @@
 
 ### 《ECMAScript 6 入门》Promise 章节没看 Promise.try
 
-### HTTP
-整理各种headers
+### Node.js学习
+* `Theories\Languages\JavaScript\NodeJS\构建Web应用\基础功能.md` 没看 Session 和
+Basic认证
 
 ### 性能
 * `Theories\Web\Architecture\Performance\CriticalRenderingPath与首屏优化\CriticalRenderingPath.md` 该整理

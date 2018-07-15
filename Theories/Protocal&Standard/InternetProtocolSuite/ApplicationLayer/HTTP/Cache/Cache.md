@@ -164,7 +164,7 @@ Validating cached responses with ETags
 ### `Last-modified`
 #### 工作原理
 1. 浏览器第一次请求一个资源时，响应中设置 `Last-modified` 注明资源最后修改事件
-2. 浏览器再次请求时，请求头部带上 `If-Modified-Since` 著名之前收到的 `Last-modified`
+2. 浏览器再次请求时，请求头部带上 `If-Modified-Since` 注明之前收到的 `Last-modified`
 的值。
 3. 服务器端收到带 `If-Modified-Since` 的请求后会去和资源的最后修改时间对比。若修改过就
 返回最新资源，若没有修改过则返回 `304`。  
@@ -176,8 +176,8 @@ Validating cached responses with ETags
 #### 和 `Etag` 的区别（优先使用 `Etag` 的原因）
 * 某些服务器不能精确得到资源的最后修改时间。
 * `Last-modified` 只能精确到秒，资源一秒内的多次变化无法识别。
-* 对于一些虽然重新生成但是内容不变的资源，使用 `Last-modified` 就会弃用缓存。
-* 服务器会优先验证ETag。
+* 对于一些虽然重新生成但是内容不变的资源，使用`Last-modified`就会弃用缓存。
+* 服务器会优先验证 ETag。
 
 
 ## Defining optimal Cache-Control policy

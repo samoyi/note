@@ -126,18 +126,30 @@ attacks (CSRF). `SameSite` cookies are still experimental and not yet supported
 by all browsers.
 
 ### `document.cookie`
-可以设置 cookies 和读取 非`HttpOnly`cookies。XSS 盗取 cookies 就是使用这个方法。
-```js
-document.cookie = 'CookieName1=CookieValue1';
-document.cookie = 'CookieName2 = CookieValue2 ;max-age=3600';
+* 可以设置 cookies 和读取 非`HttpOnly`cookies。XSS 盗取 cookies 就是使用这个方法。
+    ```js
+    document.cookie = 'CookieName1=CookieValue1';
+    document.cookie = 'CookieName2 = CookieValue2 ;max-age=3600';
 
-let oCookies = {};
-document.cookie.split('; ').forEach(cookie=>{
-    let pair = cookie.split('=');
-    oCookies[pair[0]] = pair[1]
-});
-console.log(oCookies); // {CookieName1: "CookieValue1", CookieName2: "CookieValue2"}
-```
+    let oCookies = {};
+    document.cookie.split(';').forEach(cookie=>{
+        let pair = cookie.trim().split('=');
+        oCookies[pair[0]] = pair[1]
+    });
+    console.log(oCookies); // {CookieName1: "CookieValue1", CookieName2: "CookieValue2"}
+    ```
+
+* 和`res.setHeader`多次使用会覆盖的情况不同，第二次的`document.cookie`并不会覆盖第一
+次的。因为不会覆盖，所以也无法通过赋值`undefined`进行删除。但是可以修改已经存在的值：
+    ```js
+    document.cookie = 'Name1=Value1';
+    document.cookie = 'Name2=Value2';
+    console.log(document.cookie); // Name1=Value1; Name2=Value2
+    document.cookie = 'Name2=Value3';
+    console.log(document.cookie); // Name1=Value1; Name2=Value3
+    document.cookie = undefined;
+    console.log(document.cookie); // Name1=Value1; Name2=Value3; undefined
+    ```
 
 
 ## Security
