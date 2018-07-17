@@ -251,29 +251,19 @@ JSON.stringify()
 ```
 
 ### Uploading a file
+通过 AJAX 上传的话其实只需要一个`input`就行了
+
 ```html
-<form action="http://localhost:3000" method="POST">
-    <input type="file" data-uploadto="http://localhost:3000" />
-    <input type="submit" />
-</form>
+<input type="file" id="file" name="file" />
 ```
 ```js
-document.addEventListener('DOMContentLoaded', function() { // Run when the document is ready
-    var elts = document.getElementsByTagName("input"); // All input elements
-    for(var i = 0; i < elts.length; i++) { // Loop through them
-        var input = elts[i];
-        if (input.type !== "file") continue; // Skip all but file upload elts
-        var url = input.getAttribute("data-uploadto"); // Get upload URL
-        if (!url) continue; // Skip any without a url
-        input.addEventListener("change", function() { // When user selects file
-            var file = this.files[0]; // Assume a single file selection
-            if (!file) return; // If no file, do nothing
-            var xhr = new XMLHttpRequest(); // Create a new request
-            xhr.open("POST", url); // POST to the URL
-            xhr.send(file); // Send the file as body
-        }, false);
-    }
-});
+document.querySelector('#file').addEventListener("change", function() {
+    let file = this.files[0];
+    let xhr = new XMLHttpRequest();
+    xhr.open('POST', 'http://localhost:3000');
+    xhr.setRequestHeader('Content-Type', 'multipart/form-data');
+    xhr.send(file);
+}, false);
 ```
 
 #### 跨域触发 preflight request
