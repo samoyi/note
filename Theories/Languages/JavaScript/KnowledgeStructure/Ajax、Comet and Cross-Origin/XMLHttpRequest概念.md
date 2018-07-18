@@ -1,23 +1,6 @@
 # XMLHttpRequest
 
 
-## About HTTP
-###  HTTP request
-An HTTP request consists of four parts:
-* the HTTP request method or “verb”
-* the URL being requested
-* an optional set of request headers, which may include authentication
-  information
-* an optional request body
-
-### HTTP response
-The HTTP response sent by a server has three parts:
-* a numeric and textual status code that indicates the success or failure of the
-  request
-* a set of response headers
-* the response body
-
-
 ## `XMLHttpRequest` Object
 1. Browsers define their HTTP API on an `XMLHttpRequest` class.
 2. Each instance of this class represents a single request/response pair, and
@@ -119,6 +102,7 @@ the set returned by `getAllResponseHeaders()` and returns `null` if you pass
 3. 如果想读取相应的其他首部，需要服务器设置`Access-Control-Expose-Headers`。参考：
 `Theories\Protocal&Standard\InternetProtocolSuite\ApplicationLayer\HTTP\CORSAccessControl.md`
 
+
 ## Response body
 ### Handle text response
 The response body is available in textual form from the `responseText` property
@@ -146,129 +130,117 @@ request.overrideMimeType("text/plain; charset=utf-8")
 ```
 
 
-## Encoding the Request Body
-### Form-encoded requests
-#### MIME type
-```js
-xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-```
+## Response progress
+### Response progress events
+1. XHR2 defines a more useful set of events, the `XMLHttpRequest` object
+triggers different types of events at different phases of the request so that it
+ is no longer necessary to check the `readyState` property
+    1. `loadstart`: Fires when the first byte of the response has been
+        received.
+    2. `progress`: Fires repeatedly as a response is being received. If a
+        request completes very quickly, it may never fire a `progress` event. 测
+        试响应为空时，不会触发`progress`，但仍然会触发下面的`load`和`loadend`
+    3. `error`: Fires when there was an error attempting the request.
+    4. `abort`: Fires when the connection was terminated by calling `abort()`.
+    5. `timeout`: 如果设置了`XMLHttpRequest.timeout`，在响应时间超过了该属性值的时
+        候，就会触发该事件。如果在请求阶段就已经超时了，那也算是响应超时。即不管什么原
+        因，只要在指定的时间内没有完成响应，就会触发该事件。
+    6. `load`: Fires when the response has been fully received.
+    7. `loadend`: Fires when the communication is complete and after firing
+        error, abort, or load.
+2. Each request begins with the `loadstart` event being fired; followed by one
+or more `progress` events; then one of `error`, `abort`, or `load`; finally
+ending with `loadend`.
+3. IE到10才开始支持
 
-#### Encoding an object for a form-encoded request
-```js
-/**
-* Encode the properties of an object as if they were name/value pairs from
-* an HTML form, using application/x-www-form-urlencoded format
-*/
-function encodeFormData(data) {
-    if (!data) return ""; // Always return a string
-    var pairs = []; // To hold name=value pairs
-    for(var name in data) { // For each name
-        if (!data.hasOwnProperty(name)) continue; // Skip inherited
-        if (typeof data[name] === "function") continue; // Skip methods
-        var value = data[name].toString(); // Value as string
-        name = encodeURIComponent(name.replace(" ", "+")); // Encode name
-        value = encodeURIComponent(value.replace(" ", "+")); // Encode value
-        pairs.push(name + "=" + value); // Remember name=value pair
-    }
-    return pairs.join('&'); // Return joined pairs separated with &
-}
-```
-
-#### 表单序列化，用于 AJAX 请求
-使用表单来收集数据，但不使用表单提交
-```js
-function serialize(form){
-    var parts = [],
-        field = null,
-        i,
-        len,
-        j,
-        optLen,
-        option,
-        optValue;
-
-    for (i=0, len=form.elements.length; i < len; i++){
-        field = form.elements[i];
-
-        switch(field.type){
-            case "select-one":
-            case "select-multiple":
-
-            if (field.name.length){
-                for (j=0, optLen = field.options.length; j < optLen; j++){
-                    option = field.options[j];
-                    if (option.selected){
-                        optValue = "";
-                        if (option.hasAttribute){
-                            optValue = (option.hasAttribute("value") ?
-                            option.value : option.text);
-                        } else {
-                            optValue = (option.attributes["value"].specified ?
-                            option.value : option.text);
-                        }
-                        parts.push(encodeURIComponent(field.name) + "=" +
-                        encodeURIComponent(optValue));
-                    }
-                }
-            }
-            break;
-
-            case undefined:        //字段集
-            case "file":           //文件输入
-            case "submit":         //提交按钮
-            case "reset":          //重置按钮
-            case "button":         //自定义按钮
-            break;
-
-            case "radio":          //单选按钮
-            case "checkbox":       //复选框
-            if (!field.checked){
-                break;
-            }
-            /* 执行默认操作 */
-
-            default:
-            //不包含没有名字的表单字段
-            if (field.name.length){
-                parts.push(encodeURIComponent(field.name) + "=" +
-                encodeURIComponent(field.value));
-            }
-        }
-    }
-    return parts.join("&");
-}
-```
-
-### JSON-encoded requests
-#### MIME type
-```js
-xhr.setRequestHeader('Content-Type', 'application/json');
-```
-
-#### Encoding an object for a JSON-encoded request
-```js
-JSON.stringify()
-```
-
-### Uploading a file
-通过 AJAX 上传的话其实只需要一个`input`就行了
-
-```html
-<input type="file" id="file" name="file" />
-```
+### 事件顺序
+1. When the `send()` method is called, a single `loadstart` event is fired.
+2. While the server’s response is being downloaded, the `XMLHttpRequest` object
+fires `progress` events, typically every 50 milliseconds or so, and you can use
+ these events to give the user feedback about the progress of the request.
+3. If a request completes very quickly, it may never fire a `progress` event.
+4. When a request is complete, a `load` event is fired.
+5. A complete request is not necessarily a successful request, and your handler
+for the load event should check the `status` of the `XMLHttpRequest` object to
+ensure that you received a HTTP “200 OK” response rather than a “404 Not Found”
+response.
+下面的例子是前端发送一个约 12MB 的文件，后端原样返回：
 ```js
 document.querySelector('#file').addEventListener("change", function() {
     let file = this.files[0];
     let xhr = new XMLHttpRequest();
+
+    xhr.addEventListener('loadstart', function(){
+        console.log('loadstart');
+    });
+    xhr.addEventListener('progress', function(){
+        console.log('progress');
+    });
+    xhr.addEventListener('load', function(){
+        console.log('load');
+    });
+    xhr.addEventListener('loadend', function(){
+        console.log('loadend');
+    });
+
     xhr.open('POST', 'http://localhost:3000');
-    xhr.setRequestHeader('Content-Type', 'multipart/form-data');
     xhr.send(file);
 }, false);
 ```
 
-#### 跨域触发 preflight request
-即使不设置 `Content-Type`，浏览器也会自动设置。例如发送 JPG 时会自动设置
-`Content-Type: image/jpeg`。因此在跨域请求时，会触发 preflight request。
+浏览器 console 输出为：
+```
+loadstart
+④ progress
+load
+loadend
+```
+`progress`的次数并不稳定，试了几次，最少3次，最多有11次
+
+### 获取下载进度
+1. The event object associated with these progress events has three useful
+properties in addition to the normal Event object properties like `type` and
+`timestamp`.
+2. The `loaded` property is the number of bytes that have been transferred so
+far. The `total` property is the total length (in bytes) of the data to be
+transferred, from the “Content-Length” header, or `0` if the content length is
+not known. Finally, the `lengthComputable` property is `true` if the content
+length is known and is `false` otherwise.
+
+```js
+let num = 0;
+document.querySelector('#file').addEventListener("change", function() {
+    let file = this.files[0];
+    let xhr = new XMLHttpRequest();
+
+    xhr.addEventListener('progress', function(ev){
+        if (ev.lengthComputable){
+            num = ev.loaded / ev.total * 100;
+            console.log(Math.round(num) + '%');
+        }
+    });
+    xhr.addEventListener('load', function(ev){
+        // 响应的数据太小以至于没有触发 progress 事件，这里直接显示 100%
+        if (!num){
+            console.log('100%');
+        }
+    });
+
+    xhr.open('POST', 'http://localhost:3000');
+    xhr.send(file);
+}, false);
+```
+
+
+## Upload progress
+* `XMLHttpRequest.upload` 对象也拥有上面响应的7个事件。
+* 这里的`timeout`事件时在请求等待超时时触发。如果在规定时间内请求完成了，即使响应过慢而
+导致超时，只会触发`XMLHttpRequest.ontimeout`，而不会触发
+`XMLHttpRequest.upload.ontimeout`。但如果`XMLHttpRequest.upload.ontimeout`被触发
+了，因为规定时间内也没有响应，所以也会触发`XMLHttpRequest.ontimeout`。
+
+
+================================================================================
 
 
 ### timeout
@@ -346,167 +318,3 @@ before you call `send()` or it will throw an exception.
 
 
 ***
-## POST Blob
-* IE到10才开始支持
-* XHR2允许向`send()`方法传入包括file类型在内的任何Blob对象
-* The type property of the Blob will be used to set the  Content-Type header for the upload, if you do not set that header explicitly yourself.
-* If you need to upload binary data that you have generated, you can convert the data to a Blob and use it as a request body.
-
-
-***
-##  multipart/form-data requests
-* When HTML forms include file upload elements and other elements as well, the browser cannot use ordinary form encoding and must POST the form using a special content-type known as “multipart/form-data”. 使用表单上传文件时，`enctype`属性也是如此设置。
-* This encoding involves the use of long “boundary” strings to separate the body of the request into multiple parts.
-* For textual data, it is possible to create “multipart/form-data” request bodies by hand, but it is tricky.
-* XHR2 defines a new FormData API that makes multipart request bodies simple. With FormData, the `send()` method will define an appropriate boundary string and set the “Content-Type” header for the request.
-  ```js
-    let fd = new FormData(),
-        xhr = new XMLHttpRequest();
-
-    // 选择了一张名为 640.jpg 的图片
-    document.querySelector("#file").addEventListener("change", function()
-    {
-    	fd.append("file", this.files[0]);
-    	fd.append("text", "2233");
-    	xhr.open("POST", "test.php",  true);
-    	xhr.send(fd);
-    });
-  ```
-
-  运行上述代码后，查看请求信息
-  Content-Type:  
-  ```
-  Content-Type:multipart/form-data;  
-  boundary=----WebKitFormBoundary7eGjoECbuoKAa5N8
-  ```
-
-  Request Payload
-  ```
-  ------WebKitFormBoundary7eGjoECbuoKAa5N8
-  Content-Disposition: form-data; name="file"; filename="640.jpg"
-  Content-Type: image/jpeg
-
-  ------WebKitFormBoundary7eGjoECbuoKAa5N8
-  Content-Disposition: form-data; name="text"
-
-  2233
-  ------WebKitFormBoundary7eGjoECbuoKAa5N8--
-  ```
-
-
-***
-##  XHR2 FormData
-### Summary
-1. 截至2017.5，[浏览器支持](https://developer.mozilla.org/en-US/docs/Web/API/FormData#Browser_compatibility)不好
-2. The FormData interface provides a way to easily construct a set of key/value pairs representing form fields and their values, which can then be easily sent using the XMLHttpRequest.send() method.
-3.  It uses the same format a form would use if the encoding type were set to "multipart/form-data".
-
-### Create  FormData instance
-* 创建空的`FormData`实例
-    ```js
-    var formData = new FormData();
-    ```
-* 使用已有表单来创建一个实例  
-    ```html
-    // HTML
-    <form id="myForm" action="" method="post">
-        <input type="text" name="name" value="33" />
-        <input type="text" name="age" value="22" />
-        <input type="text" name="age" value="233" />
-        <input id="sub" type="button" value="提交" />
-    </form>
-    // JS
-    var form = document.getElementById("myForm");
-    var formData = new FormData(form);
-    ```
-
-### Get data
-  ```js
-  console.log( formData.get('name') ); // 33
-  // 获取一键多值数据
-  console.log( formData.getAll('age') ); // ["22", "233"]
-  ```
-### Append data
-  ```js
-  formData.append("sex", "female");
-  console.log( formData.get('sex') ); // female
-  ```
-即使是相同的键名，也不会覆盖，而是重复添加
-  ```js
-  let formData = new FormData();
-
-  formData.append("name", "li");
-  formData.append("name", "ni");
-
-  for (var key of formData.keys()) {
-     console.log(key); // 输出两个 "name"
-  }
-
-  for (var value  of formData.values()) {
-     console.log(value); // 输出 "li" 和 "ni"
-  }
-  ```
-所以在多次提交数据时，每次都要初始化。
-
-### Update data
-  ```js
-  formData.set("sex", "male");
-  console.log( formData.get('sex') ); // male
-  // 如果要修改的key不存在，将创建该key并赋值
-  formData.set("height", "160");
-  console.log( formData.get('height') ); // 160
-  ```
-
-### Check if a key exists
-  ```js
-  console.log( formData.has("height") ); // true
-  console.log( formData.has("weight") ); // false
-  ```
-
-### Delete data
-  ```js
-  formData.delete("height");
-  console.log( formData.has("height") ); // false
-  ```
-
-### Iterator
-* Go through all key/value pairs
-    ```js
-    var i = formData.entries();
-    for (var pair of i) {
-       console.log(pair); // 分别为：["name", "33"]、["age", "22"]、["age", "233"]、["sex", "male"]
-    }
-    ```
-* Go through all keys
-    ```js
-    for (var key of formData.keys()) {
-       console.log(key); // 分别为：name、age、age、sex
-    }
-    ```
-*  Go through all values
-    ```js
-    for (var value of formData.values()) {
-       console.log(value);  // 分别为：33、22、233、male
-    }
-    ```
-
-### Post data    
-使用FormData的方便之处体现在不必明确地在XHR对象上设置请求头部。XHR对象能够识别传入的数据类型是FormData的实例，并配置适当的头部信息。
-  ```js
-  var xhr = new XMLHttpRequest();
-  xhr.open("post", "test.php", true);
-  xhr.send(formData);
-  ```
-
-
-## HTTP Progress Events (IE到10才开始支持)
-The XHR2 draft specification defines a more useful set of events and these have already been implemented by Firefox, Chrome, and Safari. In this new event model, the `XMLHttpRequest` object triggers different types of events at different phases of the request so that it is no longer necessary to check the `readyState` property
-
-1. **loadstart**: Fires when the first byte of the response has been received.
-2. **progress**: Fires repeatedly as a response is being received.
-3. **error**: Fires when there was an error attempting the request.
-4. **abort**: Fires when the connection was terminated by calling `abort()`.
-5. **load**: Fires when the response has been fully received.
-6. **loadend**: Fires when the communication is complete and after firing error, abort, or load.
-
-Each request begins with the loadstart event being fired; followed by one or more progress events; then one of error, abort, or load; finally ending with loadend.
