@@ -50,13 +50,13 @@ precedence when the `Access-Control-Max-Age` is greater.
 
 
 ## Requests with credentials
-1. 跨域请求默认并不会发送credentials，但如果设置了使其可以发送，则还必须要经过服务器端
+1. 跨域请求默认并不会发送 credentials，但如果设置了使其可以发送，则还必须要经过服务器端
 的许可才行。
-2. 服务器必须要把response的`Access-Control-Allow-Credentials`首部设为`true`才能使该
-携带credentials的跨域请求成功。
-2. 如果发送credentials，则响应首部`Access-Control-Allow-Origin`不能设置为通配符，必
-须填具体的origin。
-3. 不过携带credentials的跨域请求并不会触发preflight。
+2. 服务器必须要把 response 的`Access-Control-Allow-Credentials`首部设为`true`才能使
+该携带 credentials 的跨域请求成功。
+2. 如果发送 credentials，则响应首部`Access-Control-Allow-Origin`不能设置为通配符，必
+须填具体的 origin。
+3. 不过携带 credentials 的跨域请求并不会触发 preflight。
 
 
 ## Simple response header

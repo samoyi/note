@@ -61,9 +61,46 @@ GET requests never have a body, so you should pass  null or omit the argument.
 POST requests do generally have a body, and it should match the “Content-Type”
 header you specified with `setRequestHeader()`.
 
-### `abort()`
-You can cancel an asynchronous request before a response is received by calling
-the `abort()`
+### 发送字符时的编码问题
+1. 服务端接收到字符串数据时，会找到其中的转义序列，进行 decode。例如`1+2`会被 decode
+为`1 2`。
+2. 当你发送的字符本身就包含转义序列字符的话，你肯定希望服务端不要把它当做转义序列来看待。
+例如你就是想发送`1+2`这个数学表达式，你不希望服务端在接收到`1+2`将该变成`1 2`。
+3. 使用表单发送数据时，不会有这个问题，因为发送的字符串会被自动 encode，例如`1+2`会被
+encode 为`1%2b2`，服务端 decode 之后恢复成`1+2`。
+4. 使用 AJAX 发送时，不管是`POST`方法的 body 还是`GET`方法的 query，都不会被自动
+encode，所以`1+2`这个数学表达式发送到服务端时还是`1+2`。服务器再对其进行 decode，就变
+成了`1 2`。
+5. 因此通过 AJAX 发送数据时，如果不能确保发送的字符不包括转义序列字符，那就应该使用
+`encodeURIComponent`对其 encode。
+如果`xhr.send('str=我+你转义后是%e6%88%91%2b%e4%bd%a0')`，服务端最终解析获得的是
+`我 你转义后是我+你`；如果
+`xhr.send('str=' + encodeURIComponent('我+你转义后是%e6%88%91%2b%e4%bd%a0'))`，服
+务端最终解析获得的就是`我+你转义后是%e6%88%91%2b%e4%bd%a0`
+
+
+## Aborting Requests and Timeouts
+### `XMLHttpRequest.abort()`
+1. You can cancel an HTTP request in process by calling the `abort()` method of
+the XMLHttpRequest object. The `abort()` method is available in all versions of
+XMLHttpRequest, and in XHR2, calling `abort()` triggers an abort event on the
+object.
+2. The primary reason to call `abort()` is to cancel or time-out requests that
+have taken too long to complete or when the responses become irrelevant. Suppose
+ you’re using XMLHttpRequest to request auto-complete suggestions for a text
+input field. If the user types a new character into the field before the
+server’s suggestions can arrive, then the pending request is no longer
+interesting and can be aborted.
+
+### `XMLHttpRequest.timeout`
+* The `XMLHttpRequest.timeout` property is an unsigned long representing the
+number of milliseconds a request can take before automatically being terminated.
+* The default value is `0`, which means there is no timeout.
+* Timeout shouldn't be used for synchronous XMLHttpRequests requests used in a
+document environment or it will throw an `InvalidAccessError` exception.
+* When a timeout happens, a `timeout` event is fired.
+* In Internet Explorer, the timeout property may be set only after calling the
+`open()` method and before calling the `send()` method.
 
 
 ## Retrieving the Response
@@ -89,8 +126,8 @@ changed to the value `4` and the server’s response is complete.
 
 ### Response headers
 `getResponseHeader()` and `getAllResponseHeaders()`
-1. XMLHttpRequest handles cookies automatically: it filters cookie headers out of
-the set returned by `getAllResponseHeaders()` and returns `null` if you pass
+1. XMLHttpRequest handles cookies automatically: it filters cookie headers out
+of the set returned by `getAllResponseHeaders()` and returns `null` if you pass
 “Set-Cookie”  or “Set-Cookie2” to `getResponseHeader()`
 2. 在跨域的情况下，默认只能读取“Simple response header”，即以下六个：
     * `Cache-Control`
@@ -109,6 +146,46 @@ The response body is available in textual form from the `responseText` property
  or in Document form from the `responseXML` property.
 
 ### Handle binary response
+#### `response`
+* Returns the response's body. It can be of the type `ArrayBuffer`, `Blob`,
+`Document`, JavaScript object, or a DOMString, depending of the value of
+`XMLHttpRequest.responseType` property.
+* Value of `response` is `null` if the request is not complete or was not
+successful.
+* However, if the value of `responseType` was set to `text` or the empty string,
+ `response` can contain the partial text response while the request is still in
+ the `loading` state.
+* If your cross-origin request requires these kinds of credentials to succeed,
+you must set the `withCredentials` property of the `XMLHttpRequest` to `true`
+before you `send()` the request.
+
+#### `responseType`
+* The `XMLHttpRequest.responseType` property is an enumerated value that returns
+ the type of the response.
+* It also lets the author change the response type to one `arraybuffer`, `blob`,
+ `document`, `json`, or `text`.
+* If an empty string is set as the value of `responseType`, it is assumed as
+type `text`.
+* Setting the value of responseType to `document` is ignored if done in a Worker
+ environment.
+* When setting `responseType` to a particular value, the author should make sure
+ that the server is actually sending a response compatible to that format. If
+the server returns data that is not compatible to the responseType that was set,
+ the value of response will be `null`.
+* [兼容性不好](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType#Browser_compatibility)
+
+```js
+let xhr = new XMLHttpRequest();
+xhr.open("GET", "test.mp4");
+xhr.responseType = "blob";
+xhr.onprogress = function(ev) {
+    console.log(ev.loaded + "/" + ev.total); // show progress, if needed
+};
+xhr.onload = function() {
+    console.log(xhr.response); // 获得 MP4 文件的 Blob 对象
+}
+xhr.send(null);
+```
 
 ### `overrideMimeType()`
 1. If a server sends an XML document without setting the appropriate MIME type,
@@ -240,81 +317,20 @@ document.querySelector('#file').addEventListener("change", function() {
 了，因为规定时间内也没有响应，所以也会触发`XMLHttpRequest.ontimeout`。
 
 
-================================================================================
 
+## CORS Security Details
+* If you pass a username and password to the XMLHttpRequest `open()` method,
+they will never be sent with a cross-origin request (that would enable
+distributed password-cracking attempts).不懂，什么是 username and password ？
 
-### timeout
-* The XMLHttpRequest.timeout property is an unsigned long representing the number of milliseconds a request can take before automatically being terminated.
-* The default value is 0, which means there is no timeout.
-* Timeout shouldn't be used for synchronous XMLHttpRequests requests used in a document environment or it will throw an InvalidAccessError exception.
-* When a timeout happens, a timeout event is fired.
-* In Internet Explorer, the timeout property may be set only after calling the open() method and before calling the send() method.
-
-
-
-
-
-
-### `post()`
-* 不同于表单提交数据，XHR提交的参数名和参数值在必要的时候都需要通过`encodeURIComponent`进行编码。例如提交“1+2+3”，如果通过表单，后台接收到的仍然是“1+2+3”，但如果通过`XHR`且不编码，后台接收到的就变成了“1 2 3”。
-* 至少在火狐中，如果手动模拟post发送时，触发事件不能是点击submit
-
-###  `responseURL`
-* Returns the serialized URL of the response or the empty string if the URL is null.
-* If the URL is returned, URL fragment if present in the URL will be stripped away.
-* The value of responseURL will be the final URL obtained after any redirects.
-  ```js
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", "http://www.abc.cn/index.html#123?name=22");
-  xhr.onload = function() {
-  	console.log(xhr.responseURL); // http://www.abc.cn/index.html
-  }
-  xhr.send(null);
-  ```
-
-### `responseType`
-* The `XMLHttpRequest.responseType` property is an enumerated value that returns the type of the response.
-* It also lets the author change the response type to one "arraybuffer", "blob", "document", "json", or "text".
-* If an empty string is set as the value of responseType, it is assumed as type "text".
-* Setting the value of responseType to "document" is ignored if done in a  Worker environment.
-* When setting `responseType` to a particular value, the author should make sure that the server is actually sending a response compatible to that format. If the server returns data that is not compatible to the responseType that was set, the value of response will be `null`.
-* Setting responseType for synchronous requests will throw an `InvalidAccessError` exception. 实际测试并未发现。
-* [兼容性不好](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType#Browser_compatibility)
-
-Value | Response type
--- | --
-"" | DOMString(dafault)
-"arraybuffer" | ArrayBuffer
-"blob" | Blob
-"document" | Document
-"json" | JavaScript object, parsed from a JSON string returned by the server
-"text" | DOMString
-
-<mark>不懂设置这个属性的意义。在请求一个二进制文件的时候，不管是否设置这个属性为"blob"，服务器都会回应相同的类型，但不设置却不能正确的接受响应</mard>
-
-### `response`
-* Returns the response's body. It can be of the type ArrayBuffer, Blob, Document, JavaScript object, or a DOMString, depending of the value of `XMLHttpRequest.responseType` property.
-* Value of response is null if the request is not complete or was not successful.
-* However, if the value of responseType was set to "text" or the empty string, `response` can contain the partial text response while the request is still in the `loading` state.
-* If your cross-origin request requires these kinds of credentials to succeed, you must set the `withCredentials` property of the `XMLHttpRequest` to true before you `send()` the request.
-
-
-## Order Matters:  
-The parts of an HTTP request have a specific order: the request method and URL
-must come first, then the request headers, and finally the request body.
-XMLHttpRequest implementations generally do not initiate any networking until
-the `send()` method is called. But the XMLHttpRequest API is designed as if each
- method was writing to a network stream. This means that the XMLHttpRequest
-method must be called in an order that matches the structure of an HTTP request.
-`setRequestHeader()`, for example, must be called after you call `open()` and
-before you call `send()` or it will throw an exception.
-
-
-
-## CORS
-### Security Details
-* If you pass a username and password to the XMLHttpRequest open() method, they will never be sent with a cross-origin request (that would enable distributed password-cracking attempts).
-* Cross-origin requests do not normally include any other user credentials either: cookies and HTTP authentication tokens are not normally sent as part of the request and any cookies received as part of a cross-origin response are discarded.
-
-
-***
+### `withCredentials`
+1. Cross-origin requests do not normally include any other user credentials
+either: cookies and HTTP authentication tokens are not normally sent as part of
+the request and any cookies received as part of a cross-origin response are
+discarded.
+2. If your cross-origin request requires these kinds of credentials to succeed,
+you must set the `withCredentials` property of the XMLHttpRequest to `true`
+before you `send()` the request.
+3. 显然，更重要的是也要经过服务端的同意才行：
+    * `Access-Control-Allow-Credentials`首部要设为`true`
+    * `Access-Control-Allow-Origin`不能设置为通配符
