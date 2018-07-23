@@ -34,7 +34,7 @@
 
 ### UnderstandJS
 * 重看《this & object prototypes》的 Chapter 4及之后的.
-* Did not see [Chapter 4: Coercion](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch4.md)，sort it to  `Theories\Languages\JavaScript\UnderstandJS\TypeConversionTypeConversion.md`
+* Did not read [Chapter 4: Coercion](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch4.md)，sort it to  `Theories\Languages\JavaScript\UnderstandJS\TypeConversionTypeConversion.md`
 
 ### UnderstandVuejs
 * 没看懂[Async Components](https://vuejs.org/v2/guide/components.html#Async-Components)

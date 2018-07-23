@@ -1,17 +1,15 @@
+# Program execution phase
 
-## two phases
-### First phase
-document content is loaded and the scripts code is run.
-### Second phase
-Once the document is loaded and all scripts have run, JavaScript execution
-enters its second phase. This phase is asynchronous and event-driven.
+First phase, document content is loaded and the scripts code is run. Once the
+document is loaded and all scripts have run, JavaScript execution enters its
+second phase. This phase is asynchronous and event-driven.
 
 
 ## single-threaded execution model
 1. Both core JavaScript and client-side JavaScript have a single-threaded
 execution model. Scripts and event handlers are (or must appear to be) executed
 one at a time without concurrency. This keeps JavaScript programming simple
-2. HTML5 defines “WebWorkers” which serve as a kind of a background thread, but
+2. HTML5 defines “WebWorker” which serve as a kind of a background thread, but
 clientside JavaScript still behaves as if it is strictly single-threaded. Even
 when concurrent execution is possible, client-side JavaScript cannot ever detect
  the fact that it is occurring.
@@ -38,38 +36,38 @@ it has crashed.
 码可能明显地等待更长时间才执行。
 
 
-## Client-Side JavaScript Timeline
-### 三种原生JS文件加载和执行方式
-* 默认：同步加载，同步执行  
-    在下载脚本并执行完成之前都不会解析之后的HTML代码，即脚本的加载和执行都会阻塞解析文档
-* defer：异步加载，延迟执行
-    1. 延迟至文档解析完成之后再执行
-    2. 保证先后顺序，b.js会在a.js执行之后再执行，b.js可以依赖a.js
-        ```html
-        <script defer src="a.js">
-        <script defer src="b.js">
-        ```
-* async：异步加载，同步执行
-    1. 不保证先后顺序，b.js不一定会在a.js执行之后再执行，b.js不能依赖a.js
+## 三种原生JS文件加载和执行方式
+### 默认
+同步加载，同步执行。在下载脚本并执行完成之前都不会解析之后的 HTML 代码，即脚本的加载和
+执行都会阻塞解析文档。
+
+### `defer`
+* 异步加载，延迟执行。延迟至文档解析完成之后再执行。
+* 保证先后顺序，`b.js`会在`a.js`执行之后再执行，`b.js`可以依赖`a.js`
     ```html
-    <script async src="a.js">
-    <script async src="b.js">
+    <script defer src="a.js"></script>
+    <script defer src="b.js"></script>
     ```
-    2. If a `<script>` tag has both attributes, a browser that supports both
-    will honor the async attribute and ignore the defer attribute.
+
+### `async`
+* 异步加载，同步执行
+* 不保证先后顺序，`b.js`不一定会在`a.js`执行之后再执行，`b.js`不能依赖`a.js`
+    ```html
+    <script async src="a.js"></script>
+    <script async src="b.js"></script>
+    ```
+* If a `<script>` tag has both attributes, a browser that supports both will
+honor the `async` attribute and ignore the `defer` attribute.
 
 ![scriptTimeline](image/scriptTimeline.jpg)  
-**使用```defer```和```async```先查看最新的浏览器支持情况**  
 
-[参考资料1](https://www.igvita.com/2014/05/20/script-injected-async-scripts-considered-harmful/)  
-[参考资料2](http://www.cnblogs.com/RachelChen/p/5456193.html)   
-[参考资料3](http://www.cnblogs.com/RachelChen/p/5456185.html)  
+
 
 
 ## 文档加载时间线  
 **This is an idealized timeline and all browsers do not support all of its
 details.**
-1. The web browser creates a Document object and begins parsing the web page,
+1. The web browser creates a `Document` object and begins parsing the web page,
 adding Element objects and Text nodes to the document as it parses HTML elements
  and their textual content. The `document.readyState` property has the value
 `loading` at this stage.
@@ -78,18 +76,20 @@ adding Element objects and Text nodes to the document as it parses HTML elements
 executes the inline or external script. These scripts are executed synchronously
 , and the parser pauses while the script downloads (if necessary) and runs.
 **inline script 不会阻塞渲染**
-3. 异步下载带有`async`或者`defer`属性的scripts，并在下载完成后立刻同步执行带有`async`
-属性的脚本文件
+3. 异步下载带有`async`或者`defer`属性的 scripts，并在下载完成后立刻同步执行带有
+`async`属性的脚本文件
 4. When the document is completely parsed, the `document.readyState` property
 changes to `interactive`.
 5. Any scripts that had the `defer` attribute set are executed
-6. The browser fires a `DOMContentLoaded` event on the Document object. This
-marks the transition from synchronous script execution phase to the asynchronous event-driven phase of program execution. Note, however, that there may still be
+6. The browser fires a `DOMContentLoaded` event on the `Document` object. This
+marks the transition from synchronous script execution phase to the asynchronous
+ event-driven phase of program execution. Note, however, that there may still be
 async scripts that have not yet executed at this point.
 7. The document is completely parsed at this point, but the browser may still be
  waiting for additional content, such as images, to load. When all such content
-finishes loading, and when all async scripts have loaded and executed, the `document.readyState` property changes to `complete` and the web browser fires a
- `load` event on the Window object.
+finishes loading, and when all async scripts have loaded and executed, the
+`document.readyState` property changes to `complete` and the web browser fires a
+ `load` event on the `Window` object.
 8. From this point on, event handlers are invoked asynchronously in response to
 user input events, network events, timer expirations, and so on.
 
@@ -100,3 +100,47 @@ implementation details. For very long documents or very slow network connections
  and allow the user to start interacting with it before all the scripts have
 executed. In that case, user input events might be fired before the event-driven
  phase of program execution has formally started.*
+
+## Chrome 脚本执行对渲染的阻塞
+```
+版本 67.0.3396.99（正式版本） （32 位）
+```
+即使把`<script>`放到最后也会阻塞渲染的情况：
+1. 解析 HTML，遇到`<script>`则阻塞解析，同步加载脚本。这是正常的。
+2. 如果脚本加载完成时，页面已经完成了渲染，则不存在阻塞。
+3. 但是如果脚本很快就加载完了，而此时页面还没有进行渲染，则 Chrome 不会先进行渲染，而会
+先执行脚本。这里的逻辑应该是如果此时先渲染绘制了的话，脚本如果会导致重渲染，则会让页面出
+现可见的重新布局。
+4. 必须要等到脚本执行完才会进行统一的渲染。如果脚本之内有耗时操作的话，会导致延迟渲染。
+5. 而在 FF 中，则会正常的先渲染绘制完成后再执行脚本。
+6. 因此，如果在 Chrome 中使用`defer`，如果异步下载完成时页面没有渲染完成，同样也会先执
+行脚本再渲染页面，也会导致页面内容延迟出现。
+7. 这就要求，即使`<script>`放在底部，其内部也不能有耗时的同步操作。例如
+    ```js
+    for (let i=0; i<99999999; i++){
+        Math.random();
+    }
+    ```
+8. 甚至也不能有很快执行的异步操作：
+    ```js
+    setTimeout(()=>{
+        for (let i=0; i<99999999; i++){
+            Math.random();
+        }
+    }, 30)
+    ```
+30毫秒之后，页面如果仍然没有完成渲染，则仍然会先执行回调中的操作，从而阻塞加载。除非你设
+定更长的异步操作，让耗时操作在渲染完成后执行
+    ```js
+    setTimeout(()=>{
+        for (let i=0; i<99999999; i++){
+            Math.random();
+        }
+    }, 300)
+    ```
+这样，在异步回调执行前页面已经渲染绘制完成。
+
+
+
+## References
+* [Script-injected "async scripts" considered harmful](https://www.igvita.com/2014/05/20/script-injected-async-scripts-considered-harmful/)  
