@@ -1,6 +1,7 @@
 # Concurrency model and Event Loop
 
-![Runtime concepts](./images/RuntimeConcepts.svg)
+![Runtime concepts](./images/RuntimeConcepts.svg)  
+JavaScript Runtime
 
 
 ## The JavaScript Engine
@@ -21,13 +22,13 @@ we’re currently executing and what function is to be executed after that. 因�
 2. 每一个函数调用都会在往调用栈内 push 一个 frame
     ```js
     function foo(b) {
-      var a = 10;
-      return a + b + 11;
+        var a = 10;
+        return a + b + 11;
     }
 
     function bar(x) {
-      var y = 3;
-      return foo(x * y);
+        var y = 3;
+        return foo(x * y);
     }
 
     console.log(bar(7)); // returns 42
@@ -55,19 +56,21 @@ programming environment) and accessed through the browser APIs.
 
 ### Basic Architecture
 ![Event Loop Basic Architecture](./images/EventLoopBasicArchitecture.png)
-1. 异步操作其实都不是 JS 本身执行的，而是执行环境（例如浏览器）执行的。
-2. 执行环境提供给 JS 一些异步操作 API，JS 调用这些 API 并传入回调函数。
-3. 浏览器帮助 JS 执行这些异步操作，执行完成后，把相应的回调函数加入到下面讲到的 Event
+1. 上图中只有 V8 JS 虚线框部分是 JS 引擎，它是单线程的。所谓的异步操作是在虚线框外部的
+执行环境（例如浏览器）还可以执行其他操作，从而形成并发异步。
+2. 执行环境提供给 JS 一些异步操作 API（上图的WebAPIs），JS 调用这些 API 并传入回调函
+数。
+3. 执行环境帮助 JS 执行这些异步操作，执行完成后，把相应的回调函数加入到下面讲到的 Event
 Table，等待被 JS 执行。
 
 
 ## Event Table and Event Queue
 1. 在没有异步操作的情况下，JS 就会按照上面 `Stack` 说明中的方式，不断的线性执行，直到
-程序结束。但如果程序中执行了一个异步操作，就会涉及到另外两个数据结构：Event Table and
+程序结束。但如果程序中执行了一个异步操作，就会涉及到另外两个数据结构：Event Table 和
 Event Queue。
-2. 似乎这两者合起来统称 Message Queue。另外，结合上面的图片，看起来也可以成为
+2. 似乎这两者合起来统称 Message Queue。另外，结合上面的图片，看起来也可以称为
 Callback Queue。
-2. 并不是所有的异步操作都会被加入到 Message Queue 中，详见下面的 【Macrotask 和
+3. 并不是所有的异步操作都会被加入到 Message Queue 中，详见下面的 【Macrotask 和
 Microtask】
 
 ### Event Table
@@ -77,14 +80,18 @@ triggered after a certain event.
 3. Bear in mind that the Event Table does not execute functions and does not
 add them to the call stack on it’s own. It’s sole purpose is to keep track of
 events and send them to the Event Queue.  
-看起来是在 Event Table 注册异步操作和其对应的回调。
+
+看起来是在 Event Table 里记录异步操作和其对应的回调，在其中某个事件发生时，会发出通知给
+Event Queue。
 
 ### Event Queue
 1. The Event Queue is a data structure similar to the stack — again you add
 items to the back but can only remove them from the front.
 2. It kind of stores the correct order in which the functions should be executed.
 3. It receives the function calls from the Event Table, but it needs to somehow
-send them to the Call Stack? This is where the Event Loop comes in.
+send them to the Call Stack? This is where the Event Loop comes in.  
+
+看起来就是会形成上图中的 callback queue。
 
 
 ## Event loop
@@ -93,7 +100,9 @@ empty.
 2. Imagine it like a clock and every time it *ticks* it looks at the call stack
 and if it is empty it looks into the Event Queue. If there is something in the
 event queue that is waiting it is moved to the call stack. If not, then nothing
-happens.
+happens.  
+
+看起来就是上图中那个箭头旋转的过程。
 
 ### 一个事件循环流程
 ```js
@@ -107,7 +116,7 @@ function main(){
 main();
 ```
 ![Event Loop](./images/EventLoop.png)  
-可以看 [视频演示]([Philip Roberts: What the heck is the event loop anyway? | JSConf EU](https://www.youtube.com/watch?v=8aGhZQkoFbQ)
+可以看 [视频演示](https://www.youtube.com/watch?v=8aGhZQkoFbQ)
 
 ### `main()` 以及 `setTimeout` 的回调总是最后执行
 如下代码，`timeout` 是最后被打印出来的
@@ -150,9 +159,10 @@ console.log('end');
     (anonymous) @ test.html:32
     ```
 6. 就是最后那个匿名函数。现在不明白它的机制，但它总是作为整个执行环境的最外层被调用。在
-[这个视频](https://www.youtube.com/watch?v=8aGhZQkoFbQ)里，这个匿名函数被写为了
-`main`。因为它是在整个执行环境的最外层，而不是某个函数的最外层，所以即使异步操作是在函
-数内部，回调也不会在函数返回后执行，而是仍然要等到其他代码执行完：
+[上面那个视频](https://www.youtube.com/watch?v=8aGhZQkoFbQ)里，这个匿名函数被写为了
+`main`。
+7. 因为它是在整个执行环境的最外层，而不是某个函数的最外层，所以即使异步操作是在函数内部，
+回调也不会在函数返回后执行，而是仍然要等到其他代码执行完：
     ```js
     function foo(){
         setTimeout(function(){
@@ -169,8 +179,6 @@ console.log('end');
     foo();
     console.log('out');
     ```
-7. 这也是为什么，为了防止过量递归造成栈溢出时，可以把每次重复的操作作为 `setTimeout`
-的 0ms 回调。因为这样重复操作会等到调用栈清空时才被执行。
 
 
 ## Macrotask 和 Microtask
