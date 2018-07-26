@@ -51,6 +51,7 @@ connections per origin on HTTP 1.
 * Time the request spent waiting before it could be sent. It can be waiting for
 any of the reasons described for Queueing.
 * Additionally, this time is inclusive of any time spent in proxy negotiation.
+* 在测试时，服务器延迟回复的时间，按理说是属于 Waiting (TTFB)，但经常显示成 Stalled
 
 ### Proxy Negotiation
 Time spent negotiating with a proxy server connection.
