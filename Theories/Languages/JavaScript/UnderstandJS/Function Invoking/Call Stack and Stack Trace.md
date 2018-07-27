@@ -18,8 +18,9 @@ function a() {
 }
 a();
 ```
-In Nodejs, console will be:
-```js
+
+Nodejs console:
+```shell
 Trace
     at d (repl:2:13)
     at c (repl:2:5)
@@ -38,7 +39,12 @@ This method displays the whole call stack from top to bottom, and is easy to use
 ### 2. `Error.prototype.stack`
 ```js
 function d() {
-    try{throw new Error()} catch(err){console.log(err.stack)}
+    try{
+        throw new Error()
+    }
+    catch(err){
+        console.log(err.stack)
+    }
 }
 
 function c() {
@@ -55,7 +61,8 @@ function a() {
 
 a();
 ```
-In Nodejs, console will be:
+
+Nodejs console:
 ```js
 Error
     at d (repl:3:15)
@@ -89,7 +96,8 @@ function a() {
 a();
 console.log(obj.stack);
 ```
-In Nodejs, console will be:
+
+Nodejs console:
 ```js
 Error
     at b (repl:2:5)
@@ -104,7 +112,8 @@ Error
     at REPLServer.emit (events.js:211:7)
     at REPLServer.Interface._onLine (readline.js:282:10)
 ```
-This method will create a `stack` property in the frist object argument. And if
+
+This method will create a `stack` property in the first object argument. And if
 the second argument is provided, the function passed will be considered the
 ending point of the call stack and therefore the stack trace will only display
 the calls that happened before this function was called.

@@ -9,21 +9,21 @@
 ### Memory life cycle
 Regardless of the programming language, memory life cycle is pretty much always
 the same:
-1. **Allocate memory** — memory is allocated by the operating system which allows
- your program to use it. In low-level languages (e.g. C) this is an explicit
- operation that you as a developer should handle. In high-level languages,
- however, this is taken care of for you.
+1. **Allocate memory** — memory is allocated by the operating system which
+allows your program to use it. In low-level languages (e.g. C) this is an
+explicit operation that you as a developer should handle. In high-level
+languages, however, this is taken care of for you.
 2. **Use memory** — this is the time when your program actually makes use of the
- previously allocated memory. Read and write operations are taking place as
- you’re using the allocated variables in your code.
+previously allocated memory. Read and write operations are taking place as
+you’re using the allocated variables in your code.
 3. **Release memory** — now is the time to release the entire memory that you
-don’t need so that it can become free and available again. As with the Allocate
+don’t need so that it can become free and available again. As with the allocate
 memory operation, this one is explicit in low-level languages.
 
 #### In high-level languages
 1. The second part is explicit in all languages. The first and last parts are
 explicit in low-level languages, but are mostly implicit in high-level languages
- like JavaScript.
+like JavaScript.
 2. This seemingly “automatical” nature of freeing up resources is a source of
 confusion and gives JavaScript (and other high-level-language) developers the
 false impression they can choose not to care about memory management. **This is
@@ -34,15 +34,15 @@ a big mistake**.
 ### Release when the memory is not needed anymore
 1. Most of memory management issues come at this phase.  
 2. The hardest task here is to find when "the allocated memory is not needed any
- longer".   
+longer".   
 3. It often requires the developer to determine where in the program such piece
 of memory is not needed anymore and free it.  
 4. High-level languages embed a piece of software called "garbage collector"
 whose job is to track memory allocation and use in order to find when a piece of
- allocated memory is not needed any longer in which case, it will automatically
+allocated memory is not needed any longer in which case, it will automatically
 free it.  
 5. This process is an approximation since the general problem of knowing whether
- some piece of memory is needed is undecidable (can't be solved by an algorithm).
+some piece of memory is needed is undecidable (can't be solved by an algorithm).
 
 ### JavaScript 的垃圾回收算法： Mark-and-sweep
 This algorithm reduces the definition of "an object is not needed anymore" to
@@ -58,7 +58,7 @@ context.
 that is flipped when a variable is in context, or there may be an “in-context”
 variable list and an “out-of-context” variable list between which variables are
 moved. The implementation of the flagging is unimportant; it’s really the theory
- that is key.
+that is key.
 5. When the garbage collector runs, it marks all variables stored in memory
 (once again, in any number of ways).
 6. It then clears its mark off of variables that are in context and variables
