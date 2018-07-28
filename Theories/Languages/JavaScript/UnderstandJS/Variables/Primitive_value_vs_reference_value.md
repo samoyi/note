@@ -6,7 +6,8 @@
 
 ## Reference values
 * Stored in the heap.
-* Stored in the variable location is a pointer to a location in memory where the object is stored.
+* Stored in the variable location is a pointer to a location in memory where the
+object is stored.
 
 
 ```js
@@ -23,7 +24,7 @@ console.log( a1 ); // [33]
 
 // 内存中的实际数组 [33] 还正常的存在，但此时在内存中又保存了一个数组 [44]
 // 变量 arr 的指针此时改为指向数组 [44] ，所以打印 arr显示 “[44]”
-// 而因为数组 [33] 仍然存在于内存中，且仍然被变量 a1 的指针引用，所以打印 a1 显示 “ [33] ”
+// 而因为数组 [33] 仍然存在于内存中，且仍然被变量 a1 的指针引用，所以打印 a1 显示 “[33]”
 arr = [44];
 console.log( arr ); // [44]
 console.log( a1 ); // [33]

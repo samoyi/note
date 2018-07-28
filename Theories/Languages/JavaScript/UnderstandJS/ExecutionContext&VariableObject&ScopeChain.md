@@ -1,9 +1,9 @@
 # Execution Context &  Variable Object & Scope Chain
+
 Execution context is defined as the environment in which JavaScript code is
 executed.
 
 
-***
 ## Three Execution Context types
 ### 1. Global excution context
 1. This is the default execution context in which JS code start it’s execution
@@ -24,7 +24,6 @@ call, it creates a new functional execution context for that function.
 ### 3. Eval execution context
 
 
-***
 ## Execution context stack
 1. Execution context stack is a stack data structure to store all the execution
 stacks created while executing the JS code.
@@ -41,7 +40,6 @@ function’s execution context and starts executing the function which is below 
 context and execution of JavaScript ends.
 
 
-***
 ## Creates execution context
 JavaScript engine creates the execution context in the following two stages:
 1. Creation phase
@@ -75,7 +73,6 @@ function funA (a, b) {
 	}
 }
 funA(3, 2);
-
 ```
 1. Just after `funA` is called and before code execution of `funA` starts, JS
 engine creates an `executonContextObj` for `funcA`
@@ -90,23 +87,23 @@ context stack. Function name property points to it’s definition in the heap
 memory.
 5. After this, JS engines will create the scope chain and will determine the
 value of `this`.
-```js
-executionContextObj = {
-	variableObject: {
-		argumentObject : {
-			0: a,
-			1: b,
-			length: 2
+	```js
+	executionContextObj = {
+		variableObject: {
+			argumentObject : {
+				0: a,
+				1: b,
+				length: 2
+			},
+			a: 3,
+			b: 2
+			c: undefined,
+			d: undefined
 		},
-		a: 3,
-		b: 2
-		c: undefined,
-		d: undefined
-	},
-	scopechain: [],
-	this
-}
-```
+		scopechain: [],
+		this
+	}
+	```
 
 ### Execution phase
 In the execution phase, JS engines will again scan through the function to
@@ -128,7 +125,7 @@ variableObject = {
 ```
 
 
-***
+
 ## Complete example
 非严格模式下
 ```js
@@ -151,6 +148,7 @@ cFunc = function(e) { // Line 5
 
 cFunc(10); // Line 18
 ```
+
 ### 1. JS engine will enter the compilation phase to create the execution objects
 1. **Line 1**: In the line variable `a` is assigned a value of `1`, so JS
 engines does not think of it as a variable declaration or function declaration
@@ -210,6 +208,6 @@ globalExecutionContextObj = {
 For `cfunc`, then for `dFunc`
 
 
-***
+
 ## References
 * [Execution context, Scope chain and JavaScript internals](https://hackernoon.com/execution-context-in-javascript-319dd72e8e2c)
