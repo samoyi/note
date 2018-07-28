@@ -5,14 +5,14 @@ executed.
 
 
 ## Three Execution Context types
-### 1. Global excution context
+### Global excution context
 1. This is the default execution context in which JS code start it’s execution
 when the file first loads in the browser.
 2. All the global code are executed inside global execution context.
 3. Global execution context cannot be more than one because only one global
 environment is possible for JS code execution.
 
-### 2. Functional execution context
+### Functional execution context
 1. Functional execution context is defined as the context created by the
 execution of code inside a function.
 2. Each function has it’s own execution context.
@@ -21,7 +21,7 @@ context.
 4. While executing global execution context code, if JS engine finds a function
 call, it creates a new functional execution context for that function.
 
-### 3. Eval execution context
+### Eval execution context
 
 
 ## Execution context stack
@@ -46,21 +46,25 @@ JavaScript engine creates the execution context in the following two stages:
 2. Execution phase
 
 ### Creation phase
-Creation phase is the phase in which JS engines has called a function but it’s
+Creation phase is the phase in which JS engine has called a function but it’s
 execution has not started. In the creation phase, JS engine is in the
 compilation phase and it scans over the function to compile the code.
+
 #### 1. Creates the Activation object or the variable object
 Activation object is a special object in JS which contain all the variables,
 function arguments and inner functions declarations information. As activation
 object is a special object it does not have the `dunder proto`(`__proto__`)
 property.
+
 #### 2. Creates the scope chain
 Once the activation object gets created, JS engine initializes the scope chain
 which is a list of all the variables objects inside which the current function
 exists. This also includes the variable object of global execution context.
 Scope chain also contains the current function variable object.
-#### 3. Determines the value of this
+
+#### 3. Determines the value of `this`
 After the scope chain, JavaScript engine initialize the value of `this`.
+
 #### Example
 ```js
 function funA (a, b) {
@@ -75,7 +79,7 @@ function funA (a, b) {
 funA(3, 2);
 ```
 1. Just after `funA` is called and before code execution of `funA` starts, JS
-engine creates an `executonContextObj` for `funcA`
+engine creates an `executionContextObj` for `funcA`
 2. Activation object or variable object contains `argument` object which have
 details about the arguments of the function.
 3. It will have a property name for each of the variables and functions which
@@ -106,11 +110,11 @@ value of `this`.
 	```
 
 ### Execution phase
-In the execution phase, JS engines will again scan through the function to
+1. In the execution phase, JS engines will again scan through the function to
 update the variable object with the values of the variables and will execute
 the code.  
-After the execution stage, variable object will look like this:
-```js
+2. After the execution stage, variable object will look like this:
+```
 variableObject = {
 	argumentObject : {
 		0: a,
@@ -123,7 +127,6 @@ variableObject = {
 	d: undefined then pointer to the function defintion of d
 }
 ```
-
 
 
 ## Complete example
@@ -152,7 +155,7 @@ cFunc(10); // Line 18
 ### 1. JS engine will enter the compilation phase to create the execution objects
 1. **Line 1**: In the line variable `a` is assigned a value of `1`, so JS
 engines does not think of it as a variable declaration or function declaration
-and it  moves to line 3. It does not do anything with this line in compilation
+and it moves to line 3. It does not do anything with this line in compilation
 phase as it is not any declaration.
 2. **Line 3**: As the code is in global scope and it’s a variable declaration,
 JS engines will create a property with the name of this variable in the global
@@ -162,10 +165,11 @@ function definition in a heap memory and create a property which will point to
 location where function definition is stored. JS engines doesn’t know what is
 inside of `cFunc`.
 4. **Line 18**
-(原文是13): This code is not any declaration hence, JS engine will not do anything.
+(原文是13): This code is not any declaration hence, JS engine will not do
+anything.
 
 ### 2. Global Execution Context object after the creation phase stage:
-```js
+```
 globalExecutionContextObj = {
 	activationbj: {
 		argumentObj : {
@@ -189,7 +193,7 @@ variable object and hence update it’s value with `2`.
 to line 18.
 
 ### 4. Global execution context object after the execution phase:
-```js
+```
 globalExecutionContextObj = {
 	activationbj: {
 		argumentObj : {
