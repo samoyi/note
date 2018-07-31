@@ -2,14 +2,13 @@
 
 
 ## same-origin policy 限制范围
-### Cookie 无法读取
+* Cookie 无法读取
+* LocalStorage 和 IndexDB 无法读取
+* DOM 无法获得
+* AJAX 请求不能发送  
 
-### LocalStorage 和 IndexDB 无法读取
-
-### DOM 无法获得
-
-### AJAX 请求不能发送
-为了防止CSRF。如果 AJAX 没有同源限制，后果如下：
+### AJAX 同源限制是为了防止 CSRF
+如果 AJAX 没有同源限制，后果如下：
 1. 我想让张三把银行账户的钱转给李四
 2. 但只有银行验证了张三的身份后才会进行转账，即请求的 cookie 必须包含张三的身份信息
 3. 我制作一个网页，网址为 `www.my.com`。内部会自动发起到银行网页
@@ -24,8 +23,8 @@
 
 ## Definition
 ### Definition of same origin
-Two pages have the same origin if the **protocol**, **port**
-(if one is specified), and **host** are the same for both pages.
+Two pages have the same origin if the **protocol**, **port**(if one is specified
+), and **host** are the same for both pages.
 
 ### Definition of origin
 * A script can read only the properties of windows and documents that have the
@@ -34,7 +33,7 @@ script itself is not relevant to the same-origin policy.
 * Suppose, for example, that a script hosted by host A is included (using the
 `src` property of a `<script>` element) in a web page served by host B. The
 origin of that script is host B and the script has full access to the content of
- the document that contains it. If the script opens a new window and loads a
+the document that contains it. If the script opens a new window and loads a
 second document from host B, the script also has full access to the content of
 that second document. But if the script opens a third window and loads a
 document from host C (or even one from host A) into it, the same-origin policy
@@ -44,7 +43,7 @@ comes into effect and prevents the script from accessing this document.
 ## Inherited origins
 Content from `about:blank` and `javascript:` URLs inherits the origin from the
 document that loaded the URL, since the URL itself does not give any information
- about the origin. `data:` URLs get a new, empty, security context.
+about the origin. `data:` URLs get a new, empty, security context.
 
 
 ## IE Exceptions
@@ -65,7 +64,7 @@ considered from same origin and no restrictions are applied.
 variable to the same domain name as the parent’s domain name.
 2. When using `document.domain` to allow a subdomain to access its parent
 securely, you need to set `document.domain` to the same value in both the parent
- domain and the subdomain. This is necessary even if doing so is simply setting
+domain and the subdomain. This is necessary even if doing so is simply setting
 the parent domain back to its original value. Failure to do this may result in
 permission errors.
 3. The port number is kept separately by the browser. Any call to the setter,
@@ -83,33 +82,34 @@ window.document.getElementById("myIFrame").contentWindow.document.body.style
     .backgroundColor = "red"; // this access is allowed by default
 </script>
 ```
+
 `http://www.qnimate.com/child.php`:
 ```php
-<?php
     echo file_get_contents('http://www.blog.qnimate.com/child.html');
-?>
 ```
 
 #### `window.postMessage()`
 
 ### 跨域AJAX
-#### CORS
-#### JSONP
-#### Proxy server
+* CORS
+* JSONP
+* Proxy server
+* WebSocket
 
 ### 跨域读取 LocalStorage 和 IndexDB
-#### `window.postMessage()`
+* `window.postMessage()`
 
 ### 跨域读取 Cookie
-#### `window.postMessage()`
+* `window.postMessage()`
 
 
 ## 总结一下各个跨域方法的适用范围
-* `document.domain`： Cookie、DOM
+* `document.domain`： Cookie、DOM。
 * Proxy server：DOM、AJAX
-* `window.postMessage()`：DOM、跨域读取LocalStorage和IndexDB
+* `window.postMessage()`：DOM、跨域读取 LocalStorage 和 IndexDB
 * JSONP：AJAX
-* CORS：AJAX
+* CORS：AJAX。`header`设置方法见`Theories\Protocal&Standard\InternetProtocolSuite\ApplicationLayer\HTTP\CORSAccessControl.md`
+* WebSocket：AJAX。配置方法参考这个[Demo](https://github.com/samoyi/Nichijou/tree/master/communication/websocket)
 
 
 ## References

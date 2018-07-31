@@ -3,8 +3,8 @@
 ## Summary
 * The serialization of form data is frequently needed in modern web applications
 , and so the XMLHttpRequest Level 2 specification introduces the `FormData` type.
- The `FormData` type makes it easy to both serialize existing forms and create
- data in the same format as a form for easy transmission via XHR.
+The `FormData` type makes it easy to both serialize existing forms and create
+data in the same format as a form for easy transmission via XHR.
 * 截至2017.5，[浏览器支持](https://developer.mozilla.org/en-US/docs/Web/API/FormData#Browser_compatibility)
 不好
 

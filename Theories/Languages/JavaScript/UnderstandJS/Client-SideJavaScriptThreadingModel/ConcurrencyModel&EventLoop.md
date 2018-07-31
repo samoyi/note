@@ -4,6 +4,20 @@
 JavaScript Runtime
 
 
+## TODO
+### 异步回调是否被会错误打断
+* 在 Chrome 和 FF 上（2018.7），异步回调的执行不会被之前的同步错误打断：
+    ```js
+    setTimeout(()=>{
+        console.log(22);
+    })
+    throw new Error();
+    console.log(33);
+    ```
+    先输出错误后输出`22`。用 AJAX 测试也是不会被打断。  
+* 但在 Node.js(8.1.2) 上只会输出错误
+
+
 ## The JavaScript Engine
 A popular example of a JavaScript Engine is Google’s V8 engine. The V8 engine is
  used inside Chrome and Node.js for example. Here is a very simplified view of

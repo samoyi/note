@@ -1,44 +1,5 @@
-# Alternate Cross-Domain Techniques
+# Cross-Origin Messaging
 
-## 图像 ping
-1. 一个网页可以从任何网页中加载图像，不用担心跨域不跨域。
-2. 图像 Ping 是与服务器进行简单、单向的跨域通信的一种方式。 请求的数据是通过查询字符串
-形式发送的，而响应可以是任意内容，但通常是像素图或 204 响应。
-3. 通过图像 Ping，浏览器得不到任何具体的数据，但通过侦听 load 和 error 事件，它能知道
-响应是什么时候接收到的。图像 Ping 最常用于跟踪用户点击页面或动态广告曝光次数。
-    ```js
-    var img = new Image();
-    function imgPing(){
-        alert("Done!");
-    }
-    function imgPingFail(){
-        alert("Fail!");
-    }
-    img.addEventListener('load', imgPing, false);
-    img.addEventListener('error', imgPingFail, false);
-    img.src = "test.php?name=li";
-    ```
-4. 图像 Ping 有两个主要的缺点：
-  * 只能发送GET请求
-  * 无法访问服务器的响应文本
-
-
-## JSONP
-### 原理
-1. 因为`<script>`的`src`属性也可以跨域访问，所以可以在响应中返回所需要的文本，而这些文
-本返回后就相当于当前页面中的JS代码。
-2. 通过请求地址的参数，可以让服务器方判断如何响应。
-
-### 缺点
-1. JSONP 是从其他域中加载代码执行。如果其他域不安全，很可能会在响应中夹带一些恶意代码，
-而此时除了完全放弃 JSONP 调用之外，没有办法追究。因此在使用不是你自己运维的Web服务时，
-一定得保证它安全可靠。
-2. 要确定 JSONP 请求是否失败并不容易。虽然HTML5给 `<script>` 元素新增了一个 `onerror`
-事件处理程序，但目前还没有得到任何浏览器支持。为此，开发人员不得不使用计时器检测指定时间
-内是否接收到了响应。但就算这样也不能尽如人意，毕竟不是每个用户上网的速度和带宽都一样。
-
-
-## Cross-Origin Messaging
 1. cross-origin communication between different `window` object in cross-origin
 or same-origin
 2. You can communicate with another `window`, which in `iframe` or in a new
@@ -49,9 +10,10 @@ then free to handle this event as needed. The arguments passed to
 `window.postMessage()` are exposed to the receiving window through the event
 object.
 
-### targetWindow.postMessage
+## targetWindow.postMessage
 `targetWindow.postMessage(message, targetOrigin, [transfer])`  
-#### targetWindow
+
+### targetWindow
 A reference to the window that will receive the message. Methods for obtaining
 such a reference include:
 * `Window.open` (to spawn a new window and then reference it)
@@ -62,13 +24,14 @@ such a reference include:
     `<iframe>`)
 * `Window.frames` + an index value (named or numeric)
 
-#### `message`
-Data to be sent to the other window. The data is serialized using the [structured
- clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm). This means you can pass a broad variety of data objects safely
- to the destination window without having to serialize them yourself.
+### `message`
+Data to be sent to the other window. The data is serialized using the
+[structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm).
+This means you can pass a broad variety of data objects safely to the
+destination window without having to serialize them yourself.
 (Prior to Gecko 6.0, the message parameter must be a string. )
 
-#### `targetOrigin`
+### `targetOrigin`
 1. Specifies what the origin of `otherWindow` must be for the event to be
 dispatched, either as the literal string `*` or as a URI.
 2. If at the time the event is scheduled to be dispatched, the scheme, hostname,
@@ -82,33 +45,33 @@ using postMessage.
 window, you can simply use `/`.
 
 
-### The dispatched event
+## The dispatched event
 If the origins match, the call to `postMessage()` will result in a message event
- being fired at the target Window object. A script in that window can define an
+being fired at the target Window object. A script in that window can define an
 event handler function to be notified of message events.
 ```js
 window.addEventListener("message", receiveMessage, false);
 
 function receiveMessage(event){
-  if (event.origin !== "http://example.org:8080"){
+    if (event.origin !== "http://example.org:8080"){
       return;
-  }
+    }
 
   // ...
 }
 ```
 
-#### handler
+### handler
 This handler is passed an event object with the following properties:
-##### `data`
+#### `data`
 This is a copy of the message that was passed as the first argument to
 `postMessage()`
 
-##### `source`
+#### `source`
 The Window object from which the message was sent. You can use it to reply
 message by `postMessage()`
 
-##### `origin`
+#### `origin`
 1. The origin of the window that sent the message at the time `postMessage` was
 called.
 2. Note that this origin is not guaranteed to be the current or future origin of
@@ -125,7 +88,7 @@ but for now you should handle both IDN and punycode forms.
 contains a `javascript:` or `data:` URL is the origin of the script that loaded
 the URL.
 
-#### Security
+### Security
 1. Any window may access `postMessage` method on any other window, at any time
 , regardless of the location of the document in the window, to send it a message.
 2. Consequently, any event listener used to receive messages must first check
@@ -135,7 +98,7 @@ the identity of the sender of the message, using the `origin` and possibly
 cross-site scripting attacks.
 
 
-### Security concerns
+## Security concerns
 1. If you do not expect to receive messages from other sites, do not add any
 event listeners for message events. This is a completely foolproof way to avoid
 security problems.
@@ -146,6 +109,6 @@ of the received message. Otherwise, a security hole in the site you trusted to
 send only trusted messages could then open a cross-site scripting hole in your
 site.
 4. Always specify an exact target origin, not `*`, when you use `postMessage` to
- send data to other windows. A malicious site can change the location of the
+send data to other windows. A malicious site can change the location of the
 window without your knowledge, and therefore it can intercept the data sent
 using `postMessage`.
