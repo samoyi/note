@@ -23,7 +23,7 @@ asks the browser (through some browser-specific UI) to delete it.
 * Data stored through `sessionStorage` has the same lifetime as the top-level
 window or browser tab in which the script that stored it is running. When the
 window or tab is permanently closed, any data stored through `sessionStorage` is
- deleted. Note, however, that modern browsers have the ability to reopen
+deleted. Note, however, that modern browsers have the ability to reopen
 recently closed tabs and restore the last browsing session, so the lifetime of
 these tabs and their associated `sessionStorage` may be longer than it seems.
 
@@ -34,7 +34,7 @@ origin share the same `localStorage` data. They can read each other’s data. An
 they can overwrite each other’s data. But documents with different origins can
 never read or overwrite each other’s data.
 * Like `localStorage`, `sessionStorage` is scoped to the document origin so that
- documents with different origins will never share sessionStorage. But
+documents with different origins will never share sessionStorage. But
 `sessionStorage` is also scoped on a per-window basis. If a user has two
 browser tabs displaying documents from the same origin, those two tabs have
 separate `sessionStorage` data: the scripts running in one tab cannot read or
@@ -43,7 +43,30 @@ visiting exactly the same page and are running exactly the same scripts.
 * Note that this window-based scoping of `sessionStorage` is only for top-level
 windows. If one browser tab contains two `<iframe>` elements, and those frames
 hold two documents with the same origin, those two framed documents will share
-`sessionStorage`.
+`sessionStorage`. 测试如下：
+    ```js
+    // frame1
+    window.addEventListener('click', function(){
+        sessionStorage.clear();
+        let key = Math.random();
+        let value = Math.random();
+        document.body.innerHTML = `
+        key: ${key}<br />
+        value: ${value}
+        `;
+        sessionStorage[key] = value;
+    });
+    ```
+    ```js
+    // frame2
+    window.addEventListener('storage', function(ev){
+        document.body.innerHTML = `
+        key: ${ev.key}<br />
+        value: ${ev.newValue}<br />
+        fromULR: ${ev.url}
+        `;
+    });
+    ```
 
 
 ## Storage API
@@ -93,7 +116,7 @@ involved.
 3. Also note that storage events are only triggered when storage actually
 changes. Setting an existing stored item to its current value does not trigger
 an event, nor does removing an item that does not exist in storage.
-4. 虽然FF可以在本地环境中实现事件触发，但至少Chrome和IE只有在服务器环境才行。
+4. 虽然 FF 可以在本地环境中实现事件触发，但至少 Chrome 和 IE 只有在服务器环境才行。
 
 ### Event properties
 * `key`: the name or key of the item that was set or removed. If the `clear()`

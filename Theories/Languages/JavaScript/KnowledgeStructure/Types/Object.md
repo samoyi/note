@@ -45,41 +45,54 @@ to values.
      access a property of an object with the `[]` array notation, the name of
      the property is expressed as a string. Strings are JavaScript datatypes, so
       they can be manipulated and created while a program is running.
-    ```js
-    let obj = {
-      name: '33',
-    };
+        ```js
+        let obj = {
+          name: '33',
+        };
 
-    let key = 'name';
+        let key = 'name';
 
-    console.log(obj[key]); // 33
-    console.log(obj.name); // 33
-    console.log(obj.key);  // undefined
-    ```
+        console.log(obj[key]); // 33
+        console.log(obj.name); // 33
+        console.log(obj.key);  // undefined
+        ```
     2. 如果给中括号中的属性名传递一个数字，则它会被转化为字符串，即这种写法也是正确的：
-     ```js
-     obj[2] = 666;
-     ```
-    正是因为这个原因以及数组是特殊的对象，所以数组通常也是用这种方法。而且正如对象中的
-    写法一样，数组也可以将中括号中的项数写为字符串的形式：
-    ```js
-    arr["2"] = 666;
-    ```
-    3. ES6 支持定义对象时属性名使用表达式，表达式放在中括号内：
-    ```js
-    let str1 = 'na';
-    let str2 = 'me';
+         ```js
+         obj[2] = 666;
+         ```
+        正是因为这个原因以及数组是特殊的对象，所以数组通常也是用这种方法。而且正如对象中的
+        写法一样，数组也可以将中括号中的项数写为字符串的形式：
+        ```js
+        arr["2"] = 666;
+        ```
+    3. 给中括号中传递其他类型的值，都会被转换为字符串
+        ```js
+        let obj = {};
 
-    let obj = {
-        prop:               'not name',
-        [str1 + str2]:      33,
-        ['a' + 'g' + 'e']:  22,
-    }
+        let arr = [1, 2, 3];
+        obj[arr] = 11;
+        obj[null] = 22;
+        obj[undefined] = 33;
 
-    console.log(obj.prop);  // not name
-    console.log(obj.name);  // 33
-    console.log(obj.age);   // 22
-    ```
+        console.log(obj['1,2,3']);     // 11
+        console.log(obj['null']);      // 22
+        console.log(obj['undefined']); // 33
+        ```
+    4. ES6 支持定义对象时属性名使用表达式，表达式放在中括号内：
+        ```js
+        let str1 = 'na';
+        let str2 = 'me';
+
+        let obj = {
+            prop:               'not name',
+            [str1 + str2]:      33,
+            ['a' + 'g' + 'e']:  22,
+        }
+
+        console.log(obj.prop);  // not name
+        console.log(obj.name);  // 33
+        console.log(obj.age);   // 22
+        ```
 * **reserved word as property identifier**  
     In ECMAScript 3, the identifier that follows the dot operator cannot be a
     reserved word: you cannot write `o.for` or `o.class`, for example, because

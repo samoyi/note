@@ -22,14 +22,17 @@ a property with a `@@iterator` key which is available via constant
 4. `[Symbol.iterator]`: A zero arguments function that returns an object,
  conforming to the iterator protocol.
 5. Whenever an object needs to be iterated (such as at the beginning of a
-    `for..of` loop), its` @@iterator` method is called with no arguments, and
-    the returned `iterator` is used to obtain the values to be iterated.
+`for..of` loop), its` @@iterator` method is called with no arguments, and the
+returned `iterator` is used to obtain the values to be iterated.
 6. built-in iterables: `String`, `Array`, `TypedArray`, `Map` and `Set`
 ```js
 var str = 'hi';
 console.log( str[Symbol.iterator]); // ƒ [Symbol.iterator]() { [native code] }
-console.log( str[Symbol.iterator]()); // StringIterator {}
+console.log( str[Symbol.iterator]()); // StringIterator {}  调用该方法会返回遍历器
 ```
+
+简单来说，如果一个对象要实现可遍历协议，这个对象就要有一个可以通过`Symbol.iterator`访
+问的方法，该方法会返回一个遍历器。
 
 
 ## Iterator protocol
@@ -43,7 +46,8 @@ following semantics:
         when `done` is `true`.
         * `done`: Has the value `true` if the iterator is past the end of the
         iterated sequence. Has the value `false` if the iterator was able to
-        produce the next value in the sequence.
+        produce the next value in the sequence. 注意参考下面的例子，`true`不是遍历
+        的最后一项，而是已经超出超出范围的那一项。
     2. The `next` method always has to return an object with appropriate
     properties including `done` and `value`. If a non-object value gets returned
     , a `TypeError` will be thrown.
@@ -58,38 +62,69 @@ console.log( iterator.next() ); // {value: "i", done: false}
 console.log( iterator.next() ); // {value: undefined, done: true}
 ```
 
+简单来说，如果一个可遍历对象通过`Symbol.iterator`返回的对象要符合遍历器协议，这个对象
+必须要有一个符合上述要求的`next`方法。
 
-## Built-in iteration constructs
-Some built-in constructs, such as the spread operator, use the same iteration
-protocol under the hood. 下面通过给一个字符串实例添加`@@iterator`方法使其覆盖原型中的
-相应方法来改变该字符串对象的迭代规则
+
+## 实现可遍历对象
+当一个对象实现了 Iterable protocol，并且其遍历器实现了 Iterator protocol，那个该对象
+就可以使用`for...of`遍历，也可以使用其他会默认调用遍历接口的方法
 ```js
-var someString = new String('hi');
-// var someString = 'hi'; // try using primitive value, see what happens
-
-console.log( [...someString] ); // ["h", "i"]
-
-someString[Symbol.iterator] = function() {
-	return {
-		next: function() {
-			if (this._index !==3) {
-				return { value: this._chars[this._index++], done: false };
-			}
-			else {
-				return { done: true };
-			}
-		},
-		_chars: ['hello ', 'world ', '!'],
-        _index: 0,
-	};
+let obj = {
+    name: '33',
+    age: 22,
 };
 
-console.log( [...someString] ); // ["hello ", "world ", "!"]
-console.log( someString+'' );   // hi
+try {
+    // 不能使用 for...of
+    for (let val of obj){}
+}
+catch(err){
+    console.log(err); // TypeError: obj is not iterable
+}
+try {
+    // 不能使用扩展运算符和解构赋值
+    console.log([...obj]);
+}
+catch(err){
+    console.log(err); // TypeError: obj is not iterable
+}
+
+
+// 实现遍历
+const aPair = [];
+for (let key in obj){
+    aPair.push([key, obj[key]]);
+}
+
+obj[Symbol.iterator] = function(){
+    return {
+        length: aPair.length,
+        index: 0,
+        next(){
+            let result = {
+                value: aPair[this.index] && aPair[this.index][1],
+                done: this.index !== this.length ? false : true,
+            };
+            this.index++;
+            return result;
+        },
+    };
+};
+
+for (let val of obj){
+    console.log(val);
+}
+// "33"
+// 22
+
+console.log([...obj]); // ["33", 22]
 ```
 
 
-***
+## 可选的`return()`和`throw()`方法
+
+
 ## Reference
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols)
 * [Draft ECMA-262](https://tc39.github.io/ecma262/#sec-iteration)

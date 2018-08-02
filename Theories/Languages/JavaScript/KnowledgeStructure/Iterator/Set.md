@@ -1,5 +1,6 @@
 # Set
 
+
 ## Description
 ```js
 new Set([iterable]);
@@ -13,7 +14,6 @@ Same-value-zero equality
     ```js
     const set = new Set([-0, 0, NaN, NaN]);
     console.log(set); // {0, NaN}
-    // 可以看出来在 Set 中，既认为 -0 和 0 相等（Strict Equality），也认为 NaN 和 NaN 相等（SameValue）
     ```
 
 
@@ -24,6 +24,7 @@ Returns the number of values in the Set object.
 let set = new Set([1, 2, 3, 1]);
 console.log(set.size); // 3
 ```
+
 
 ## Instance Methods
 ### `add(value)`
@@ -41,6 +42,7 @@ otherwise `false`.
 * return `undefined`
 
 ### 与 Map 不同，没有`get`方法
+也不能通过数字索引查询项。只能通过遍历方法获得。
 
 ```js
 let set = new Set();
@@ -60,7 +62,6 @@ mySet.forEach(function callback(value, value, set) {
     //your iterator
 }[, thisArg])
 ```
-
 * There are no keys in Set objects. However, the first two arguments are both
 values contained in the Set
 * Each value is visited once, except in the case when it was deleted and
@@ -109,7 +110,7 @@ for (let item of set.entries()) {
 ## WeakSet
 ### The main differences to the `Set` object are:
 #### 成员只能是对象
-WeakSet 的成员只能是对象，而不能是其他类型的值。
+WeakSet 的成员只能是引用，而不能是其他类型的值。基础类型的值并不能实现弱引用。
 
 #### 弱引用
 1. WeakSet 中的对象都是弱引用，即垃圾回收机制不考虑 WeakSet 对该对象的引用，也就是说，
