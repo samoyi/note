@@ -36,7 +36,6 @@ new Vue({
 2. 但如果把函数调用而非函数本身赋值给 `@click` 的话，与在 JS 中的语法有所不同。在 JS
 中如果要把函数调用赋值给事件属性或将其作为 `addEventListener` 的参数，该事件调用必须要
 返回一个合理的 [`EventListener`](https://developer.mozilla.org/en-US/docs/Web/API/EventListener)
-。
 ```js
 function handler(msg){
     return (ev)=>{
@@ -72,8 +71,8 @@ new Vue({
     },
 });
 ```
-按照 JS 的思路，应该是 mounted 之后就会立即执行 `greet` 并打印出 `2233`。实际上并没有
-，而是在点击按钮之后才打印出 `2233`，而且也仅有 `2233`被打印出。
+按照 JS 的思路，应该是 mounted 之后就会立即执行`greet`并打印出`2233`。实际上并没有，而
+是在点击按钮之后才打印出 `2233`，而且也仅有 `2233`被打印出。
 4. Vue 中的实际的写法是这样的：
 ```html
 <input id="app" type="button" @click="greet('hello', $event)" />
@@ -94,4 +93,4 @@ new Vue({
 TODO：需要确认源码。这里先推测一下 Vue 内部的处理方法：
     1. 使用一个新的函数 `foo` 作为事件处理程序，事件发生后，`foo` 被调用，在其内部获得
        了事件对象
-    2. 将事件对象赋值给 `$event`，然后再调用 `greet`，并将 `$event` 作为参数传入。
+    2. 将事件对象赋值给`$event`，然后再调用`greet`，并将`$event`作为参数传入。

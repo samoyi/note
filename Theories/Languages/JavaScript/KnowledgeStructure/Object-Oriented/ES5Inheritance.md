@@ -1,4 +1,5 @@
 # Implement Inheritance
+
 严格继承时，优先使用 Parasitic Combination Inheritance，它的缺点是父类原型的
 `constructor`指向子类构造函数；其次可以使用 Combination Inheritance，它的缺点是子类
 的实例和原型都会拥有父类的实例属性。  
@@ -49,23 +50,28 @@ other instances will be modified.
 ```js
 function SuperType(){
     this.colors = ['red'];
+    this.name = 'is SuperType';
 }
 
 function SubType(){}
 SubType.prototype = new SuperType();
 
 var instance1 = new SubType();
+instance1.name = 'is instance1'; // add own property
 instance1.colors.push('black'); // modify, not re-reference
 
 var instance2 = new SubType();
-console.log(instance2.colors); // ['red', 'black']
 
+console.log(instance1.name); // "is instance1"
+console.log(instance2.name); // "is SuperType"
+
+console.log(instance2.colors); // ['red', 'black']
 console.log(instance1.colors === instance2.colors); // true
 ```
 
 
 ## by Constructor Stealing
-Copy constructor properties of SuperType into SubType's constructor
+Copy constructor properties of SuperType into SubType's constructor.
 
 ### Process of inheritance
 1. 继承原理
@@ -84,7 +90,7 @@ console.log(foo.hasOwnProperty('colors')); // true
 `SubType`作为构造函数被调用时，内部`this`指向被创建的对象（该对象随后赋值给`foo`）。
 这个对象又作为`SuperType`的`this`，因此随后的`foo`之上就新加了`colors`属性。
 2. 和 Prototype Chain 继承方法不同，这里是按照父类的 own 属性直接在子类实例上创建属性，
-每个实例都有自己独立的属性
+每个实例都有自己独立的属性，所以它解决了原型链继承时所有实例都拥有同一个引用类型的问题。
 ```js
 function SuperType(){
 	this.colors = ["red"];
@@ -137,8 +143,11 @@ function SuperType(){
 SuperType.prototype.name = 33;
 
 function SubType(){
-	SuperType.call(this);
-	this.__proto__ = SuperType.prototype;
+	SuperType.call(this); // 继承实例属性
+	// 下面这一行，与 Prototype Chain 继承方法不同，这里子类的原型没有指向父类的实例。
+	// 因此只会继承父类的原型属性。
+	// 父类的实例属性是通过上面一行的 Constructor Stealing 方法来继承的。
+	this.__proto__ = SuperType.prototype; // 继承原型属性，和父类使用同样的原型
 }
 
 var instance1 = new SubType();
@@ -177,7 +186,7 @@ function SuperType(name){
 SuperType.prototype.name = 33;
 
 function SubType(){
-	// 从构造函数中继承不共享的属性
+	// 与上面不同，这里的构造函数中只继承实例属性
     SuperType.call(this);
 }
 
@@ -185,6 +194,7 @@ function SubType(){
 // 虽然 SubType 实例的原型中依然有共享的 colors 属性，但因为上面通过构造函数直接实例本
 // 身拥有了 colors 属性，所以不会用到原型里面的 colors 属性，因此每个实例都拥有独立的
 // colors 属性
+// 重要的是，这里的子类原型不再使用父类的原型，而是有了自己独立的原型
 SubType.prototype = new SuperType();
 SubType.prototype.constructor = SubType;
 
@@ -268,7 +278,7 @@ var person = {
 var anotherPerson1 = createAnother(person);
 var anotherPerson2 = createAnother(person);
 
-console.log( anotherPerson1 === anotherPerson2); // true
+console.log( anotherPerson1 === anotherPerson2); // true。这根本不是继承
 
 console.log( anotherPerson1.name ); // 'Nicholas'
 console.log( anotherPerson1.age ); // 32
@@ -311,8 +321,8 @@ function SubType(name){
 
 function inheritPrototype(subType, superType){
 	let prototype = superType.prototype;
-    prototype.constructor = subType;
-    subType.prototype = prototype;
+    prototype.constructor = subType; // 父类原型构造函数指向子类构造函数
+    subType.prototype = prototype; // 子类原型指向父类原型
 }
 inheritPrototype(SubType, SuperType);
 
@@ -324,6 +334,24 @@ instance2.sayName(); // 22
 
 console.log(SubType.prototype.constructor === SubType); // true 正常
 console.log(SuperType.prototype.constructor === SuperType); // false 不正常
+```
+
+### 和上面有缺陷的组合继承很相似
+前面有缺陷的组合继承也是子类原型指向父类原型，但子类构造函数的原型却没有指向父类，导致
+`instance instanceof SubType`为`false`的情况。只要按照这个思路修改，就成了这里的
+Parasitic Combination Inheritance
+```js
+function SuperType(){
+	this.colors = ["red"];
+}
+SuperType.prototype.name = 33;
+
+function SubType(){
+	SuperType.call(this);
+}
+
+SubType.prototype = SuperType.prototype;
+SuperType.prototype.constructor = SubType;
 ```
 
 ### Problems with Parasitic Combination Inheritance

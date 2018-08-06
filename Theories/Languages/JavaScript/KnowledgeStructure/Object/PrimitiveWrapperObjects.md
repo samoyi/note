@@ -1,6 +1,6 @@
 # Primitive wrapper objects
 
-***
+
 ## Example first
 First, let's intuitively look at the difference between primitive value and
 corresponding wrapper object. Run the following code in Chrome:
@@ -31,7 +31,7 @@ String {0: "I", 1: " ", 2: "a", 3: "m", 4: " ", 5: "a", 6: " ", 7: "s", 8: "t", 
 1. The primitive value `I am a string` is not an object, it's a primitive
 literal and immutable value. To perform operations on it, such as checking its
 `length`, accessing its individual character contents, etc, a `String` object is
- required.
+required.
 2. Luckily, the language automatically coerces a `"string"` primitive to a
 `String` object when necessary, which means you almost never need to explicitly
 create the Object form.
@@ -56,8 +56,6 @@ there's basically no reason to use the object form directly. It's better to just
  let the boxing happen implicitly where necessary.
 
 
-
-***
 ### Unboxing
 ```js
 let s = new String( "abc" );
@@ -68,13 +66,11 @@ console.log( s.valueOf() ); // "abc"
 console.log( n.valueOf() ); // 42
 console.log( b.valueOf() ); // true
 
-console.log( s+'' ); // "abc"
+console.log( s + '' ); // "abc"
 console.log( +n ); // 42
 console.log( !!b ); // true
 ```
 
 
-
-***
 ## References
 * [《You Don't Know JS: this & Object Prototypes》 Chapter 3: Objects](https://github.com/getify/You-Dont-Know-JS/blob/master/this%20%26%20object%20prototypes/ch3.md)

@@ -111,7 +111,7 @@ const vm = new Vue({
     },
 });
 ```
-组件有 `slot` 时，组件标签之间的作用域仍然是外部作用域。
+组件有`slot`时，组件标签之间的作用域仍然是外部作用域。
 
 
 ## 异步组件
@@ -151,7 +151,7 @@ const vm = new Vue({
 
 
 ## Misc
-### 使用 `is` 解决子节点类型限制的问题
+### 使用`is`解决子节点类型限制的问题
 1. Some HTML elements, such as `<ul>`, `<ol>`, `<table>` and `<select>` have
 restrictions on what elements can appear inside them, and some elements such as
 `<li>`, `<tr>`, and `<option>` can only appear inside certain other elements.
@@ -196,9 +196,9 @@ dangerous, so keep them in mind when deciding to use each feature.
     <child-component></child-component>
 </parent-component>
 ```
-在设计 `child-component` 时，如果考虑到它需要访问 `parent-component` 的某个属性，那
-么你也许会在 `child-component` 的一个 method 里用到 `$parent`。到目前为止，没有问题。
-但如果页面结构发生了一些变化：
+在设计`child-component`时，如果考虑到它需要访问`parent-component`的某个属性，那么你也
+许会在`child-component`的一个 method 里用到`$parent`。到目前为止，没有问题。但如果页
+面结构发生了一些变化：
 ```html
 <parent-component>
     <child-component></child-component>
@@ -210,13 +210,13 @@ dangerous, so keep them in mind when deciding to use each feature.
     </middle-component>
 </parent-component>
 ```
-现在你必须要修改 `child-component` 组件，而且在其内部访问 `parent-component` 时还要
-做出判断并分两种情况：`$parent` 和 `$parent.$parent`。  
+现在你必须要修改`child-component`组件，而且在其内部访问`parent-component`时还要做出判
+断并分两种情况：`$parent`和`$parent.$parent`。  
 这是就需要用到 Dependency Injection。
 
 ##### 前辈组件使用依赖注入明确表示将哪些数据和方法继承给后辈组件
-1. 前辈组件使用 `provide` 表明要把哪些数据和方法提供给后辈组件
-2. 后辈组件使用 `inject` 选择接受前辈组件提供的哪些数据和方法
+1. 前辈组件使用`provide`表明要把哪些数据和方法提供给后辈组件
+2. 后辈组件使用`inject`选择接受前辈组件提供的哪些数据和方法
 
 ```html
 <div id="components-demo">
@@ -269,7 +269,7 @@ const vm = new Vue({
 *You can think of dependency injection as sort of “long-range props”*
 
 ##### 闭包与非响应式的数据
-1. 如果不考虑依赖注入，前辈组件的 `consoleAge` 一般会写成：
+1. 如果不考虑依赖注入，前辈组件的`consoleAge`一般会写成：
     ```js
     consoleAge(){
         console.log(this.age);
@@ -325,13 +325,11 @@ They might spend hours trying to figure out why the template isn’t updating
 correctly.
 
 
-
-
 ## Demo
 ### 表单子组件和父组件数据双向绑定
-表单子组件可以使用自己的数据进行双向绑定(把 `v-model` 写在模板内的 `input`)。但如果
-要和父组件的数据绑定(把 `v-model` 写在模板标签上)，则仍然需要 prop 和 event 来实现。
-根据[文档](https://vuejs.org/v2/guide/components.html#Using-v-model-on-Components)
+表单子组件可以使用自己的数据进行双向绑定(把`v-model`写在模板内的`input`)。但如果要和父
+组件的数据绑定(把`v-model`写在模板标签上)，则仍然需要 prop 和 event 来实现。根据
+[文档](https://vuejs.org/v2/guide/components.html#Using-v-model-on-Components)
 中对 `v-model` 的解释：
 ```html
 <input v-model="searchText">
@@ -343,10 +341,9 @@ correctly.
   v-on:input="searchText = $event.target.value"
 >
 ```
-因此要实现表单子组件的 `v-model`，子组件需要接收一个 `value` prop，然后内部的表单值发
-生变化时，emit 出来一个 `input` 事件，且带上当前的表单值。
+因此要实现表单子组件的`v-model`，子组件需要接收一个`value` prop，然后内部的表单值发生
+变化时，emit 出来一个`input`事件，且带上当前的表单值。
 
-html:
 ```html
 <div id="components-demo">
     <custom-input v-model="inputValue"></custom-input>
@@ -354,7 +351,6 @@ html:
 </div>
 ```
 
-js:
 ```js
 Vue.component('custom-input', {
     props: ['value'],

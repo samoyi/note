@@ -1,12 +1,13 @@
 # Prototype
 
+<img src="./images/prototype.png" style="border: 3px solid white;" />
 
-![Prototype](./images/prototype.png)
+
 ## Prototype
 1. Every function has a prototype object.
 2. If a function is called as a constructor, instances inherit properties and
 methods from constructor's prototype.
-3. There are 2 way to reference a prototype object:
+3. There are 2 ways to reference a prototype object:
     * constructor's `prototype` property
     * instance's `[[Prototype]]` internal slot
 4. Prototype's `constructor` proerty points back to the constructor
@@ -27,8 +28,6 @@ not inherit any properties.
     ```
 
 
-
-***
 ##  `[[Prototype]]`
 Each time a constructor is called to create a new instance, that instance has
 an internal slot called `[[Prototype]]`, which is a pointer to the constructor’s
@@ -37,13 +36,14 @@ prototype.
 ### References `[[Prototype]]` by 2 ways:
 * `Object.prototype.__proto__`
 * `Object.getPrototypeOf`
-    ```js
-    let obj = {};
-    console.log( obj.__proto__ === obj.constructor.prototype); // true
-    console.log( Object.getPrototypeOf(obj) === obj.constructor.prototype); // true
-    ```
 
-### Check prototye by `[[Prototype]]`
+```js
+let obj = {};
+console.log( obj.__proto__ === obj.constructor.prototype); // true
+console.log( Object.getPrototypeOf(obj) === obj.constructor.prototype); // true
+```
+
+### Check prototype by `[[Prototype]]`
 The `isPrototypeOf()` method checks if an object exists in another object's
 prototype chain.
 ```js
@@ -75,8 +75,6 @@ create a new object with the desired `[[Prototype]]` using `Object.create()`.
 * 内置构造函数的原型都是不可写、不可枚举、不可配置的
 
 
-
-***
 ## References
 * [Specification](https://tc39.github.io/ecma262/)
 * [Professional JavaScript for Web Developers](https://book.douban.com/subject/7157249/)

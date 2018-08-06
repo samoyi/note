@@ -1,4 +1,5 @@
 # Property
+
 * An Object is logically a collection of properties. Each property is either a
 **data property**, or an **accessor property**.
 * **Attributes** are used in this specification to define and explain the state
@@ -87,10 +88,31 @@ means that the property cannot be written to. Likewise, a property with only a
 setter cannot be read
 
 ### 强大的自定义对象
-通过`[[Get]]`和`[[Set]]`可以捕获到对对象属性和事件的读写请求，并且可以自定义对请求
-的响应。因为你可以任意编写`get`和`set`函数，对对象属性和事件的读写可以响应任何符合语
-言规范的操作，这就使得对象可以无限的扩展其功能，就可以构造出具有各种各样属性和功能的
-对象。
+通过`[[Get]]`和`[[Set]]`可以捕获到对对象属性和事件的读写请求，并且可以自定义对请求的响
+应。因为你可以任意编写`get`和`set`函数，对对象属性和事件的读写可以响应任何符合语言规范
+的操作，这就使得对象可以无限的扩展其功能，就可以构造出具有各种各样属性和功能的对象。
+
+### 访问器属性会屏蔽数据属性
+```js
+let proto = {name: 22,};
+Object.defineProperty(proto, 'name', {
+    get(){
+        return 33;
+    },
+});
+let myObject = Object.create( proto );
+console.log( myObject.name ); // 33
+```
+
+如果只设置了`[[Set]]`而没有设置`[[Get]]`，即使该属性的数据属性有`value`，也是不可读的
+```js
+let proto = {name: 22,};
+Object.defineProperty(proto, 'name', {
+    set(){},
+});
+let myObject = Object.create( proto );
+console.log( myObject.name ); // undefined
+```
 
 
 ## Methods
@@ -256,29 +278,27 @@ When `foo` is not already on `myObject` directly, but is at a higher level of
 the `[[Prototype]]` chain, and it's not marked as read-only (`writable: false`)
 then a new property called `foo` is added directly to `myObject`, resulting in a
 shadowed property.
-```js
+    ```js
     let proto = { foo: 22 },
         myObject = Object.create( proto );
     myObject.foo = 33;
     console.log( myObject.foo ); // 33
-```
-
+    ```
 2. If a `foo` is found higher on the `[[Prototype]]` chain, but it's marked as
 read-only (`writable: false`), then both the setting of that existing property
 as well as the creation of the shadowed property on `myObject` are disallowed.
-```js
+    ```js
     let proto = {};
     Object.defineProperty(proto, 'foo', {
         'value': 22,
     });
     let myObject = Object.create( proto );
     myObject.foo = 33; // TypeError: Cannot assign to read only property 'foo' of object '#<Object>'
-```
-
-3. If a `foo` is found higher on the `[[Prototype]]` chain and it's a setter ,
+    ```
+3. If a `foo` is found higher on the `[[Prototype]]` chain and it's a setter,
 then the setter will always be called. No `foo` will be added to `myObject`, nor
 will the `foo` setter be redefined.
-```js
+    ```js
     let proto = {name: 22,};
     Object.defineProperty(proto, 'foo', {
         get(){
@@ -294,13 +314,11 @@ will the `foo` setter be redefined.
     myObject.foo = 666;
     console.log( myObject.foo ); // 33
     console.log( myObject.hasOwnProperty('foo') ); // false
-```
-
+    ```
 4. If you want to shadow `foo` in cases 2 and 3, you cannot use `=` assignment,
 but must instead use `Object.defineProperty(..)` to add `foo` to `myObject`.
-
 5. Shadowing can even occur implicitly in subtle ways:
-```js
+    ```js
     let proto = { a: 2, },
         myObject = Object.create( proto );
 
@@ -313,7 +331,7 @@ but must instead use `Object.defineProperty(..)` to add `foo` to `myObject`.
     console.log( myObject.a ); // 3
 
     console.log( myObject.hasOwnProperty( "a" ) ); // true
-```
+    ```
 The `++` operation corresponds to `myObject.a = myObject.a + 1`.
 <mark>没看明白规范中对于 ++ 操作符的说明</mark>
 
@@ -324,7 +342,7 @@ The `++` operation corresponds to `myObject.a = myObject.a + 1`.
 * Define a "constant property"
     ```js
     var myObject = {};
-    Object.defineProperty( {}, "FAVORITE_NUMBER", {
+    Object.defineProperty(myObject, "FAVORITE_NUMBER", {
     	value: 42,
     	writable: false,
     	configurable: false

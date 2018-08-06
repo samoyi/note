@@ -3,10 +3,10 @@
 ## DOM is a bad translator
 1. HTML and JS can not communicate with each other directly, they need DOM.
 2. DOM, a model of HTML document, is more complicated and more abstract than
-   HTML itself.
+HTML itself.
 3. HTML document is a structure which is visible, logical and well-organized.
-   The use of DOM will, undoubtedly, undermine the visuality, logic and
-   organization, and will also add extra code.
+The use of DOM will, undoubtedly, undermine the visuality, logic and
+organization, and will also add extra code.
 4. DOM operation is very inefficent.
 
 

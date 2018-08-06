@@ -1,6 +1,6 @@
 # Two-way binding
-Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过 `Object.defineProperty()` 来劫
-持各个属性的 setter、getter，在数据变动时发布消息给订阅者，触发相应的监听回调。
+Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过`Object.defineProperty()`来劫持各
+个属性的 setter、getter，在数据变动时发布消息给订阅者，触发相应的监听回调。
 
 **完整代码位置**: `../codes/easyTwoWayBinding`
 
@@ -24,14 +24,14 @@ Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过 `Obje
 * 本例只实现前两个功能
 
 ### 从 view 到 model 的绑定
-改变 view 中 `input` 的值时，model 的 data 发生更新
+改变 view 中`input`的值时，model 的 data 发生更新
 
 ### 从 model 到 view 的绑定
 * 改变 model 的某个数据时，更新 view 依赖该数据的节点。包括但不限于：
-    * `input` 的 `value`
-    * 节点的 `textContent`
-    * 节点的 `class`
-    * `v-show` 节点的显示和隐藏
+    * `input`的`value`
+    * 节点的`textContent`
+    * 节点的`class`
+    * `v-show`节点的显示和隐藏
 * 本例只实现前两个功能
 
 
@@ -46,8 +46,8 @@ Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过 `Obje
 Compiler 模块
 
 ### 实现逻辑
-1. 扫描节点，识别其中的 Mustache syntax 和 `v-model` 指令。
-2. 将模板中的文本变量替换成数据，给 `v-model` 节点的`value` 属性赋值
+1. 扫描节点，识别其中的 Mustache syntax 和`v-model`指令。
+2. 将模板中的文本变量替换成数据，给`v-model`节点的`value`属性赋值
 
 html：
 ```html
@@ -140,8 +140,8 @@ const vm = new MVVM({
 也是由 Compiler 模块实现
 
 ### 实现逻辑
-1. 对 `v-model` 节点添加事件监听，将输入值传入 model 中对应的变量  
-2. 只需在上述代码中，在 `node.removeAttribute('v-model');` 之后添加以下事件绑定即可：
+1. 对`v-model`节点添加事件监听，将输入值传入 model 中对应的变量  
+2. 只需在上述代码中，在`node.removeAttribute('v-model');` 之后添加以下事件绑定即可：
 ```js
 // 通过 input 事件实现从 view 到 model 的绑定
 node.addEventListener('input', function (ev) {
@@ -158,7 +158,8 @@ Observer 模块 、Publisher 模块和 Subscriber 模块
 
 ### 各模块功能
 1. 首先要能监听到 model 中某个数据的变化。使用 Observer 来实现。
-2. 确定哪些节点依赖该数据，在监听到变化后，更新依赖该数据的节点。使用 Publisher & Subscriber 模式来实现
+2. 确定哪些节点依赖该数据，在监听到变化后，更新依赖该数据的节点。使用
+Publisher & Subscriber 模式来实现
 
 ### Observer
 * Observer 的作用是将一个对象的所有属性转化为访问器属性，这样就可以监听其属性值的变化，
@@ -268,12 +269,12 @@ Subscriber.prototype = {
 ```
 
 #### 使用 Publisher
-* 因为一个 `publisher` 对应一个数据属性，所以应该在 `defineReactive` 函数中实例化
+* 因为一个`publisher`对应一个数据属性，所以应该在`defineReactive`函数中实例化
 `Publisher`
-* 因为要在数据更新后通知 subscribers，所以应该在数据属性的 `getter` 里调用
-`Publisher` 实例的通知方法 `notify`。
+* 因为要在数据更新后通知 subscribers，所以应该在数据属性的`getter`里调用`Publisher`
+实例的通知方法`notify`。
 
-`defineReactive` 函数添加代码后变成如下：
+`defineReactive`函数添加代码后变成如下：
 ```js
 function defineReactive(data, key, val) {
     const publisher = new Publisher();
@@ -297,7 +298,7 @@ function defineReactive(data, key, val) {
 
 #### 使用 Subscriber
 因为一个 subscriber 对应一个节点，所以应该在编译的时候给每个节点添加一个 `Subscriber`
-实例。即，在 `compile` 函数中实例化：
+实例。即，在`compile`函数中实例化：
 ```js
 function compile (node, vm) {
 
@@ -348,15 +349,15 @@ function compile (node, vm) {
 ```
 
 #### 把 subscriber 注册到 publisher
-1. 注册需要用到 `Publisher` 实例的 `addSubscriber` 方法，即：
+1. 注册需要用到`Publisher`实例的`addSubscriber`方法，即：
 ```js
 publisher.addSubscriber(subscriber);
 ```
-2. 但是 `Publisher` 实例和 `subscriber` 不在相同的作用域，没办法直接添加。那就想办法
-把 `Publisher` 实例传到 `subscriber` 的作用域。
-3. 生成 `Publisher` 实例时，将该实例保存到一个公共属性中：`Publisher.curPub`。这样，
-在 `subscriber` 的作用域，即 `compile` 函数中也可以访问到当前的 `Publisher` 实例。
-4. `defineReactive` 函数变成如下：
+2. 但是`Publisher`实例和`subscriber`不在相同的作用域，没办法直接添加。那就想办法把
+`Publisher`实例传到`subscriber`的作用域。
+3. 生成`Publisher`实例时，将该实例保存到一个公共属性中：`Publisher.curPub`。这样，在
+`subscriber`的作用域，即`compile`函数中也可以访问到当前的`Publisher`实例。
+4. `defineReactive`函数变成如下：
 ```js
 function defineReactive(data, key, val) {
     const publisher = new Publisher();
@@ -378,7 +379,7 @@ function defineReactive(data, key, val) {
     observe(val);
 }
 ```
-5. 这样就可以在 `compile` 函数中添加生成的 `subscriber`：
+5. 这样就可以在`compile`函数中添加生成的`subscriber`：
 ```js
 function compile (node, vm) {
 

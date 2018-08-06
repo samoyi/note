@@ -5,7 +5,6 @@ Once an object has been made temper-proof, the operation cannot be undone.
 
 
 ## Prevent extension
-
 ### Prevent
 ```js
 Object.preventExtensions()
@@ -15,19 +14,28 @@ Object.preventExtensions()
 silently or by throwing a TypeError (most commonly, but not exclusively, when in
 `strict mode`).
 * `Object.preventExtensions()` only prevents addition of own properties.
-Properties can still be added to the object prototype.
-* 然而，`Object.preventExtensions`会阻止一个对象将`__proto__`属性重新指向另一个对象。
-```js
-let obj = {};
-console.log(Object.isExtensible(obj)); // true
-Object.preventExtensions(obj);
-console.log(Object.isExtensible(obj)); // false
-obj.constructor.prototype.foo = 'foo';
-obj.__proto__.bar = 'bar';
-console.log( obj.foo ); // foo
-console.log( obj.bar ); // bar
-obj.__proto__ = {}; // TypeError
-```
+    ```js
+    let obj = {
+        num: [1, 2],
+    };
+    Object.preventExtensions(obj);
+    obj.num.push(3);
+    console.log(obj.num); // [1, 2, 3]
+    obj.name = 22; // TypeError: Cannot add property name, object is not extensible
+    ```
+* 虽然这个操作会阻止对象将`__proto__`属性重新指向另一个对象，但并不会影响对象的原型。
+不懂这样的目的是什么
+    ```js
+    let obj = {
+        num: [1, 2],
+    };
+    Object.preventExtensions(obj);
+    obj.num = 3;
+    console.log(obj.num); // 3
+    obj.constructor.prototype.age = 22;
+    console.log(obj.age); // 22
+    obj.__proto__ = {}; // TypeError: #<Object> is not extensible
+    ```
 * In ES5, if the argument to this method is not an object (a primitive), then it
 will cause a `TypeError`. In ES2015, a non-object argument will be treated as if
 it was a non-extensible ordinary object, simply return it.
@@ -37,12 +45,16 @@ it was a non-extensible ordinary object, simply return it.
 Object.isExtensible()
 ```
 In ES5, if the argument to this method is not an object (a primitive), then it
-ill cause a `TypeError`. In ES2015, a non-object argument will be treated as if
+will cause a `TypeError`. In ES2015, a non-object argument will be treated as if
 it was a non-extensible ordinary object, simply return `false`.
+```js
+let obj = 'hi';
+Object.preventExtensions(obj);
+console.log(typeof obj); // string
+console.log(Object.isExtensible(obj)); // false
+```
 
 
-
-***
 ## Seal object
 ### Seal
 ```js
@@ -54,20 +66,21 @@ properties as non-configurable.
 * Attempting to delete or add properties to a sealed object, or to convert a
 data property to accessor or vice versa, will fail, either silently or by
 throwing a `TypeError` (most commonly, although not exclusively, when in
-    `strict mode` code).
-* Properties can still be added to the object prototype.
-* 然而，`Object.seal`会阻止一个对象将`__proto__`属性重新指向另一个对象。
-```js
-let obj = {};
-console.log(Object.isSealed(obj)); // false
-Object.seal(obj);
-console.log(Object.isSealed(obj)); // true
-obj.constructor.prototype.foo = 'foo';
-obj.__proto__.bar = 'bar';
-console.log( obj.foo ); // foo
-console.log( obj.bar ); // bar
-obj.__proto__ = {}; // TypeError
-```
+`strict mode` code).
+    ```js
+    let arr = [1, 2];
+    Object.seal(arr);
+    arr[1] = 3;
+    console.log(arr); // [1, 3]
+    try {
+        arr.push(4);
+    }
+    catch(err){
+        console.log(err); // TypeError: Cannot add property 2, object is not extensible
+    }
+    arr.length = 1; // TypeError: Cannot delete property '1' of [object Array]
+    ```
+* 同样会阻止一个对象将`__proto__`属性重新指向另一个对象。
 * In ES5, if the argument to this method is not an object (a primitive), then it
 will cause a `TypeError`. In ES2015, a non-object argument will be treated as if
 it was a sealed ordinary object, simply return it.
@@ -81,8 +94,6 @@ will cause a `TypeError`. In ES2015, a non-object argument will be treated as if
 it was a sealed ordinary object, simply return `true`.
 
 
-
-***
 ## Freeze object
 ### Freeze
 ```js
@@ -90,30 +101,39 @@ Object.freeze()
 ```
 * Prevents new properties from being added to it
 * Prevents existing properties from being removed
-* Prevents existing properties, or their enumerability, configurability, or writability, from being changed
+* Prevents existing properties, or their enumerability, configurability, or
+writability, from being changed
 * Prevents the prototype from being changed
 * Nothing can be added to or removed from the properties set of a frozen object.
 Any attempt to do so will fail, either silently or by throwing a `TypeError`
 (most commonly, but not exclusively, when in` strict mode`).
 * Accessor properties may still be written to but only if a `[[Set]]` function
 has been defined.
-* As an object, an array can be frozen whereafter its elements can't be altered.
-No elements can be added or removed from it as well.
-```js
-let obj = {};
-Object.defineProperty(obj, 'name', {
-    set(s){}
-});
-obj.name = 33; // No error
-console.log(Object.isFrozen(obj)); // false
-Object.freeze(obj);
-console.log(Object.isFrozen(obj)); // true
-obj.constructor.prototype.foo = 'foo';
-obj.__proto__.bar = 'bar';
-console.log( obj.foo ); // foo
-console.log( obj.bar ); // bar
-obj.__proto__ = {}; // TypeError
-```
+    ```js
+    let obj = {};
+    let _name = '33';
+
+    Object.defineProperties(obj, {
+        name: {
+            get(){
+                return _name;
+            },
+            set(newName){
+                _name = newName;
+            },
+        },
+        age: {
+            value: 22,
+        },
+    });
+
+    Object.freeze(obj)
+    console.log(obj.name); // "33"
+    obj.name = '22';
+    console.log(obj.name); // "22"
+    console.log(obj.age); // 22
+    obj.age = 33; // TypeError
+    ```
 * In ES5, if the argument to this method is not an object (a primitive), then it
 will cause a `TypeError`. In ES2015, a non-object argument will be treated as if
 it were a frozen ordinary object, and be simply returned.
@@ -125,7 +145,9 @@ object (deep freeze).
 3. Use the pattern on a case-by-case basis based on your design when you know
 the object contains no cycles in the reference graph, otherwise an endless loop
 will be triggered.  
-4. You still run a risk of freezing an object that shouldn't be frozen, such as `window`.
+4. You still run a risk of freezing an object that shouldn't be frozen, such as
+`window`.
+
 ```js
 function deepFreeze(obj) {
 
@@ -137,7 +159,7 @@ function deepFreeze(obj) {
         var prop = obj[name];
 
         // Freeze prop if it is an object
-        if (typeof prop == 'object' && prop !== null)
+        if (typeof prop === 'object' && prop !== null)
         deepFreeze(prop);
     });
 
@@ -155,8 +177,6 @@ will cause a `TypeError`. In ES2015, a non-object argument will be treated as if
 it was a frozen ordinary object, simply return `true`.
 
 
-
-***
 ## References
 * [Professional JavaScript for Web Developers](https://book.douban.com/subject/7157249/)
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)
