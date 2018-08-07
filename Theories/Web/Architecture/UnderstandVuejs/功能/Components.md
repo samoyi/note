@@ -1,6 +1,6 @@
 # Components
 
-
+## 组件是可复用的 Vue 实例
 ## Props
 ### Static or Dynamic Props
 Static prop 的值永远是作为字符串传入的，而 dynamic prop 是作为一个表达式传入的。

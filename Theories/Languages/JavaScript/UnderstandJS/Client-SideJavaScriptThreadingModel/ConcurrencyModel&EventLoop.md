@@ -236,7 +236,7 @@ setTimeout(function(){
     * `I/O`
     * `UI渲染`
 **microtasks 包括：**
-    * `process.nextTick`
+    * `process.nextTick`：Vue.js 的`nextTick`方法可能就是这个
     * `promise`
     * `Object.observe`
     * `MutationObserver`
