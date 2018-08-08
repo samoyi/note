@@ -271,7 +271,7 @@ Subscriber.prototype = {
 #### 使用 Publisher
 * 因为一个`publisher`对应一个数据属性，所以应该在`defineReactive`函数中实例化
 `Publisher`
-* 因为要在数据更新后通知 subscribers，所以应该在数据属性的`getter`里调用`Publisher`
+* 因为要在数据更新后通知 subscribers，所以应该在数据属性的`setter`里调用`Publisher`
 实例的通知方法`notify`。
 
 `defineReactive`函数添加代码后变成如下：
