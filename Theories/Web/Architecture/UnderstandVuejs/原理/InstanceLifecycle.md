@@ -1,177 +1,179 @@
 # Instance Lifecycle
 
+**看这篇笔记前，要先看懂这一篇：**
+`Theories\Web\Architecture\UnderstandVuejs\原理\Two-wayBinding.md`  
+本篇中提到的以下四个模块都出自这篇笔记：`Compiler`、`Publisher`、`Observer`和`Subscriber`
+
 ![lifecycle](../images/lifecycle.png)
 
 
-## TODO
-* 不知道图示中的 Init injections 是什么
-* 不知道图示中的 Init Lifecycle 是什么
+## Misc
 * 同辈组件生命周期顺序和预想的不一样，应该要看源码才能理解
-
-
-## 生命周期分析
-这是以自己编写的双向绑定 `../codes/easyTwoWayBinding/mvvm.js` 为基础，来分析实例的生
-命周期。与 Vue 的实际情况肯定有差别。之后还要从 Vue 的源码中了解其真实的生命周期。
-
-### TODO
-* 找不到 `beforeCreate` 的时间节点
-* 没有 `beforeDestroy` 的时间节点
-* 没有 `destroyed` 的时间节点
-
-```js
-'use strict';
-
-
-// Compiler
-function initCompile (node, vm) {
-    let fragment = document.createDocumentFragment();
-    let child = null;
-
-    while (child = node.firstChild) {
-        compile(child, vm);
-        fragment.appendChild(child);
-    }
-    return fragment;
-}
-
-function compile(node, vm) {
-    if (node.nodeType === 1) {
-        const aAttr = [...node.attributes];
-        aAttr.forEach(attr=>{
-            if (attr.nodeName === 'v-model') {
-                const sPropName = attr.nodeValue;
-
-                node.value = vm.data[sPropName];
-
-                node.removeAttribute('v-model');
-
-                node.addEventListener('input', function (ev) {
-                    vm.data[sPropName] = ev.target.value;
-                });
-
-                const subscriber = new Subscriber(node, 'model');
-                Publisher.curPub.addSubscriber(subscriber);
-            }
-        });
-
-        node.childNodes.forEach(child=>{
-            compile(child, vm);
-        });
-    }
-
-    if (node.nodeType === 3) {
-        const reg = /\{\{(.*)\}\}/;
-        const aMatch = node.nodeValue.match(reg);
-        if (aMatch) {
-            const sPropName = aMatch[1].trim();
-            node.nodeValue = vm.data[sPropName];
-
-            const subscriber = new Subscriber(node, 'text');
-            Publisher.curPub.addSubscriber(subscriber);
+* 前面的钩子函数内部抛出错误，后面的钩子函数仍然会被执行，不知道内部是什么机制
+    ```js
+    new Vue({
+        el: '#components-demo',
+        data: {
+            num1: 22,
+        },
+        beforeCreate(){
+            throw new Error('beforeCreate'); // 这里会抛出一个错误
+        },
+        mounted(){
+            console.log('mounted')； // 但这里仍然会打印
         }
-    }
-}
-
-
-// Observer
-function observe(data) {
-    if (!data || typeof data !== 'object') {
-        return;
-    }
-    Object.keys(data).forEach(function(key) {
-        defineReactive(data, key, data[key]);
     });
-};
-
-function defineReactive(data, key, val) {
-    const publisher = new Publisher();
-    Publisher.curPub = publisher;
-
-    Object.defineProperty(data, key, {
-        enumerable: true,
-        get() {
-            return val;
+    ```
+    更为神奇的是，如果前面使用`debugger`，后面的钩子函数甚至会抛出错误：
+    ```js
+    const vm = new Vue({
+        el: '#components-demo',
+        data: {
+            num1: 22,
         },
-        set(newVal) {
-            // 触发 beforeUpdate
-            val = newVal;
-            publisher.notify(newVal);
-            // 触发 updated
+        beforeCreate(){
+            debugger;
         },
-    });
-
-    observe(val);
-}
-
-
-// Publish & Subscribe 实现
-function Publisher(){
-    this.subscribers = [];
-}
-
-Publisher.prototype = {
-    constructor: Publisher,
-
-    addSubscriber(sub){
-        this.subscribers.push(sub)
-    },
-
-    notify(newVal){
-        this.subscribers.forEach(sub=>{
-            sub.update(newVal);
-        });
-    },
-
-};
-
-
-function Subscriber (node, updateType) {
-    this.node = node;
-    this.updateType = updateType;
-}
-
-Subscriber.prototype = {
-    update(newVal) {
-        this.updateFns[this.updateType].call(this, newVal);
-    },
-
-    updateFns: {
-        text(newVal) {
-            this.node.textContent = typeof newVal == 'undefined' ? '' : newVal;
-        },
-
-        model(newVal) {
-            this.node.value = typeof newVal == 'undefined' ? '' : newVal;
+        mounted(){
+            console.log('mounted')； // SyntaxError: Invalid or unexpected token
         }
-    },
-};
-
-
-// MVVM构造函数
-function MVVM (options) {
-    this.data = options.data;
-    observe(this.data); // 在这一步完成了图示中所说的 Init injections & reactivity
-    // 触发 created
-    const node = document.querySelector(options.el);
-    const dom = initCompile(node, this); // 完成了编译模板
-    // 触发 beforeMount
-    node.appendChild(dom); // 图示中所说的 replace "el" with it
-    // 触发 mounted
-}
-```
+    });
+    ```
+    因此如果要断点测试，需要使用`alert`
 
 
 ## Hooks
-生命周期钩子 | 组件状态 | 最佳实践
---|--|--
-beforeCreate | 实例初始化之后，this指向创建的实例，不能访问到data、computed、watch、methods上的方法和数据 | 常用于初始化非响应式变量
-created | 实例创建完成，可访问data、computed、watch、methods上的方法和数据，未挂载到DOM，不能访问到$el属性，$ref属性内容为空数组 | 常用于简单的ajax请求，页面的初始化
-beforeMount | 在挂载开始之前被调用，beforeMount之前，会找到对应的template，并编译成render函数 | -
-mounted | 实例挂载到DOM上（仅指示当前组件已挂载，不包括子组件），此时可以通过DOM API获取到DOM节点，$ref属性可以访问 | 常用于获取VNode信息和操作，ajax请求
-beforeupdate | 响应式数据更新时调用，发生在虚拟DOM打补丁之前 | 适合在更新之前访问现有的DOM，比如手动移除已添加的事件监听器
-updated | 虚拟 DOM 重新渲染和打补丁之后调用，组件DOM已经更新，可执行依赖于DOM的操作 | 避免在这个钩子函数中操作数据，可能陷入死循环
-beforeDestroy | 实例销毁之前调用。这一步，实例仍然完全可用，this仍能获取到实例 | 常用于销毁定时器、解绑全局事件、销毁插件对象等操作
-destroyed | 实例销毁后调用，调用后，Vue 实例指示的所有东西都会解绑定，所有的事件监听器会被移除，所有的子实例也会被销毁 | -
+### `beforeCreate`
+1. Called synchronously immediately after the instance has been initialized, before
+data observation and event/watcher setup. 不懂这个 initialized 到底做了什么
+```js
+const vm = new Vue({
+    el: '#components-demo',
+    data: {
+        num1: 22,
+    },
+    beforeCreate(){
+        console.log(this.num1); // undefined
+    },
+});
+```
+
+### `created`
+1. Called synchronously after the instance is created. At this stage, the instance
+has finished processing the options which means the following have been set up:
+data observation（data observation 应该就是指 Observer 模块使用 setter、getter 劫持了实
+例数据）, computed properties, methods, watch/event callbacks.
+2. However, the mounting phase has not been started, and the `$el` property will not
+be available yet.
+3. 既然已经创建完成，所以实例数据可访问
+
+```js
+new Vue({
+    el: '#components-demo',
+    data: {
+        num1: 22,
+    },
+    created(){
+        console.log(this.num1); // 22
+    },
+});
+```
+
+### `beforeMount`
+* The `beforeMount()` method is invoked after our template has been compiled and our
+virtual DOM updated by Vue.
+    ```js
+    new Vue({
+        el: '#components-demo',
+        data: {
+            num1: 22,
+        },
+        created(){
+            console.log(this.$el); // undefined
+        },
+        beforeMount(){
+            console.log(this.$el); // <div id=​"components-demo">​…​</div>​
+        },
+    });
+    ```
+* This hook is not called during server-side rendering.
+* As mounting hooks do not run during server side rendering, they shouldn’t be used
+for fetching data for components on initialization. `created()` methods are best
+suited for that purpose.
+
+### `mounted`
+* Called after the instance has been mounted, where `el` is replaced by the newly
+created `vm.$el`.
+* If the root instance is mounted to an in-document element, `vm.$el` will also be
+in-document when mounted is called. 不懂，但总之 mounting 阶段会进行渲染，而`mounted`触
+发时已经完成了渲染
+    ```html
+    <div id="components-demo">
+        {{num1}}
+        <input type="text" v-model="num1" />
+    </div>
+    ```
+    ```js
+    const vm = new Vue({
+        el: '#components-demo',
+        data: {
+            num1: 22,
+        },
+        beforeMount(){
+            alert('beforeMount');
+        },
+    });
+    ```
+    弹出 “beforeMount” 的时候，页面上的变量仍然没有被替换为真实的数据，之后会渲染出`22`
+* Note that `mounted` does not guarantee that all child components have also been
+mounted. If you want to wait until the entire view has been rendered, you can use
+`vm.$nextTick` inside of `mounted`:
+    ```js
+    mounted: function () {
+      this.$nextTick(function () {
+        // Code that will run only after the
+        // entire view has been rendered
+      })
+    }
+    ```
+    看起来的意思就是在本次执行周期内，它的所有子组件也都会完成 mounting
+* This hook is not called during server-side rendering.
+
+### `beforeUpdate`
+* Called when data changes, before the DOM is patched. This is a good place to access
+the existing DOM before an update, e.g. to remove manually added event listeners.
+* This hook is not called during server-side rendering, because only the initial
+render is performed server-side.
+
+### `updated`
+* Called after a data change causes the virtual DOM to be re-rendered and patched.
+* The component’s DOM will have been updated when this hook is called, so you can
+perform DOM-dependent operations here. However, in most cases you should avoid
+changing state inside the hook. To react to state changes, it’s usually better to use
+a computed property or watcher instead.
+* Note that updated does not guarantee that all child components have also been
+re-rendered. If you want to wait until the entire view has been re-rendered, you can
+use `vm.$nextTick` inside of updated
+* 避免在这个钩子函数中操作数据，可能陷入死循环
+* This hook is not called during server-side rendering.
+
+
+### `beforeDestroy`
+* Called right before a Vue instance is destroyed.
+* At this stage the instance is still fully functional.
+* 常用于销毁定时器、解绑全局事件、销毁插件对象等操作
+* This hook is not called during server-side rendering.
+
+
+### `destroyed`
+* Called after a Vue instance has been destroyed.
+* When this hook is called, all directives of the Vue instance have been unbound, all
+event listeners have been removed, and all child Vue instances have also been
+destroyed.
+* `destroyed()` method can be used to do any last minute cleanup or informing a
+remote server that the component was destroyed.
+* This hook is not called during server-side rendering.
+
 
 
 ## 父子组件生命周期顺序
@@ -335,5 +337,7 @@ own hooks.
 
 
 ## References
-* [官方文档](https://vuejs.org/v2/guide/instance.html#Lifecycle-Diagram)
+* [API Options / Lifecycle Hooks](https://vuejs.org/v2/api/#Options-Lifecycle-Hooks)
+* [The Vue Instance](https://vuejs.org/v2/guide/instance.html#Lifecycle-Diagram)
+* [Demystifying Vue Lifecycle Methods](https://scotch.io/tutorials/demystifying-vue-lifecycle-methods)
 * [Vue生命周期深入](https://segmentfault.com/a/1190000014705819)

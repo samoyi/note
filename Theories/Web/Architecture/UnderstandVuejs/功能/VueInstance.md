@@ -4,7 +4,7 @@
 没有看源码，但大概的过程就是编译模板并双向绑定，也就是这一篇：
 `Theories\Web\Architecture\UnderstandVuejs\原理\Two-wayBinding.md`
 
-### 节点被添加`__vue__`属性
+### mount 之后，节点被添加`__vue__`属性
 ```js
 let oNode = document.querySelector('#components-demo');
 
@@ -14,6 +14,12 @@ const vm = new Vue({
     el: '#components-demo',
     data: {
         name: '33',
+    },
+    beforeMount(){
+        console.log(Object.keys(this.$el)); // []
+    },
+    mounted(){
+        console.log(Object.keys(this.$el)); // ["__vue__"]
     },
 });
 
@@ -39,10 +45,21 @@ HTML 并通过`template`将其指定为模板。
 
 ## 创建 Vue 实例时，选项最终在实例上的位置
 ### `vm.$options`
-看起来除了`data`以外的属性都会作为`vm.$options`的属性
+* 看起来除了`data`以外的属性都会作为`vm.$options`的属性
 
 ### `vm.$el`
-* `vm.$el`会引用节点，但
+* `vm.$el`会引用节点，但同样也是添加了`__vue__`属性的
+    ```js
+    const vm = new Vue({
+        el: '#components-demo',
+        data: {
+            num1: 22,
+        },
+    });
+
+    console.log(vm.$el.id === 'components-demo'); // true
+    console.log(vm.$el['__vue__'] === vm); // true
+    ```
 
 
 
