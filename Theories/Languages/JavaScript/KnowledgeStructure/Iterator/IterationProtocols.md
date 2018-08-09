@@ -121,6 +121,20 @@ for (let val of obj){
 console.log([...obj]); // ["33", 22]
 ```
 
+### `for...of`只能遍历自身属性
+这一点与`for...in`可遍历原型属性不同
+```js
+Array.prototype.temp = 666;
+let obj = [11, 22, 33];
+// 会遍历到 temp
+for (let key in obj){
+    console.log(key);
+}
+// 不会遍历到 666
+for (let val of obj){
+    console.log(val);
+}
+```
 
 ## 可选的`return()`和`throw()`方法
 

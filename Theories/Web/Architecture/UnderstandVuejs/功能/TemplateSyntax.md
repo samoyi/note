@@ -17,7 +17,7 @@ re-render and apply the minimal amount of DOM manipulations when the app state
 changes.
 
 
-## Interpolations
+## 实现原理
 1. Compiler 在编译模板时如果发现了一个文本节点里包含`{{}}`，例如发现了`1{{ num }}3`，
 就会把该文本节点的值在虚拟 DOM 设置为 `'1' + num + '3'`。
 2. 假如在创建 Vue 实例时，`num`值为`2`，那在初次渲染时就会输出`123`。
@@ -42,44 +42,17 @@ Subscriber 模块来实现的。
 9. 等到`num`变化时，它的 getter 被触发，publisher 发出通知给所有的订阅者，每个订阅者
 接到通知后，都会对节点（虚拟DOM中的）进行修改。
 
-###
-```html
-<div id="components-demo">
-    {{num1}}
-    <!-- <input type="text" v-model="num1" /> -->
-    <span>{{num2}}</span>
-    <!-- <test-component></test-component> -->
-</div>
-```
 
-
-## Directives
-### `v-html`
-* Dynamically rendering arbitrary HTML on your website can be very dangerous
-because it can easily lead to XSS attacks. Only use v-html on trusted content
-and never on user-provided content. 写个xss获取cookie并发送的例子
-### `v-once`
-1. Render the element and component once only.
-2. On subsequent re-renders, the element/component and all its children will be
-treated as static content and skipped.
-3. This can be used to optimize update performance.
-4. 会作用到后辈节点
-
-```html
-<div id="components-demo" v-once>
-    {{num1}}
-    <span>{{num2}}</span>
-</div>
-```
-```js
-const vm = new Vue({
-    el: '#components-demo',
-    data: {
-        num1: 22,
-        num2: 33,
-    },
-});
-// 之后的修改都无效
-vm.num1 = 222;
-vm.num2 = 333;
-```
+## Using JavaScript Expressions
+* 必须是有明确返回值的表达式
+* Template expressions are sandboxed and only have access to a whitelist of
+globals such as `Math` and `Date`. You should not attempt to access user defined
+globals in template expressions. 想想在模板里用了实例没定义的属性的话，出现的是 Vue
+级别的报错，内容类似于：`Property or method "某某" is not defined on the instance
+but referenced during render`。如果可以随意引用全局变量，只会出现 JS 级别的报错，类似
+于：`ReferenceError: 某某 is not defined`
+    ```html
+    <div id="components-demo">
+        {{ Math.random() }}  <!-- 没问题 -->
+    </div>
+    ```

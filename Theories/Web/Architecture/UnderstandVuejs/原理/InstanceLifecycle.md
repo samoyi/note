@@ -336,6 +336,10 @@ all of them will be called. Mixin hooks will be called before the component’s
 own hooks.
 
 
+## 与自定义指令钩子函数相比的执行顺序
+`Theories\Web\Architecture\UnderstandVuejs\功能\Directives.md`
+
+
 ## References
 * [API Options / Lifecycle Hooks](https://vuejs.org/v2/api/#Options-Lifecycle-Hooks)
 * [The Vue Instance](https://vuejs.org/v2/guide/instance.html#Lifecycle-Diagram)
