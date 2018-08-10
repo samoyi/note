@@ -305,9 +305,58 @@ An object containing the following properties:
         },
     });
     ```
-* `expression`: The expression of the binding as a string. For example in v-my-directive="1 + 1", the expression would be "1 + 1".
-* `arg`: The argument passed to the directive, if any. For example in v-my-directive:foo, the arg would be "foo".
-* `modifiers`: An object containing modifiers, if any. For example in v-my-directive.foo.bar, the modifiers object would be { foo: true, bar: true }.
+* `expression`: The expression of the binding as a string. For example in
+    `v-my-directive="1 + 1"`, the expression would be `"1 + 1"`. 不懂，有什么用
+* `arg`: The argument passed to the directive, if any. For example in
+    `v-my-directive:foo`, the arg would be `"foo"`.
+    ```html
+    <div id="components-demo">
+        <span v-font-color:red>111</span>
+        <span v-font-color:royalblue>222</span>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        directives: {
+            'font-color': {
+                inserted: function(el, binding){
+                    el.style.color = binding.arg;
+                },
+            },
+        },
+    });
+    ```
+* `modifiers`: An object containing modifiers, if any. For example in
+    `v-my-directive.foo.bar`, the modifiers object would be
+    `{ foo: true, bar: true }`.
+    ```html
+    <div id="components-demo">
+        <span v-font.bold>111</span>
+        <span v-font.italic>222</span>
+        <span v-font.italic.underline>333</span>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        directives: {
+            'font': {
+                inserted: function(el, binding){
+                    if (binding.modifiers.bold){
+                        el.style.fontWeight = 'bold';
+                    }
+                    if (binding.modifiers.italic){
+                        el.style.fontStyle = 'italic';
+                    }
+                    if (binding.modifiers.underline){
+                        el.style.textDecoration = 'underline';
+                    }
+                },
+            },
+        },
+    });
+    ```
 
 #### `vnode`
 The virtual node produced by Vue’s compiler.
@@ -340,6 +389,46 @@ new Vue({
     },
     mounted(){
         this.num1 = 33;
+    },
+});
+```
+
+### 在`bind`和`update`时触发相同行为时的简写
+下面的例子会打印`22`和`33`
+```html
+<div id="components-demo" v-console="num1"></div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    data: {
+        num1: 22,
+    },
+    directives: {
+        console: function(el, binding){
+            console.log(binding.value);
+        },
+    },
+    mounted(){
+        this.num1 = 33;
+    },
+});
+```
+
+### 可以传入引用类型字面量
+```html
+<div id="components-demo" v-object="{name: '33', age: 22}" v-array="['hime', 'hina']"></div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    directives: {
+        object: function(el, binding){
+            console.log(binding.value.name + ': ' + binding.value.age); // "33: 22"
+        },
+        array: function(el, binding){
+            console.log(binding.value[0] + ' & ' + binding.value[1]); // "hime & hina"
+        },
     },
 });
 ```
