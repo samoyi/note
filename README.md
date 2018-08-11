@@ -1,13 +1,4 @@
-# 目录
-
-
-## Theories
-### Encoding  基础信息的组织形式
-* #### Character Encoding
-
-### Architecture  独立系统的组织形式
-* #### Software Architecture
-
+# 个人笔记
 
 ## Progress Record
 ### 其他
@@ -31,10 +22,6 @@
 * JS算法代码不要用书上的形式，做成module的形式
 * 该看counting sort了 http://www.jianshu.com/p/1b4068ccd505
 * 重新整理二叉树部分
-
-### UnderstandJS
-* 重看《this & object prototypes》的 Chapter 4及之后的.
-* Did not read [Chapter 4: Coercion](https://github.com/getify/You-Dont-Know-JS/blob/master/types%20%26%20grammar/ch4.md)，sort it to  `Theories\Languages\JavaScript\UnderstandJS\TypeConversionTypeConversion.md`
 
 ### UnderstandVuejs
 * 没看懂[Async Components](https://vuejs.org/v2/guide/components.html#Async-Components)

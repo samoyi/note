@@ -114,6 +114,30 @@ let myObject = Object.create( proto );
 console.log( myObject.name ); // undefined
 ```
 
+### 执行顺序的问题
+```js
+let obj = {
+    _age: 22,
+};
+Object.defineProperty(obj, 'age', {
+    get(){
+        return this._age;
+    },
+    set(n){
+        console.log(1);
+        this._age = n;
+        console.log(2);
+    },
+});
+
+obj.age = 33;
+console.log(3);
+obj.age;
+```
+1. 正常情况下的一行一行执行，肯定是`obj.age = 33`执行完后执行`console.log(3)`
+2. 但这里看起来是，因为变成了访问器属性，`obj.age = 33`不再是属性赋值的操作，而是变成了
+类似于这样的操作`setValue(obj.age, 33)`，内部已经成了函数了。
+
 
 ## Methods
 ### Define and change
