@@ -359,7 +359,22 @@ An object containing the following properties:
     ```
 
 #### `vnode`
-The virtual node produced by Vue’s compiler.
+* The virtual node produced by Vue’s compiler.
+* 比较常用的是在钩子函数里引用 VUe 实例
+    ```html
+    <div id="components-demo" v-show_this></div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        directives: {
+            show_this(el, binding, vnode){
+                console.log(this); // undefined
+                console.log(vnode.context.$options.el); // "#components-demo"
+            }
+        },
+    });
+    ```
 
 #### `oldVnode`
 The previous virtual node, only available in the update and componentUpdated
@@ -391,6 +406,20 @@ new Vue({
         this.num1 = 33;
     },
 });
+```
+
+### 钩子函数不是方法调用
+```js
+directives: {
+    focus: {
+        inserted: function (el) {
+            console.log(this); // undefined
+        },
+    },
+},
+mounted(){
+    console.log(this.inserted); // undefined
+},
 ```
 
 ### 在`bind`和`update`时触发相同行为时的简写

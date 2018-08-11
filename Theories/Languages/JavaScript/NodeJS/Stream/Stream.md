@@ -1,5 +1,8 @@
 # Stream
-[Doc](https://nodejs.org/api/stream.html)
+
+* A stream is an abstract interface for working with streaming data in Node.js.
+* Streams can be readable, writable, or both.
+* All streams are instances of EventEmitter.
 
 
 
