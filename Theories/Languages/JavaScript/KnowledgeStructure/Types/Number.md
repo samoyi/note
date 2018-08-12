@@ -207,8 +207,10 @@ results in `NaN`, the `toString()` method is called and the rules for converting
 parseInt和parseFloat在这种情况下返回NaN
 
 ### `Number.parseInt()`
-* Leading white space in the string is ignored until the first non–white space character is found.
-* If this first character isn’t a number, the minus sign, or the plus sign,  `Number.parseInt()` always returns `NaN`.
+* Leading white space in the string is ignored until the first non–white space
+character is found.
+* If this first character isn’t a number, the minus sign, or the plus sign,  
+`Number.parseInt()` always returns `NaN`.
 * Empty string returns `NaN` (unlike with `Number()`, which returns `0`)
 * If the first character is a number, plus, or minus, then the conversion goes
 on to the second character and continues on until either the end of the string
