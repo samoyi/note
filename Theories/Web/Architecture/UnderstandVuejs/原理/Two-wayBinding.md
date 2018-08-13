@@ -64,6 +64,8 @@ js：
 function initCompile (node, vm) {
     // 将子节点剪切到 DocumentFragment，编译完成后一次性添加进 DOM
     // TODO 在哪里看到过 Vuejs 不是使用 `DocumentFragment`，而且在源代码里也没有找到
+    // 又看到如下：Vue 2.0 中模板渲染与 Vue 1.0 完全不同，1.0 中采用的
+    // DocumentFragment，而 2.0 采用 Virtual DOM。
     let fragment = document.createDocumentFragment();
 
     let child;
