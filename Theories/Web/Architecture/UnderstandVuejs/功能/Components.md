@@ -53,7 +53,7 @@ Vue.component('child-component', {
                 </div>`,
 });
 
-const vm = new Vue({
+new Vue({
     el: '#components-demo',
     data: {
         info: {
@@ -66,6 +66,52 @@ const vm = new Vue({
 
 
 ## Event
+### Emitting a Value With an Event
+1. 子组件通过`$emit`发送该值
+2. 父组件事件监听的方法通过第一个参数来接受该值
+3. 如果要在行内使用该值，则为`$event`
+```html
+<div id="components-demo">
+    <child-component v-bind="info" @inner-click="getClick"></child-component>
+</div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'child-component': {
+            props: ['name', 'age'],
+            template: `<div>
+                            <p @click="clickName">name: {{name}}</p>
+                            <p @click="clickAge">age: {{age}}</p>
+                        </div>`,
+            methods: {
+                clickName(){
+                    this.$emit('inner-click', 'name');
+                },
+                clickAge(){
+                    this.$emit('inner-click', 'age');
+                },
+            }
+        }
+    },
+    data: {
+        info: {
+            name: '33',
+            age: 22,
+        },
+    },
+    methods: {
+        getClick(ev){
+            console.log(ev + ' is clicked');
+        },
+    },
+});
+```
+
+### Using v-model on Components
+
+
 ### `$listeners` 解决原生事件（`.native`）失效的问题
 TODO：按照[文档](https://vuejs.org/v2/guide/components-custom-events.html#Binding-Native-Events-to-Components)中的，没有发现失效
 ```html
