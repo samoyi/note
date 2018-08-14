@@ -133,6 +133,117 @@ new Vue({
 });
 ```
 1. 现在两个`<input>`，然后点击切换，会发现只有前面的数字换了。
+2. 其实和上面的道理一样，`reverse`只是颠倒了`num`依赖的`arr`，而并没有改变组件内
+`input`的`value`
+
+### `v-for` with a Range
+`v-for` can also take an integer. In this case it will repeat the template that
+many times.
+```html
+<div>
+  <span v-for="n in 10">{{ n }} </span>
+</div>
+```
+
+### `v-for` on a `<template>`
+Similar to template `v-if`, you can also use a `<template>` tag with `v-for` to
+render a block of multiple elements.
+```html
+<ul>
+  <template v-for="item in items">
+    <li>{{ item.msg }}</li>
+    <li class="divider" role="presentation"></li>
+  </template>
+</ul>
+```
+
+### `v-for` with `v-if`
+When they exist on the same node, `v-for` has a higher priority than `v-if`.
+That means the `v-if` will be run on each iteration of the loop separately. 这是
+理所应当的，如果`v-if`那它就可以控制是否进行列表渲染，而这个工作完全可以交给`v-for`来执
+行，比如让数组长度为0。
+
+### `v-for` with a Component
+1. You can directly use `v-for` on a custom component, like any normal element.
+2. However, this won’t automatically pass any data to the component, because
+components have isolated scopes of their own.
+3. In order to pass the iterated data into the component, we should also use
+`props`.
+```html
+<my-component
+  v-for="(item, index) in items"
+  v-bind:item="item"
+  v-bind:index="index"
+  v-bind:key="item.id"
+></my-component>
+```
+4. The reason for not automatically injecting item into the component is because
+that makes the component tightly coupled to how `v-for` works. Being explicit
+about where its data comes from makes the component reusable in other situations.
+5. 想象能自动注入的情况：组件内部就可以直接使用`this.item`，而组件编写者不知道谁将使用
+这个组件，也就不知道有什么变量会被自动注入。所以在组件内部，在运行时，`this`上面可以出现
+任何属性。
+
+
+## Array Change Detection
+### Mutation Methods
+
+### Replacing an Array
+You might think this will cause Vue to throw away the existing DOM and re-render
+the entire list - luckily, that is not the case. Vue implements some smart
+heuristics to maximize DOM element reuse, so replacing an array with another
+array containing overlapping objects is a very efficient operation. 需要查看源码
+
+### Caveats
+1. 由于属性的子属性的变动不会触发属性的 setter, Vue cannot detect the following
+changes to an array:
+    1. When you directly set an item with the index, e.g.
+        `vm.items[indexOfItem] = newValue`
+    2. When you modify the length of the array, e.g.
+        `vm.items.length = newLength`
+2. 针对第一种情况，可以使用以下两个方法：
+    * `Vue.set`方法
+    ```js
+    Vue.set(vm.items, indexOfItem, newValue)
+    // or
+    vm.$set(vm.items, indexOfItem, newValue)
+    ```
+    * `Array.prototype.splice`
+    ```js
+    vm.items.splice(indexOfItem, 1, newValue)
+    ```
+3. 其实`Vue.set`在内部也是使用`Array.prototype.splice`
+    ```js
+    if (Array.isArray(target) && isValidArrayIndex(key)) {
+        target.length = Math.max(target.length, key);
+        target.splice(key, 1, val);
+        return val
+    }
+    ```
+4. 针对第二种情况，也是要用`Array.prototype.splice`
+    ```js
+    vm.items.splice(newLength)
+    ```
+
+
+## Object Change Detection Caveats
+*  同样不能检测对象属性的添加或删除
+* Vue does not allow dynamically adding new root-level reactive properties to
+an already created instance.不懂为什么
+* Sometimes you may want to assign a number of new properties to an existing
+object, for example using `Object.assign()` or` _.extend()`. In such cases, you
+should create a fresh object with properties from both objects.
+    1. 不能使用下面这样的方法：
+        ```js
+        Object.assign(vm.userProfile, anotherObj)
+        ```
+    2. 因为`Object.assign()`也是给`vm.userProfile`添加属性的，不会触发
+        `vm.userProfile`性的 setter
+    3. 应该像下面这样直接修改`vm.userProfile`
+        ```js
+        vm.userProfile = Object.assign({}, vm.userProfile, anotherObj)
+        ```
 
 ## References
 * [StackOverflow](https://stackoverflow.com/a/44079395)
+* [List Rendering and Vue’s v-for Directive](https://css-tricks.com/list-rendering-and-vues-v-for-directive/)

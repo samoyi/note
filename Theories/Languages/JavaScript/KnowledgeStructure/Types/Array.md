@@ -294,12 +294,23 @@ appropriate locations. For example, calling `slice(-2, -1)` on an array with
   than the start, then an empty array is returned.
 
 ### splice()
-1. Deletion — Any number of items can be deleted from the array by specifying just two arguments: the position of the first item to delete and the number of items to delete. 如果只有第一个参数，则从该位置开始直到结束的所有数组项都被删除
-2. Insertion — Items can be inserted into a specific position by providing three or more arguments: the starting position, 0 (the number of items to delete), and the item to insert. Optionally, you can specify a fourth parameter, fifth parameter, or any number of other parameters to insert.
-3. Replacement — Items can be inserted into a specific position while simultaneously deleting items, if you specify three arguments: the starting position, the number of items to delete, and any number of items to insert. The number of items to insert doesn’t have to match the number of items to delete.
-4. unlike ```concat()```, ```splice()``` inserts arrays themselves, not the elements of those arrays.
-5.  Unlike ```slice()``` and ```concat()```, ```splice()``` modifies the array on which it is invoked.
-6.  The ```splice()``` method always returns an array that contains any items that were removed from the array (or an empty array if no items were removed).
+1. Deletion — Any number of items can be deleted from the array by specifying
+just two arguments: the position of the first item to delete and the number of
+items to delete. 如果只有第一个参数，则从该位置开始直到结束的所有数组项都被删除
+2. Insertion — Items can be inserted into a specific position by providing three
+or more arguments: the starting position, 0 (the number of items to delete),
+and the item to insert. Optionally, you can specify a fourth parameter, fifth
+parameter, or any number of other parameters to insert.
+3. Replacement — Items can be inserted into a specific position while
+simultaneously deleting items, if you specify three arguments: the starting
+position, the number of items to delete, and any number of items to insert. The
+number of items to insert doesn’t have to match the number of items to delete.
+4. unlike `concat()`, `splice()` inserts arrays themselves, not the elements of
+those arrays.
+5. Unlike `slice()` and `concat()`, `splice()` modifies the array on which it is
+invoked.
+6. The `splice()` method always returns an array that contains any items that
+were removed from the array (or an empty array if no items were removed).
 
 ##### ES6 copyWithin()
 [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/copyWithin)
