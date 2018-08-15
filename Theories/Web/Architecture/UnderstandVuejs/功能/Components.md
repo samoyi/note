@@ -70,6 +70,8 @@ new Vue({
 1. 子组件通过`$emit`发送该值
 2. 父组件事件监听的方法通过第一个参数来接受该值
 3. 如果要在行内使用该值，则为`$event`
+4. 注意，普通事件的`ev`参数或`$event`是事件对象，而子组件`$emit`事件的这两个值是 emit
+出来的值
 ```html
 <div id="components-demo">
     <child-component v-bind="info" @inner-click="getClick"></child-component>
@@ -109,7 +111,81 @@ new Vue({
 });
 ```
 
-### Using v-model on Components
+### Using `v-model` on Components
+1. 想在一个自定义的 input 组件上使用`v-model`，也就是下面的效果
+```html
+<div id="components-demo">
+    <custom-input v-model="searchText"></custom-input>
+    <input type="button" :value="'搜索 ' + searchText" />
+</div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'custom-input': {
+            // ...暂略
+        }
+    },
+    data: {
+        searchText: '近期新闻',
+    },
+});
+```
+2. `v-model`实际上是语法糖，它的实现几乎如下
+```html
+<custom-input :value="searchText" @input="searchText = $event.target.value">
+</custom-input>
+```
+3. 之所以说几乎，是因为`v-model`除了使用`input`事件，还通过`compositionstart`和
+`compositionend`事件阻止了类似于拼音输入法输入是的拼音字符更新变量。
+4. 知道了`v-model`的实际实现，就可以在子组件里模拟。
+5. 因为`:value="searchText"`，所以子组件的`props`要接受一个变量`value`，并且绑定到它
+自身的实际`input`上。
+6. 再看`@input="searchText = $event.target.value"`，因为前面说到，子组件 emit 自定
+义事件时，父组件行内的`$event`并不是事件对象，而是随着自定义事件 emit 出来的一个值。而
+这里因为是`$event.target.value`，显然`$event`是事件对象，而不是具体值。所以会认为子组
+件的 emit 应该是这样：`this.$emit('input', ev);`
+7. 可实际上，当用在组件上时，`v-model`则会这样：
+```html
+<custom-input
+  v-bind:value="searchText"
+  v-on:input="searchText = $event"
+></custom-input>
+```
+8. 预期接受的变成了子组件自定义事件 emit 的值。所以子组件的 emit 要写成
+`this.$emit('input', ev.target.value);`
+9. 综上，子组件要定义为：
+```js
+{
+    props: ['value'],
+    template: `<input :value="value"
+        @input="emitInput"
+        @compositionstart="compositionstart"
+        @compositionend="compositionend"
+    >`,
+    data: function(){
+        return {
+            bShouldInputValue: true,
+        };
+    },
+    methods: {
+        emitInput(ev){
+            if (this.bShouldInputValue){
+                this.$emit('input', ev.target.value);
+            }
+        },
+        compositionstart(){
+            this.bShouldInputValue = false;
+        },
+        compositionend(ev){
+            ev.target.value += ev.data
+            this.$emit('input', ev.target.value);
+            this.bShouldInputValue = true;
+        },
+    }
+}
+```
 
 
 ### `$listeners` 解决原生事件（`.native`）失效的问题
