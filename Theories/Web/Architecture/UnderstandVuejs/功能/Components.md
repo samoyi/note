@@ -7,6 +7,14 @@
 3. 要说不同的话，就是狭义的组件需要自创模板，可以自定义标签名，以及可复用。
 
 
+## Registration
+* Global registration often isn’t ideal. For example, if you’re using a build
+system like Webpack, globally registering all components means that even if you
+stop using a component, it could still be included in your final build. This
+unnecessarily increases the amount of JavaScript your users have to download.
+
+
+
 ## 复用
 ### `data`必须是一个函数
 1. 想象一下如果`data`是一个对象
@@ -27,6 +35,70 @@
 
 
 ## Props
+### Prop Casing (camelCase vs kebab-case)
+1. HTML attribute names are case-insensitive, so browsers will interpret any
+uppercase characters as lowercase.
+```html
+<ul id="components-demo">
+    <child-component :myNum="num"></child-component>
+    <!-- <child-component :my-num="num"></child-component> -->
+</ul>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'child-component': {
+            props: ['myNum'],
+            template: `<li>{{myNum}}</li>`,
+        }
+    },
+    data: {
+        num: 2233,
+    },
+});
+```
+2. 在实例里使用 camelCase 肯定是没有问题，因为是 JS 变量名。而在 HTML 中的 camelCase
+特性，正如前面说的，会被转换为纯小写的`mynum`。Vue 也会给出如下提示：
+>[Vue tip]: Prop "mynum" is passed to component <Anonymous>, but the declared
+prop name is "myNum". Note that HTML attributes are case-insensitive and
+camelCased props need to use their kebab-case equivalents when using in-DOM
+templates. You should probably use "my-num" instead of "myNum".
+
+3. 如果在实例中使用了 camelCase 形式的变量，则在 HTML 需要像注释中那样使用 kebab-case
+形式。
+
+### 类型检测和默认值
+1. 最简单的类型检测，需要把`prop`从数组变成对象形式，并在内部指定通过每个数据的构造函数
+来约束类型（对应`Object.prototype.toString.call`显示的那个）。源码参考`assertType`函
+数
+```html
+<div id="components-demo">
+    <child-component :name="name" :age="age"></child-component>
+</div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'child-component': {
+            props: {
+                name: String,
+                age: Number,
+            },
+            template: `<p>{{name}}, {{age}}</p>`,
+        }
+    },
+    data: {
+        name: '33',
+        age: 22,
+        // age: new Number(22), // 可以通过，数值包装类型的构造函数也是 Number
+        // age: '22', // 不能通过
+    },
+});
+```
+
+
 ### Static or Dynamic Props
 Static prop 的值永远是作为字符串传入的，而 dynamic prop 是作为一个表达式传入的。
 ```html

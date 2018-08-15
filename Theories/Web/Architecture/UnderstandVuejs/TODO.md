@@ -7,6 +7,7 @@
 * `Theories\Web\Architecture\UnderstandVuejs\原理\ComputedProperties.md`
 * 条件渲染和列表渲染的实现原理
 * 组件系统的实现原理
+* [组件的模块系统](https://cn.vuejs.org/v2/guide/components-registration.html#%E6%A8%A1%E5%9D%97%E7%B3%BB%E7%BB%9F)
 
 
 ## 没看懂的部分
