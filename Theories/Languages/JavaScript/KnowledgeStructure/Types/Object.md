@@ -217,7 +217,8 @@ let arr = [1, 2, 3];
 console.log(arr.toString()); // “1,2,3”
 ```
 5. If this method is not overridden in a custom object, `toString()`
- returns `"[object type]"`, where `type` is the object type. 常用语类型判断：
+ returns `"[object type]"`, where `type` is the object type.
+    * 常用于类型判断：
     ```js
     let obj = {};
     console.log(obj.toString()); // "[object Object]"
@@ -225,7 +226,12 @@ console.log(arr.toString()); // “1,2,3”
     let arr = [1, 2, 3];
     console.log(Object.prototype.toString.call(arr)); // "[object Array]"
     ```
-
+    * 如果参数是`undefined`，返回`[object Undefined]`；如果参数是`null`，返回
+    `[object Null]`；如果是基础类型，会先包装为引用类型。参考[规范](https://www.ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+    ```js
+    console.log(Object.prototype.toString.call(new Number(22))); // [object Number]
+    console.log(Object.prototype.toString.call(22)); // [object Number]
+    ```
 
 ## 属性和方法
 ### `Object.is`
@@ -381,50 +387,93 @@ var baz = { [foo]: 'abc'};
 
 
 ## 遍历对象
+### ES5、ES6
+#### 一共有5种方法
+1. `for...in`
+循环遍历对象自身的和继承的可枚举属性（不含 Symbol 属性）。
+2. `Object.keys(obj)`
+`Object.keys`返回一个数组，包括对象自身的（不含继承的）所有可枚举属性（不含 Symbol 属
+性）
+3. `Object.getOwnPropertyNames(obj) `
+`Object.getOwnPropertyNames`返回一个数组，包含对象自身的所有属性（不含 Symbol 属性，
+但是包括不可枚举属性）。
+4. ES6 `Object.getOwnPropertySymbols(obj)`
+`Object.getOwnPropertySymbols`返回一个数组，包含对象自身的所有 Symbol 属性。
+5. ES6 `Reflect.ownKeys(obj)`
+`Reflect.ownKeys`返回一个数组，包含对象自身的所有属性，不管是属性名是 Symbol 或字符串，
+也不管是否可枚举。
 
-**ES6一共有5种方法可以遍历对象的属性。**
-
-一. ```for...in```
-for...in循环遍历对象自身的和继承的可枚举属性（不含Symbol属性）。
-
-二. ```Object.keys(obj)```
-Object.keys返回一个数组，包括对象自身的（不含继承的）所有可枚举属性（不含Symbol属性）。
-
-三. ```Object.getOwnPropertyNames(obj) ```
-Object.getOwnPropertyNames返回一个数组，包含对象自身的所有属性（不含Symbol属性，但是包括不可枚举属性）。
-
-四. ES6 ```Object.getOwnPropertySymbols(obj)```
-Object.getOwnPropertySymbols返回一个数组，包含对象自身的所有Symbol属性。
-
-五. ES6 ```Reflect.ownKeys(obj)```
-Reflect.ownKeys返回一个数组，包含对象自身的所有属性，不管是属性名是Symbol或字符串，也不管是否可枚举。
-
+#### 遍历次序
 以上的5种方法遍历对象的属性，都遵守同样的属性遍历的次序规则：
-首先遍历所有属性名为数值的属性，按照数字排序。
-其次遍历所有属性名为字符串的属性，按照生成时间排序。
-最后遍历所有属性名为Symbol值的属性，按照生成时间排序。
+1. 首先遍历所有属性名为数值的属性，按照数字排序。
+2. 其次遍历所有属性名为字符串的属性，按照生成时间排序。
+3. 最后遍历所有属性名为 Symbol 值的属性，按照生成时间排序。
 
-
-**ES7的两种遍历提案**
-
-六. ```Object.values(obj) ```
-1. 返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历（enumerable）属性的值。
-2. Object.values会过滤属性名为Symbol值的属性。
-3. 如果Object.values方法的参数是一个字符串，会返回各个字符组成的一个数组。
-4. 如果参数不是对象，Object.values会先将其转为对象。由于数值和布尔值的包装对象，都不会为实例添加非继承的属性。所以，Object.values会返回空数组。
-
-
-七. ```Object.entries(obj) ```
-1. 返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历（enumerable）属性的键值对数组。
-2. 如果原对象的属性名是一个Symbol值，该属性会被省略
-3. Object.entries方法的一个用处是，将对象转为真正的Map结构
+### ES7
+#### `Object.values(obj)`
+1. 返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历属性的值。
+2. `Object.values`会过滤属性名为 Symbol 值的属性。
+3. 如果参数不是对象，`Object.values`会先将其转为对象。由于数值和布尔值的包装对象，都不
+会为实例添加非继承的属性。所以，`Object.values`会返回空数组。
+```js
+console.log(Object.values('你好')); // ["你", "好"]
 ```
+
+#### `Object.entries(obj)`
+1. 返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历属性的键值对数组。
+2. 如果原对象的属性名是一个 Symbol 值，该属性会被省略
+3. `Object.entries`方法的一个用处是，将对象转为真正的 Map 结构
+```js
 var obj = { foo: 'bar', baz: 42 };
 var map = new Map(Object.entries(obj));
 map // Map { foo: "bar", baz: 42 }
 ```
 
+### 示例
+```js
+let proto = {};
+Object.defineProperties(proto, {
+    protoEnumerable: {
+        enumerable: true,
+        value: 'protoEnumerable',
+    },
+    protoNonEnumerable: {
+        value: 'protoNonEnumerable',
+    },
+});
+proto[Symbol('protoSymbol')] = 'protoSymbol';
 
+let obj = Object.create(proto);
+Object.defineProperties(obj, {
+    ownEnumerable: {
+        enumerable: true,
+        value: 'ownEnumerable',
+    },
+    ownNonEnumerable: {
+        value: 'ownNonEnumerable',
+    },
+});
+obj[Symbol('ownSymbol')] = 'ownSymbol';
+
+
+for (let key in obj){
+    console.log(key);
+    // ownEnumerable
+    // protoEnumerable
+}
+
+console.log(Object.keys(obj)); // ['ownEnumerable']
+
+console.log(Object.getOwnPropertyNames(obj)); // ['ownEnumerable', 'ownNonEnumerable']
+
+console.log(Object.getOwnPropertySymbols(obj)); // [Symbol(ownSymbol)]
+
+console.log(Reflect.ownKeys(obj)); // ['ownEnumerable', 'ownNonEnumerable', Symbol(ownSymbol)]
+
+console.log(Object.values(obj)); // ['ownEnumerable']
+
+console.log(Object.entries(obj)); // [['ownEnumerable', 'ownEnumerable']]
+```
 
 
 ## ES7 对象的扩展运算符

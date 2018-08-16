@@ -44,7 +44,13 @@ corresponding wrapper object.
     console.log( v instanceof Object ); // true
     console.log( v instanceof Obj ); // false
     ```
-
+* 基础类型会返回`false`
+```js
+console.log((22).__proto__ === (new Number(22)).__proto__) // true
+console.log((new Number(22)) instanceof Number) // true
+// 即使可以通过原型链追溯到，但因为`22`不是对象实例。所以还是返回`false`
+console.log((22) instanceof Number) // false
+```
 
 
 ***
