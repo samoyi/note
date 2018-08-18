@@ -69,33 +69,73 @@ templates. You should probably use "my-num" instead of "myNum".
 形式。
 
 ### 类型检测和默认值
-1. 最简单的类型检测，需要把`prop`从数组变成对象形式，并在内部指定通过每个数据的构造函数
-来约束类型（对应`Object.prototype.toString.call`显示的那个）。源码参考`assertType`函
-数
-```html
-<div id="components-demo">
-    <child-component :name="name" :age="age"></child-component>
-</div>
-```
+1. 需要把`prop`从数组变成对象形式，并在内部指定通过每个数据的构造函数来约束类型（对应
+`Object.prototype.toString.call`显示的那个）。源码参考`assertType`函数
+2. The type can be one of the following native constructors，或者自定义构造函数:
+    * String
+    * Number
+    * Boolean
+    * Array
+    * Object
+    * Date
+    * Function
+    * Symbol
+3. 因为是使用构造函数来检测，所以包装类型是用其构造函数而不是`Object`。例如
+`new Number(22)`会通过`Number`的检测。
+4. `null` matches any type
+5. `type` can also be a custom constructor function and the assertion will be
+made with an `instanceof` check. For example, given the following constructor
+function exists:
+    ```js
+    function Person (firstName, lastName) {
+        this.firstName = firstName
+        this.lastName = lastName
+    }
+    ```
+You could use:
+    ```js
+    props: {
+        author: Person
+    }
+    ```
+to validate that the value of the `author` prop was created with `new Person`.
+6. Note that props are validated before a component instance is created, so
+instance properties (e.g. `data`, `computed`, etc) will not be available inside
+`default` or `validator` functions.
+
 ```js
-new Vue({
-    el: '#components-demo',
-    components: {
-        'child-component': {
-            props: {
-                name: String,
-                age: Number,
-            },
-            template: `<p>{{name}}, {{age}}</p>`,
+props: {
+    // Basic type check
+    propA: Number,
+    // Multiple possible types
+    propB: [String, Number],
+    // Required string
+    propC: {
+        type: String,
+        required: true
+    },
+    // Number with a default value
+    propD: {
+        type: Number,
+        default: 100
+    },
+    // Object with a default value
+    propE: {
+        type: Object,
+        // Object or array defaults must be returned from
+        // a factory function
+        default: function () {
+            return { message: 'hello' }
         }
     },
-    data: {
-        name: '33',
-        age: 22,
-        // age: new Number(22), // 可以通过，数值包装类型的构造函数也是 Number
-        // age: '22', // 不能通过
-    },
-});
+    // Custom validator function
+    propF: {
+        validator: function (value) {
+            // The value must match one of these strings
+            return ['success', 'warning', 'danger'].indexOf(value) !== -1
+        }
+    }
+}
 ```
 
 ### Static or Dynamic Props
@@ -189,6 +229,76 @@ new Vue({
     },
     ```
 
+### Non-Prop Attributes
+A non-prop attribute is an attribute that is passed to a component, but does not
+have a corresponding prop defined.
+```html
+<div id="components-demo">
+    <child-component age="22"></child-component>
+</div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'child-component': {
+            template: `<p></p>`,
+            mounted(){
+                console.log(this.$el.getAttribute('age')); // 22
+                console.log(this.$attrs); // {age: "22"}
+            },
+        },
+    },
+});
+```
+
+### Replacing/Merging with Existing Attributes
+1. For most attributes, the value provided to the component will replace the
+value set by the component.
+2. The `class` and `style` attributes are a little smarter, both values are
+merged.
+```html
+<div id="components-demo">
+    <child-component type="number" style="text-decoration: line-through;"></child-component>
+</div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'child-component': {
+            template: `<input type="text" style="color: red;" />`,
+        },
+    },
+});
+```
+只能输入数字，红色，有 text-decoration
+
+### Disabling Attribute Inheritance
+1. If you do not want the root element of a component to inherit attributes, you
+can set `inheritAttrs: false` in the component’s options.
+2. 这时虽然在元素上访问不到特性，但是在实例中仍然可见。也就是说，在该特性传入组件后，并
+没有被设置到组件模板的元素之上
+```html
+<div id="components-demo">
+    <child-component age="22"></child-component>
+</div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'child-component': {
+            inheritAttrs: false,
+            template: `<p></p>`,
+            mounted(){
+                console.log(this.$el.getAttribute('age')); // null
+                console.log(this.$attrs); // {age: "22"}
+            },
+        },
+    },
+});
+```
 
 
 ## Event
@@ -196,8 +306,13 @@ new Vue({
 1. 子组件通过`$emit`发送该值
 2. 父组件事件监听的方法通过第一个参数来接受该值
 3. 如果要在行内使用该值，则为`$event`
-4. 注意，普通事件的`ev`参数或`$event`是事件对象，而子组件`$emit`事件的这两个值是 emit
+4. 普通事件的`ev`参数或`$event`是事件对象，而子组件`$emit`事件的这两个值是 emit
 出来的值
+5. 与组件名和 prop 名不同，camelCase 定义的事件名在模板添加监听时并不能使用对应的
+kebab-case 版本，而是会转换为纯小写。`this.$emit('myEvent')`不会被`@my-event`监听到
+，只会被`#myevent`监听到。For these reasons, we recommend you always use
+kebab-case for event names.
+
 ```html
 <div id="components-demo">
     <child-component v-bind="info" @inner-click="getClick"></child-component>
@@ -313,6 +428,82 @@ new Vue({
 }
 ```
 
+#### 非`value-input`的`<input>`
+1. 例如`checkbox`类型，值要绑定到`checked`而非`value`特性上
+2. `checkbox`类型的输入事件是`change`，不过发送给父组件的事件仍然是`input`，因为
+`v-model`默认接收的事件就是`input`
+```html
+<div id="components-demo">
+    <custom-input v-model="checked"></custom-input>
+    {{checked}}
+</div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'custom-input': {
+            props: ['value'],
+            template: `<input
+                :checked="value"
+                type="checkbox"
+                @change="emitChange"
+            >`,
+            methods: {
+                emitChange(ev){
+                    this.$emit('input', !this.value);
+                },
+            }
+        },
+    },
+    data: {
+        checked: false,
+    },
+});
+```
+3. 如果不想出现`input`类型的`value`特性和`input`事件，可以按照[文档](https://vuejs.org/v2/guide/components-custom-events.html#Customizing-Component-v-model)
+上的方法，给组件设置`model`属性，然后就可以使用`checked`和`change`作为prop和自定义事
+件名了
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'custom-input': {
+            model: {
+                prop: 'checked',
+                event: 'change'
+            },
+            props: ['checked'],
+            template: `<input
+                :checked="checked"
+                type="checkbox"
+                @change="emitChange"
+            >`,
+            methods: {
+                emitChange(ev){
+                    this.$emit('change', !this.checked);
+                },
+            },
+        },
+    },
+    data: {
+        checked: false,
+    },
+});
+```
+
+### Binding Native Events to Components
+1. 组件是被设计为功能完整的、独立的、只需要接收一些参数来个性化的对象。
+2. 因此，组件上的事件正常情况下都应该在组件内部来处理。例如你设计了一个按钮组件，显然点
+击事件应该由组件内部来处理，而不应该由使用它的父级来处理。只有组件内部抛出的自定义事件才
+应该由父级来处理。
+3. 所以，组件标签上的事件绑定默认只是用来接收组件内部的自定义事件的。
+4. 但有时不得已的情况下，组件使用者想在组件上监听原生的事件，而使用者又不能在组件内部添
+加对该事件的监听，就需要在组件标签上使用`.native`修饰符来监听原生事件。
+    ```js
+    // 出于某些原因，不能在组件内部监听 click 的时候
+    <child-components @click.native="clickP"></child-components>
+    ```
 
 ### `$listeners` 解决原生事件（`.native`）失效的问题
 TODO：按照[文档](https://vuejs.org/v2/guide/components-custom-events.html#Binding-Native-Events-to-Components)中的，没有发现失效
