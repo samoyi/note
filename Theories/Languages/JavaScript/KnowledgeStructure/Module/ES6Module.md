@@ -25,7 +25,7 @@ CommonJS 模块的加载方式高。
 6. 由于 ES6 模块是编译时加载，使得静态分析成为可能。有了它，就能进一步拓宽 JavaScript
 的语法，比如引入宏（macro）和类型检验（type system）这些只能靠静态分析实现的功能。
 
-#### 静态化下的 `export` 和 `import`
+#### 静态化下的`export`和`import`
 ##### `export`
 `export` 必须处于模块顶层。如果处于块级作用域内，就没法做静态优化了
 ```js
@@ -35,8 +35,8 @@ function foo() {
 ```
 
 ##### `import`
-* `import` 命令具有提升效果，会提升到整个模块的头部，首先执行。因为 `import` 命令是编
-译阶段执行的。
+* `import`命令具有提升效果，会提升到整个模块的头部，首先执行。因为`import`命令是编译阶
+段执行的。
     ```js
     foo();
     import { foo } from 'my_module';
@@ -273,8 +273,29 @@ export default function(x) {
 己的默认方法。
 
 
-## 运行时加载模块
-[import()](http://es6.ruanyifeng.com/#docs/module#import)
+## 运行时加载模块 `import()`
+1. `import()`返回一个 Promise 对象
+2. `import()`函数与所加载的模块没有静态连接关系，这点也是与`import`语句不相同。
+`import()`类似于 Node 的`require`方法，区别主要是前者是异步加载，后者是同步加载。
+3. `import()`加载模块成功以后，这个模块会整体作为一个对象被加载，当作`then`方法的参数
+```js
+// module.js
+export let name = '33';
+export let age = 22;
+```
+```js
+let p = import('./module.js');
+p.then(res=>{
+    console.log(res.name); // "33"
+    console.log(res.age); // 22
+})
+.catch(err=>{
+    console.error(err);
+});
+```
+
+
+
 
 
 ## 加载方式
