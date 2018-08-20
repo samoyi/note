@@ -1,6 +1,5 @@
 # Computed Properties and Watchers
 
-
 ## Watcher
 ### 节流
 ```js
@@ -43,3 +42,27 @@ watcher 的回调。因为 watcher 的回调是在一个周期的末尾来执行
     vm.num1 = 20;
     unwatch();
     ```
+
+### 触发标准是 Same-value-zero equality
+```js
+new Vue({
+    el: '#components-demo',
+    data: {
+        age: 0
+    },
+    watch: {
+        age(n){
+            console.log(n);
+        },
+    },
+    created(){
+        this.age = -0; // 不会触发
+        setTimeout(()=>{
+            this.age = NaN; // 会触发
+        });
+        setTimeout(()=>{
+            this.age = NaN; // 不会触发
+        });
+    },
+});
+```

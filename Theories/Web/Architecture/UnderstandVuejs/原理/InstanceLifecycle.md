@@ -180,7 +180,10 @@ new Vue({
 ```
 
 ### 第五阶段 数据更新
-* 当有数据更新时，会触发数据属性的 getter，从而进入该阶段。
+* 当有数据更新时，会触发数据属性的 getter。如果该数据更新将影响 DOM，则进入该阶段。
+* 不影响 DOM 的更新不会进入该阶段，不会触发`updated`函数。所谓影响 DOM 更新，包括所有
+影响的情况，例如直接渲染出它的值、在某个影响更新的计算属性中用到该属性、以该属性为标准进
+行`v-for`等等。
 * 判断数据是否更新的算法是 Same-value-zero。下面的情况不会触发更新：
     ```js
     new Vue({
@@ -206,6 +209,9 @@ render is performed server-side.
 
 ### 第六阶段 虚拟 DOM 更新和重渲染
 * Called after a data change causes the virtual DOM to be re-rendered and patched.
+* 不影响 DOM 的更新不会进入该阶段，不会触发`updated`函数。所谓影响 DOM 更新，包括所有
+影响的情况，例如直接渲染出它的值、在某个影响更新的计算属性中用到该属性、以该属性为标准进
+行`v-for`等等。
 * The component’s DOM will have been updated when this hook is called, so you
 can perform DOM-dependent operations here.
 * However, in most cases you should avoid changing state inside the hook. To

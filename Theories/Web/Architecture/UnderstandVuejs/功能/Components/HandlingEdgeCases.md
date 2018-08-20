@@ -7,9 +7,11 @@ dangerous, so keep them in mind when deciding to use each feature.
 
 
 ## Element & Component Access
-In most cases, it’s best to avoid reaching into other component instances or
-manually manipulating DOM elements. There are cases, however, when it can be
-appropriate.
+* In most cases, it’s best to avoid reaching into other component instances
+or manually manipulating DOM elements. There are cases, however, when it
+can be appropriate.
+* 通过直接访问其他组件，可以调用其他组件的方法，但注意方法的定义是通过`bind()`绑定到定
+义时的组件上的，所以方法内部的`this`永远指向定义它的组件实例。参考`原理\Misc.md`。
 
 ### Accessing the Root Instance
 * All subcomponents will be able to access root instance and use it as a global
@@ -122,7 +124,6 @@ new Vue({
                     console.log(this.num);
                 },
             },
-            mounted:
         },
     },
     mounted(){ // 这里不能使用 created，
@@ -175,7 +176,7 @@ new Vue({
 ```
 
 ### Dependency Injection
-#### 使用 `$parent` 的问题
+#### 使用`$parent`的问题
 ```html
 <parent-component>
     <child-component></child-component>
@@ -202,11 +203,9 @@ new Vue({
 #### 前辈组件使用依赖注入明确表示将哪些数据和方法继承给后辈组件
 1. 前辈组件使用`provide`表明要把哪些数据和方法提供给后辈组件
 2. 后辈组件使用`inject`选择接受前辈组件提供的哪些数据和方法
-
 ```html
 <div id="components-demo">
-    <middle-component>
-    </middle-component>
+    <middle-component></middle-component>
 </div>
 ```
 ```js
@@ -230,7 +229,7 @@ const middleComponent = {
                 </div>`,
 };
 
-const vm = new Vue({
+new Vue({
     el: '#components-demo',
     components: {
         'middle-component': middleComponent,
@@ -251,25 +250,47 @@ const vm = new Vue({
     },
 });
 ```
-*You can think of dependency injection as sort of “long-range props”*
-
-#### 闭包与非响应式的数据
-1. 如果不考虑依赖注入，前辈组件的`consoleAge`一般会写成：
-    ```js
-    consoleAge(){
-        console.log(this.age);
+3. 你可以把依赖注入看作一部分“大范围有效的 prop”
+4. 但依赖注入是非响应的
+```html
+<div id="components-demo">
+    <child-component></child-component>
+</div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'child-component': {
+            inject: ['age'],
+            template: '<div>{{age}}</div>',
+        },
     },
-    ```
-2. 如果这样写，依赖注入时就不需要再 provide `age` 了，后辈组件的 `showAge` 永远都会显
-示前辈组件里的 `age`。
-3. 但是如果仍然是按照上面例子中的写法，因为依赖注入的数据是非响应的，所以前辈组件的
-`age` 如果发生了变化，后辈组件并不会更新它的 `age`，仍然是保持为 `22`。
+    data: {
+        age: 22,
+    },
+    provide(){
+        return {
+            age: this.age,
+        };
+    },
+    mounted(){
+        setTimeout(()=>{
+            this.age = 33;
+            console.log(this.age)
+        }, 1000);
+    }
+});
+```
+
 
 ## Programmatic Event Listeners
+
 
 ## Circular References
 ### Recursive Components
 ### Circular References Between Components
+
 
 ## Alternate Template Definitions
 ### Inline Templates
