@@ -37,6 +37,26 @@ unnecessarily increases the amount of JavaScript your users have to download.
 
 
 ## Misc
+### `template`中是全局作用域，`this`指向全局对象
+```html
+<div id="components-demo">
+    <child-component></child-component>
+</div>
+```
+```js
+let str = 'hello';
+
+new Vue({
+    el: '#components-demo',
+    components: {
+        'child-component': {
+            template: `<p>${this}, ${str}</p>`,
+            // 渲染出 <p>[object Window], hello</p>
+        },
+    },
+});
+```
+
 ### 使用`is`解决子节点类型限制的问题
 1. Some HTML elements, such as `<ul>`, `<ol>`, `<table>` and `<select>` have
 restrictions on what elements can appear inside them, and some elements such as

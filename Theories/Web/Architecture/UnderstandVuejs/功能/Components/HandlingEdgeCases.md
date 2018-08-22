@@ -306,26 +306,52 @@ system, e.g. with data.
 3. However, if you’ve ruled out the above and find yourself in this extremely
 rare situation of having to manually force an update, you can do so with
 `$forceUpdate`.
+4. 强制更新因为不会更改数据，所以不会触发 watcher，但会触发实例生命周期钩子函数和自定义
+组件钩子函数。
 
 ### Cheap Static Components with `v-once`
 1. Rendering plain HTML elements is very fast in Vue, but sometimes you might
 have a component that contains a lot of static content. In these cases, you can
 ensure that it’s only evaluated once and then cached by adding the `v-once`
-directive to the root element, like this:
-    ```js
-    Vue.component('terms-of-service', {
-      template: `
-        <div v-once>
-          <h1>Terms of Service</h1>
-          ... a lot of static content ...
-        </div>
-      `
-    })
-    ```
-2. Once again, try not to overuse this pattern. While convenient in those rare
+directive to the root element
+2. `v-once`原理：Render the element and component once only. On subsequent
+re-renders, the element/component and all its children will be treated as static
+content and skipped.
+```html
+<div id="components-demo">
+    <child-component></child-component>
+</div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'child-component': {
+            template: `<p v-once>{{num}}</p>`,
+            data(){
+                return {
+                    num: 22,
+                };
+            },
+            watch: {
+                num(newVal){ // 数据可以正常更新
+                    console.log(newVal);
+                },
+            },
+            updated(){ // 组件更新仍然会触发，但不会使用新的 num 重新渲染
+                console.log('updated');
+            },
+            mounted(){
+                this.num = 33;
+            },
+        },
+    },
+});
+```
+3. Once again, try not to overuse this pattern. While convenient in those rare
 cases when you have to render a lot of static content, it’s simply not necessary
- unless you actually notice slow rendering
-3. Plus, it could cause a lot of confusion later. For example, imagine another
+unless you actually notice slow rendering
+4. Plus, it could cause a lot of confusion later. For example, imagine another
 developer who’s not familiar with `v-once` or simply misses it in the template.
 They might spend hours trying to figure out why the template isn’t updating
 correctly.
