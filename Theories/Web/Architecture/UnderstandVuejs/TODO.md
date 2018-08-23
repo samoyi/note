@@ -9,11 +9,12 @@
 * 组件系统的实现原理
 * [组件的模块系统](https://cn.vuejs.org/v2/guide/components-registration.html#%E6%A8%A1%E5%9D%97%E7%B3%BB%E7%BB%9F)
 * [禁用特性继承的应用](https://cn.vuejs.org/v2/guide/components-props.html#%E7%A6%81%E7%94%A8%E7%89%B9%E6%80%A7%E7%BB%A7%E6%89%BF)
-* [作用域插槽](https://cn.vuejs.org/v2/guide/components-slots.html#%E4%BD%9C%E7%94%A8%E5%9F%9F%E6%8F%92%E6%A7%BD)
 * 异步组件的“直接提供一个返回 Promise 的函数”和“处理加载状态”
 * [依赖注入](https://cn.vuejs.org/v2/guide/components-edge-cases.html#%E4%BE%9D%E8%B5%96%E6%B3%A8%E5%85%A5)的缺点
 * [处理边界情况](https://vuejs.org/v2/guide/components-edge-cases.html#Programmatic-Event-Listeners)
 中“访问元素 & 组件”以外的部分
+* [函数式组件](https://cn.vuejs.org/v2/guide/render-function.html#%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BB%84%E4%BB%B6)
+
 
 ## 没看懂的部分
 * [Non-Prop Attributes](https://vuejs.org/v2/guide/components-props.html#Non-Prop-Attributes)

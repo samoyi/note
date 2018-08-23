@@ -283,3 +283,72 @@ new Vue({
 
 
 ### Slots
+1. 通过`vm.$slots`获得插入普通插槽的内容，通过`vm.$scopedSlots`获得插入作用域插槽的内
+容
+2. `vm.$scopedSlots.插槽名`数据类型是函数，调用这个函数时，传参一个对象，这个对象指明
+了传入这个插槽的数据
+```html
+<div id="components-demo">
+    <self-introduction :persons="persons">
+        <template slot="title">自我介绍</template>
+        <template slot-scope="{myname, age}">
+            所以我是{{age>17 ? '成年人' : '未成年人'}}
+            <input v-if="age>17" type="button" :value=`请${myname}喝酒` />
+        </template>
+    </self-introduction>
+</div>
+```
+```js
+new Vue({
+    el: '#components-demo',
+    components: {
+        'self-introduction': {
+            props: ['persons'],
+            // template: `<div>
+            //                 <h2>
+            //                     <slot name="title"></slot>
+            //                 </h2>
+            //                 <ul>
+            //                     <li v-for="person in persons" :key="person.name">
+            //                         我叫{{person.name}}，{{person.age}}岁
+            //                         <slot :myname="person.name" :age="person.age"></slot>
+            //                     </li>
+            //                 </ul>
+            //             </div>
+            // `,
+            render(h){
+                const h2 = h('h2', this.$slots.title); // 普通插槽的内容
+                const aLi = this.persons.map(person=>{
+                    // 下面这个函数参数的意义相当于模板语法中的 :myname="person.name" :age="person.age"
+                    let scopeSlot = this.$scopedSlots.default({
+                        myname: person.name,
+                        age: person.age
+                    });
+                    return h('li', [`我叫${person.name}，${person.age}岁`, scopeSlot])
+                });
+
+                return h('div', [h2, h('ul', aLi)]);
+            },
+        },
+
+    },
+    data: {
+        persons: [
+            {
+                name: 'Hime',
+                age: 17,
+            },
+            {
+                name: 'Hina',
+                age: 18,
+            },
+        ],
+    },
+});
+```
+
+
+## JSX
+
+
+## Template Compilation
