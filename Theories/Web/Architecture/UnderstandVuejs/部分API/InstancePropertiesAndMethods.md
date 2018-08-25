@@ -238,7 +238,50 @@ vm.num1 = 20; // 会触发 watcher 回调
 ### `vm.$destroy()`
 1. Completely destroy a vm.
 2. Clean up its connections with other existing vms, unbind all its directives,
-turn off all event listeners.
+turn off all event listeners. 但这里并不能完全清除。看下面的例子，`destroy`子组件之
+后，它上面的事件监听就会失效。但是通过父级的`$refs`仍然可以应用甚至调用它的方法，而且组
+件的元素仍然会留在 DOM中。看起来这两个都需要手动清除。看看这个[提问](https://forum.vuejs.org/t/how-to-wait-for-element-removal-from-doc-after-vm-destroy/5258)
+    ```html
+    <div id="app">
+        <child-component ref="child" @fromchild="getEmit"></child-component>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#app',
+        components: {
+            'child-component': {
+                template: `<p @click="$emit('fromchild')">ppp</p>`,
+                beforeDestroy(){
+                    console.log('beforeDestroy');
+                },
+                destroyed(){
+                    console.log('destroyed');
+                },
+                methods: {
+                    childMethod(){
+                        console.log('子组件方法被触发');
+                    },
+                },
+                mounted(){
+                    setTimeout(()=>{
+                        this.$destroy();
+                    }, 2000);
+                },
+            },
+        },
+        methods: {
+            getEmit(){
+                console.log('收到了子组件的事件');
+            },
+        },
+        mounted(){
+            setTimeout(()=>{
+                this.$refs.child.childMethod();
+            }, 4000);
+        },
+    });
+    ```
 3. Triggers the `beforeDestroy` and `destroyed` hooks.
 4. In normal use cases you shouldn’t have to call this method yourself. Prefer
 controlling the lifecycle of child components in a data-driven fashion using

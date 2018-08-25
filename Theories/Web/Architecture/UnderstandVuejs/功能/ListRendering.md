@@ -30,12 +30,19 @@ new Vue({
 ```
 
 ### `key`
-1. When Vue is updating a list of elements rendered with `v-for`, by default it
-uses an “in-place patch” strategy.
-2. If the order of the data items has changed, instead of moving the DOM
-elements to match the order of the items, Vue will patch each element in-place
-and make sure it reflects what should be rendered at that particular index.
-3. This default mode is efficient, but only suitable when your list render
+1. The `key` special attribute is primarily used as a hint for Vue’s virtual DOM
+algorithm to identify VNodes when diffing the new list of nodes against the old
+list.
+2. When Vue is updating a list of elements rendered with `v-for`, by default it
+uses an “in-place patch” strategy. Without keys, Vue uses an algorithm that
+minimizes element movement and tries to patch/reuse elements of the same type
+in-place as much as possible. If the order of the data items has changed,
+instead of moving the DOM elements to match the order of the items, Vue will
+patch each element in-place and make sure it reflects what should be rendered at
+that particular index.
+3. With keys, it will reorder elements based on the order change of keys, and
+elements with keys that are no longer present will always be removed/destroyed.
+4. This default mode is efficient, but only suitable when your list render
 output does not rely on child component state or temporary DOM state (e.g. form
 input values).
 

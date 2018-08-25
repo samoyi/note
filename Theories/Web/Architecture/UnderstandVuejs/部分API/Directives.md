@@ -168,3 +168,62 @@ TODO：需要确认源码。这里先推测一下 Vue 内部的处理方法：
     1. 使用一个新的函数 `foo` 作为事件处理程序，事件发生后，`foo` 被调用，在其内部获得
        了事件对象
     2. 将事件对象赋值给`$event`，然后再调用`greet`，并将`$event`作为参数传入。
+
+
+## `v-pre`
+不编译元素及其后代元素。但自定义子组件仍能编译。
+```html
+<div id="app" v-pre>
+    {{name}}
+    <span>{{age}}</span>
+    <child-component></child-component>
+</div>
+<!-- 渲染为：{{name}} {{age}} child -->
+```
+```js
+new Vue({
+    el: '#app',
+    data: {
+        name: '33',
+        age: 22,
+    },
+    components: {
+        'child-component': {
+            template: `<span>{{str}}</span>`,
+            data(){
+                return {
+                    str: 'child',
+                };
+            },
+        },
+    },
+
+});
+```
+
+
+## `v-cloak`
+1. This directive will remain on the element until the associated Vue instance
+finishes compilation.
+2. Combined with CSS rules such as `[v-cloak] { display: none }`, this directive
+can be used to hide un-compiled mustache bindings until the Vue instance is
+ready.
+3. 不懂，还有什么用
+```css
+[v-cloak] {
+    display: none;
+}
+```
+```html
+<div id="app" v-cloak>
+    {{name}}
+</div>
+```
+```js
+new Vue({
+    el: '#app',
+    data: {
+        name: '33',
+    },
+});
+```
