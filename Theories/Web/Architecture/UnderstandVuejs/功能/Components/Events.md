@@ -396,3 +396,101 @@ new Vue({
 are too many edge cases to consider in parsing a complex expression like this.
 不懂复杂性的原因，使用字面量时数据是可以正常传入的，只是不能从子组件里向外更新。
 需要看源码。
+
+
+## 其他三个事件方法
+都是针对当前实例，而非子组件实例
+
+### `vm.$on( event, callback )`
+监听的是当前实例 emit 的事件，而不是子组件实例 emit 的
+```html
+<div id="app">
+    <child-component></child-component>
+</div>
+```
+```js
+new Vue({
+    el: '#app',
+    components: {
+        'child-component': {
+            template: `<p @click="$emit('inner-click')">child-component</p>`,
+            mounted(){
+                this.$on('inner-click', ()=>{
+                    console.log(333);
+                });
+            },
+        },
+    },
+});
+```
+
+### `vm.$once( event, callback )`
+也是监听的是当前实例 emit 的事件，而不是子组件实例 emit 的
+
+### `vm.$off( [event, callback] )`
+* `{string | Array<string>} event` (array only supported in 2.2.2+)
+* `{Function} [callback]`
+* If no arguments are provided, remove all event listeners;
+* If only the event is provided, remove all listeners for that event;
+* If both event and callback are given, remove the listener for that
+    specific callback only.
+* 也是移除的是当前实例 emit 的事件的监听
+
+```html
+<div id="app">
+    <child-component></child-component>
+</div>
+```
+```js
+new Vue({
+    el: '#app',
+    components: {
+        'child-component': {
+            template: `<p @click="emit">child-component</p>`,
+            methods: {
+                emit(){
+                    this.$emit('event1');
+                    this.$emit('event2');
+                    console.log('-------------------');
+                },
+                handler11(){
+                    console.log('event1-1');
+                },
+                handler12(){
+                    console.log('event1-2');
+                },
+                handler21(){
+                    console.log('event2-1');
+                },
+                handler22(){
+                    console.log('event2-2');
+                },
+            },
+            mounted(){
+                this.$on('event1', this.handler11);
+                this.$on('event1', this.handler12);
+                this.$on('event2', this.handler21);
+                this.$on('event2', this.handler22);
+
+                setTimeout(()=>{
+                    console.log('remove event1 handler12');
+                    console.log('-------------------');
+                    this.$off('event1', this.handler12);
+                }, 3000);
+
+                setTimeout(()=>{
+                    console.log('remove event2 handlers');
+                    console.log('-------------------');
+                    this.$off('event2');
+                }, 6000);
+
+                setTimeout(()=>{
+                    console.log('remove all event handlers');
+                    console.log('-------------------');
+                    this.$off();
+                }, 9000);
+            },
+        },
+    },
+});
+```

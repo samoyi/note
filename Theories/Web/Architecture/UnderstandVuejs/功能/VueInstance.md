@@ -62,6 +62,83 @@ HTML 并通过`template`将其指定为模板。
     ```
 
 
+## 手动挂载
+1. 如果 Vue 实例在实例化时没有收到`el`选项，则它处于“未挂载”状态，没有关联的 DOM 元素。
+2. 可以使用`vm.$mount()`手动地挂载一个未挂载的实例。`$mount`方法的参数是挂载点选择器，
+Vue 将使用实例的模板覆盖选择器所在的元素
+    ```html
+    <div id="app">app</div>
+    <!-- 渲染为 <p>2233</p> -->
+    ```
+    ```js
+    let vm = new Vue({
+        template: `<p>2233</p>`
+    }).$mount(`#app`);
+    ```
+3. 如果没有提供选择器参数给`$mount`，模板将被渲染为文档之外的的元素，并且你必须使用原生
+DOM API 把它插入文档中。
+    ```html
+    <div id="app">
+        app
+    </div>
+    <!-- 渲染为：
+    <div id="app">
+        app
+    <p>2233</p></div> -->
+    ```
+    ```js
+    let vm = new Vue({
+        template: `<p>2233</p>`
+    });
+
+    vm = vm.$mount(); // 返回挂载后的组件
+    let node = vm.$el; // 因为已经挂载，所以 $el 属性是渲染后的节点
+    // 使用原生方法插入 DOM，显然这样并不会覆盖节点当前的内部子节点
+    document.querySelector('#app').appendChild(node);
+    ```
+
+
+## Misc
+### `el`
+* 也可以是一个 HTMLElement 实例
+    ```js
+    new Vue({
+        el: document.querySelector('#app'),
+    });
+    ```
+* If this option is available at instantiation, the instance will immediately
+enter compilation; otherwise, the user will have to explicitly call `vm.$mount()`
+to manually start the compilation.
+* If neither `render` function nor `template` option is present, the in-DOM HTML
+of the mounting DOM element will be extracted as the template. In this case,
+Runtime + Compiler build of Vue should be used.
+
+### `data`
+* 根属性名不能以`_`或`$`开头，因为它们可能和 Vue 内置的属性、API 方法冲突。但子属性名
+和计算属性没有该限制
+    ```js
+    data: {
+        // $id: 123, // 报错
+        // _code: 456, // 报错
+        profile:{
+            $name: '33',
+            _age: 22,
+        },
+    },
+    computed: {
+        $hehe(){
+            return 'hehe';
+        },
+        _haha(){
+            return 'haha';
+        },
+    },
+    ```
+
+### `template`
+* From a security perspective, you should only use Vue templates that you can
+trust. Never use user-generated content as your template.
+* If render function is present in the Vue option, the template will be ignored.
 
 ## References
 * [Vue 实例](https://cn.vuejs.org/v2/guide/instance.html)

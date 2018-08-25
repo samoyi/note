@@ -82,6 +82,16 @@ Vue.component('blog-post', {
 ### `vm.$watch`
 最基本的用法和在创建实例时的`watch`属性用法一样，只不过可以在创建实例后添加监听
 
+#### Arguments
+* `{string | Function} expOrFn`
+* `{Function | Object} callback`
+* `{Object} [options]`
+    * `{boolean} deep`
+    * `{boolean} immediate`
+
+#### Returns
+`{Function} unwatch`
+
 #### 更强大的数据监听
 1. 不同的是，该方法可以监听子属性
     ```js
@@ -223,3 +233,13 @@ vm.num1 = 20; // 会触发 watcher 回调
 // unwatch(); // 只能阻止 20 的触发，无法阻止 22 的触发
 ```
 看起来内部的逻辑就是，在添加的时候就顺便调用以下回调，然后才进入真正的 watch 状态。
+
+
+### `vm.$destroy()`
+1. Completely destroy a vm.
+2. Clean up its connections with other existing vms, unbind all its directives,
+turn off all event listeners.
+3. Triggers the `beforeDestroy` and `destroyed` hooks.
+4. In normal use cases you shouldn’t have to call this method yourself. Prefer
+controlling the lifecycle of child components in a data-driven fashion using
+`v-if` and `v-for`.

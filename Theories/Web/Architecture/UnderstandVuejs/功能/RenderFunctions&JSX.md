@@ -348,6 +348,29 @@ new Vue({
 ```
 
 
+## `renderError`
+* Only works in development mode.
+* Provide an alternative render output when the default render function
+encounters an error.
+* The error will be passed to renderError as the second argument.
+* This is particularly useful when used together with hot-reload.
+
+```js
+// 会渲染出红色的 “渲染出错！错误原因：自定义错误”
+new Vue({
+    el: '#app',
+    render(h){
+        throw new Error('自定义错误');
+    },
+    renderError(h, err){
+        return h('p', {
+            style: {color: 'red'},
+        }, `渲染出错！错误原因：${err.message}`);
+    },
+});
+```
+
+
 ## JSX
 
 

@@ -43,6 +43,25 @@ watcher 的回调。因为 watcher 的回调是在一个周期的末尾来执行
     unwatch();
     ```
 
+### 监听子属性
+```js
+new Vue({
+    data: {
+        profile:{
+            age: 33,
+        },
+    },
+    watch: {
+        ['profile.age'](n){ console.log(n) },
+        // 或者
+        // 'profile.age': function(n){ console.log(n) },
+    },
+    created(){
+        this.profile.age = 22;
+    }
+});
+```
+
 ### 触发标准是 Same-value-zero equality
 ```js
 new Vue({
@@ -66,3 +85,7 @@ new Vue({
     },
 });
 ```
+
+### Computed Setter
+Computed properties are by default getter-only, but you can also provide a
+setter when you need it:

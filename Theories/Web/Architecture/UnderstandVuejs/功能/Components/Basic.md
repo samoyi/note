@@ -42,9 +42,7 @@ unnecessarily increases the amount of JavaScript your users have to download.
 4. 如果还想分开，那只有对`data`对象进行深拷贝。
 5. 然后深拷贝是一个费力且很难完美实现的操作，所以还是用函数返回一个对象简单得多。
 6. 这样每个实例的`$data`都会引用一个新创建的对象。
-
-
-
+7. 根实例的`data`也可以写成函数的形式。
 
 
 ## Misc
