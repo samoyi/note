@@ -10,7 +10,8 @@ Domain (BIND) software [BIND 2009].
 4. DNS is commonly employed by other application-layer protocols -- including
 HTTP, SMTP, and FTP -- to translate user-supplied hostnames to IP addresses.
 
-### Other services
+
+## Other services
 DNS provides a few other important services in addition to translating hotsnames
 to IP addresses:
 #### Host aliasing
@@ -37,8 +38,8 @@ have the same alias name.
 谓 rotation，就是每次响应查询时，都会循环改变返回的IP名单的顺序。例如第一次响应
 `[IP1, IP2, IP3]`，第二次响应 `[IP2, IP3, IP1]`，第二次响应 `[IP3, IP1, IP2]`，第四
 次响应 `[IP1, IP2, IP3]`。因为客户端都是读取列表中的第一个，所以保证了每次访问的服务器
-都是不同的，实现了负载均衡。这种机制的另一个名字叫做 [Round-robin DNS](https://en.wikipedia.org/wiki/Round-robin_DNS)。
-
+都是不同的，实现了负载均衡。这种机制的另一个名字叫做
+[Round-robin DNS](https://en.wikipedia.org/wiki/Round-robin_DNS)。
 
 
 ## A Distributed, Hierarchical Database
@@ -46,15 +47,15 @@ In fact, the DNS is a wonderful example of how a distributed database can be
 implemented in the Internet.
 
 ### Three classes of DNS servers
-#### Root DNS servers
+#### 1. Root DNS servers
 截至2016年2月，全世界一共有13个根服务器（域名），每个根服务器（域名）由很多台服务器共同
 组成。这些机器分布在全世界，方便就近查询。
 
-#### Top-level DNS servers (TLD)
+#### 2. Top-level DNS servers (TLD)
 These servers are responsible for top-level domains such as `com`, `org`, and
 all of the country top-level domains such as `uk`, `fr`.
 
-#### Authoritative DNS servers
+#### 3. Authoritative DNS servers
 
 ### ISP local DNS server
 1. The root, TLD, and authoritative DNS servers all belong to the hierarchy of
@@ -92,6 +93,7 @@ namely, `dns.umass.edu`.
 `dns.umass.edu`, which responds with the IP address of `gaia.cs.umass.edu`.  
 
 <img src="./images/InteractionOfTheVariousDNSServers.jpg" alt="Interaction Of The Various DNS Servers" width="600px"/>  
+
 * 主机向本地域名服务器的查询一般采用递归查询（recursive query），即提交请求后，本地域名
 服务器在返回之前还要进行其他的查询请求。
 * 本地域名服务器向其他域名服务器的查询一般采用迭代查询（iterative query），即每次请求
@@ -114,7 +116,7 @@ turn returns the mapping to the requesting host.
 ## DNS Caching
 1. Our discussion thus far has ignored DNS caching, a critically important
 feature of the DNS system.
-2. In truth, DNS extensively exploits DNS caching in order ro improve the delay
+2. In truth, DNS extensively exploits DNS caching in order to improve the delay
 performance and to reduce the number of DNS messages ricocheting around the
 Internet.
 3. 除了各级服务器的缓存，主机在本地也会建立自己的缓存。最近使用过的域名可以不发送请求即
