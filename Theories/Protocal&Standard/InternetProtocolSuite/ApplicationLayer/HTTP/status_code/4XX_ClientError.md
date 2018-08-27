@@ -53,12 +53,15 @@ the user agent.
 
 
 ## `408 Request Timeout`
-1. This response is sent on an idle connection by some servers, even without an
-y previous request by the client.
+1. This response is sent on an idle connection by some servers, even without any
+previous request by the client.
 2. It means that the server would like to shut down this unused connection.
-3. This response is used much more since some browsers, like Chrome, Firefox 27+
+3. A server should send the "close" `Connection` header field in the response,
+since `408` implies that the server has decided to close the connection rather
+than continue waiting.
+4. This response is used much more since some browsers, like Chrome, Firefox 27+
 , or IE9, use HTTP pre-connection mechanisms to speed up surfing.
-4. Also note that some servers merely shut down the connection without sending
+5. Also note that some servers merely shut down the connection without sending
 this message.
 
 

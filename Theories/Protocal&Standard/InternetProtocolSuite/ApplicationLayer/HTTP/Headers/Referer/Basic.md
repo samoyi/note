@@ -1,14 +1,13 @@
 # HTTP Referer
 
-***
-## 访问一个URI时，普通情况下，referer 的三种情况
-* 通过浏览器直接访问该 URI，没有 referer
-* 通过链接访问资源 URI，referer 为链接所在页面的 URI
-    * referer 的域名和该 URI 为同一个域
-    * referer 的域名和该 URI 不是一个域
+
+## 访问一个URI时，普通情况下，`referer`的三种情况
+* 通过浏览器直接访问该 URI，没有`referer`
+* 通过链接访问资源 URI，`referer`为链接所在页面的 URI
+    * `referer`的域名和该 URI 为同一个域
+    * `referer`的域名和该 URI 不是一个域
 
 
-***
 ## Referrer-Policy
 Note that `Referer` is actually a misspelling of the word "referrer". The
 Referrer-Policy header does not share this misspelling
@@ -32,12 +31,9 @@ Send a full URL when performing a same-origin request, only send the origin of t
     * This policy will leak origins and paths from TLS-protected resources to insecure origins. Carefully consider the impact of this setting.
 
 
-
-***
 ## Set Referrer Policy
 * meta 标签
-```
-// 例如
+```html
 <meta name="referrer" content="no-referrer">
 ```
 * A `referrerpolicy` attribute on an `<a>`, `<area>`, `<img>`, `<iframe>`, or
@@ -46,8 +42,28 @@ Send a full URL when performing a same-origin request, only send the origin of t
 * When using Fetch: set `Request.referrerPolicy`   
 `Request.referrerPolicy` 不是只读属性吗，为什么[MDN写可以设置](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Referrer-Policy)
 
+```js
+// 直接访问`http://localhost:3000`肯定不会发送 Referer，但因为加了
+// `<meta name="referrer" content="no-referrer">`，现在点击链接也不会发送了
+require('http').createServer((req, res)=>{
+    if (req.url !== '/favicon.ico'){
+        console.log(req.headers.referer);
+        res.setHeader('Content-Type', 'text/html;charset=utf-8');
+    }
+    res.end(`<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="referrer" content="no-referrer">
+        <title></title>
+    </head>
+    <body>
+        <a href="http://localhost:3000/666" target="_blank">aaa</a>
+    </body>
+    </html>`);
+}).listen(3000);
+```
 
 
-***
 ## References
 * [Referrer-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy)

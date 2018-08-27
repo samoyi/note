@@ -54,12 +54,12 @@ RewriteRule .*\.(webp|jpg|jpeg|png)$ - [F]
 资源。
 
 
-***
+
 ## referer反盗链破解
 ### 最简单的方法，不设置referer
 因为上面防盗链起效的规则是必须要有referer才行，所以如果我设置请求不发送referer就可以  
 在HTML中，可以直接设置如下meta标签即可
-```
+```html
 <meta name="referrer" content="no-referrer">
 ```
 在上面的防盗链设置中，为了可以让浏览器直接打开图片可以访问，不会限制referer为空的情
@@ -69,19 +69,20 @@ RewriteRule .*\.(webp|jpg|jpeg|png)$ - [F]
 不链接设置了反盗链的域，直接把资源下载到自己的服务器  
 例如，现在无法从前端页面链接这个URI `http://www.domainA.com/image/private.jpg`，
 则直接使用后端下载，然后返回给自己想要链接的前端页面
-```
-    // 前端链接的写法举例
+```html
+    <!-- 前端链接的写法举例 -->
     <a href="http://DomainC.php?getImage=http://www.domainA.com/image/private.jpg"></a>
 ```
-```
+```php
+<?php
     // DomainC.php
     header('Content-Type: image/jpeg');
     echo file_get_contents( $_GET['getImage'] );
+?>
 ```
 这里实际上链接的是自己服务器里的资源
 
 
-***
 ## References
 * [Referrer-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy)
 * [RewriteRule Flags](http://httpd.apache.org/docs/current/rewrite/flags.html)

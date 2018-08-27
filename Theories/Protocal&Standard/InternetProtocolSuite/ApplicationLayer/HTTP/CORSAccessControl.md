@@ -1,5 +1,11 @@
 # CORS Access Control
 
+## TODO
+* 除了`Access-Control-Allow-Origin`，其他限制的原因是什么？比如为什么响应的`Age`
+header 看起来好像不会引发什么危险性，但仍然需要设置`Access-Control-Expose-Headers`之
+后客户端才能读取。
+
+
 ## "Simple requests"
 A request that doesn’t trigger a CORS preflight request is one that meets all
 the following conditions:
@@ -38,13 +44,58 @@ preflighted like this since they may have implications to user data.
     will be used when the actual request is made.
     * `Access-Control-Request-Headers`: notifies the server which HTTP headers
     will be used when the actual request is made.
-4. 服务器通过设置response首部的`Access-Control-Allow-Methods`和/或
+4. Chrome 中测试发现，如果 method 是非简单请求的 method，而 header 是简单请求的，则
+不会发送`Access-Control-Request-Headers`；如果 header 是非简单请求的，而 method 是
+简单请求的，仍然会发送`Access-Control-Request-Method`。
+```js
+// 请求
+let xhr = new XMLHttpRequest();
+
+xhr.addEventListener('readystatechange', function(){
+    if (xhr.readyState === 4 ){
+        if ((xhr.status>=200 && xhr.status<300) || xhr.status === 304){
+            console.log(xhr.responseText);
+        }
+    }
+});
+
+xhr.open('INPUT', 'http://localhost:3000?name=33&age=22', true); // 非简单请求 method
+xhr.setRequestHeader("From", "https://github.com/samoyi"); // 非简单请求 header
+xhr.send();
+```
+```
+// OPTIONS 请求相关 header
+OPTIONS /?name=33&age=22 HTTP/1.1
+Access-Control-Request-Method: INPUT
+Access-Control-Request-Headers: from
+```
+5. 如果响应只设置了`Access-Control-Allow-Origin`，则首先会报错：
+`Method INPUT is not allowed by Access-Control-Allow-Methods in preflight response.`
+6. 如果 method 改为比如`GET`，则报错是：
+`Request header field From is not allowed by Access-Control-Allow-Headers in preflight response.`
+7. 服务器通过设置 response 首部的`Access-Control-Allow-Methods`和/或
 `Access-Control-Allow-Headers`来设置允许的跨域方法和首部字段。
-5. 如果实际请求的方法是`GET`、`HEAD`或`POST`，即使因为其他原因触发了Preflight，服务
+```js
+// 响应
+require('http').createServer((req, res)=>{
+    if (req.url !== '/favicon.ico'){
+        res.setHeader('Access-Control-Allow-Origin', 'http://localhost');
+
+        res.setHeader('Access-Control-Allow-Methods', 'INPUT');
+        // 如果允许多个方法，用逗号隔开
+        // res.setHeader('Access-Control-Allow-Methods', 'DELETE, INPUT, TRACE');
+
+        res.setHeader('Access-Control-Allow-Headers', 'From');
+
+    }
+    res.end('roger that');
+}).listen(3000);
+```
+8. 如果实际请求的方法是`GET`、`HEAD`或`POST`，即使因为其他原因触发了Preflight，服务
 器端所设置的`Access-Control-Allow-Methods`也不会对这三个安全的方法进行限制。也就是说
 `Access-Control-Allow-Methods`设置的是：不安全的方法中，哪些是被允许的。
 6. `Access-Control-Max-Age` gives the value in seconds for how long the response
- to the preflight request can be cached for without sending another preflight
+to the preflight request can be cached for without sending another preflight
 request. Note that each browser has a maximum internal value that takes
 precedence when the `Access-Control-Max-Age` is greater.
 
@@ -57,6 +108,19 @@ precedence when the `Access-Control-Max-Age` is greater.
 2. 如果发送 credentials，则响应首部`Access-Control-Allow-Origin`不能设置为通配符，必
 须填具体的 origin。
 3. 不过携带 credentials 的跨域请求并不会触发 preflight。
+
+```js
+// 请求
+xhr.withCredentials = true;
+xhr.send();
+```
+```js
+if (req.url !== '/favicon.ico'){
+    console.log(req.method); // 只有一个 GET
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+}
+```
 
 
 ## Simple response header
@@ -83,7 +147,7 @@ unsafe header "Etag"`
 
 
 
-## Chrome中跨域POST请求localhost时的问题
+## Chrome 中跨域 POST 请求 localhost 时的问题
 ### 问题情况
 1. 我从`localhost:8080`发送`POST`请求到`localhost`,`Content-Type`为
 `application/json`

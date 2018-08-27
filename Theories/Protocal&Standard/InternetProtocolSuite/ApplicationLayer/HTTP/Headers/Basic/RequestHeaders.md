@@ -18,7 +18,8 @@ Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 4. 权重值`q`的范围是 0~1（可精确到小数点后 3 位），且 1 为最大值。不指定权重`q`值时，
 默认权重为 q=1.0。
 5. 当服务器提供多种内容时，将会首先返回权重值最高的媒体类型。
-
+6. 该 header 指定客户端可以接收哪些类型的数据，而`Content-Type`指定的是客户端或服务端
+当次发送数据的类型。
 
 ## Accept-Charset
 ```
@@ -94,6 +95,8 @@ browsing history of the user, which is a privacy concern.
     * the referring resource is a local "file" or "data" URI,
     * an unsecured HTTP request is used and the referring page was received with
      a secure protocol (HTTPS).
+* 可以通过相应的设置，让浏览器不发送或只在特定情况下发送`Referer`，以此来保护隐私。
+参考`Theories\Protocal&Standard\InternetProtocolSuite\ApplicationLayer\HTTP\Headers\Referer\Basic.md`
 * 下面的例子，直接访问`http://localhost:3000`的时候，因为不是从其他页面跳转的，所以
 `req.headers.referer`是`undefined`。再点击链接访问的时候，`req.headers.referer`就成
 了`http://localhost:3000`。如果不屏蔽`/favicon.ico`，其实访问`/favicon.ico`时也是会
