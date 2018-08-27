@@ -1,8 +1,8 @@
 # Extension headers
-Extension headers are nonstandard headers that have been created by applica-
-tion developers but not yet added to the sanctioned HTTP specification. HTTP
-programs need to tolerate and forward extension headers, even if they don’t
-know what the headers mean.
+Extension headers are nonstandard headers that have been created by application
+developers but not yet added to the sanctioned HTTP specification. HTTP programs
+need to tolerate and forward extension headers, even if they don’t know what the
+headers mean.
 
 
 ## X-Frame-Options
@@ -11,15 +11,41 @@ X-Frame-Options: DENY
 ```
 * 首部字段`X-Frame-Options`属于响应首部，用于控制网站内容在其他 Web 网站的`Frame`标
 签内的显示问题。其主要目的是为了防止点击劫持（clickjacking）攻击。
-* 首部字段`X-Frame-Options`有以下两个可指定的字段值。
+* 首部字段`X-Frame-Options`有以下三个可指定的字段值。
     * `DENY`：The page cannot be displayed in a frame, regardless of the site
     attempting to do so.
     * `SAMEORIGIN`：仅同源域名下的页面（Top-level-browsing-context）匹配时许可。
     （比如，当指定 http://hackr.jp/sample.html 页面为`SAMEORIGIN`时，那么
     `hackr.jp`上所有页面的`frame`都被允许可加载该页面，而`example.com`等其他域
     名的页面就不行了）
+    * `ALLOW-FROM origin`：只有指定的 origin 才能把当前页面加载为 frame
 * 能在所有的 Web 服务器端预先设定好 X-Frame-Options 字段值是最理想的状态。
 
+```html
+坏的网站<br />
+坏的网站 <br />
+如果 http://localhost:3000/ 不使用 X-Frame-Options 禁止，我就可以把它加载为 frame<br />
+<iframe src="http://localhost:3000/"></iframe>
+<!-- 报错：Refused to display 'http://localhost:3000/' in a frame because it set 'X-Frame-Options' to 'deny'. -->
+```
+```js
+require('http').createServer((req, res)=>{
+    if (req.url !== '/favicon.ico'){
+        res.setHeader('X-Frame-Options', 'DENY');
+        res.setHeader('Content-Type', 'text/html')
+        res.end(`<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title></title>
+        </head>
+        <body>
+            好的网站
+        </body>
+        </html>`);
+    }
+}).listen(3000);
+```
 
 ## X-XSS-Protection
 ```

@@ -7,9 +7,9 @@ syntax.
 
 ## `401 Unauthorized`
 1. 该状态码表示发送的请求需要有通过 HTTP 认证（BASIC 认证、DIGEST 认证）的认证信息。
-另外若之前已进行过 1 次请求，则表示用 户认证失败。
-2. 返回含有 `401` 的响应必须包含一个适用于被请求资源的 `WWW-Authenticate` 首部用以质
-询（challenge）用户信息。当浏览器初次接收到 `401` 响应，会弹出认证用的对话窗口。
+另外若之前已进行过 1 次请求，则表示用户认证失败。
+2. 返回含有`401`的响应必须包含一个适用于被请求资源的`WWW-Authenticate`首部用以质询
+（challenge）用户信息。当浏览器初次接收到`401`响应，会弹出认证用的对话窗口。
 
 
 ## `403 Forbidden`
@@ -30,8 +30,8 @@ itself does not exist.
 
 
 ## `405 Method Not Allowed`
-1. The request method is known by the server but has been disabled and cannot be
- used. For example, an API may forbid DELETE-ing a resource.
+1. The request method is known by the server but has been disabled and cannot be used.
+For example, an API may forbid DELETE-ing a resource.
 2. 该响应必须返回一个 `Allow` 头信息用以表示出当前资源能够接受的请求方法的列表。 　　
 3. 鉴于 `PUT`、`DELETE` 方法会对服务器上的资源进行写操作，因而绝大部分的网页服务器都不
 支持或者在默认配置下不允许上述请求方法，对于此类请求均会返回 `405` 错误。

@@ -16,6 +16,22 @@ Allow: GET, HEAD
 2. 当服务器接收到不支持的 HTTP 方法时，会以状态码`405 Method Not Allowed`作为响应返回
 。与此同时，还会把所有能支持的 HTTP 方法写入首部字段 `Allow` 后返回。
 
+```js
+require('http').createServer((req, res)=>{
+    if (req.method !== 'GET' && req.method !== 'HEAD'){
+        res.writeHead(405, {
+            'Allow': 'GET, HEAD',
+        });
+        res.end('Method Not Allowed');
+    }
+    else {
+        res.writeHead(200);
+        res.end();
+    }
+
+}).listen(3000);
+```
+
 
 ## Content-Encoding
 ```
@@ -74,7 +90,7 @@ Content-Range: bytes 5001-10000/10000
 体的哪个部分符合范围请求。
 2. 字段值以字节为单位，表示当前发送部分及整个实体大小。
 
-![ContentRange](./image/EntityHeaders/ContentRange.png)
+![ContentRange](./images/EntityHeaders/ContentRange.png)
 
 
 ## Content-Type

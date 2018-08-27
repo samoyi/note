@@ -94,7 +94,28 @@ browsing history of the user, which is a privacy concern.
     * the referring resource is a local "file" or "data" URI,
     * an unsecured HTTP request is used and the referring page was received with
      a secure protocol (HTTPS).
-
+* 下面的例子，直接访问`http://localhost:3000`的时候，因为不是从其他页面跳转的，所以
+`req.headers.referer`是`undefined`。再点击链接访问的时候，`req.headers.referer`就成
+了`http://localhost:3000`。如果不屏蔽`/favicon.ico`，其实访问`/favicon.ico`时也是会
+带上值为`http://localhost:3000`的`referer`的
+```js
+require('http').createServer((req, res)=>{
+    if (req.url !== '/favicon.ico'){
+        console.log(req.headers.referer);
+        res.setHeader('Content-Type', 'text/html;charset=utf-8');
+    }
+    res.end(`<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+    </head>
+    <body>
+        <a href="http://localhost:3000/666" target="_blank">aaa</a>
+    </body>
+    </html>`);
+}).listen(3000);
+```
 
 ## User-Agent
 * 将创建请求的浏览器和用户代理名称等信息传达给服务器。
