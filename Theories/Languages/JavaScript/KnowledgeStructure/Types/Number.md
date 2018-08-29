@@ -207,6 +207,8 @@ results in `NaN`, the `toString()` method is called and the rules for converting
 parseInt和parseFloat在这种情况下返回NaN
 
 ### `Number.parseInt()`
+* The `Number.parseInt()` method parses a string argument and returns an integer
+of the specified radix or base.
 * Leading white space in the string is ignored until the first non–white space
 character is found.
 * If this first character isn’t a number, the minus sign, or the plus sign,  

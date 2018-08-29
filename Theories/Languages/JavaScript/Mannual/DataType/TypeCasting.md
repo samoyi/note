@@ -7,7 +7,6 @@ when done explicitly, and "coercion" when done implicitly.
 primitive type value, the values of other objects are still reference type value
 
  ![image](ConversionRules.png)  
- *(from *The Definitive Guide 6th* 3.8)*
 
 
  ## 转换为数值类型

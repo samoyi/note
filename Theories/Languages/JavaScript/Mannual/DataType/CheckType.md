@@ -1,8 +1,6 @@
 # Check data type
 
 
-
-***
 ## Common checks
 ### `typeof`
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof)
@@ -11,17 +9,18 @@
 console.log( typeof null ); // object
 console.log( typeof NaN ); // number
 console.log( typeof undefined ); // undefined
+console.log( typeof new Number(22) ); // object
 ```
 
 ### `Object.prototype.toString.call`
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString)
 * [Spec](https://tc39.github.io/ecma262/#sec-object.prototype.tostring)
-* According to the Spec, this function will convert `this` to a value of type
-`Object`. Thus, this method can not differentiate primitive value from its
-corresponding wrapper object.
+* MDN 对该方法的定义是：The `toString()` method returns a string representing the
+object。根据规范中所说的也可以看到，这个方法会把`this`转换为对象，所以这个方法没办法区
+分基础类型和它的包装类型
     ```js
-    let str = 'hello',
-        obj = new String('hello');
+    let str = 'hello';
+    let obj = new String('hello');
     console.log( typeof str ); // string
     console.log( typeof obj ); // object
     console.log( Object.prototype.toString.call(str) ); // [object String]
@@ -45,15 +44,14 @@ corresponding wrapper object.
     console.log( v instanceof Obj ); // false
     ```
 * 基础类型会返回`false`
-```js
-console.log((22).__proto__ === (new Number(22)).__proto__) // true
-console.log((new Number(22)) instanceof Number) // true
-// 即使可以通过原型链追溯到，但因为`22`不是对象实例。所以还是返回`false`
-console.log((22) instanceof Number) // false
-```
+    ```js
+    console.log((22).__proto__ === (new Number(22)).__proto__) // true
+    console.log((new Number(22)) instanceof Number) // true
+    // 即使可以通过原型链追溯到，但因为`22`不是对象实例。所以还是返回`false`
+    console.log((22) instanceof Number) // false
+    ```
 
 
-***
 ## Check for Number
 ### isNumber
 ```js
@@ -77,6 +75,7 @@ function isNumericString(v){
 
 ### isNumeric
 Number or numeric string
+
 * Cover ±Infinite
 ```js
 function isNumeric(v){

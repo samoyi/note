@@ -1,6 +1,67 @@
 # Object
 
 ## Misc
+### `super` keyword
+* 在 class 中的使用方法见`Theories\Languages\JavaScript\KnowledgeStructure\Object-Oriented\ES6Inheritance.md`
+* 在对象字面量中，`super`指向对象的原型
+    ```js
+    const proto = {
+        foo: 'hello'
+    };
+
+    const obj = {
+        foo: 'world',
+        find() {
+            console.log(super.foo);
+        }
+    };
+
+    Object.setPrototypeOf(obj, proto);
+    obj.find() // "hello"
+    ```
+* JavaScript 引擎内部，`super.foo`等同于`Object.getPrototypeOf(this).foo`（属性
+或`Object.getPrototypeOf(this).foo.call(this)`（方法）
+    ```js
+    const proto = {
+        x: 'hello',
+        foo() {
+            console.log(this.x);
+        },
+    };
+
+    const obj = {
+        x: 'world',
+        foo() {
+            super.foo();
+        }
+    }
+
+    Object.setPrototypeOf(obj, proto);
+
+    obj.foo() // "world"
+    ```
+* `super`关键字表示原型对象时，只能用在对象的方法之中，用在其他地方都会报错。目前，只有
+对象方法的简写法可以让 JavaScript 引擎确认，定义的是对象的方法。   
+    ```js
+    // 报错
+    const obj = {
+        foo: super.foo
+    }
+
+    // 报错
+    const obj = {
+        foo: () => super.foo
+    }
+
+    // 报错
+    const obj = {
+        foo: function () {
+            return super.foo
+        }
+    }
+    ```
+
+### 属性名
 * An object is an unordered collection of properties, each of which has a name
 and a value. Property names are strings, so we can say that objects map strings
 to values.
@@ -37,9 +98,9 @@ to values.
 
     console.log(obj); // {null: "li"}
     ```
-* **dot vs []**  
-    1. When you use the `.` operator to access a property of an object, however,
-     the name of the property is expressed as an identifier. Identifiers must be
+### **dot vs []**  
+1. When you use the `.` operator to access a property of an object, however, the
+name of the property is expressed as an identifier. Identifiers must be
       typed literally into your JavaScript program; they are not a datatype, so
      they cannot be manipulated by the program. On the other hand, when you
      access a property of an object with the `[]` array notation, the name of
@@ -216,8 +277,8 @@ from `Object`.
 let arr = [1, 2, 3];
 console.log(arr.toString()); // “1,2,3”
 ```
-5. If this method is not overridden in a custom object, `toString()`
- returns `"[object type]"`, where `type` is the object type.
+5. If this method is not overridden in a custom object, `toString()` returns
+`"[object type]"`, where `type` is the object type.
     * 常用于类型判断：
     ```js
     let obj = {};
