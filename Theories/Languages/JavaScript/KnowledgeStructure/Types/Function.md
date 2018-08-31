@@ -113,6 +113,15 @@ let baz = function(){}
     foo(); // "foo"
     bar(); // ReferenceError: foo is not defined
     ```
+* 在 ES6 严格模式下中，函数必须声明在顶级作用于或代码块中
+    ```js
+    if (true)
+    function f() {}
+    // SyntaxError: In strict mode code, functions can only be declared at top level or inside a block.
+    ```
+    块级作用域（使用`{}`）的出现，就使得省略`{}`的情况不一定安全。在块级作用域出现之前，
+    这里的`{}`是可有可无的，但因为块级作用域要求必须使用`{}`，所以这里就会出错。同样的
+    情况在使用`let`或`const`时也会出现。
 * 在 ES6 之前的严格模式中会报错，不能在代码块中声明函数，只能使用函数表达式
 * 在 ES6 之前的非严格模式中，函数声明会提升出代码块。
 
@@ -176,14 +185,26 @@ let baz = function(){}
 值为`1`，于是用`1`给`y`赋值。如果在外部没有定义`x`，那就会`ReferenceError`
 3. 可以把这个单独的作用域理解为函数内部作用域和函数外部作用域之间的作用域。一个函数内部
 的变量首先会看内部有没有定义，如果没有就从参数中找，也就是这个单独的作用域，如果还没有，
-就从函数外部的作用域去找。所以，下面的情况会报错：
+就从函数外部的作用域去找。所以，下面的两种情况都会报错：
+    * 第一种
     ```js
-    var x = 1;
-
-    function foo(x = x) {}
-
-    foo() // ReferenceError: x is not defined
+    function bar(x = y, y = 2) {}
     ```
+    参数作用域里的逻辑是：
+    ```js
+    let x = y;
+    let y = 2;
+    ```
+    * 第二种
+    ```js
+    function foo(x = x) {}
+    ```
+    参数作用域里的逻辑是：
+    ```js
+    let x = x;
+    ```
+    从这里也能看出来，参数默认值的情况下，参数作用域里面定义变量是使用的`let`逻辑。因为
+    `var x = x`并不会报错，而是给`x`赋值了`undefined`。
 
 
 ### Misc
@@ -305,7 +326,13 @@ bar(1, 2, 3);
 
 
 
-
+## Return
+必须返回实际的值
+```js
+function foo(){
+    return var a = 2; // SyntaxError: Unexpected token var
+}
+```
 
 
 
