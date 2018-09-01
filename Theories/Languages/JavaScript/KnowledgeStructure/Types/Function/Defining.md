@@ -126,7 +126,6 @@ let baz = function(){}
 * 在 ES6 之前的非严格模式中，函数声明会提升出代码块。
 
 
-
 ## ES6 参数默认值
 ### 与解构赋值默认值结合使用
 1. 使用解构赋值参数时遇到的情况
@@ -166,7 +165,22 @@ let baz = function(){}
     let x = 2;
     let y = x;
     ```
-2. 单独的作用域使用外部作用域的情况
+2. 这个只在初始化参数时存在并随后立即消失的单独作用域看起来好像没什么意义，而且在某些时
+候，你不用这个思路去分析，也是行得通的。例如上面的例子，你可以把参数的作用域理解为函数作
+用域的一部分，传参调用时就是下面这种效果：
+    ```js
+    let x = 1;
+
+    function f() {
+        let x = 2;
+        let y = x;
+        console.log(y);
+    }
+
+    f() // 2
+    ```
+    这同样不会有什么问题。但下面的情况，如果还这样理解，显然就会出错了。
+3. 单独的作用域使用外部作用域的情况
     ```js
     let x = 1;
 
@@ -181,31 +195,24 @@ let baz = function(){}
     ```js
     let y = x;
     ```
-这个赋值操作首先要找到`x`的值，在这个单独的作用于立并没有，所以只有向外部作用域找，找到
+这个赋值操作首先要找到`x`的值，在这个单独的作用域里并没有，所以只有向外部作用域找，找到
 值为`1`，于是用`1`给`y`赋值。如果在外部没有定义`x`，那就会`ReferenceError`
-3. 可以把这个单独的作用域理解为函数内部作用域和函数外部作用域之间的作用域。一个函数内部
-的变量首先会看内部有没有定义，如果没有就从参数中找，也就是这个单独的作用域，如果还没有，
-就从函数外部的作用域去找。所以，下面的两种情况都会报错：
-    * 第一种
+4. 如果还想按照之前那样，把参数的作用域理解为函数作用域的一部分，那么就是下面这种效果：
     ```js
-    function bar(x = y, y = 2) {}
+    function f(y = x) {
+        let y = x;
+        let x = 2;
+        console.log(y);
+    }
     ```
-    参数作用域里的逻辑是：
+    这显然会出错。
+5. 但是注意，这个单独的作用域是只在初始化参数是存在的，结束后就会消失，和函数作用域合二
+为一。如果函数执行的时候，这个单独的作用域仍然存在，那么下面就不会报错了：
     ```js
-    let x = y;
-    let y = 2;
+    function f(x = 5) {
+        let x = 2; // SyntaxError: Identifier 'x' has already been declared
+    }
     ```
-    * 第二种
-    ```js
-    function foo(x = x) {}
-    ```
-    参数作用域里的逻辑是：
-    ```js
-    let x = x;
-    ```
-    从这里也能看出来，参数默认值的情况下，参数作用域里面定义变量是使用的`let`逻辑。因为
-    `var x = x`并不会报错，而是给`x`赋值了`undefined`。
-
 
 ### Misc
 * 参数默认值不是传值的，而是每次都重新计算默认值表达式的值
@@ -241,35 +248,38 @@ let baz = function(){}
     中对`length`的定义是：“The value of the length property is an integer that
     indicates the typical number of arguments expected by the function. ”。这样看
     来，默认参数不计入可以理解，但是默认参数后面的也不计入，就有些不符合定义了。
-* 函数参数的值是在调用时生成的，默认值也是一样
-    ```js
-    let x = 1;
-    function f(y = x)
-    {
-      let x = 2;
-      console.log(y);
-    }
-    f() // 1
-    ```
 * 通过将将参数的默认值设定为一个函数调用，可以在未传该参数而调用函数的时候执行某些动作
-    ```
-    function noPara()
-    {
+    ```js
+    function noPara(){
         alert('para missing !');
     }
     function foo( mustBeProvided = noPara() ){}
     foo();
     ```
-* 如果一个参数是可省略的，那应该明确的将其默认值设定为undefined
+* 如果一个参数是可省略的，那应该明确的将其默认值设定为`undefined`
 
-
-
-
-    只有当函数foo的参数是一个对象时，变量x和y才会通过解构赋值而生成。如果函数foo调用时参数不是对象，变量x和y就不会生成，从而报错。
 
 ## rest parameter
-### rest 参数的问题是你不不能直观的看到函数到底期望几个参数
+1. 通过 rest parameter 形式传入的参数将会是真正的数组，可以用来替代`arguments`类数组
+对象
+    ```js
+    function sum1(...nums){
+        return nums.reduce((accu, curr)=>{
+            return accu + curr;
+        })
+    }
 
+    function sum2(init, ...nums){
+        return [init, ...nums].reduce((accu, curr)=>{
+            return accu + curr;
+        })
+    }
+
+    console.log(sum1(1, 2, 3)); // 6
+    console.log(sum2(4, 1, 2, 3)); // 10
+    ```
+2. rest 参数之后不能再有其他参数（即只能是最后一个参数），否则会报错.
+3. 函数的`length`属性，不包括 rest 参数。    
 
 
 ## 箭头函数注意事项
@@ -305,18 +315,6 @@ NOTE Arrow functions never have an arguments objects.
 workaround to begin with, which ES6 has solved with a rest parameter
 
 3. 使用 rest 参数代替`arguments`
-```js
-let foo = (...args)=>{
-    console.log(args); // [1, 2]
-};
-
-let bar = (a, b, ...rest)=>{
-    console.log([a, b, ...rest]); // [1, 2, 3]
-};
-
-foo(1, 2);
-bar(1, 2, 3);
-```
 
 ### 没有`super`和`new.target`
 
@@ -324,44 +322,10 @@ bar(1, 2, 3);
 因此箭头函数不能用作`Generator`函数。
 
 
-
-
 ## Return
-必须返回实际的值
+函数必须返回实际的值
 ```js
 function foo(){
     return var a = 2; // SyntaxError: Unexpected token var
 }
-```
-
-
-
-## `new.target`
-ES6 为`new`命令引入了一个`new.target`属性，该属性一般用在构造函数之中，返回`new`命令
-作用于的那个构造函数。如果构造函数不是通过`new`命令调用的，`new.target`会返回
-`undefined`：
-```js
-function Foo(){
-    console.log(new.target);
-}
-
-new Foo();
-// ƒ Foo(){
-//     console.log(new.target);
-// }
-
-Foo();
-// undefined
-```
-这个属性可以用来确定构造函数是怎么调用的：
-```js
-function Person(name) {
-    if (new.target === Person) {
-        this.name = name;
-    } else {
-        throw new Error('必须使用 new 命令生成实例');
-    }
-}
-
-Person('33');  // Error: 必须使用 new 命令生成实例
 ```

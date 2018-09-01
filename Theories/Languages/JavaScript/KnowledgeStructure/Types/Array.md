@@ -455,13 +455,35 @@ function forEachCanBreak(arr,fn,oThis)
 
 
 ## Reduction Methods
-```reduce()``` and ```reduceRight()```
-1. Both methods accept two arguments: a function to call on each item and an optional initial value upon which the reduction is based. 如果传入初始值，相当于在初始值和数组首项之间先进行一次reduce。
-2. The function passed into ```reduce()``` or ```reduceRight()``` accepts
-four arguments: the previous value, the current value, the item’s index, and the array object.
-3. Calling ```reduce()``` on an empty array with no initial value argument causes a TypeError.
-4. If you call it with only one value—either an array with one element and no initial value or an empty array and an initial value—it simply returns that one value without ever calling the reduction function.
-5. Note that neither ```reduce()``` nor ```reduceRight()``` accepts an optional argument that specifies the this value on which the reduction function is to be invoked. The optional initial value argument takes its place. See the ```Function.bind()``` method if you need your reduction function invoked as a method of a particular object.
+`arr.reduce(callback[, initialValue])` and `arr.reduceRight(callback[, initialValue])`
+
+1. If you call it with only one value — either an array with one element and no
+initial value or an empty array and an initial value — it simply returns that
+one value without ever calling the reduction function.
+2. Calling `reduce()` on an empty array with no initial value argument causes a
+`TypeError`.
+
+### `callback`
+Function to execute on each element in the array, taking four arguments:
+#### `accumulator`
+* The `accumulator` accumulates the callback's return values
+* 如果提供了`initialValue`，`initialValue`会作为`accumulator`的初始值，reduce 会从
+数组第一项开始；如果没有提供`initialValue`，`accumulator`初始值是数组第一项，也就是说
+reduce 是从数组第二项开始。
+#### `currentValue`
+同上，根据是否提供`initialValue`，`currentValue`初始值会是数组第二项或第一项。
+#### `currentIndex`
+* Optional.
+* 同上，初始值会是`1`或`0`
+#### `array`
+* Optional
+* The array `reduce()` was called upon.
+
+### `initialValue`
+* Optional
+* Value to use as the first argument to the first call of the callback. If no
+initial value is supplied, the first element in the array will be used.
+* Calling `reduce()` on an empty array without an initial value is an error.
 
 
 
