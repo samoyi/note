@@ -278,8 +278,20 @@ let baz = function(){}
     console.log(sum1(1, 2, 3)); // 6
     console.log(sum2(4, 1, 2, 3)); // 10
     ```
-2. rest 参数之后不能再有其他参数（即只能是最后一个参数），否则会报错.
-3. 函数的`length`属性，不包括 rest 参数。    
+2. rest 参数不仅可以是数组，也可以是类数组对象
+    ```js
+    function foo(x, y, z){
+        console.log(x, y, z); // "1 2 3"
+    }
+
+    function bar(){
+        foo(...arguments)
+    }
+
+    bar(1, 2, 3);
+    ```
+3. rest 参数之后不能再有其他参数（即只能是最后一个参数），否则会报错.
+4. 函数的`length`属性，不包括 rest 参数。    
 
 
 ## 箭头函数注意事项
