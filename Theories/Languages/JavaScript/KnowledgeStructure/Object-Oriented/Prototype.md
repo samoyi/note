@@ -27,6 +27,35 @@ not inherit any properties.
     console.log( Object.prototype.toString.call(Date.prototype));     // [object Object]
     ```
 
+### Prototype chain
+```js
+Object.prototype.say = function(){
+    console.log('Object');
+};
+
+let obj1 = {
+    say1(){
+        console.log('obj1');
+    },
+};
+obj1.say(); // Object
+
+let obj2 = Object.create(obj1);
+obj2.say2 = function(){
+    console.log('obj2');
+};
+obj2.say(); // Object
+obj2.say1(); // obj1
+
+let obj3 = Object.create(obj2);
+obj3.say(); // Object
+obj3.say1(); // obj1
+obj3.say2(); // obj2
+```
+1. `obj1`直接继承`Object.prototype`
+2. `obj2`直接继承`obj1`，间接继承`Object.prototype`
+3. `obj3`直接继承`obj2`，间接继承`obj1`，进一步间接继承`Object.prototype`
+
 
 ##  `[[Prototype]]`
 Each time a constructor is called to create a new instance, that instance has

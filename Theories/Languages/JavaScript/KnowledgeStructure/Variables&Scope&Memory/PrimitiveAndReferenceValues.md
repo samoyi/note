@@ -266,18 +266,35 @@ ECMAScript 的概念来说，就是 arguments 对象中的一个元素）。
 
 
 ## `instanceof`
-1. 如果变量是给定引用类型（根据它的原型链来识别）的实例，那么`instanceof`操作符就会返回
-`true`
+`object instanceof constructor`
+
+1. This operator tests whether the `prototype` property of a constructor appears
+anywhere in the prototype chain of an object. 即，`object`的原型链中是否有一节是
+`constructor.prototype`
 2. 注意是根据构造函数的原型链而不是根据构造函数来判断
     ```js
     function Foo(){}
-    let foo = new Foo(); // foo 是 Foo.prototype 的实例
+    let foo = new Foo(); // foo 的直接原型就是 Foo.prototype 引用的对象，设为 proto1
     console.log(foo instanceof Foo); // 所以这里是 true
-    Foo.prototype = {}; // 现在 Foo 有了一个新原型
-    // 因为 foo 是旧原型的实例而非现在的 Foo.prototype，所以是 false
-    console.log(foo instanceof Foo);
+    Foo.prototype = {}; // Foo.prototype 引用了一个新对象作为原型，设为 proto2
+    // foo 的原型链里有 proto1 但没有 proto2，所以 Foo.prototype 不在 foo 的原型链里
+    console.log(foo instanceof Foo); // false
     ```
 3. 所有引用类型的值都是`Object`的实例。因此在检测一个引用类型值和`Object`构造函数时，
 `instanceof`操作符始终会返回`true`。
 4. 当然，使用`instanceof`操作符检测基本类型的值，始终会返回`false`，因为基本类型不是
 对象实例。
+5. 不懂。下面这种情况要怎么解释
+    ```js
+    function Foo(){}
+
+    let obj_Foo = Foo.bind({});
+
+    let instance = new obj_Foo();
+
+    console.log(obj_Foo.prototype); // undefined
+    console.log(instance instanceof obj_Foo); // true
+    ```
+    《Javascript - The Definitive Guide 6th》也只是对这个做了事实陈述，也没有在其他
+    地方看到原因。但给人的感觉是，如果调用构造函数创建的实例在这种情况下返回`false`会比
+    较违和，所以就让`instanceof`在这种情况下做出了妥协。

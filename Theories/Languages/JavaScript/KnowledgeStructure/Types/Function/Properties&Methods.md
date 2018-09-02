@@ -8,18 +8,18 @@ number of arguments expected by the function.
 2. 默认参数和 rest 参数的情况
 按照上面`length`的定义，默认参数不计入可以理解，但是默认参数后面的也不计入，就有些不符
 合定义了。
-```js
-function foo(a, b=0) {}
-function bar(a, b=0, c) {}
+    ```js
+    function foo(a, b=0) {}
+    function bar(a, b=0, c) {}
 
-console.log(foo.length); // 1
-console.log(bar.length); // 1
-```
-不过 rest 参数不计入`length`倒是合理
-```js
-function foo(a, ...rest) {}
-console.log(foo.length); // 1
-```
+    console.log(foo.length); // 1
+    console.log(bar.length); // 1
+    ```
+    不过 rest 参数不计入`length`倒是合理
+    ```js
+    function foo(a, ...rest) {}
+    console.log(foo.length); // 1
+    ```
 
 ### `prototype`
 对于 ECMAScript 中的引用类型而言，`prototype`是保存它们所有实例方法的真正所在。换句话
@@ -120,51 +120,92 @@ of arbitrary length. 不过在 ES6 中，可以直接用 rest 参数了
     ```
 
 ### `bind()`
-1. This method creates a new function instance whose ```this``` value is bound to the value that was passed into ```bind()```.
-2. 绑定之后的函数，通过`call`或`apply`都无法改变其`this`值。
-2. If the function returned by ```bind()``` is used as a constructor:
-    * the ```this``` passed to ```bind()``` is ignored, and the original function is invoked as a constructor, with some arguments already bound.
-    ```
-    function Foo(){
-        console.log( this );
+`function.bind(thisArg[, arg1[, arg2[, ...]]])`
+
+1. This method creates a new function instance whose `this` value is bound to
+the value that was passed into `bind()`.
+2. 绑定之后的函数，通过`call`或`apply`甚至`bind`都无法改变其`this`值。
+    ```js
+    function foo(){
+        console.log(this.age);
     }
-    let obj = {name:33};
+
+    let obj1 = {age: 22};
+    obj1_foo = foo.bind(obj1);
+    obj1_foo(); // 22
+
+    let obj2 = {age: 33};
+    obj2_foo = obj1_foo.bind(obj2);
+    obj2_foo(); // 22
+    ```
+3. Function objects created using `Function.prototype.bind` are exotic objects.
+They also do not have a `prototype` property.
+4. If the function returned by `bind()` is used as a constructor:
+    * the `this` passed to `bind()` is ignored, and the original function is
+    invoked as a constructor, with some arguments already bound.
+    ```js
+    function Foo(age){
+        console.log(this.name, age);
+    }
+    let obj = {name: '22'};
+
+    let obj_Foo = Foo.bind(obj, 33);
+
+    obj_Foo(); // "22" 33
+    new obj_Foo(); // undefined 33
+    ```
+    * Functions returned by the `bind()` method do not have a `prototype`
+    property and objects created when these bound functions are used as
+    constructors inherit from the `prototype` of the original, unbound
+    constructor.
+    ```js
+    function Foo(){}
+    let obj = {};
 
     let obj_Foo = Foo.bind(obj);
 
-    obj_Foo(); // Object {name: 33}
-    new obj_Foo; // Foo {}
-    // 虽然obj_Foo之前绑定到了obj上，但显然还是作为构造函数时对于this的设定覆盖了之前对于this的设定
+    let instance = new obj_Foo();
+
+    console.log(obj_Foo.prototype); // undefined
+    console.log(Foo.prototype); // {constructor: ƒ}
+
+    console.log(instance instanceof obj_Foo); // true  ！！
+    console.log(instance instanceof Foo); // true
     ```
-    * Functions returned by the ```bind()``` method do not have a ```prototype``` property and objects created when these bound functions are used as constructors inherit from the ```prototype``` of the original, unbound constructor.
-    * Also, a bound constructor works just like the unbound constructor for the purposes of the ```instanceof``` operator.
-3. 通过该方法实现```Partial application```/```currying```  
-Any arguments you pass to ```bind()``` after the first are bound along with the ```this``` value.
-```
-// example1
-var sum = function(x,y) { return x + y }; // Return the sum of 2 args
-// Create a new function like sum, but with the this value bound to null
-// and the 1st argument bound to 1. This new function expects just one arg.
-var succ = sum.bind(null, 1);
-console.log( succ(2) ); // => 3: x is bound to 1, and we pass 2 for the y argument
-```
-```
-// example2
-function f(y,z) { return this.x + y + z }; // Another function that adds
-var g = f.bind({x:1}, 2); // Bind this and y
-console.log( g(3) ); // => 6: this.x is bound to 1, y is bound to 2 and z is 3
-```
-```
-// example3
-let name = 33,
-    oBtn = document.querySelector("#btn");
+    * 但有一点不懂，就是对绑定的函数使用`instanceof`居然也返回`true`。《Javascript -
+    The Definitive Guide 6th》也只是对这个做了事实陈述，也没有在其他地方看到原因。但
+    给人的感觉是，如果调用构造函数创建的实例在这种情况下返回`false`会比较违和，所以就让
+    `instanceof`在这种情况下做出了妥协。
+3. 通过该方法实现 Partial application / Currying
+    ```js
+    // example1
+    var sum = function(x,y) { return x + y }; // Return the sum of 2 args
+    // Create a new function like sum, but with the this value bound to null
+    // and the 1st argument bound to 1. This new function expects just one arg.
+    var succ = sum.bind(null, 1);
+    console.log( succ(2) ); // => 3: x is bound to 1, and we pass 2 for the y argument
+    ```
+    ```js
+    // example2
+    function f(y,z) { return this.x + y + z }; // Another function that adds
+    var g = f.bind({x:1}, 2); // Bind this and y
+    console.log( g(3) ); // => 6: this.x is bound to 1, y is bound to 2 and z is 3
+    ```
+    ```js
+    // example3  实现在不能传参得到情况下进行预传参
+    let name = 33,
+        oBtn = document.querySelector("#btn");
 
-function handler( name ){
-    console.log( name );
-    console.log( this );
-}
-oBtn.addEventListener("click", handler.bind(oBtn, name));
-```
+    function handler( name ){
+        console.log( name );
+        console.log( this );
+    }
+    oBtn.addEventListener("click", handler.bind(oBtn, name));
+    ```
 
-#### toString()
-Like all JavaScript objects, functions have a ```toString()``` method. The ECMAScript spec requires this method to return a string that follows the syntax of the function declaration statement. In practice most (but not all) implementations of this ```toString()``` method return the complete source code for the function.
+### toString()
+Like all JavaScript objects, functions have a `toString()` method. The
+ECMAScript spec requires this method to return a string that follows the syntax
+of the function declaration statement. In practice most (but not all)
+implementations of this `toString()` method return the complete source code for
+the function.
