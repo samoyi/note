@@ -25,66 +25,45 @@ what we call the entire tree of VNodes, built by a tree of Vue components.
 
 
 ## `createElement` Arguments
-```js
-// @returns {VNode}
-createElement(
-    // {String | Object | Function}
-    // An HTML tag name, component options, or async
-    // function resolving to one of these. Required.
-    'div',
+* 在只有两个参数的情况下， Vue 会识别第二个参数是形参2还是形参3
 
-    // {Object}
-    // A data object corresponding to the attributes
-    // you would use in a template. Optional.
-    {
-        // (see details in the next section below)
-    },
+### 第一个参数
+`{String | Object | Function}` Required
 
-    // {String | Array}
-    // Children VNodes, built using `createElement()`,
-    // or using strings to get 'text VNodes'. Optional.
-    [
-        'Some text comes first.',
-        createElement('h1', 'A headline'),
-        createElement(MyComponent, {
-            props: {
-                someProp: 'foobar'
-            }
-        })
-    ]
-)
-```
-1. 先看个简单的例子
-```html
-<div id="components-demo">
-    <anchored-heading :level="1">H1标题</anchored-heading>
-</div>
-```
+#### String: 一个 HTML 标签字符串
 ```js
-new Vue({
-    el: '#components-demo',
-    components: {
-        'anchored-heading': {
-            render: function (createElement) {
-                return createElement(
-                    'h' + this.level,
-                    this.$slots.default
-                );
-            },
-            props: {
-                level: {
-                    type: Number,
-                    required: true
-                }
-            },
-        },
+render(h) {
+    return h('p', '123');
+},
+```
+#### Object: 组件选项对象
+```js
+render(h) {
+    return h({
+        template: `<p>123</p>`,
+    });
+},
+```
+#### Function: 解析上述任何一种的一个 async 函数
+不懂。实际测试时，不能直接在参数的位置定义函数，而且函数也只能返回组件选项对象不能返回标
+签字符串。只能像下面这样先定义好一个返回组件选项对象的 async 函数，然后传入函数名
+```js
+async function getComponent(){
+    return {
+        template: `<p>123</p>`,
+    };
+}
+Vue.component('child-component', {
+    render(h) {
+        return h(getComponent);
     },
 });
 ```
-2. 不懂。上面例子中`createElement`的参数只有两个，而且看类型应该是第一个和第三个。为什
-么第二个直接被省略了也没有问题？
 
-### The Data Object In-Depth（第二个参数）
+### 第二个参数
+* A data object corresponding to the attributes you would use in a template.
+* `{Object}` Optional
+
 ```js
 {
     // Same API as `v-bind:class`, accepting either
@@ -152,7 +131,50 @@ new Vue({
 }
 ```
 
-### Complete Example
+### 第三个参数
+* 定义子节点
+* `{Array | String}` Optional
+
+#### Array
+1. 数组项可以是 VNode 或字符串。
+2. VNode 可以使用`createElement()`构建而成，或者是通过`vm.$slots`获得
+3. 字符串会被渲染为文字节点。相邻的字符串会合并。
+
+```html
+<div id="app">
+    <child-component>
+        <span>插入默认插槽的内容</span>
+        <span slot="named">插入具名的内容1</span>
+        <span slot="named">插入具名的内容2</span>
+    </child-component>
+</div>
+```
+```js
+render(h) {
+    return h('p', [
+        this.$slots.default,
+        ...this.$slots.named,
+        '123',
+        h('span', '通过 createElement 创建的 VNode'),
+        '456',
+        '789',
+    ]);
+},
+```
+渲染结果为：
+```html
+<p>
+    <span>插入默认插槽的内容</span>  
+    <span>插入具名的内容1</span>
+    <span>插入具名的内容2</span>
+    123
+    <span>通过 createElement 创建的 VNode</span>
+    456789
+</p>
+```
+
+
+## Complete Example
 ```js
 function getChildrenTextContent(children) {
     return children.map(function (node) {
@@ -195,7 +217,8 @@ new Vue({
 });
 ```
 
-### VNodes Must Be Unique
+
+## VNodes Must Be Unique
 不懂。按照文档上的例子运行，可以正常的渲染出来两个`<p>`
 ```js
 new Vue({

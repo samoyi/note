@@ -164,6 +164,10 @@ caching internally, and the `response.getHeader()` on the header will not yield
 the expected result. If progressive population of headers is desired with
 potential future retrieval and modification, use `response.setHeader()` instead.
 
+### 单独设置 status
+```js
+res.statusCode = 500;
+```
 
 ### 编写响应体
 ```js
