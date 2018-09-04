@@ -63,7 +63,7 @@ const app = new Vue({
 
 
 ## Reacting to Params Changes
-5. 可以通过 watcher 和 Navigation Guards 两种方法来监听参数变化。
+可以通过 watcher 和 Navigation Guards 两种方法来监听参数变化。
 ```js
 // watcher 方法
 const User = {
@@ -85,7 +85,7 @@ const Post = {
 };
 ```
 ```js
-// avigation Guards 方法
+// Navigation Guards 方法
 const User = {
     template: '<div>{{$route.params.username}}的页面</div>',
     beforeRouteUpdate (to, from, next) {
