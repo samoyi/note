@@ -14,6 +14,7 @@
 * [处理边界情况](https://vuejs.org/v2/guide/components-edge-cases.html#Programmatic-Event-Listeners)
 中“访问元素 & 组件”以外的部分
 * [函数式组件](https://cn.vuejs.org/v2/guide/render-function.html#%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BB%84%E4%BB%B6)
+* `Theories\Web\Architecture\UnderstandVuejs\Vue-Router\Props.md`  Function mode
 
 
 ## 没看懂的部分

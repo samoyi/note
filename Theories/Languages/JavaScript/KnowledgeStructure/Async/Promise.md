@@ -336,26 +336,84 @@ console.log(obj.foo(res=>{
 先是`5`才是`undefined`
 
 
-## `Promise.all()`
-作为参数的`promise`自身如果捕获了自身的错误，那么这个错误对于`Promise.all`就是不存在的
-，而之前捕获错误函数的返回值将作为`Promise.all`正确 resolve 的结果之一。
-```js
-const p1 = new Promise((resolve, reject) => {
-    resolve('hello');
-})
-.then(result => result)
-.catch(e => e);
+## `Promise.all(iterable)`
+1. `Promise.all`方法用于将多个 Promise 实例，包装成一个新的 Promise 实例。
+    ```js
+    let p1 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve(111);
+        }, 1000);
+    });
+    let p2 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve(222);
+        }, 3000);
+    });
+    Promise.all([p1, p2])
+    .then(res=>{
+        console.log(res); // 三秒钟之后输出 [111, 222]
+    })
+    ```
+2. 如果参数可遍历对象的的某项不是 Promise 实例，就会先调用`Promise.resolve`方法，将参
+数转为 Promise 实例，再进一步处理。    
+    ```js
+    let p1 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve(111);
+        }, 1000);
+    });
+    let p2 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve(222);
+        }, 3000);
+    });
+    // 相当于 Promise.all([p1, p2, Promise.resolve(333)])
+    Promise.all([p1, p2, 333])
+    .then(res=>{
+        console.log(res); // 三秒钟之后输出 [111, 222, 333]
+    })
+    ```
+3. 如果其中一个实例 reject 了，那不用等待其他 实例处理，`Promise.all`会立刻 rejcet。
+    ```js
+    let p1 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            reject('oops');
+        }, 1000);
+    });
+    let p2 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve(222);
+        }, 3000);
+    });
+    Promise.all([p1, p2])
+    .catch(err=>{
+        console.error(err); // 一秒钟之后就输出 oops
+    });
+    ```
+4. 作为参数的`promise`自身如果捕获了自身的错误，那么这个错误对于`Promise.all`就是不存
+在的，而之前捕获错误函数的返回值将作为`Promise.all`正确 resolve 的结果之一。
+    ```js
+    let p1 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            reject('oops');
+        }, 1000);
+    })
+    .catch(err=>err);
 
-const p2 = new Promise((resolve, reject) => {
-    throw new Error('报错了');
-})
-.then(result => result)
-.catch(e => e.message + '哦'); // p2的错误在这里就已经被捕获了，Promise.all就不会再捕获到
+    let p2 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve(222);
+        }, 3000);
+    });
 
-Promise.all([p1, p2])
-.then(result => console.log(result)) // [ 'hello', '报错了哦' ]
-.catch(e => console.log('err in all'));
-```
+    Promise.all([p1, p2])
+    .then(res=>{
+        console.log(res); // 三秒钟之后输出 ["oops", 222]
+    })
+    .catch(err=>{
+        这里不会被调用
+    });
+    ```
 
 
 ## `Promise.race()`

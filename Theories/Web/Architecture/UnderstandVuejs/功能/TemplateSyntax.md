@@ -44,7 +44,7 @@ Subscriber 模块来实现的。
 
 
 ## Using JavaScript Expressions
-* 必须是有明确返回值的表达式
+* 必须是有明确返回值的单独表达式
 * Template expressions are sandboxed and only have access to a whitelist of
 globals such as `Math` and `Date`. You should not attempt to access user defined
 globals in template expressions. 想想在模板里用了实例没定义的属性的话，出现的是 Vue

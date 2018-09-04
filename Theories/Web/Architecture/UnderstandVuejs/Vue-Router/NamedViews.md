@@ -47,12 +47,22 @@ new Vue({
 
 
 ## 嵌套路由结合命名视图
+1. 看起来只是把两者结合起来从而更复杂了一些而已，并没有什么特殊的。
+2. 下面的例子中，整体是一个`UserSettings`组件，对应最外层的路由出口。
+3. 该组件有两个非路由子节点和两个路由子节点，两个路由子节点对应两个路由出口。
+4. 之前讲到的嵌套路由是每个嵌套层只有一条子路由，这里只是变成了两个而已。
+5. 因此`UserSettings`路由的`children`是两项，对应两条子路由。
+6. 第一条子路由只有一个默认组件`UserEmailsSubscriptions`，因此会渲染到非命名的
+`router-view`上（当然你也可以通过给这个组件设定命名使其渲染到`helper`视图上）；第二条
+子路由有一个默认组件`UserProfile`和一个对应命名视图的组件`UserProfilePreview`，因此会
+渲染到两个`router-view`上。
 
 ```html
 <div id="app">
     <router-link to="/settings/emails">emails</router-link>
     <router-link to="/settings/profile">profile</router-link>
 
+    <!-- UserSettings 的路由出口 -->
     <router-view></router-view>
 </div>
 ```
@@ -61,6 +71,7 @@ const UserSettings = {
     template: `<div>
                   <h1>User Settings</h1>
                   <nav-bar></nav-bar>
+                  <!-- 两个嵌套路由出口 -->
                   <router-view></router-view>
                   <router-view name="helper"></router-view>
                </div>`,
@@ -91,13 +102,16 @@ const routes = [
     {
         path: '/settings',
         component: UserSettings,
+        // 两条嵌套路由
         children: [
             {
                 path: 'emails',
+                // 第一条嵌套路由渲染一个路由出口
                 component: UserEmailsSubscriptions,
             },
             {
                 path: 'profile',
+                // 第二条嵌套路由渲染两个路由出口
                 components: {
                     default: UserProfile,
                     helper: UserProfilePreview,
