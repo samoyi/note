@@ -203,7 +203,138 @@ new Vue({
 ```
 
 
-## $route.matched
+## `$route.matched`
+1. Each route object in the `routes` configuration is called a route record.
+2. Route records may be nested. Therefore when a route is matched, it can
+potentially match more than one route record.
+3. All route records matched by a route are exposed on the `$route` object
+(and also route objects in navigation guards) as the `$route.matched` Array.
+
+```html
+<div id="app">
+    <router-link to="/login">login</router-link> <br />
+    <router-link to="/profile/detail/setting">profile detail setting</router-link> <br /><br />
+
+    <router-view></router-view>
+</div>
+```
+```js
+const Login = {
+    template: `<div>
+                    Login component
+                </div>`,
+
+};
+const Profile = {
+    template: `<div>
+                    Profile component
+                    <router-view name="detail1"></router-view>
+                    <router-view name="detail2"></router-view>
+                </div>`,
+};
+const Detail1 = {
+    template: `<div>
+                    detail1
+                    <router-view></router-view>
+                </div>`,
+};
+const Detail2 = {
+    template: `<div>
+                    detail2
+                    <router-view></router-view>
+                </div>`,
+};
+const Setting = {
+    template: `<p>setting</p>`,
+};
+
+const routes = [
+    {
+        path: '/profile',
+        component:  Profile,
+        children: [
+            {
+                path: 'detail',
+                components: {
+                    detail1: Detail1,
+                    detail2: Detail2,
+                },
+                children: [
+                    {
+                        path: 'setting',
+                        component: Setting,
+                        meta: {requiresAuth: true},
+                    }
+                ],
+                meta: ['Hime', 'Hina'],
+            },
+        ],
+        meta: {name: '33'},
+    },
+    {
+        path: '/login',
+        component:  Login,
+        meta: {age: 22},
+    },
+];
+
+const router = new VueRouter({routes});
+
+router.beforeEach((to, from, next)=>{
+    // 路由至 Setting 组件时
+
+    console.log(to.matched.length); // 3
+    console.log(to.matched.map(route=>route.path));
+    // ["/profile", "/profile/detail", "/profile/detail/setting"]
+    console.log(JSON.stringify(to.matched.map(route=>route.meta), null, 4));
+    // [
+    //     {
+    //         "name": "33"
+    //     },
+    //     [
+    //         "Hime",
+    //         "Hina"
+    //     ],
+    //     {
+    //         "requiresAuth": true
+    //     }
+    // ]
+    next();
+});
+
+
+new Vue({
+    el: '#app',
+    router,
+});
+```
+
+4. 上面的例子，当通过`/profile/detail/setting`路由至`Setting`组件时，当前 route 匹配
+到了三条 route 记录
 
 
 ## Route Meta Fields
+1. `$route.matched`的例子中，每个 route 都有一个`meta`属性，而且在`beforeEach`钩子中
+输出了匹配到的每条 route 记录的`meta`。
+2. 假设我们设定进入`Setting`组件时需要时登陆状态，那么就可以通过`beforeEach`钩子和
+`/profile/detail/setting`路由的`meta`来实现鉴权
+    ```js
+    router.beforeEach((to, from, next) => {
+        // 如果某条 route要求权限
+        if (to.matched.some(route => route.meta.requiresAuth)) {
+            if (!auth.loggedIn()) { // 如果没有登陆登陆
+                next({ // 路由至登录页面
+                    path: '/login',
+                    query: { redirect: to.fullPath },
+                });
+            }
+            else {
+                next();
+            }
+        }
+        else {
+            next();
+        }
+    })
+    ```
+3. 如果没有设置`meta`，则默认为空对象。
