@@ -120,6 +120,27 @@ often than once per second (1000ms) in inactive tabs.
 integer overflow when using delays larger than 2147483647 (about 24.8 days),
 resulting in the timeout being executed immediately.
 
+### 参数的迷惑性
+1. 下面两个`setTimeout`，`22`和`33`都是输出的
+    ```js
+    setTimeout((function() { console.log(22);})(), 3000);
+    setTimeout(console.log(33), 3000);
+    ```
+2. 因为这里的`(function() { console.log(22);})()`和`console.log(33)`并不是参数本身
+，而是参数的求值表达式，或者说是传参表达式。
+3. 虽然参数本身是在三秒钟后异步执行，但传参行为是同步的，立刻执行的。
+3. 这两个`setTimeout`的参数实际上都是`undefined`。
+4. 再看下面两个例子
+    ```js
+    setTimeout(a, 3000);
+    ```
+    ```js
+    setTimeout('a', 3000);
+    ```
+5. 第一个立刻就会报错，因为传参的时候，传参表达式`a`未定义。第二个会在三秒后报错，因为
+传参表达式是个字符串，没错，但变异成可执行代码后，也变成了未定义的变量`a`，三秒钟后执行
+的时候就会报错。
+
 
 ## System Dialogs
 * `confirm()` 点击取消或关闭时返回的是 `false`，`prompt()` 点击取消或关闭时返回的是

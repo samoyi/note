@@ -118,6 +118,9 @@ const router = new VueRouter({
 // Make sure to inject the router with the router option to make the
 // whole app router-aware.
 const app = new Vue({
+    // 虽然没有明确在实例里定义 router-link 和 router-view 两个组件，但确实在实例挂
+    // 载的元素内这两个组件是可用的。这说明在内部 Vue Router 给该实例注册了这两个组件
+    // 虽然不知道实际是不是像我上面的 MyRouteMixin 一样，但总之是注册了这两个组件。
     router,
     created(){
         console.log(this.$router);
