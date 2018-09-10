@@ -1,5 +1,8 @@
 # State
 
+`state`保存着 store 中的所有原始状态数据。之所以用“原始”，是为了和`getters`区分。
+
+
 ## 单一状态树
 1. Vuex 使用单一状态树，用一个对象就包含了全部的应用层级状态。至此它便作为一个
 “唯一数据源 (SSOT)”而存在。
@@ -81,3 +84,55 @@
     ```
 
 ### `mapState`辅助函数
+1.
+2. 加入现在`state`中有三个值
+    ```js
+    state: {
+        count: 0,
+        name: '33',
+        age: 22,
+    },
+    ```
+3. 你现在想要在一个组件里面用这三个值，可以分别定义三个计算属性
+    ```js
+    computed: {
+        myCount(){
+            return this.$store.state.count + 1;
+        },
+        myName(){
+            return this.$store.state.name;
+        },
+        myAge(){
+            return this.$store.state.age - 1;
+        },
+    },
+    ```
+4. 其实也不算麻烦，不过 Vuex 还是提供了简单的写法
+    ```js
+    import { mapState } from 'vuex'
+
+    export default {
+        computed: {
+            ...mapState({
+                myCount: state => state.count + 1,
+                myName: 'name',
+                myAge(state){
+                    return state.age - 1;
+                },
+            }),
+        },
+        // ...
+    }
+    ```
+5. `mapState`函数的参数是表示一组计算属性定义选项的对象。该对象的属性名是每个计算属性的
+名称，对应的属性值可以是一个函数或者是一个字符串。
+    * 如果是一个函数，该函数接受一个参数，引用`this.$store.state`。返回值为计算属性的
+        值。
+    * 如果是一个字符串`str`，则表示直接返回`this.$store.state.str`。
+6. 如果你打算让计算属性和`state`中的对应属性的名值都保持相同，那么直接给`mapState`传一
+个数组，把所有属性名作为字符串数组项即可，这倒是明显简便了
+    ```js
+    computed: {
+        ...mapState(['count', 'name', `age`]),
+    },
+    ```
