@@ -470,3 +470,267 @@ getter。
         },
     });
     ```
+
+### 在带命名空间的模块注册全局 action
+1. 不懂，为什么要在这里注册全局 action？
+2. 若需要在带命名空间的模块注册全局 action，需要把这个 action 注册为一个对象类型，该对
+象可添加属性`root: true`，并用`handler`定义 action 的处理函数。
+3. 虽然是定义成了全局 action，但是参数 context 仍然是模块内的
+    ```js
+    const moduleB = {
+        namespaced: true,
+        state: {
+            age: 23,
+        },
+        actions: {
+            b_action: {
+                root: true,
+                handler(ctx){
+                    console.log('global_action');
+                    console.log(ctx.state.age); // 23
+                },
+            },
+        },
+    };
+
+    export const store = new Vuex.Store({
+        modules: {
+            b: moduleB,
+        },
+        state: {
+            age: 22,
+        },
+    });
+    ```
+4. 在组件实例里要通过全局的方式来 dispatch
+    ```js
+    this.$store.dispatch('b_action');
+    ```
+5. 在不带命名空间的模块里也可以这样注册 action，但没什么意义
+
+### Binding Helpers with Namespace
+1. 默认情况下，对带有命名空间的模块使用 Binding Helpers 有些复杂，在组件里的每一次引用
+都要带上完整的路径
+    ```js
+    // store
+    const moduleB = {
+        namespaced: true,
+        state: {
+            b_age: 23,
+        },
+        getters: {
+            b_getter(){
+                return 'b_getter';
+            },
+        },
+        mutations: {
+            b_mutation(state, payload){
+                console.log(payload.name); // "b_mutation"
+            },
+        },
+        actions: {
+            b_action(ctx, payload){
+                console.log(payload.name); // "b_action"
+            },
+        },
+        modules: {
+            inner: {
+                state: {
+                    inner_age: 24,
+                },
+            },
+            inner_ns: {
+                namespaced: true,
+                state: {
+                    inner_ns_age: 25,
+                },
+            },
+        },
+    };
+
+    export const store = new Vuex.Store({
+        modules: {
+            b: moduleB,
+        },
+        state: {
+            root_age: 22,
+        },
+    });
+    ```
+    ```html
+    <!-- template -->
+    <div>
+        <p>
+            <input type="button" value="b_mutation"
+                @click="b_mutation({name: 'b_mutation'})" />
+            <input type="button" value="b_action"
+                @click="b_action({name: 'b_action'})" />
+        </p>
+        <p>
+
+            {{root_age}}      <!-- 22 -->
+            {{b_age}}         <!-- 23 -->
+            {{inner_age}}     <!-- 24 -->
+            {{inner_ns_age}}  <!-- 25 -->
+            {{b_getter}}      <!--b_getter -->
+        </p>
+    </div>
+    ```
+    ```js
+    // vm
+    computed: {
+        ...mapState({
+            root_age: 'root_age',
+            // b_age: 'b/b_age', // 不能这样
+            b_age: state=>state.b.b_age,
+            inner_age: state=>state.b.inner.inner_age,
+            inner_ns_age: state=>state.b.inner_ns.inner_ns_age,
+        }),
+        ...mapGetters({
+            b_getter: 'b/b_getter',
+        }),
+    },
+    methods: {
+        ...mapMutations({
+            b_mutation: 'b/b_mutation',
+        }),
+        ...mapActions({
+            b_action: 'b/b_action',
+        }),
+    },
+    ```
+2. 把路径字符串中的**命名空间路径**作为第一个参数传给 Binding Helpers，之后的所有引用
+时就都不需要带路径。
+3. 注意，只能是命名空间路径，不带命名空间的子模块的模块名不能被提取出来。例如
+`state.b.inner.inner_age`，只能提取出公共路径`'b'`，而不能提取出`'b/inner'`，因为
+`inner`模块没有命名空间；而`state.b.inner_ns.inner_ns_age`就可以提取出`'b/inner_ns'`
+    ```js
+    computed: {
+        ...mapState(['root_age']),
+        ...mapState({
+            b_age: state=>state.b.b_age,
+        }),
+        ...mapState('b', {
+            inner_age: state=>state.inner.inner_age,
+        }),
+        ...mapState('b/inner_ns', {
+            inner_ns_age: state=>state.inner_ns_age,
+        }),
+        ...mapGetters('b/', {
+            b_getter: 'b_getter',
+        }),
+    },
+    methods: {
+        ...mapMutations('b/', {
+            b_mutation: 'b_mutation',
+        }),
+        ...mapActions('b/', {
+            b_action: 'b_action',
+        }),
+    },
+    ```
+4. 除了这种定义参数的方法以外，还可以在 import 这些 map 函数时就直接定义一个统一的路径
+    ```js
+    import { mapState } from 'vuex'
+    // import { mapGetters } from 'vuex'
+    // import { mapMutations } from 'vuex'
+    // import { mapActions } from 'vuex'
+
+    import { createNamespacedHelpers } from 'vuex'
+    // 以下三个函数会自动设定路径，而通过常规方法 import 的 mapState 不受影响
+    const { mapGetters, mapMutations, mapActions } = createNamespacedHelpers('b/');
+
+    export default {
+        computed: {
+            ...mapState(['root_age']),
+            ...mapState({
+                b_age: state=>state.b.b_age,
+            }),
+            ...mapState('b', {
+                inner_age: state=>state.inner.inner_age,
+            }),
+            ...mapState('b/inner_ns', {
+                inner_ns_age: state=>state.inner_ns_age,
+            }),
+            ...mapGetters({
+                b_getter: 'b_getter',
+            }),
+        },
+        methods: {
+            ...mapMutations({
+                b_mutation: 'b_mutation',
+            }),
+            ...mapActions({
+                b_action: 'b_action',
+            }),
+        },
+    }
+    ```
+
+### Caveat for Plugin Developers
+如果你开发的插件（Plugin）提供了模块并允许用户将其添加到 Vuex store，可能需要考虑模块
+的空间名称问题。对于这种情况，你可以通过插件的参数对象来允许用户指定空间名称
+```js
+// 通过插件的参数对象得到空间名称
+// 然后返回 Vuex 插件函数
+export function createPlugin (options = {}) {
+    return function (store) {
+        // 把空间名字添加到插件模块的类型（type）中去
+        const namespace = options.namespace || ''
+        store.dispatch(namespace + 'pluginAction')
+    }
+}
+```
+
+
+## 模块动态注册
+1. 在 store 创建之后，你可以使用`store.registerModule`方法注册模块
+    ```js
+    // store
+    const moduleA = {
+        state: {
+            name: 'a',
+        },
+    };
+
+    export const store = new Vuex.Store({
+        modules: {
+            a: moduleA,
+        },
+    });
+    ```
+    ```js
+    // vm
+    export default {
+        beforeCreate(){
+            // 注册模块 b
+            this.$store.registerModule('b', {
+                state: {
+                    name: 'b',
+                },
+            });
+
+            // 给模块 b 再注册一个子模块 inner
+            this.$store.registerModule(['b', 'inner'], {
+                state: {
+                    name: 'inner',
+                },
+            });
+        },
+        computed: {
+            ...mapState({
+                a_name: state=>state.a.name,
+                b_name: state=>state.b.name,
+                inner_name: state=>state.b.inner.name,
+            }),
+        },
+    }
+    ```
+2. 你也可以使用`store.unregisterModule(moduleName)`来动态卸载模块。注意，你不能使用
+此方法卸载静态模块（即创建 store 时声明的模块）。不懂为什么写在子模块会报错
+    ```js
+    this.$store.unregisterModule('inner');
+    // TypeError: Cannot read property 'runtime' of undefined
+
+    // this.$store.unregisterModule('b.inner'); // 一样报错
+    ```
