@@ -194,3 +194,22 @@ const store = new Vuex.Store({
         })
     },
     ```
+
+
+## 严格模式
+1. 虽然规定对 state 的修改必须通过 commit，但默认情况下，直接修改也不会报错。
+2. 但开启严格模式后，直接修改就会报错。这能保证所有的状态变更都能被调试工具跟踪到。
+    ```js
+    const store = new Vuex.Store({
+        // ...
+        strict: true
+    });
+    ```
+3. 不要在发布环境下启用严格模式。严格模式会深度监测状态树来检测不合规的状态变更 —— 请确
+保在发布环境下关闭严格模式，以避免性能损失。我们可以让构建工具来处理这种情况：
+    ```js
+    const store = new Vuex.Store({
+        // ...
+        strict: process.env.NODE_ENV !== 'production'
+    });
+    ```
