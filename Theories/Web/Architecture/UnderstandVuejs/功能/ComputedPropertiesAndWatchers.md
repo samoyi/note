@@ -86,6 +86,22 @@ new Vue({
 });
 ```
 
-### Computed Setter
-Computed properties are by default getter-only, but you can also provide a
-setter when you need it:
+### 计算属性的 setter
+1. 计算属性默认是定义为一个 getter 函数，因此是只读的。
+2. 但也可以定义为可写的。只要把计算属性定义为一个对象，并定义 setter 即可
+    ```js
+    computed: {
+        fullName: {
+            // getter
+            get: function () {
+                return this.firstName + ' ' + this.lastName
+            },
+            // setter
+            set: function (newValue) {
+                var names = newValue.split(' ')
+                this.firstName = names[0]
+                this.lastName = names[names.length - 1]
+            }
+        }
+    }
+    ```
