@@ -457,11 +457,9 @@ function forEachCanBreak(arr,fn,oThis)
 ## Reduction Methods
 `arr.reduce(callback[, initialValue])` and `arr.reduceRight(callback[, initialValue])`
 
-1. If you call it with only one value — either an array with one element and no
-initial value or an empty array and an initial value — it simply returns that
-one value without ever calling the reduction function.
-2. Calling `reduce()` on an empty array with no initial value argument causes a
-`TypeError`.
+1. 如果只使用该方法 reduce 一个值，不管是一个单项数组没有初始值或者是空数组带初始值，该
+方法都会直接返回该值而不调用 callback。
+2. 如果是空数组且没有初始值时，`TypeError`。
 
 ### `callback`
 Function to execute on each element in the array, taking four arguments:

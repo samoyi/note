@@ -94,3 +94,14 @@ console.log( `你好，${ yourName()}` );    // 你好，33
 ==模板编译 不懂  
 标签模板 不懂  
 http://es6.ruanyifeng.com/#docs/string==
+
+
+## 方法
+
+### `split`
+分隔符在边缘时，会分割出空的字符串
+```js
+const str = '小时1小时2小时';
+const arr = str.split('小时');
+console.log(arr); // ["", "1", "2", ""]
+```
