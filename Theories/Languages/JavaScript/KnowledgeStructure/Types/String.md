@@ -124,6 +124,17 @@ var text = "This is the letter sigma: \u03a3.";
 [http://es6.ruanyifeng.com/#docs/string#%E6%A8%A1%E6%9D%BF%E5%AD%97%E7%AC%A6%E4%B8%B2](其他高级用法)
 
 
+## 四字节字符的处理方法
+1. 字符串在使用内部的 iterator 遍历时，可以正确识别四字节字符，因此可以使用遍历相关的方
+法来获得正确的结果
+2. 使用扩展运算符获得正确的字符数量
+    ```js
+    let str = 'd𝑒f';
+    console.log(str.length); // 3
+    console.log([...str].length); // 3
+    ```
+3. 使用`for...of`遍历字符串
+
 
 ## 方法
 **一个方法如果没有特别说明，那么它的规则就不兼容 Supplementary plane 中的字符**
@@ -137,9 +148,18 @@ console.log(str.charAt(1)); // ""
 console.log(typeof str[1]); // undefined
 ```
 
-#### `codePointAt()` 和 `String.fromCodePoint()`
-* 兼容多字节字符
+#### `codePointAt()`
+```js
+let str = '𝑒';
+console.log(str.codePointAt(0)); // 119890
+console.log(str.charCodeAt(0)); // 55349
+console.log(str.codePointAt(1)); // 56402
+```
+* 从上面的例子可以看出来，该方法相比于`charCodeAt()`，对多字节字符的兼容性更好一些。但
+还不是完全兼容，因为它仍然可以访问到第二个 2byte。
 * `codePointAt()`返回字符的 Unicode code point
+
+#### `String.fromCodePoint()`
 *  `String.fromCodePoint(num1[, ...[, numN]])` 若干个 Unicode code point，返回它们
 对应的字符组成的字符串
     ```js
