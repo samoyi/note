@@ -127,20 +127,41 @@ var text = "This is the letter sigma: \u03a3.";
 ## 四字节字符的处理方法
 1. 字符串在使用内部的 iterator 遍历时，可以正确识别四字节字符，因此可以使用遍历相关的方
 法来获得正确的结果
-2. 使用扩展运算符获得正确的字符数量
+2. 使用扩展运算符转换为数组
     ```js
     let str = 'd𝑒f';
     console.log(str.length); // 3
+
+    let arr = [...str];
+    console.log(arr); // ["d", "𝑒", "f"]
     console.log([...str].length); // 3
     ```
 3. 使用`for...of`遍历字符串
+    ```js
+    let str = 'd𝑒f';
+
+    for(let i in str){
+    	console.log(str[i]);
+    }
+    // d
+    // �
+    // �
+    // f
+
+    for(let c of str){
+    	console.log(c);
+    }
+    // d
+    // 𝑒
+    // f
+    ```
 
 
 ## 方法
 **一个方法如果没有特别说明，那么它的规则就不兼容 Supplementary plane 中的字符**
 
-### 字符方法
-#### `charAt()`
+## 字符方法
+### `charAt()`
 与`[]`语法的差异
 ```js
 let str = 'a';
@@ -148,7 +169,7 @@ console.log(str.charAt(1)); // ""
 console.log(typeof str[1]); // undefined
 ```
 
-#### `codePointAt()`
+### `codePointAt()`
 ```js
 let str = '𝑒';
 console.log(str.codePointAt(0)); // 119890
@@ -157,22 +178,20 @@ console.log(str.codePointAt(1)); // 56402
 ```
 * 从上面的例子可以看出来，该方法相比于`charCodeAt()`，对多字节字符的兼容性更好一些。但
 还不是完全兼容，因为它仍然可以访问到第二个 2byte。
-* `codePointAt()`返回字符的 Unicode code point
 
-#### `String.fromCodePoint()`
-*  `String.fromCodePoint(num1[, ...[, numN]])` 若干个 Unicode code point，返回它们
-对应的字符组成的字符串
+
+### `String.fromCodePoint()`
+*  `String.fromCodePoint(num1[, ...[, numN]])`接受若干个 Unicode code point，返回
+它们对应的字符组成的字符串
+* 相比于`String.fromCharCode`，这个方法可以兼容多字节字符
     ```js
-    console.log(String.fromCodePoint(72, 0B1100101, 0O154, 0O154, 0X6f)); // Hello
+    console.log(String.fromCodePoint(72, 119890, 0o154, 0o154, 0x6f)); // H𝑒llo
+    console.log(String.fromCharCode(72, 119890, 0o154, 0o154, 0x6f)); // H푒llo
     ```
 
-#### `charCodeAt()` 和 `codePointAt()`
-使用兼容多字节字符的`codePointAt()`和`fromCodePoint()`
 
-
-
-### 编辑字符串
-#### `concat()`
+## 编辑字符串
+### `concat()`
 ```js
 let str1 = '1';
 let str2 = '2';
@@ -181,11 +200,11 @@ console.log(str1.concat(str2, str3)); // "123"
 console.log(str1); // "1"
 ```
 
-#### `padStart()`和`padEnd()`
-##### Syntax
+### `padStart()`和`padEnd()`
+#### Syntax
 `str.padStart(targetLength [, padString])`
 
-##### `targetLength`参数
+#### `targetLength`参数
 1. The length of the resulting string once the current string has been padded.
 2. If the value is lower than the current string's length, the current string
 will be returned as is.
@@ -196,7 +215,7 @@ console.log(str.padEnd(2, '456')); // "123"
 console.log(str); // "123"  不改变原字符串
 ```
 
-##### 可选的`padString`参数
+#### 可选的`padString`参数
 1. The string to pad the current string with.
 2. If this string is too long to stay within the target length, it will be
 truncated and the left-most part will be applied.
@@ -207,11 +226,11 @@ console.log(str.padEnd(5, '4567890')); // "12345"
 console.log(str.padEnd(5) + '.'); // "123  ."
 ```
 
-#### `repeat()`
-##### Syntax
+### `repeat()`
+#### Syntax
 `str.repeat(count);`
 
-##### `count`参数
+#### `count`参数
 An integer between 0 and +∞: [0, +∞), indicating the number of times to repeat
 the string in the newly-created string that is to be returned.
 ```js
@@ -221,7 +240,7 @@ console.log(str.repeat(0)); // ""
 console.log(str); // "123"  不改变原字符串
 ```
 
-##### 不规范参数
+#### 不规范参数
 * `Infinity`：`RangeError`
     ```js
     str.repeat(1/0); // RangeError
@@ -254,11 +273,11 @@ console.log(str); // "123"  不改变原字符串
     console.log(str.repeat(true)); // "123"
     ```
 
-#### `split`
-##### Syntax
+### `split`
+#### Syntax
 `str.split([separator[, limit]])`
 
-##### 可选的`separator`参数
+#### 可选的`separator`参数
 1. 分隔符
     ```js
     let str = 'hello';
@@ -310,7 +329,7 @@ console.log(str); // "123"  不改变原字符串
     console.log(str.split('')); // []
     ```
 
-##### 可选的`limit`参数
+#### 可选的`limit`参数
 最大分块数量。如果拆分的块数已经达到该值，即使字符串还没有拆分完，也会停止拆分，只返回已
 拆分出来的部分。
 ```js
@@ -318,7 +337,127 @@ let str = '102030405060';
 console.log(str.split('0', 3)); // ["1", "2", "3"]
 ```
 
-#### `trim()`
+
+## 确定/查找子字符串
+### `includes()`
+1. `str.includes(searchString[, position])`
+2. 可选参数表示从哪里开始找
+3. 搜索空字符串总是返回`true`
+```js
+let str = 'hello world';
+console.log(str.includes('lo'));    // true
+console.log(str.includes('lo', 4)); // false
+console.log(str.includes(''));      // true
+console.log(str.includes(''));      // true
+console.log(str.includes('', -1));  // true
+console.log(str.includes('', 99));  // true
+```
+
+### `indexOf()` `lastIndexOf()`
+1. `str.indexOf(searchValue[, fromIndex])`
+    `str.lastIndexOf(searchValue[, fromIndex])`
+2. 不支持正则
+    ```js
+    let str = 'abcdefgfedcba';
+    console.log(str.indexOf('c'));     // 2
+    console.log(str.lastIndexOf('c')); // 10
+    ```
+3. 对于第二个参数，`indexOf()`是从左边开始数起点位置，`lastIndexOf()`是从右边开始数起
+点位置，都是和搜索的方向一样
+    ```js
+    console.log(str.indexOf('c', 3));     // 10   跳过了左边的 c
+    console.log(str.lastIndexOf('c', 3)); // 2    跳过了右边的 c
+    ```
+3. 如果第二个参数指定的序号超出了范围，则该序号自动变为距离它最近的序号
+    ```js
+    let str = 'abcdefgfedcba';
+    console.log(str.indexOf('c', -100));     // 2    fromIndex 自动变为 0
+    console.log(str.lastIndexOf('c', 100)); // 10    fromIndex 自动变为 12
+    ```
+4. 如果第一个参数为空字符串，逻辑有些讲不通，记住规则就行了：
+    * 如果没有第二个参数，一个返回首序号一个返回尾序号：
+    ```js
+    console.log(str.indexOf(''));         // 0
+    console.log(str.lastIndexOf(''));     // 13
+    ```
+    * 如果有第二个参数：如果参数指定的序号合理就直接返回该序号，如果序号不合理就返回离
+    它最近的合理序号
+    ```js
+    console.log(str.indexOf('', 3));      // 3
+    console.log(str.lastIndexOf('', 3));  // 3
+    console.log(str.indexOf('', 33));     // 13
+    console.log(str.lastIndexOf('', 33)); // 13
+    console.log(str.indexOf('', -3));     // 0
+    console.log(str.lastIndexOf('', -3)); // 0
+    ```
+
+### `startsWidth` `endsWidth`
+1. `str.startsWith(searchString [, position])`
+   `str.endsWith(searchString[, length])`
+2. 注意`endsWith`的第二个参数并不是和`lastIndexOf`的第二个参数一样
+    ```js
+    let str = 'hello world';
+    console.log(str.startsWith('he'));    // true
+    console.log(str.startsWith('he', 1));    // false
+    console.log(str.endsWith('ld'));    // true
+    console.log(str.endsWith('ld', 10));    // false
+    console.log(str.endsWith('ld', 11));    // true
+    ```
+3. 如果第二个参数的位置不合理，会被自动转换为最近的合理的序号
+    ```js
+    let str = 'hello world';
+    console.log(str.startsWith('he', -100));  // true  -100 自动转为 0
+    console.log(str.endsWith('ld', 100));     // true  100 自动转为 length 的值
+    ```
+4. 同样，空串总能被找到
+    ```js
+    let str = 'hello world';
+    console.log(str.startsWith(''));        // true
+    console.log(str.endsWith(''));          // true
+    console.log(str.startsWith('', -100));  // true
+    console.log(str.endsWith('', 100));     // true
+    ```
+    
+
+## 子字符串相关方法
+1. `slice()`方法接收一到两个参数。第一个参数指定字符串的开始位置，第二个参数指定的是子
+字符串最后一个字符后面的位置。如果第二个参数小于第一个，则返回空字符串。
+2. `substring()`方法接收一到两个参数。第一个参数指定字符串的开始位置，第二个参数指定的
+是子字符串最后一个字符后面的位置。如果第二个参数小于第一个，则颠倒两个参数。
+3. `substr()`方法接收一到两个参数。第一个参数指定字符串的开始位置，第二个参数指定的是
+子字符串的字符个数。
+4. 在传递的参数是负值的情况下，`slice()`方法将负值加上字符串`length`；`substring()`方
+法会将负值转换为`0`；`substr()`方法第一个参数为负数时将负值加上字符串`length`，而第二
+个为负值时，则转换为`0`。
+
+
+## 大小写转换的`Locale`的问题
+1. 先看一下规范中说的：
+>This function works exactly the same as toLowerCase except that its result is
+intended to yield the correct result for the host environment’s current locale,
+rather than a locale-independent result. There will only be a difference in the
+few cases (such as Turkish) where the rules for that language conflict with the
+regular Unicode case mappings.
+
+2. 看起来是说，Unicode 本身有一套大小写映射，而且绝大多数语言都符合这套映射规则。但只有
+很少的语言不符合该规则，比如土耳其语。
+3. 也就是说，如果是类似于土耳其语这样的语言，仍然使用`toLowerCase`的话，就是使用的
+Unicode 的大小写转换规则，而这并不是土耳其语本身的大小写规则，所以转换结果就不是正确的
+土耳其语。
+4. 比如你要对用户输入内容进行大小写转换，而恰好用户使用土耳其语输入的，那就可能出现异常。
+下面是一个例子：
+    ```js
+    var str = 'İstanbul';
+    console.log(str.toLocaleLowerCase('en-US') === str.toLocaleLowerCase('tr'));
+    // false
+    // 使用美式英语和土耳其语的规则转换的结果并不相同
+    ```
+5. 所以如果不确定应用会应用于哪些语言环境，最好还是使用带`Locale`的。
+6. 带`Locale`方法的参数是指定使用哪里的转换规则，不过一般情况下都不需要传参，以为根据
+MDN 上说的，该参数默认值是 the host environment’s current locale。
+
+
+### `trim()`
 1. The `trim()` method removes whitespace from both ends of a string.
 2. Whitespace in this context is all the whitespace characters (space, tab,
 no-break space, etc.) and all the line terminator characters (LF, CR, etc.).
