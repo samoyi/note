@@ -65,7 +65,7 @@ console.log( str ); // hello world !
 ---|---
 `\n` | 换行
 `\t` | 制表
-`\b` | 退格
+`\b` | 退格。实测该字符会有打印输出
 `\r` | 回车
 `\f` | 进纸
 `\\\` | 斜杠
@@ -602,7 +602,8 @@ MDN 上说的，该参数默认值是 the host environment’s current locale。
 ### `trim()`
 1. The `trim()` method removes whitespace from both ends of a string.
 2. Whitespace in this context is all the whitespace characters (space, tab,
-no-break space, etc.) and all the line terminator characters (LF, CR, etc.).
+no-break space, etc.) and all the line terminator characters (LF, CR, etc.). 但不
+包括`\b`，`\b`会有实际字符输出。
 3. IE 不支持 `trimStart()`/`trimLeft()`和`trimEnd()`/`trimRight()`
 
 

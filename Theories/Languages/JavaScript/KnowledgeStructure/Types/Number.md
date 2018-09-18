@@ -131,6 +131,7 @@ integer values, ECMAScript always looks for ways to convert values into integers
 2. 这个临界值一般被成为 "machine epsilon"，它的值为`2^-52 (2.220446049250313e-16)`。
 可以通过常量`Number.EPSILON`来引用这个值。
 3. 所以在判断两个数是否相等时，可以使用下面的方法
+
 ```js
 function numbersCloseEnoughToEqual(n1, n2) {
 	return Math.abs( n1 - n2 ) < Number.EPSILON;
@@ -143,8 +144,13 @@ console.log( numbersCloseEnoughToEqual(x, y) );  // true
 ```
 
 
-## 数值转换
+## 类型转换
 `Number()` `Number.parseInt()` `Number.parseFloat()`
+1. 第一个函数，即转型函数可以用于任何数据类型。另外两个函数则专门用于把字符串转换成数值。
+实测后两个也可以转换首项是数字或数字字符串的数组，但不能转换布尔值。
+2. 这三个函数对于同样的输入会有返回不同的结果。
+3. 转换极大或极小的整数时会返回个位数，因为使用了e底数的计数法。
+4. 一元加操作符的操作与`Number()`函数相同
 
 ### `Number()`
 * 如果参数是布尔值，`true`转换为`1`，`false`转换为`0`。
@@ -192,51 +198,153 @@ console.log( numbersCloseEnoughToEqual(x, y) );  // true
         ```js
         console.log(Number('\n'));  // 0
         console.log(Number('\t'));  // 0
-        console.log(Number('\b'));  // NaN
+        console.log(Number('\b'));  // NaN  \b 会有实际字符输出，
         console.log(Number('\r'));  // 0
         console.log(Number('\f'));  // 0
         ```
     * 其他形式的字符串，都会返回`NaN`.
-* When applied to objects, the `valueOf()` method is called and the returned
-value is converted based on the previously described rules. If that conversion
-results in `NaN`, the `toString()` method is called and the rules for converting strings are applied.
-* 如果参数是对象，则先会调用对象的`valueOf()`方法，然后在运用上述转换规则转换
-
-2.第一个函数，即转型函数可以用于任何数据类型。另外两个函数则专门用于把字符串转换成数值。实测后两个也可以转换首项是数字或数字字符串的数组，但不能转换布尔值。
-3.这三个函数对于同样的输入会有返回不同的结果。
-4.转换极大或极小的整数时会返回个位数，因为使用了e底数的计数法。
-5.一元加操作符的操作与Number()函数相同
-
-parseInt和parseFloat在这种情况下返回NaN
+* 如果参数是对象，则先会调用对象的`valueOf()`方法。包装类型经过该方法会变成基础类型，可
+以运用上面的转换方法转换；其他对象仍然是对象类型，会再调用`toString()`方法转换为字符串，
+然后再转数值。
+    ```js
+    console.log(Number(String(2)));  // 2
+    console.log(Number('{}'));       // NaN   {}.toString() === '[object Object]'
+    console.log(Number([]));         // 0     {n:1}.toString() === '[object Object]'
+    console.log(Number('{n:2}'));    // NaN   [].toString() === ''
+    console.log(Number([2]));        // 2     [1].toString() === '1'
+    ```
 
 ### `Number.parseInt()`
-* The `Number.parseInt()` method parses a string argument and returns an integer
-of the specified radix or base.
-* Leading white space in the string is ignored until the first non–white space
-character is found.
-* If this first character isn’t a number, the minus sign, or the plus sign,  
-`Number.parseInt()` always returns `NaN`.
-* Empty string returns `NaN` (unlike with `Number()`, which returns `0`)
-* If the first character is a number, plus, or minus, then the conversion goes
-on to the second character and continues on until either the end of the string
-is reached or a nonnumeric character is found.
-* This function can automatically recognizes hexadecimal integer string, but can
- not recognize octal and binary integer string.
-* If the type of parameter is number, this function will return the decimal
-value of this number.
+1. `Number.parseInt(string,[ radix ])`
+2. 前导 0 和前导空白字符会被忽略
+    ```js
+    console.log(Number.parseInt('0123'));   // 123
+    console.log(Number.parseInt(' 123'));   // 123
+    console.log(Number.parseInt('\n123'));  // 123
+    console.log(Number.parseInt('\t123'));  // 123
+    console.log(Number.parseInt('\r123'));  // 123
+    console.log(Number.parseInt('\f123'));  // 123
+    console.log(Number.parseInt('\b123'));  // NaN
+    ```
+3. 如果有上述可忽略的，在忽略完成后，如果剩下的字符串中，前面的一个或几个字符不是合理的
+数字类型（包括任何进制），`Number.parseInt()`会返回`NaN`。
+    ```js
+    console.log(Number.parseInt(' 0123', 10));   // 123
+    console.log(Number.parseInt(' +123', 10));   // 123
+    console.log(Number.parseInt(' -123', 10));   // -123
+    console.log(Number.parseInt(' 0x123', 16));  // 291
+    // 与 Number() 不能识别带正负号的其他进制数字符串不同，这个方法可以识别
+    console.log(Number.parseInt(' -0x123', 16)); // -291
+    console.log(Number.parseInt(' x123', 16));   // NaN
+    ```
+4. 如果识别到了有效的数字字符串，则会按顺序往后识别直到识别到非整数成分或字符串结束
+    ```js
+    console.log(Number.parseInt('123a', 10));   // 123
+    console.log(Number.parseInt('123 4', 10));  // 123
+    console.log(Number.parseInt('123. 4', 10)); // 123
+    console.log(Number.parseInt('123.4', 10));  // 123
+    ```
+* 空字符串和空白字符串返回`NaN`，这一点与`Number()`返回`0`不同
+    ```js
+    console.log(Number.parseInt(''));   // NaN
+    // 其实空白字符串，根据前面忽略前导0的规则，最终识别是和''是一样的
+    console.log(Number.parseInt(' '));  // NaN
+    ```
+* 能自动识别十六进制字符串，但不能自动识别其他进制的。要想识别就必须带第二个参数。建议永
+远带第二个参数
+    ```js
+    console.log(Number.parseInt('0b11'));   // 0
+    console.log(Number.parseInt('0o11'));   // 0
+    console.log(Number.parseInt('0x11'));   // 17
+    ```
+* 如果参数是数值类型，则返回整数部分
+    ```js
+    console.log(Number.parseInt(123.4));   // 123
+    ```
 
 ### `Number.parseFloat()`
-* If the string represents a whole number (no decimal point or only one or more
-zero after the decimal point), `Number.parseFloat()` returns an integer.
-* Empty string returns `NaN`
-* Unlike `Number.parseInt()`, this function can only recognize decimal number
-string. But it can also will return decimal value of the parameter which is a
-number type.
-* Parsing accuracy is limited
+1. `Number.parseFloat(string)`
+2. 与`Number.parseInt()`不同，这个方法只能用于十进制数。
+3. Parsing accuracy is limited
     ````js
     let result = Number.parseFloat( '1.337000012397766117451156851189711');
     console.log( result ); // 1.3370000123977661
     ````
+
+### `Number.prototype.toPrecision([precision])`
+1. 将一个数字转换为字符串，使用指定数目的有效数字。根据数字的大小以及指定的有效数字位数，
+可能会采用指数或浮点记数法。
+2. 如果有效数字的位数少于数字整数部分的位数，则转换成指数形式。如果有效数字的位数不少于
+整数部分的位数，则被截取的第一位会四舍五入
+    ```js
+    console.log((1234.5678).toPrecision(3));  // "1.23e+3"
+    console.log((1234.5678).toPrecision(4));  // "1235"
+    console.log((1234.5678).toPrecision(5));  // "1234.6"
+    ```
+3. 如果被操作数已经是指数形式，只要有效数字位数不会导致其放弃指数形式，那么就直接按有效
+数字位数四舍五入。但是注意，如果不传参，指数形式会被自动展开，原因见下
+    ```js
+    console.log((1234.5678e+5).toPrecision(3));  // "1.23e+8"
+    console.log((1234.5678e+5).toPrecision(4));  // "1.235e+8"
+    console.log((1234.5678e+5).toPrecision(5));  // "1.2346e+8"
+    console.log((1234.5678e+5).toPrecision(9));  // "123456780"
+    console.log((1234.5678e+5).toPrecision());   // "123456780"
+    ```
+4. 可以识别其他进制并转换为十进制
+    ```js
+    console.log((0b1111011).toPrecision(4)); // "123.0"
+    ```
+5. 参数不能为0，因为不能保留0为有效数字。但也不能默认为1，大概是默认为0感觉正常，默认为
+1有些奇怪了。所以如果没有传参，和`Number.prototype.toString()`等效。这时唯一要注意的
+是，指数形式会被自动展开
+    ```js
+    console.log((1234.5678e+5).toPrecision()); // 123456780
+    ```
+
+### `Number.prototype.toFixed([digits])`
+1. 返回一个数字的字符串格式，参数为保留几位小数。同样会四舍五入。
+    ```js
+    console.log((123.456).toFixed(2));     // "123.46"
+    console.log((0.004).toFixed(2));     // "0.00"
+    ```
+2. 参数默认为0
+    ```js
+    console.log((123.456).toFixed());     // "123"
+    ```
+3. 不是用指数形式。
+    ```js
+    console.log((1.23e+4).toFixed(2)); // "12300.00"
+    ```
+4. 同样可以识别其他进制并转换为十进制
+    ```js
+    console.log((0b11).toFixed(2));   // "3.00"
+    ```
+
+### `Number.prototype.toExponential([fractionDigits])`
+1. 返回数字的指数形式字符串
+2. 可选的参数指定指数形式的小数部分位数，如果不传，会根据需要自行决定
+3. 同样会四舍五入
+
+```js
+console.log((123.456).toExponential(0));     // "1e+2"
+console.log((123.456).toExponential(1));     // "1.2e+2"
+console.log((123.456).toExponential(2));     // "1.23e+2"
+console.log((123.456).toExponential(3));     // "1.235e+2"
+console.log((123.456).toExponential());     // "1.23456e+2"
+```
+
+### `Number.prototype.toLocaleString()`
+
+
+### `toString()`
+其他进制会被转换为十进制，指数形式会被展开
+```js
+console.log((11).toString());     // 11
+console.log((0b11).toString());   // 3
+console.log((0o11).toString());   // 9
+console.log((0x11).toString());   // 17
+console.log((1.1e+2).toString()); // 10
+```
 
 
 ## `NaN`
