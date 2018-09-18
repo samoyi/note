@@ -101,10 +101,6 @@ console.log( str ); // hello world !
     console.log('\u{1d452}');    // "𝑒"
     ```
 
-console.log('\ud835\udc52'); // "𝑒"
-console.log('\u1d45');       // "ᵅ"
-console.log('\u{1d452}');    // "𝑒"
-
 
 
 ## 模板字符串

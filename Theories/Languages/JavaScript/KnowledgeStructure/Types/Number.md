@@ -1,19 +1,15 @@
 # Number
 
 
-##  Number in JS
-1. Unlike many languages, JavaScript does not make a distinction between integer
- values and floating-point values. All numbers in JavaScript are represented as
- floating-point values.
-2. JavaScript represents numbers using the 64-bit floating-point format defined
-by the IEEE 754 standard, which means it can represent numbers as large as
-`±1.7976931348623157 × 10^308` and as small as `±5 × 10^−324`.
-3. The JavaScript number format allows you to exactly represent all integers
-between `−9007199254740992 (−2^53)` and `9007199254740992 (2^53)`, inclusive.
-However, certain operations in JavaScript (such as array indexing and the
-bitwise operators) are performed with 32-bit integers.
-4. `Number.isInteger()` 判断一个值是否为整数。需要注意的是，在 JavaScript 内部，整数
-和浮点数是同样的储存方法，所以`3`和`3.0`被视为同一个值，都会返回`true`
+## Number in JS
+1. 与其他编程语言不通，JS 不区分整数值和浮点数值。JS 中的所有数字均由浮点数值表示。
+2. JS 采用 IEEE 754 标准定义的 64 位浮点数格式表示数字，这意味着它能表示的最大值是
+`±1.7976931348623157 × 10^308`，最小值是`±5 × 10^−324`。
+3. 按照 JavaScript 中的数字格式，能够表示的整数范围是从`−9007199254740992 (−2^53)`到
+`9007199254740992 (2^53)`，包含边界值。如果使用了超过此范围的整数，则无法保证低位数字
+的精度。
+4. 然而需要注意的是，JavaScript 中实际的操作（比如数组索引，以及位操作符）则是基于32位
+整数。
 5. 支持 Scientific notation
     ```js
     console.log(3.14e6); // 3140000
@@ -21,46 +17,36 @@ bitwise operators) are performed with 32-bit integers.
 
 
 ## 进制
-1. ES6提供了二进制数字的写法，使用前缀0b或0B
-2. ES6之前，八进制字面值的第一位必须是0.如果字面值中的数值超出了范围，那么前导0将被忽略，后面的数值将当做十进制数值解析。
-     var octalNum=08   //无效的八进制数值——解析为8
-3. ES6之前，八进制字面量在严格模式下是无效的，会导致支持的JavaScript引擎抛出错误。但ES6提供了八进制的新前缀：0o或0O
-4. 十六进制字面值的前两位必须是0x或0X，字母A~F可以大写也可以小写。
-5. 在进行算术计算时，所有以八进制和十六进制表示的数值最终都将被转换为十进制数值。
+1. 二进制使用前缀`0b`或`0B`
+2. 八进制使用前缀`0o`或`0O`
+4. 十六进制使用前缀`0x`或`0X`，字母A~F可以大写也可以小写
+5. 在进行算术计算时，其他进制表示的数值最终都将被转换为十进制数值
 
 
-## Range of Values
-### JS number range
-Not all numbers in the world can be represented in ECMAScript, because of
-memory constraints. The smallest number that can be represented in ECMAScript is stored in `Number.MIN_VALUE`, the largest number is stored in `Number.MAX_VALUE`
+## 数值范围
+### 安全范围
+1. JS 中的数字使用 IEEE-754 的双精度浮点数格式，数值范围是(`-(2^53 - 1)`,`2^53 - 1`)，
+可以通过常量`Number.MIN_VALUE`和`Number.MAX_VALUE`来使用这个范围。
+2. `Number.isSafeInteger()`可以判断一个整数是否在上述范围内。
+3. 不应该只判断计算的结果是否安全，计算中的每一步用到的数值都应该判断。
 
-### Safe range
-* JavaScript uses double-precision floating-point format numbers as
-specified in IEEE 754 and can only safely represent numbers between
-`-(2^53 - 1)` and `2^53 - 1`, not contained.
-* Safe in this context refers to the ability to represent integers exactly
-and to correctly compare them.
-* `Number.isSafeInteger()` detects whether provided value is a integer in
-safe range.
-* You should not only test whether the result of calculation is within safe
-range, but also test each number of calculation involved.
 
 ### Underflow
-1. Underflow occurs when the result of a numeric operation is closer to zero than
-the smallest representable number. In this case, JavaScript returns `0`.
+1. Underflow occurs when the result of a numeric operation is closer to zero
+than the smallest representable number. In this case, JavaScript returns `0`.
 2. If underflow occurs from a negative number, JavaScript returns a special
 value known as "negative zero". This value is almost completely
 indistinguishable from regular zero and JavaScript programmers rarely need to
 detect it.
 
 ### Infinity
-1. Division by zero is not an error in JavaScript: it simply returns `-Infinity`
- or `Infinity`. There is one exception: zero divided by zero does not have a well defined value, and the result of this operation is `NaN`;
-2. If the result of a calculation is out of range, it will be converted to the corresponding `-Infinity` or `Infinity`
-3. `-Infinity` or `Infinity` are stored in `Number.NEGATIVE_INFINITY` and `Number.POSITIVE_INFINITY`.
-4. `Number.isFinite()` return `true` if the parameter is a finite number. If
-parameter is not a number ,`isFinite()` will convert parameter to a number, but
-`Number.isFinite()` will not.
+1. 在 JS 中，除以 0 并不会导致错误。除了`0/0`返回`NaN`以外，其他数除以 0 都会返回相应
+的`-Infinity`或`Infinity`。
+2. 如果一个计算的结果超出了返回，也会被转换为相应的`-Infinity`或`Infinity`。
+3. `-Infinity`和`Infinity`也会保存在常量`Number.NEGATIVE_INFINITY`和
+`Number.POSITIVE_INFINITY`中。
+4. `Number.isFinite()`会判断一个是否是有穷。如果参数不是数字，`isFinite()`会试图将其
+转换为数字，但`Number.isFinite()`不会转型。
     ```js
     console.log( Number.isFinite(Infinity) );  // false
     console.log( Number.isFinite(NaN) );       // false
@@ -77,51 +63,39 @@ parameter is not a number ,`isFinite()` will convert parameter to a number, but
 
 
 ## Integers
+### `Number.isInteger()`
+判断一个值是否为整数。需要注意的是，在 JavaScript 内部，整数和浮点数是同样的储存方法，
+所以`3`和`3.0`被视为同一个值，都会返回`true`
 ```js
 Number.isInteger()
-Number.isSafeInteger()
 ```
+
 ### 32-bit (Signed) Integers
-1. While integers can range up to roughly 9 quadrillion safely (53 bits), there
-are some numeric operations (like the bitwise operators) that are only defined
-for 32-bit numbers, so the "safe range" for numbers used in that way must be
-much smaller.
-2. The range then is `Math.pow(-2,31)` up to `Math.pow(2,31)-1`.
-3. Certain special values such as `NaN` and `Infinity` are not "32-bit safe," in
- that those values when passed to a bitwise operator will pass through the
+1. 虽然整数安全范围是`-(2^53 - 1)` and `2^53 - 1`，包括用`Number.isSafeInteger()`
+测试一个整数是否安全时也是基于该范围。但某些数字操作（例如位操作符）是基于 32-bit 数字
+的，所以在这种情况下的实际安全范围会小得多。即`Math.pow(-2, 31)`到
+`Math.pow(2, 31)-1`.
+2. Certain special values such as `NaN` and `Infinity` are not "32-bit safe," in
+that those values when passed to a bitwise operator will pass through the
 abstract operation `ToInt32` and become simply the `+0` value for the purpose of
  that bitwise operation.
 
 
 ## Floating point
-1. Omission of integer part or fractional part is ok if it is zero, but it is
-not recommended.
-    ```js
-    console.log( .5 ); // 0.5
-    console.log( 5. ); // 5
-    ```
-2. Access priority of decimal separator is higher than that of dot for property
-access.
+1. 在一个`.`既有可能被被解释为小数点又有可能被解释为属性访问符时，这属于茴自写法问题，不
+要分析原理
     ```js
     3.toString(); // SyntaxError: Invalid or unexpected token
-    // The dot will be interpreted a decimal separator, which will form a valid
-    // number with `3`. But function name or variable name can not start with a
-    // number
-
-    3 .toString(); // 3
-    // [White Space](https://tc39.github.io/ecma262/#sec-white-space)
 
     3..toString() // '3'  
-    // `3.` will form a valid number, and the second dot will be interpreted as
-    // a proerty access operator
 
     0.3.toString() // '0.3'  
 
+    3 .toString(); // 3
+
     obj..3 = 333; // SyntaxError: Unexpected number
-    // The first dot will be interpreted as a decimal separator, but `obj.` is
-    // not a valid nuber
     ```
-3. Because storing floating-point values uses twice as much memory as storing
+2. Because storing floating-point values uses twice as much memory as storing
 integer values, ECMAScript always looks for ways to convert values into integers
     ```js
     var floatNum1 = 1.; // missing digit after decimal - interpreted as integer 1
@@ -129,75 +103,104 @@ integer values, ECMAScript always looks for ways to convert values into integers
     ```
 
 
-## Binary Floating-Point and Rounding Errors
-* There are infinitely many real numbers, but only a finite number of them
-(18437736874454810627, to be exact) can be represented exactly by the JavaScript
- floating-point format. This means that when you’re working with real numbers in
- JavaScript, the representation of the number will often be an approximation of
-the actual number.
-* The IEEE-754 floating-point representation used by JavaScript is a binary
-representation, which can exactly represent fractions like `1/2`, `1/8`, and
-`1/1024`. Unfortunately, the fractions we use most commonly are decimal
-fractions `1/10`, `1/100`, and so on. Binary floating-point representations
-cannot exactly represent numbers as simple as `0.1`.
+## 二进制浮点数和四舍五入错误
+1. 实数有无数个，但 JavaScript 通过浮点数的形式只能表示其中有限的个数（确切地说是
+18 437736 874 454 810 627个）。也就是说，当在 JavaScript 中使用实数的时候，常常只是
+真实值的一个近似表示。
+2. JavaScript 采用了 IEEE-754 浮点数表示法（几乎所有现代编程语言所采用），这是一种二进
+制表示法，可以精确地表示分数，比如 1/2、1/8 和 1/1024。遗憾的是，我们常用的分数（特别是
+在金融计算方面）都是十进制分数 1/10、1/100 等。二进制浮点数表示法并不能精确表示类似 0.1
+这样简单的数字。
     ```js
     let x = 0.3 - 0.2;
     let y = 0.2 - 0.1;
-    console.log( x === y );    // false
-    console.log( x === 0.1 );  // false
-    console.log( y === 0.1 );  // true
+    console.log(x === y); // false
+    console.log(x);       // 0.09999999999999998
+    console.log(y);       // 0.1
     ```
-* Because of rounding error, the difference between the approximations of `0.3`
-and `0.2` is not exactly the same as the difference between the approximations
-of `0.2` and `0.1`.
-* The computed values are adequate for almost any purpose: the problem arises
-when we attempt to compare values for equality
-* A future version of JavaScript may support a decimal numeric type that avoids
-these rounding issues. Until then you might want to perform critical financial
-calculations using scaled integers. For example, you might manipulate monetary
-values as integer cents rather than fractional dollars.
-* The most commonly accepted practice is to use a tiny "rounding error" value as
- the tolerance for comparison. This tiny value is often called "machine epsilon"
-  which is commonly `2^-52 (2.220446049250313e-16)` for the kind of numbers in
- JavaScript. `Number.EPSILON` is predefined with this tolerance value:
+3. 因为舍入误差，0.3 和 0.2 之间的近似值实际上并不等于 0.2 和 0.1 之间的近似差值。这个
+问题并不只在 JavaScript 中才会出现，在任何使用二进制浮点数的编程语言中都会有这个问题。
+
+### 解决方法
+#### 使用整数
+在需要精密计算的场景下，只使用整数来计算。例如在金融计算时，要使用整数“分”而不要使用小数
+“元”进行基于货币单位的运算。
+
+#### 使用`Number.EPSILON`
+1. 在这种误差存在的前提下，当两个值的差距小到一定程度的时候，就可以认定它俩是同一个数。
+2. 这个临界值一般被成为 "machine epsilon"，它的值为`2^-52 (2.220446049250313e-16)`。
+可以通过常量`Number.EPSILON`来引用这个值。
+3. 所以在判断两个数是否相等时，可以使用下面的方法
 ```js
+function numbersCloseEnoughToEqual(n1, n2) {
+	return Math.abs( n1 - n2 ) < Number.EPSILON;
+}
+
 let x = 0.3 - 0.2;
 let y = 0.2 - 0.1;
 console.log( x === y );    // false
 console.log( numbersCloseEnoughToEqual(x, y) );  // true
-
-function numbersCloseEnoughToEqual(n1, n2) {
-	return Math.abs( n1 - n2 ) < Number.EPSILON;
-}
 ```
 
 
 ## 数值转换
-There are three functions that convert non-numeric values to numeric value:
-`Number()`, `Number.parseInt()` and `Number.parseFloat()`
+`Number()` `Number.parseInt()` `Number.parseFloat()`
 
 ### `Number()`
-The `Number()` function performs conversions based on these rules:
-* When applied to Boolean values, `true` and `false` get converted into `1` and
-`0`, respectively.
-* When applied to numbers, the value is simply passed through and returned its
-decimal format.
-* When applied to `null`, `Number()` returns 0.
-* When applied to `undefined`, `Number()` returns `NaN`;
-* When applied to strings, the following rules are applied:
-    * If the string contains only numbers, optionally preceded by a plus or
-    minus sign, it is always converted to a decimal number, leading zeros are
-    ignored.
-    * If the string contains a valid fl oating-point format, such as, it is
-    converted into the appropriate floating-point numeric value. Once again,
-    leading zeros are ignored.
-    * If the string contains a valid hexadecimal format, octal format or binary
-    format, it is converted into its decimal format.
-    * If the string is empty, it is converted to 0.
-    * If the string contains anything other than these previous formats, it is converted into `NaN`.
+* 如果参数是布尔值，`true`转换为`1`，`false`转换为`0`。
+    ```js
+    console.log(Number(true));  // 1
+    console.log(Number(false)); // 0
+    ```
+* 如果参数是数字，返回其十进制格式
+    ```js
+    console.log(Number(12));     // 12
+    console.log(Number(0b1100)); // 12
+    console.log(Number(0o14));   // 12
+    console.log(Number(0xC));    // 12
+    ```
+* `null`返回 0，`undefined`返回`NaN`。感觉上`undefined`比`null`要更“空”一些
+    ```js
+    console.log(Number(null));      // 0
+    console.log(Number(undefined)); // NaN
+    ```
+* 如果参数是字符串，则细分为一下的规则：
+    * 如果字符串是标准二进制、八进制或十六进制数，则转换为相应的十进制数值。如果在该二
+    进制、八进制或十六进制前面还带符号或者前导0，则转为`NaN`
+        ```js
+        console.log(Number('0b10'));  // 2
+        console.log(Number('0o10'));  // 8
+        console.log(Number('0x10'));  // 16
+        console.log(Number('+0x10')); // NaN
+        console.log(Number('00x10')); // NaN
+        ```
+    * 如果字符串是十进制数，前导0会被忽略，而且最前面可以带符号，会被正确识别
+        ```js
+        console.log(Number('0010'));    // 10
+        console.log(Number('+0010'));   // 10
+        console.log(Number('-0010'));   // -10
+        console.log(Number('003.14'));  // 3.14
+        console.log(Number('+003.14')); // 3.14
+        console.log(Number('-003.14')); // -3.14
+        ```
+    * 空字符串和空白字符串都会被转为0
+        ```js
+        console.log(Number(''));  // 0
+        console.log(Number(' ')); // 0
+        ```
+    * 几个特殊的字符串转换结果如下
+        ```js
+        console.log(Number('\n'));  // 0
+        console.log(Number('\t'));  // 0
+        console.log(Number('\b'));  // NaN
+        console.log(Number('\r'));  // 0
+        console.log(Number('\f'));  // 0
+        ```
+    * 其他形式的字符串，都会返回`NaN`.
 * When applied to objects, the `valueOf()` method is called and the returned
 value is converted based on the previously described rules. If that conversion
 results in `NaN`, the `toString()` method is called and the rules for converting strings are applied.
+* 如果参数是对象，则先会调用对象的`valueOf()`方法，然后在运用上述转换规则转换
 
 2.第一个函数，即转型函数可以用于任何数据类型。另外两个函数则专门用于把字符串转换成数值。实测后两个也可以转换首项是数字或数字字符串的数组，但不能转换布尔值。
 3.这三个函数对于同样的输入会有返回不同的结果。
@@ -238,19 +241,16 @@ number type.
 
 ## `NaN`
 1. `NaN`, short for Not a Number, which is used to indicate when an operation
-intended to return a number has failed (as opposed to throwing an error).
-2. Any operation involving `NaN` always returns `NaN`.
-3. `NaN` is not equal to any value, including `NaN`.
-4. `Number.isNaN()` and `isNaN()`
-When a value is passed into `isNaN()`, an attempt is made to convert it into a
-number by `Number()`.
-```js
-console.log( isNaN(undefined) );         // true   Number(undefined) returns NaN
-console.log( Number.isNaN(undefined) );  // false
-console.log( isNaN("blue") );            // true   Number("blue") returns NaN
-console.log( Number.isNaN("blue") );     // false
-```
-Don't use `isNaN()`
+intended to return a number has failed (as opposed to throwing an error). 不懂，
+为什么不抛出错误。
+2. 当判断是一个值是否是`NaN`时，要使用`Number.isNaN()`。不要用`isNaN()`，因为它会对非
+数值参数进行转型。
+    ```js
+    console.log( isNaN(undefined) );         // true   Number(undefined) returns NaN
+    console.log( Number.isNaN(undefined) );  // false
+    console.log( isNaN("blue") );            // true   Number("blue") returns NaN
+    console.log( Number.isNaN("blue") );     // false
+    ```
 
 
 ## `-0`
