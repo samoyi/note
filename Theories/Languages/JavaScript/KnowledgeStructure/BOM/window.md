@@ -142,6 +142,35 @@ resulting in the timeout being executed immediately.
 的时候就会报错。
 
 
+## URI-Encoding Methods
+### `encodeURI()`和`encodeURIComponent()`
+1. 需要转码的字符会被替换为十六进制转义序列。
+2. 由于`encodeURI()`是用于编码转换完整的 URI，所以不会转义 URI 中的特殊符号
+    `;/?:@&=+$,#`
+
+### `encodeURI()`和`encodeURIComponent()`的区别
+1. 先看一下正确的使用方法
+    ```js
+    const uri1 = 'http://www.a.com?name=有道';
+    const uri2 = 'http://www.b.com?url=http://www.a.com?name=有道';
+    // 如果希望编码上述两个 URI 并输出浏览器可用的 URI，应该按照下面的方式
+
+    console.log(encodeURI(uri1));
+    // http://www.a.com?name=%E6%9C%89%E9%81%93
+
+    console.log('http://www.b.com?url=' + encodeURIComponent(uri1));
+    // http://www.b.com?url=http%3A%2F%2Fwww.a.com%3Fname%3D%E6%9C%89%E9%81%93
+    ```
+2. `encodeURI`是用于编码转换完整的 URI，它的输出是直接可以用于浏览器等使用的，所以不会
+转码 URI 中本身的符号。如果你用`encodeURIComponent`转换`uri1`，它就会变成不合理的 URI
+格式。
+3. `encodeURIComponent`是用于转码 URI 组件的，如上面例子中，是用来转码查询参数`url`的
+值的，这时如果还使用`encodeURI`转码，结果中就会保留 URI 中的符号，而这些符号并不是给浏
+览器用的。这样就和本身`http://www.b.com`中本身给浏览器用的符号发生了冲突。
+
+### `decodeURI()`和`decodeURIComponent()`
+
+
 ## System Dialogs
 * `confirm()` 点击取消或关闭时返回的是 `false`，`prompt()` 点击取消或关闭时返回的是
 `null`

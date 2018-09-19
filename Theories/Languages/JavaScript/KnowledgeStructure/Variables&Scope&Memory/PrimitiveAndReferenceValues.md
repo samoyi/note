@@ -298,3 +298,310 @@ anywhere in the prototype chain of an object. 即，`object`的原型链中是�
     《Javascript - The Definitive Guide 6th》也只是对这个做了事实陈述，也没有在其他
     地方看到原因。但给人的感觉是，如果调用构造函数创建的实例在这种情况下返回`false`会比
     较违和，所以就让`instanceof`在这种情况下做出了妥协。
+
+
+
+## 解构（Destructuring）赋值
+1. 本质上，这种写法属于“模式匹配”，只要等号两边的模式相同，左边的变量就会被赋予对应的值。
+2. 如果结构赋值不成功，变量的值就等于`undefined`。但是如果是扩展运算符的变量解构赋值失败，则
+值为空数组
+    ```js
+    let [foo] = [];
+    let [bar, baz] = [1];
+    console.log(foo); // undefined
+    console.log(bar); // 1
+    console.log(baz); // undefined
+
+    let [x, y, ...z] = [1];
+    console.log(x); // 1
+    console.log(y); // undefined
+    console.log(z); // []
+    ```
+
+### 默认值
+1. 解构赋值允许指定默认值
+    ```js
+    var [m, n=3] = [2];
+    console.log(m, n); // 2, 3
+    ```
+2. 如果默认值是一个表达式，那么这个表达式是惰性求值的，即只有在用到的时候，才会求值。
+    ```js
+    function fn() {
+    	console.log('aaa'); //并不会执行
+    	return 2233;
+    }
+    let [x = fn()] = [123]; // 因为这里不是用默认值，所以表达式不会求值
+    console.log(x); // 123
+    let [y = fn()] = []; // 这里使用默认值，表达式求值，输出 "aaa"
+    console.log(y); // 2233
+    ```
+3. 默认值可以引用解构赋值的其他变量，但该变量必须已经声明
+    ```js
+    {
+    	let [x = 1, y = x] = [];
+    	console.log(x, y); // 1 1
+    }
+
+    {
+    	let [x = 1, y = x] = [2];
+    	console.log(x, y); // 2 2
+    }
+
+    {
+    	let [x = 1, y = x] = [1, 2];
+    	console.log(x, y); // 1 2
+    }
+
+    {
+    	let [x = y, y = 1] = []; // ReferenceError: y is not defined
+    	// 因为求值过程是从左到右，先执行 x = y，而此时 y 还没来得及被赋予默认值
+    }
+    ```
+
+### Iterable 类型的解构赋值
+```js
+// 数组
+{
+	let [a, b, c] = [1, 2, 3];
+	console.log(a, b, c); // 1 2 3
+}
+{
+	let [foo, [[bar], baz]] = [1, [[2], 3]];
+	console.log(foo, bar, baz); // 1 2 3
+}
+{
+	let [x, , y] = [1, 2, 3];
+	console.log(x, y); // 1 3
+}
+{
+	let [x, y] = [1, 2, 3];
+	console.log(x, y); // 1 2
+
+	[x, y] = [y, x];
+	console.log(x, y); // 2 1
+}
+
+// set
+{
+    let set = new Set([1, 2, 3]);
+    let [x, y, z] = set;
+    console.log(x, y, z); // 1 2 3
+}
+{
+    let set = new Set([1, 2, [3, 4]]);
+    let [x, y, [a, b]] = set;
+    console.log(x, y, a, b); // 1 2 3 4
+}
+{
+    let set = new Set([1, 2, new Set([3, 4])]);
+    let [x, y, [a, b]] = set;
+    console.log(x, y, a, b); // 1 2 3 4
+}
+
+// map
+{
+    let map = new Map();
+    map.set(1, 4).set(2, 5).set(3, 6);
+    let [x, y, z] = map;
+
+    console.log(x); // [1, 4]
+    console.log(y); // [2, 5]
+    console.log(z); // [3, 6]
+}
+{
+    let map = new Map();
+    map.set(1, 6).set(2, 7).set(3, 8).set([4, 9], [5, 10]);
+    let [x, y, z, [a, b]] = map;
+
+    console.log(x); // [1, 6]
+    console.log(y); // [2, 7]
+    console.log(z); // [3, 8]
+    console.log(a); // [4, 9]
+    console.log(b); // [5, 10]
+}
+{
+    let map = new Map();
+    map.set(1, 6).set(2, 7).set(3, 8).set(new Map([[4, 9]]), new Map([[5, 10]]));
+    let [x, y, z, [[a], [b]]] = map;
+
+    console.log(x); // [1, 6]
+    console.log(y); // [2, 7]
+    console.log(z); // [3, 8]
+    console.log(a); // [4, 9]
+    console.log(b); // [5, 10]
+}
+
+// string
+{
+    let str = '123';
+    let [x, y, z] = str;
+    console.log(x, y, z); // "1" "2" "3"
+}
+```
+
+#### 使用扩展运算符的解构赋值
+```js
+let [head, ...tail] = [1, 2, 3, 4];
+console.log(head); // 1
+console.log(tail); // [2, 3, 4]
+
+let [x, y, ...z] = [1];
+console.log(x); // 1
+console.log(y); // undefined
+console.log(z); // []
+```
+
+
+### 对象的解构赋值
+1. 对象的解构与数组有一个重要的不同。数组的元素是按次序排列的，变量的取值由它的位置决定；而对
+象的属性没有次序，变量必须与属性同名，才能取到正确的值。
+    ```js
+    let { foo, bar } = { baz: '没有用', foo: "aaa", bar: "bbb" };
+    console.log(foo); // "aaa"
+    console.log(bar); // "bbb"
+
+    let { baz } = { foo: "aaa", bar: "bbb" };
+    console.log(baz); // undefined
+    ```
+2. 如果变量名与属性名不一致，必须按照下面的规则，不能使用再属性的简写形式
+    ```js
+    let obj = { first: 'hello', last: 'world' };
+    let { first: f, last: l } = obj;
+    console.log(f); // "hello"
+    console.log(l); // "world"
+
+    let { foo: baz } = { foo: 'aaa', bar: 'bbb' };
+    console.log(baz); // "aaa"
+    console.log(foo); // ReferenceError: foo is not defined
+    ```
+
+#### 对象式解构赋值的内部机制
+1. 结合上面正确和错误的例子，以及下面的例子，分析对象式解构赋值的内部机制
+    ```js
+    let { foo: foo, bar: bar, foo: baz} = { foo: "aaa", bar: "bbb" };
+    console.log(foo); // "aaa"
+    console.log(bar); // "bbb"
+    console.log(baz); // "aaa"
+    ```
+2. 先根据左边的属性名，找到右边的对应属性；然后把右边属性的属性值赋给左边对应属性的属性值变量。
+3. 以给`baz`成功赋值为例：先根据左边的`foo`属性名找到右边对应的`foo`属性，获得属性值`'aaa'`。
+4. 然后把`'aaa'`赋值给左边的`foo`属性的属性值变量`baz`。
+5. 所以`foo: baz`里面的`foo`并不是声明的变量，它只是一个查找标识符。正因为它不是一个声明的变
+量，所以才不会和`foo: foo`冲突导致重复声明变量的错误。
+6. 冒号右边才是被声明的变量，所以下面的就会出错
+    ```js
+    let {foo: baz, bar: baz} = { foo: "aaa", bar: "bbb" };
+    // SyntaxError: Identifier 'baz' has already been declared
+    ```
+
+#### 和数组一样也可以嵌套
+
+2.嵌套赋值
+let obj = {};
+let arr = [];
+({ foo: obj.prop, bar: arr[0] } = { foo: 123, bar: true });//不加括号会报错
+console.log( obj );// {prop:123}
+console.log( arr );// [true]
+
+3. 也可以使用默认值
+var {x = 3} = {x: undefined};
+
+4. 解构赋值允许等号左边的模式之中不放置任何变量名，也允许右边是空对象。但不允许右边是null或者undefined
+
+
+三. 字符串式
+const [a, b, c, d, e] = 'hello';
+let {length : len} = 'hello';
+console.log( len ); //5。看起来这里讲字符串字面量转换成了包装类型对象形式
+
+
+四. 数值和布尔值式解构赋值
+解构赋值时，如果等号右边是数值和布尔值，则会先转为对象。
+let {toFixed: fn1} = 123;
+console.log( fn1 );// function toFixed() { [native code] }
+
+let {toString: fn2} = true;
+console.log( fn2 );// function toString() { [native code] }
+上面的两个例子，数值和布尔值都会转换成其基本包装类型的对象，然后将与左边对应的方法名赋给左边的变量
+
+
+五. 函数参数式解构赋值
+function add([x, y])
+{
+console.log(x + y);
+}
+let arr = [6, 4];
+add(arr); // 10
+参数中的数组在函数内部被解构为两个变量
+
+1. 函数参数式解构也支持默认值
+function move({x = 0, y = 0} = {} )
+{
+console.log( [x, y] );
+}
+
+move({x: 3, y: 8}); // [3, 8]
+move({x: 3}); // [3, 0]
+move({}); // [0, 0]
+move( ); // [0, 0]
+
+六. 圆括号问题
+对于编译器来说，一个式子到底是模式，还是表达式，没有办法从一开始就知道，必须解析到（或解析不到）等号才能知道。
+
+由此带来的问题是，如果模式中出现圆括号怎么处理。ES6的规则是，只要有可能导致解构的歧义，就不得使用圆括号。
+
+建议只要有可能，就不要在模式中放置圆括号。
+
+1. 不能使用圆括号的情况
+
+以下三种解构赋值不得使用圆括号。
+
+（1）变量声明语句中，不能带有圆括号。
+var [(a)] = [1];
+
+var {x: (c)} = {};
+
+var ({x: c}) = {};
+
+var {(x: c)} = {};
+
+var {(x): c} = {};}
+
+var { o: ({ p: p }) } = { o: { p: 2 } };
+
+上面三个语句都会报错，因为它们都是变量声明语句，模式不能使用圆括号。
+
+（2）函数参数中，模式不能带有圆括号。
+
+函数参数也属于变量声明，因此不能带有圆括号。
+
+function f([(z)]) { return z; }
+// 报错
+（3）赋值语句中，不能将整个模式，或嵌套模式中的一层，放在圆括号之中。
+
+({ p: a }) = { p: 42 };
+
+([a]) = [5];
+
+上面代码将整个模式放在圆括号之中，导致报错。
+
+[({ p: a }), { x: c }] = [{}, {}];
+
+上面代码将嵌套模式的一层，放在圆括号之中，导致报错。
+
+2. 可以使用圆括号的情况
+
+可以使用圆括号的情况只有一种：赋值语句的非模式部分，可以使用圆括号。
+
+[(b)] = [3];
+({ p: (d) } = {});
+[(parseInt.prop)] = [3];
+上面三行语句都可以正确执行，因为首先它们都是赋值语句，而不是声明语句；其次它们的圆括号都不属于模式的一部分。第一行语句中，模式是取数组的第一个成员，跟圆括号无关；第二行语句中，模式是p，而不是d；第三行语句与第一行语句的性质一致。
+
+
+七. 用途
+
+2. 对象的解构赋值，可以很方便地将现有对象的方法，赋值到某个变量。
+let { log, sin, cos } = Math;
+
+Note however, that swapping variables with destructuring assignment causes significant performance loss, as of October 2017.
