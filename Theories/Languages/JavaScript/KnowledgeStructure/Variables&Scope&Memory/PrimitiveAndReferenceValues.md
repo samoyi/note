@@ -439,6 +439,11 @@ anywhere in the prototype chain of an object. 即，`object`的原型链中是�
 }
 ```
 
+1. 如果等号右边不是 Iterable 类型，则会报错
+    ```js
+    let [] = {}; // TypeError: {} is not iterable
+    ```
+
 #### 使用扩展运算符的解构赋值
 ```js
 let [head, ...tail] = [1, 2, 3, 4];
@@ -494,114 +499,157 @@ console.log(z); // []
     // SyntaxError: Identifier 'baz' has already been declared
     ```
 
-#### 和数组一样也可以嵌套
+#### 和数组一样也可以嵌套解构
+```js
+const obj = {
+  p: [
+    'Hello',
+    { y: 'World' }
+  ]
+};
 
-2.嵌套赋值
-let obj = {};
-let arr = [];
-({ foo: obj.prop, bar: arr[0] } = { foo: 123, bar: true });//不加括号会报错
-console.log( obj );// {prop:123}
-console.log( arr );// [true]
+let { p: [x, { y }] } = obj;
+console.log(x); // "Hello"
+console.log(y); // "World"
+```
+```js
+const node = {
+	loc: {
+		start: {
+			line: 1,
+			column: 5
+		}
+	}
+};
 
-3. 也可以使用默认值
-var {x = 3} = {x: undefined};
+let { loc, loc: { start }, loc: { start: { line }} } = node;
+console.log(loc); // {start: {…}}
+console.log(start); // {line: 1, column: 5}
+console.log(line); // 1
+```
 
-4. 解构赋值允许等号左边的模式之中不放置任何变量名，也允许右边是空对象。但不允许右边是null或者undefined
+#### 也可以使用默认值
+```js
+var {x = 3} = {};
+x // 3
+
+var {x, y = 5} = {x: 1};
+x // 1
+y // 5
+
+var {x: y = 3} = {};
+y // 3
+
+var {x: y = 3} = {x: 5};
+y // 5
+
+var { message: msg = 'Something went wrong' } = {};
+msg // "Something went wrong"
+```
 
 
-三. 字符串式
-const [a, b, c, d, e] = 'hello';
-let {length : len} = 'hello';
-console.log( len ); //5。看起来这里讲字符串字面量转换成了包装类型对象形式
+### 数值和布尔值式解构赋值
+解构赋值的规则是，只要等号右边的值不是对象或数组，就先将其转为对象。
+```js
+let {toString: ns} = 123;
+console.log(ns === Number.prototype.toString); // true
+
+let {toString: bs} = true;
+console.log(bs === Boolean.prototype.toString); // true
+```
 
 
-四. 数值和布尔值式解构赋值
-解构赋值时，如果等号右边是数值和布尔值，则会先转为对象。
-let {toFixed: fn1} = 123;
-console.log( fn1 );// function toFixed() { [native code] }
-
-let {toString: fn2} = true;
-console.log( fn2 );// function toString() { [native code] }
-上面的两个例子，数值和布尔值都会转换成其基本包装类型的对象，然后将与左边对应的方法名赋给左边的变量
-
-
-五. 函数参数式解构赋值
-function add([x, y])
-{
-console.log(x + y);
+### 函数参数式解构赋值
+```js
+// 对象形式
+{    
+    function add({x, y}){
+        console.log(x + y);
+    }
+    add({x: 1, y: 2}); // 3
 }
-let arr = [6, 4];
-add(arr); // 10
-参数中的数组在函数内部被解构为两个变量
 
-1. 函数参数式解构也支持默认值
-function move({x = 0, y = 0} = {} )
-{
-console.log( [x, y] );
+// 数组形式
+{    
+    function add([x, y]){
+        console.log(x + y);
+    }
+    add([1, 2]); // 3
+
+    // 遍历过程共调用两次回调，分别传参[1, 2]好[3, 4]，解构赋值给 a 和 b
+    let arr = [[1, 2], [3, 4]].map(([a, b]) => a + b);
+    console.log(arr); // [3, 7]
 }
+```
 
-move({x: 3, y: 8}); // [3, 8]
-move({x: 3}); // [3, 0]
-move({}); // [0, 0]
-move( ); // [0, 0]
+#### 默认值要改为使用对象形式参数
+1. 最基本的默认值
+    ```js
+    {
+    	function add({x=1, y=2}){
+    		 console.log(x + y);
+    	 }
+    	 add({}); // 3
+    	 add({x: 3, y: 4}); // 7
+    }
+    {
+    	function add([x=1, y=2]){
+    		console.log(x + y);
+    	}
+    	add([]); // 3
+    	add([3, 4]); // 7
+    }
+    ```
+    注意这里仍然要传参一个空对象或空数组，否则就是在对`undefined`解构了，会报错
+2. 显然这还不够默认。应该把空对象或空数组设置为普通的函数参数默认值
+    ```js
+    {
+    	function add({x=1, y=2} = {}){
+    		 console.log(x + y);
+    	 }
+    	 add(); // 3
+    	 add({x: 3, y: 4}); // 7
+    }
+    {
+    	function add([x=1, y=2] = []){
+    		console.log(x + y);
+    	}
+    	add(); // 3
+    	add([3, 4]); // 7
+    }
+    ```
 
-六. 圆括号问题
-对于编译器来说，一个式子到底是模式，还是表达式，没有办法从一开始就知道，必须解析到（或解析不到）等号才能知道。
+### 常见用途
+1. 交换变量值
+    ```js
+    let x = 1;
+    let y = 2;
 
-由此带来的问题是，如果模式中出现圆括号怎么处理。ES6的规则是，只要有可能导致解构的歧义，就不得使用圆括号。
+    [x, y] = [y, x];
+    ```
+根据[这篇文章](https://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array)
+，截至 2017.10，这种方式有明显的性能损失
+2. 从函数返回多个值
+    ```js
+    // 返回一个数组
+    function example() {
+      return [1, 2, 3];
+    }
+    let [a, b, c] = example();
 
-建议只要有可能，就不要在模式中放置圆括号。
-
-1. 不能使用圆括号的情况
-
-以下三种解构赋值不得使用圆括号。
-
-（1）变量声明语句中，不能带有圆括号。
-var [(a)] = [1];
-
-var {x: (c)} = {};
-
-var ({x: c}) = {};
-
-var {(x: c)} = {};
-
-var {(x): c} = {};}
-
-var { o: ({ p: p }) } = { o: { p: 2 } };
-
-上面三个语句都会报错，因为它们都是变量声明语句，模式不能使用圆括号。
-
-（2）函数参数中，模式不能带有圆括号。
-
-函数参数也属于变量声明，因此不能带有圆括号。
-
-function f([(z)]) { return z; }
-// 报错
-（3）赋值语句中，不能将整个模式，或嵌套模式中的一层，放在圆括号之中。
-
-({ p: a }) = { p: 42 };
-
-([a]) = [5];
-
-上面代码将整个模式放在圆括号之中，导致报错。
-
-[({ p: a }), { x: c }] = [{}, {}];
-
-上面代码将嵌套模式的一层，放在圆括号之中，导致报错。
-
-2. 可以使用圆括号的情况
-
-可以使用圆括号的情况只有一种：赋值语句的非模式部分，可以使用圆括号。
-
-[(b)] = [3];
-({ p: (d) } = {});
-[(parseInt.prop)] = [3];
-上面三行语句都可以正确执行，因为首先它们都是赋值语句，而不是声明语句；其次它们的圆括号都不属于模式的一部分。第一行语句中，模式是取数组的第一个成员，跟圆括号无关；第二行语句中，模式是p，而不是d；第三行语句与第一行语句的性质一致。
-
-
-七. 用途
-
-2. 对象的解构赋值，可以很方便地将现有对象的方法，赋值到某个变量。
-let { log, sin, cos } = Math;
-
-Note however, that swapping variables with destructuring assignment causes significant performance loss, as of October 2017.
+    // 返回一个对象
+    function example() {
+      return {
+        foo: 1,
+        bar: 2
+      };
+    }
+    let { foo, bar } = example();
+    ```
+3. 直接以数组或对象传参。不过与`apply`和 spread 运算符来传参数组不同，这里的函数必须预定义解
+构赋值格式的参数。
+4. 提取对象中的属性和方法。常见于获取模块方法。
+5. 遍历 map
+    ```js
+    for (let [key, value] of map) {}
+    ```
