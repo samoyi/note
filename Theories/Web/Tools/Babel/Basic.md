@@ -40,36 +40,40 @@ been approved to be part of a release of Javascript.
 中，但已经在未来的规范中制定完成，开始有环境支持。
 
 
-## Babel 自带的 polifill 模块
-1. 如果你只是用 Transform Plugins，会发现很多ES6、ES7的东西并不会被转换，仍然不能兼容
-本来就不兼容的环境。转换以下代码：
-```js
-{
-  let arr = Array.from('123');
-}
-console.log(arr);
-```
-得到的结果是：
-```js
-{
-  var _arr = Array.from('123');
-}
-console.log(arr);
-```
-同样是ES6的特性，块级作用域和`let`就可以被转换，但`Array.from`就不会被转换。  
-因为 Transform Plugins 只转换语法，不转换语言 API，更不转换环境 API。  
-所以像`promise`、`Array.from`这样的ES6 API不会被转换，像`fetch`这样的DOM API更不会被
-转换。  
-想要转换API，需要找相应的polyfill来实现。
-2. The `babel-polyfill` and `transform-runtime` modules are used to serve the
-same function in two different ways. Both modules ultimately serve to emulate an
-ES2015+ environment with two things: a slew of polyfills as provided by
-[core-js](https://github.com/zloirock/core-js), as well as a complete
-[regenerator runtime](https://github.com/facebook/regenerator).
-2. `babel-polyfill`的方法是直接在全局环境下添加对象和方法，以及直接在built-in对象的原
-型上添加方法，所以它只适合应在封闭的应用中，而不适合用于供他人使用的库或工具里，否则有可
-能会和他人的使用环境冲突。
-3. `transform-runtime`不会污染全局环境，但也不能polyfill实例方法。不懂原理。
+## 仍然需要 polyfill
+### 问题
+1. 如果你只是用 Transform Plugins，会发现很多 ES6、ES7 的东西并不会被转换，仍然不能兼
+容本来就不兼容的环境。
+2. 转换以下代码：
+    ```js
+    {
+      let arr = Array.from('123');
+    }
+    console.log(arr);
+    ```
+    得到的结果是：
+    ```js
+    {
+      var _arr = Array.from('123');
+    }
+    console.log(arr);
+    ```
+    同样是 ES6 的特性，块级作用域和`let`就可以被转换，但`Array.from`就不会被转换。  
+2. 因为 Transform Plugins 只转换语法，不转换语言 API，更不转换环境 API。  
+3. 所以像`promise`、`Array.from`这样的 ES6 API 不会被转换，像`fetch`这样的DOM API更
+不会被转换。`async`函数也需要 polyfill 才能使用，可能也是属于 ES6 API 。
+想要转换API，需要找相应的 polyfill 来实现。
+
+### 解决
+1. Babel 自带的`babel-polyfill`和`transform-runtime`两个模块可以实现上述需要的功能，
+但是是以不同的方式。
+2. 两个模块都会使用[core-js](https://github.com/zloirock/core-js)提供一系列的
+polyfill，并提供一个完整的[regenerator runtime](https://github.com/facebook/regenerator)。
+3. 不同之处在于，`babel-polyfill`的方法是直接在全局环境下添加对象和方法，以及直接在
+built-in 对象的原型上添加方法，所以它只适合应在封闭的应用中，而不适合用于供他人使用的库
+或工具里，否则有可能会和他人的使用环境冲突。而`transform-runtime`不会污染全局环境，不
+会在 built-in 对象上添加方法，所以不会引发上述冲突。但也因此不能 polyfill 实例方法。
+4. 使用`babel-polyfill`需要手动引入，具体用法看[文档](https://babeljs.io/docs/en/babel-polyfill)
 
 
 ## References

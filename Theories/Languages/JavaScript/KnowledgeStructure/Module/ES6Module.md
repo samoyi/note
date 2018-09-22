@@ -278,23 +278,28 @@ export default function(x) {
 2. `import()`函数与所加载的模块没有静态连接关系，这点也是与`import`语句不相同。
 `import()`类似于 Node 的`require`方法，区别主要是前者是异步加载，后者是同步加载。
 3. `import()`加载模块成功以后，这个模块会整体作为一个对象被加载，当作`then`方法的参数
-```js
-// module.js
-export let name = '33';
-export let age = 22;
-```
-```js
-let p = import('./module.js');
-p.then(res=>{
-    console.log(res.name); // "33"
-    console.log(res.age); // 22
-})
-.catch(err=>{
-    console.error(err);
-});
-```
-
-
+    ```js
+    // module.js
+    export let name = '33';
+    export let age = 22;
+    ```
+    ```js
+    let p = import('./module.js');
+    p.then(res=>{
+        console.log(res.name); // "33"
+        console.log(res.age); // 22
+    })
+    .catch(err=>{
+        console.error(err);
+    });
+    ```
+4. 如果模块有`default`输出接口，可以用`default`属性获得。
+    ```js
+    import('./myModule.js')
+    .then(myModule => {
+        console.log(myModule.default);
+    });
+    ```
 
 
 
