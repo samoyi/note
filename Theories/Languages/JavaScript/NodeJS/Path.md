@@ -44,8 +44,8 @@ D:\
 ```
 
 
-
-## `basename()` and `extname()`
+## 方法
+### `basename()` and `extname()`
 * `path.basename`: trailing directory separators are ignored
     ```js
     const path = require('path');
@@ -63,4 +63,29 @@ D:\
     console.log( path.extname('htaccess.') );    // '.'
     console.log( path.basename('htaccess') );    // 'htaccess'
     console.log( path.extname('htaccess') );     // ''
+    ```
+
+
+### `path.join([...paths])`
+1. 将多个路径连接到一起，返回一个合理的结果路径。
+2. 路径分隔符会采用当前平台所使用的分隔符。比如在 windows 系统里是`\`而不是`/`
+    ```js
+    const {join} = require('path');
+    let path = join('/foo', 'bar', 'baz/asdf', 'quux', '..');
+    console.log(path); // \foo\bar\baz\asdf
+    ```
+3. 长度为零的路径片段会被忽略
+    ```js
+    let path = join('/foo', '', 'baz/asdf');
+    console.log(path); // \foo\baz\asdf
+    ```
+4. 如果连接后的路径字符串是一个长度为零的字符串，则返回`'.'`，表示当前工作目录
+    ```js
+    let path = join('', '');
+    console.log(path); // .
+    ```
+5. 如果任一路径片段不是一个字符串，则抛出`TypeError`
+    ```js
+    let path = join('foo', {}, 'bar');
+    console.log(path); // TypeError: Path must be a string. Received {}
     ```
