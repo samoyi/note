@@ -23,9 +23,8 @@ source map, and AST.
 [很多Transform Plugins](https://babeljs.io/docs/plugins/#transform-plugins)。
 2. 把他们全部打包成一个虽然简单，但是显然过于庞大，冗余巨大。然而每次都要根据自己的需求一
 个个引入也是相当麻烦。
-3. 因此Babel将这些插件分类打包成
-[若干个preset](https://babeljs.io/docs/plugins/#official-presets)，每次可以根据自己
-的需求引入特定的preset。
+3. 因此Babel将这些插件分类打包成[若干个preset](https://babeljs.io/docs/en/presets)，
+每次可以根据自己的需求引入特定的 preset。
 
 #### Stage-X (Experimental Presets)
 1. Any transforms in stage-x presets are changes to the language that haven’t
