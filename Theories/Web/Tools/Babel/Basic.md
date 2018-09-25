@@ -73,6 +73,10 @@ built-in 对象的原型上添加方法，所以它只适合应在封闭的应�
 或工具里，否则有可能会和他人的使用环境冲突。而`transform-runtime`不会污染全局环境，不
 会在 built-in 对象上添加方法，所以不会引发上述冲突。但也因此不能 polyfill 实例方法。
 4. 使用`babel-polyfill`需要手动引入，具体用法看[文档](https://babeljs.io/docs/en/babel-polyfill)
+。需要注意的是，虽然`babel-polyfill`原则上是哪个模块需要就在哪个模块引用。但是在使用
+webpack 时，有很多第三方模块里都有需要`babel-polyfill`的地方，所以你不能只在你自己写的
+模块里引用。在这种情况下，只需要在 webpack 的构建入口文件里（比如`src/index.js`）引入
+一次就行了，相当于全局有效。
 
 
 ## References
