@@ -1,4 +1,35 @@
-# CommonJS and AMD
+# CommonJS
+
+
+## Node.js 的 CommonJS 模块实现
+### 缘起
+在 ES6 之前，JS 都是不支持模块化的。Node.js 使用 CommonJS 规范实现了模块化。
+
+### 实现原理
+1. 其实要实现模块功能，并不需要语法层面的支持。Node.js 并没有增加任何 JavaScript 语法。
+2. 实现模块功能的奥妙就在于 JavaScript 是一种函数式编程语言，它支持闭包。如果我们把一
+段 JavaScript 代码用一个函数包装起来，这段代码的所有全局变量就变成了函数内部的局部变量。
+3. 例如下面一个模块`sayHi.js`
+    ```js
+    function sayHi(){
+        console.log('Hi');
+    }
+    ```
+4. 当`require('sayHi')`时，Node.js 加载该文件，然后把它内部的代码包装进函数，变成这样执行：
+    ```js
+    (function(exports, require, module, __filename, __dirname){
+        function sayHi(){
+            console.log('Hi');
+        }
+    })
+    ```
+5. 这样，本来的全局变量`sayHi`就变成了匿名函数内部的局部变量。
+
+#### 实现变量输出
+1. 上面封闭了模块的作用域，但还不能把模块内的变量`sayHi`输出给外部。
+
+
+
 
 ## CommonJS 模块的加载原理
 1. CommonJS 的一个模块，就是一个脚本文件。`require`命令第一次加载该脚本，就会执行整个
@@ -46,5 +77,3 @@ var b = require('./b.js');
 
 
 ## References
-* [JavaScript Module Systems Showdown: CommonJS vs AMD vs ES2015](https://auth0.com/blog/javascript-module-systems-showdown/)
-* [ECMAScript 6 入门](http://es6.ruanyifeng.com/#docs/module-loader#CommonJS-%E6%A8%A1%E5%9D%97%E7%9A%84%E5%8A%A0%E8%BD%BD%E5%8E%9F%E7%90%86)

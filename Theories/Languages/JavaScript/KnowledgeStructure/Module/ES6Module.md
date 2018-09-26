@@ -59,7 +59,41 @@ function foo() {
     ```
 
 ### 动态绑定
-1. CommonJS 模块输出的是一个值的拷贝，ES6 模块输出的是值的引用
+1. CommonJS 模块输出的是一个值的拷贝，ES6 模块输出的是值的引用。
+
+### CommonJS 模块输出值的拷贝
+1. 因此 CommonJS 模块一旦输出一个值，模块内部的变化就影响不到这个值。
+    ```js
+    // lib.js
+    let counter = 3;
+
+    function incCounter() {
+        counter++;
+    }
+
+    module.exports = {
+        counter,
+        incCounter,
+    };
+    ```
+    ```js
+    // main.js
+
+    // 这里分别拷贝了一个基本类型的数值变量和一个函数指针
+    // 这里的 counter 和 lib 模块里面的 counter 已经没关系了
+    let mod = require('./lib');
+
+    console.log(mod.counter);  // 3
+    mod.incCounter();
+    console.log(mod.counter); // 3
+
+    console.log(counter);  // 3   本地的 counter
+    incCounter(); // 因为闭包，所以这个函数修改的是 lib 模块的 counter，而不是本地的
+    console.log(counter); // 3
+    ```
+2. 如果希望获取到模块里的值而不是其拷贝，可以用 getter 输出值
+
+
 2. `export`语句输出的接口，与其对应的值是动态绑定关系，即通过该接口，可以取到模块内部实
 时的值。
 3. JS 引擎对脚本静态分析的时候，遇到模块加载命令`import`，就会生成一个只读引用。等到脚
@@ -304,65 +338,47 @@ export default function(x) {
 
 
 ## 加载方式
-### `<script>` 标签加载
-```html
-<script type="module">
-import {year} from './test.js';
-console.log(year);
-</script>
-```
-虽然看到过说下面这种加载方式的，但实测并不行：
-```html
-<script type="module" src="./test.js"></script>
-```
-
-#### `defer` 加载
-使用这种方式加载，相当于使用`defer`属性加载脚本。即：
-* 异步加载
-* 页面解析完成后才会执行
-* 多个模块的执行顺序按照标签顺序
-
-#### `async` 加载
-如果再加上`async`属性，则会变成`async`属性时候规则。即
-* 异步加载
-* 加载完成后立即执行
-* 多个模块的执行顺序不一定按照标签顺序，谁先加载完谁就执行
-
-#### 标签内部加载
-也可以在标签内部加载
-```html
-<script type="module">
-  import utils from "./utils.js";
-  // other code
-</script>
-```
-
-#### 与普通 `<script>` 标签加载的不同之处
-* 代码是在模块作用域之中运行，而不是在全局作用域运行。模块内部的顶层变量，外部不可见。
-    ```js
+### 浏览器加载
+1. 浏览器加载 ES6 模块，也使用`<script>`标签，但是要加入`type="module"`特性。
+    ```html
     <script type="module">
-        import {age} from './test.js';
-        console.log(age); // 22
-    </script>
-    <script>
-    'use strict';
-    console.log(age); // ReferenceError: age is not defined
+        import {year} from './year.js'; // 不能省略后缀
+        console.log(year);
     </script>
     ```
-* 模块脚本自动采用严格模式
+2. 默认都是`defer`加载。如果想要`async`加载可以加上该特性。
+3. 模块的作用域只在`<script>`标签之间，外部无法引用
+    ```html
+    <script type="module">
+        import foo from './components/foo.js'
+        console.log(foo);
+    </script>
+    <script>
+    	console.log(typeof foo); // undefined
+    </script>
+    ```
+4. 另外还可以加载一个封闭的模块，即无法获取其输出的值。
+    ```html
+    <script type="module" src="./test.js">
+        console.log(typeof foo); // undefined
+    </script>
+    ```
+
+#### 与普通 `<script>` 标签加载的不同之处
+* 代码是在模块作用域之中运行，而不是在全局作用域运行。
+* 模块脚本自动采用严格模式。
 * 模块之中，可以使用`import`命令加载其他模块（`.js`后缀不可省略），也可以使用`export`
-命令输出对外接口。
+命令输出对外接口。不懂输出后怎么引用
 * 同一个模块如果加载多次，将只执行一次。
 * 模块之中，顶层的`this`关键字返回`undefined`，而不是指向`window`。利用这个语法点，可
 以侦测当前代码是否在 ES6 模块之中。
-    ```js
+    ```html
     <script type="module">
-        import {age} from './test.js';
         console.log(this); // undefined
     </script>
     <script>
-    'use strict';
-    console.log(this); // window
+        'use strict';
+        console.log(this); // window
     </script>
     ```
 
