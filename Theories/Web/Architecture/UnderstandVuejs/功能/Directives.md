@@ -6,8 +6,8 @@
 2. 各种指令就是接口。当 Vue 编译 HTML 模板时，各种节点中的指令将告诉 Vue 该如何处理该
 节点。之后数据更新时，指令也会告诉 Vue 怎么更新 View。
 3. 也就是说，Vue 通过各种各样的指令，基于 Model，来操作 View。
-3. 比如 `v-for` 指令告诉 Vue 要循环该节点，`v-if` 指令告诉 Vue 要根据变量的布尔值来决
-定是否渲染该节点，`{{}}` 指令告诉 Vue 要把其中的变量替换为变量值。
+3. 比如`v-for`指令告诉 Vue 要循环该节点，`v-if`指令告诉 Vue 要根据变量的布尔值来决定
+是否渲染该节点，`{{}}` 指令告诉 Vue 要把其中的变量替换为变量值。
 
 
 ## Arguments 和 Modifiers
@@ -127,17 +127,17 @@ new Vue({
 ```
 
 
-### Hook Functions
+### 钩子函数
 规定指令什么时候生效
 
 #### `bind`
-1. Called only once, when the directive is first bound to the element. This is
-where you can do one-time setup work.
+只调用一次，指令第一次绑定到元素时调用。在这里可以进行一次性的初始化设置。
 
 #### `inserted`
-1. Called when the bound element has been inserted into its parent node (this
-only guarantees parent node presence, not necessarily in-document).
-2. `bind`和`inserted`这两个钩子函数，都是在`beforeMount`和`mounted`之间触发的。也就
+1. 被绑定元素插入父节点时调用 。
+2. 仅保证父节点存在，但不一定已被插入文档中。不懂这是什么意思，本来以为组件不挂载也可以
+触发，但测试不行。
+3. `bind`和`inserted`这两个钩子函数，都是在`beforeMount`和`mounted`之间触发的。也就
 是说，发生在模板编译之后的挂载阶段，所以说不是一边编译模板一边执行绑定。
 3. 不过这样也是有道理的，毕竟钩子函数的第一个参数就是`el`就是实际的节点，要让`el`能正常
 访问，必须在实际 DOM 更新之后，但没必要等到挂载渲染全部完成。有可能的顺序是：
@@ -148,10 +148,9 @@ only guarantees parent node presence, not necessarily in-document).
         data: {
             num1: 22,
         },
-        // 也可以局部注册
         directives: {
             _bind: {
-                bind: function (el, binding vnode) {
+                bind: function (el, binding, vnode) {
                     console.log(el); // 这里证明已经用虚拟 DOM 更新了实际 DOM
                     // <div id="components-demo">
                     //     22
@@ -161,7 +160,7 @@ only guarantees parent node presence, not necessarily in-document).
                 },
             },
             _inserted: {
-                inserted: function (el, binding vnode) {
+                inserted: function (el, binding, vnode) {
                     console.log(el);
                     // <div id="components-demo">
                     //     22
@@ -171,7 +170,7 @@ only guarantees parent node presence, not necessarily in-document).
                 },
             },
             _update: {
-                update: function (el, binding vnode) {
+                update: function (el, binding, vnode) {
                     console.log(el);
                     // <div id="components-demo">
                     //     33
@@ -191,31 +190,59 @@ only guarantees parent node presence, not necessarily in-document).
     ```
 
 #### `update`
-1. Called after the containing component’s VNode has updated, but possibly
-before its children have updated.
-2. 发生在`beforeUpdate`之后，即虚拟 DOM 更新和重渲染，这很合理。
+1. 所在组件的 VNode 更新时调用（并不一定是指令的值更新），但是可能发生在其子 VNode 更
+新之前。
+2. 发生在`beforeUpdate`之后，因为`beforeUpdate`的时间点是整个更新过程的起点。
 3. 和`updated`一样，判断数据是否更新的算法是 Same-value-zero。
-4. The directive’s value may or may not have changed, but you can skip
-unnecessary updates by comparing the binding’s current and old values.
+4. 指令的值可能发生了改变，也可能没有。但是你可以通过比较更新前后的值来忽略不必要的模板
+更新。
+    ```html
+    <!-- name 和 age 的更新都可以触发 foo 指令的 update 钩子 -->
+    <div id="app" v-foo="age">
+		{{name}}
+	</div>
+    ```
+    ```js
+    new Vue({
+	el: '#app',
+    	data: {
+    		age: 22,
+    		name: 'hime',
+    	},
+    	directives: {
+    		foo: {
+    			update(el, {oldValue, value}){
+    				 if (oldValue !== value){
+                         // age 更新了
+    					 // 指令值更新了再执行
+    				 }
+                     else {
+                         // 其他的更新
+                     }
+    			},
+    		},
+    	},
+    })
+    ```
 
 #### `componentUpdated`
-1. Called after the containing component’s VNode and the VNodes of its children
-have updated.
-2. 发生在`updated`之前，这很合理。
+1. 指令所在组件的 VNode 及其子 VNode 全部更新后调用。
+2. 生命周期钩子函数要等待子组件全部更新完是会用到`vm.$nextTick`，那这里为什么却是有了
+一个单独的钩子呢？不懂
+3. 发生在`updated`之前，这很合理。
 
 #### `unbind`
-1. Called only once, when the directive is unbound from the element.
+1. 只调用一次，指令与元素解绑时调用。
 2. 发生在`beforeDestroy`和`destroyed`之间，很合理。
 
 
+
 ### Directive Hook Arguments
-* Apart from `el`, you should treat these arguments as read-only and never
-modify them. If you need to share information across hooks, it is recommended to
-do so through element’s `dataset`.
+* 除了`el`之外，其它参数都应该是只读的，切勿进行修改。如果需要在钩子之间共享数据，建议
+通过元素的`dataset`来进行。
 
 #### `el`
-* The element the directive is bound to. This can be used to directly manipulate
-the DOM.
+* 指令所绑定的元素，可以用来直接操作 DOM 。
 * 即使是最早执行的`bind`钩子函数，也是在挂载阶段虚拟 DOM 替换了真实 DOM 之后。不过此时
 挂载过程还没完成，之后才会触发`mounted`
     ```html

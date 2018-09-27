@@ -69,9 +69,7 @@ const vm = new Vue({
     * 实现 data observation。应该就是指 Observer 模块使用 setter、getter 劫持了实例
         数据。
     * 处理了 computed properties, methods, watch/event callbacks。
-* However, the mounting phase has not been started, and the `$el` property will
-not be available yet.
-* 这一阶段还不涉及模板，只是纯 JS 的部分。
+* 这一阶段还不涉及模板，只是纯 JS 的部分。实例的所以`$el`也还不可用。
 * 创建实例结束后触发`created`
 
 #### `created`
@@ -91,21 +89,19 @@ new Vue({
         // 已经完成了 data observation
         console.log(Object.getOwnPropertyDescriptor(this, 'num1'));
         // {get: ƒ, set: ƒ, enumerable: true, configurable: true}
-        console.log(this.$el); // undefined
+        console.log(this.$el); // undefined  仍未挂载
     },
 });
 ```
 
 ### 第三阶段 编译模板
 * 编译模板只是根据数据更新虚拟 DOM，只有 mounting 才会涉及真实 DOM。所以真实的 DOM 并
-不会更新，下面的例子中，虽然这是`this.$el`已经指向了实际的 DOM 节点，但还是没有编译更新
-过的。
-* This hook is not called during server-side rendering.
-* As mounting hooks do not run during server side rendering, they shouldn’t be used
-for fetching data for components on initialization. `created()` methods are best
-suited for that purpose.
-* 模板编译完成后触发`beforeMount`，the render function is about to be called for
-the first time.
+不会更新，下面的例子中，虽然这是`this.$el`已经指向了实际的 DOM 节点，但还是该节点还是
+没有被更新渲染过的。
+* `beforeMount`钩子在服务器端渲染期间不被调用。
+* 因为涉及挂载的两个钩子函数在服务端渲染期间不会被调用，所以他们不能用于获取数据这样的操
+作。这样的操作应该在`created()`中进行。
+* 模板编译完成后触发`beforeMount`，渲染函数准备首次调用来进行渲染。
 
 #### `beforeMount`
 ```js
@@ -118,6 +114,7 @@ new Vue({
         foo(){return 22},
     },
     beforeMount(){
+        // 该阶段之后才会渲染真实的 HTML
         console.log(this.$el);
         // 打印如下：
         // <div id="components-demo">
@@ -130,14 +127,16 @@ new Vue({
 
 ### 第四阶段 挂载
 * 用编译好的虚拟 DOM 更新实际的 DOM，并进行渲染。
-* 这时`this.$el`指向的实际 DOM 节点已经是更新后的了。并且还带上了`__vue__`属性指向它
-的 Vue 实例。
+* 挂载之后，`this.$el`指向的实际 DOM 节点已经是更新后的了。并且还带上了`__vue__`属性
+指向它的 Vue 实例。
 * If the root instance is mounted to an in-document element, `vm.$el` will also
 be in-document when mounted is called. 不懂，但总之 mounting 阶段会进行渲染，而
 `mounted`触发时已经完成了渲染
 * Note that `mounted` does not guarantee that all child components have also
 been mounted. If you want to wait until the entire view has been rendered, you
 can use `vm.$nextTick` inside of `mounted`:
+* `mounted`触发时只保证该组件已经被挂载，但不保证它的所有子组件也已经被挂载。如果你要确
+保它的子组件都已经挂载，就要在该钩子函数里使用`vm.$nextTick`。
     ```js
     mounted: function () {
       this.$nextTick(function () {
@@ -147,7 +146,7 @@ can use `vm.$nextTick` inside of `mounted`:
     }
     ```
     看起来的意思就是在本次执行周期内，它的所有子组件也都会完成 mounting
-* This hook is not called during server-side rendering.
+* `mounted`钩子在服务器端渲染期间不被调用。
 * 挂载结束后触发`mounted`
 
 #### `mounted`
@@ -181,9 +180,43 @@ new Vue({
 
 ### 第五阶段 数据更新
 * 当有数据更新时，会触发数据属性的 getter。如果该数据更新将影响 DOM，则进入该阶段。
-* 不影响 DOM 的更新不会进入该阶段，不会触发`updated`函数。所谓影响 DOM 更新，包括所有
-影响的情况，例如直接渲染出它的值、在某个影响更新的计算属性中用到该属性、以该属性为标准进
-行`v-for`等等。
+* 不影响 DOM 的更新不会进入该阶段，不会触发涉及更新的两个钩子函数。所谓影响 DOM 更新，
+包括所有影响的情况，可见的和不可见的。可见的例如直接渲染出数据的值，在某个影响更新的计算
+属性中用到该数据，用到该数据的涉及渲染的指令（例如以该数据为长度进行`v-for`）。不可见的
+目前只发现了一个，就是不涉及渲染的指令用到了该数据。
+    ```html
+    <div id="app" v-foo="age">
+		{{name}}
+	</div>
+    ```
+    ```js
+    new Vue({
+    	el: '#app',
+    	data: {
+    		age: 22,
+    		name: 'hime',
+    	},
+    	directives: {
+    		foo: {
+    			bind(el, binding){
+    			},
+    		},
+    	},
+    	beforeUpdate(){
+    		console.log('beforeUpdate')
+    	},
+    	updated(){
+    		console.log('updated')
+    	},
+    	mounted(){
+    		this.age = 33;
+            // age 虽然不涉及渲染，但它出现在了 DOM 的指令里，所以它的更新会触发
+            // beforeUpdate 和 updated
+            // 但如果删除指令，则 age 和 DOM 完全没有关系，则 age 的更新不会触发两个
+            // 更新的钩子函数
+    	},
+    })
+    ```
 * 判断数据是否更新的算法是 Same-value-zero。下面的情况不会触发更新：
     ```js
     new Vue({
@@ -202,42 +235,32 @@ new Vue({
     });
     ```
 * 该阶段结束后，触发`beforeUpdate`，之后将进入虚拟 DOM 更新和重渲染阶段
-* This is a good place to access the existing DOM before an update, e.g. to
-remove manually added event listeners.
-* This hook is not called during server-side rendering, because only the initial
-render is performed server-side.
+* 如果要在更新前做点什么，那就应该在`beforeUpdate`钩子函数中执行。比如移除节点的事件绑
+定。
+* 这个钩子函数也不会在服务端渲染被调用，因为只有初始渲染是在服务端进行的。
 
 ### 第六阶段 虚拟 DOM 更新和重渲染
-* Called after a data change causes the virtual DOM to be re-rendered and patched.
-* 不影响 DOM 的更新不会进入该阶段，不会触发`updated`函数。所谓影响 DOM 更新，包括所有
-影响的情况，例如直接渲染出它的值、在某个影响更新的计算属性中用到该属性、以该属性为标准进
-行`v-for`等等。
-* The component’s DOM will have been updated when this hook is called, so you
-can perform DOM-dependent operations here.
-* However, in most cases you should avoid changing state inside the hook. To
-react to state changes, it’s usually better to use a computed property or
-watcher instead.
-* Note that updated does not guarantee that all child components have also been
-re-rendered. If you want to wait until the entire view has been re-rendered, you
-can use `vm.$nextTick` inside of updated
+* 数据更新引发 DOM 更新后，会触发`updated`函数。
+* 这里所谓的 DOM 更新，和`beforeUpdate`的情况一样，不仅涉及可见的更新，也涉及不引发重
+渲染的的指令的更新。
+* 因为`updated`触发时 DOM 已经更新完成，所以可以进行依赖 DOM 的操作。
+* `updated`触发时只保证该组件已经被重渲染，但不保证它的所有子组件也已经被重渲染。如果你
+要确保它的子组件都已经重渲染，就要在该钩子函数里使用`vm.$nextTick`。
 * 避免在这个钩子函数中操作数据，可能陷入死循环
-* This hook is not called during server-side rendering.
-* 重渲染结束后，触发`updated`
+* 同样在服务端渲染中不会被触发。
 
 ### 第七阶段 准备销毁实例
-* 当调用`vm.$destroy()`，开始进入这一阶段
-* 该阶段结束后，触发`beforeDestroy`，之后将执行实例销毁
-* At this stage the instance is still fully functional.
-* 常用于销毁定时器、解绑全局事件、销毁插件对象等操作
-* This hook is not called during server-side rendering.
+* 当调用`vm.$destroy()`，开始进入这一阶段。
+* 该阶段结束后，触发`beforeDestroy`，之后将执行实例销毁。
+* 在这个阶段内因为还只是准备销毁，所以实例还可以正常使用。
+* 常用于销毁定时器、解绑全局事件、销毁插件对象等操作。
+* 在服务端渲染中不会被触发。
 
 ### 第八阶段 销毁实例
-* All directives of the Vue instance will be unbound, all event listeners will
-be removed, and all child Vue instances will also be destroyed.
-* 销毁完毕后，会触发`destroyed()`
-* `destroyed()` method can be used to do any last minute cleanup or informing a
-remote server that the component was destroyed.
-* This hook is not called during server-side rendering.
+* 实例的所有指令会被解绑，事件监听会被移除，子实例也会销毁。
+* 销毁完毕后，会触发`destroyed()`。
+* `destroyed()`用于销毁实例后的后续清理工作，或者通知远程服务器该本次销毁。
+* 样在服务端渲染中不会被触发。
 
 
 ## 父子组件生命周期顺序
