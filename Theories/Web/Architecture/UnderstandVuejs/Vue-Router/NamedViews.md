@@ -1,14 +1,19 @@
 # Named Views
 
-1. Sometimes you need to display multiple views at the same time instead of
-nesting them. This is where named views come in handy.
-2. 例如路由在不同的用户之间切换，每个用户要显示三个模块，分别是 profile、article 和
-album。当然你也可以只渲染一个包含这三个模块的大模块，但总是有需要独立渲染的场景。
+## 用途
+1. 有时候想同时 (同级) 展示多个视图，而不是嵌套展示，例如创建一个布局，有 sidebar
+(侧导航) 和 main (主内容) 两个视图。
+2. 例如路由在不同的用户之间切换，每个用户要同时同级显示三个模块，分别是 profile、
+article 和 album。当然你也可以只渲染一个包含这三个模块的大模块，但总是有需要独立渲染的
+场景。
 3. 之前配置 routes 的时候，是一个 path 对应 一个 component，现在成了一个 path 对应三
 个 component 了。就需要知道三个 component 分别要渲染到哪个 `route-view`。
 4. 因此就和 slot 的情况一样，在默认 slot 的基础上又需要 named slot。
 
 
+## 方法
+1. 之前在设置 route 时，是`{path: '/', component: Foo}`，现在因为要渲染多个组件，所
+以要把`component`改为`components`，并设置为一个对象。
 ```html
 <div id="app">
     <!-- 两条路由 -->

@@ -2,50 +2,73 @@
 
 ## 基本原理
 * 监听 URL 变化，使用动态组件方法在`<router-view>`上渲染不同的不同的组件
-* 实现一个简单的路由。想做成插件但是没有成功，在插件里定义的 mixin 都是全局的，这导致任
-何一个实例都会有`router-link`和`router-view`子组件。
+* 实现一个很简单的路由器插件：
+
+```js
+// MyRouter.js
+function install (Vue) {
+    Vue.mixin({
+        // 添加两个全局组件 router-link 和 router-view
+        components: {
+            'router-link': {
+                // 和 VueRouter 一样，用 to 表示设置路由路径
+                props: ['to'],
+                // 渲染为一个链接，将路径添加进 href 特性
+                template: `<a :href='"#" + to'><slot></slot></a>`,
+            },
+            'router-view': {
+                data(){
+                    return {
+                        // 这个属性是当前要显示的组件
+                        ViewComponent: null,
+                    };
+                },
+                mounted(){
+                    // 因为通过 vm 实例的 router 选项将路由器实例注入，所以这里可以
+                    // 通过 this.$parent.$options.router 引用路由器实例
+                    const routes = this.$parent.$options.router.routes;
+
+                    // 刚加载页面时，根据当前 hash，设定要显示的组件
+                    this.ViewComponent = routes[location.hash.slice(1)];
+
+                    // 监听 hash 变化，改变显示的组件
+                    window.addEventListener('hashchange', ()=>{
+                        this.ViewComponent = routes[location.hash.slice(1)];
+                    });
+                },
+                // 使用动态组件方法
+                template: `<div :is="ViewComponent"></div>`,
+            },
+        },
+    })
+}
+
+export default class MyRouter {
+    // 实例化路由器时，接受 routes 设置，并将其保存为路由器实例的属性
+    constructor(routes){
+        this.routes = routes;
+    }
+}
+
+MyRouter.install = install;
+```
 
 ```html
-<div id="app">
-    <router-link to="/">home</router-link>
-    <router-link to="/about">about</router-link>
-    <router-link to="/user">user</router-link>
+<body>
+	<div id="app">
+	    <router-link to="/">home</router-link>
+	    <router-link to="/about">about</router-link>
+	    <router-link to="/user">user</router-link>
 
-    <router-view></router-view>
-</div>
-```
-```js
-// 这个 mixin 将为实例添加路由功能
-// 内部会定义两个组件，一个是路由链接 router-link，一个是路由出口 router-view
-const MyRouteMixin = {
-    components: {
-        'router-link': {
-            // 和 VueRouter 一样，用 to 表示设置路由路径
-            props: ['to'],
-            // 渲染为一个链接，将路径添加进 href 特性
-            template: `<a :href='"#" + to'><slot></slot></a>`,
-        },
-        'router-view': {
-            data(){
-                return {
-                    // 这是属性是当前要显示的组件
-                    ViewComponent: null,
-                };
-            },
-            mounted(){
-                // 刚加载页面时，根据当前 hash，设定要显示的组件
-                this.ViewComponent = this.$parent.routes[location.hash.slice(1)];
+	    <router-view></router-view>
+	</div>
+</body>
+<script src="./vue.js"></script>
+<script type="module">
 
-                // 监听 hash 变化，改变显示的组件
-                window.addEventListener('hashchange', ()=>{
-                    this.ViewComponent = this.$parent.routes[location.hash.slice(1)];
-                });
-            },
-            // 使用动态组件方法
-            template: `<div :is="ViewComponent"></div>`,
-        },
-    },
-};
+// 引用和使用路由器插件
+import MyRouter from './MyRouter.js';
+Vue.use(MyRouter);
 
 // 待渲染的组件
 const Home = { template: '<p>Home page</p>' };
@@ -60,67 +83,62 @@ const routes = {
     '/user': User,
 };
 
+// 实例化路由并注入 routes 设置
+const router = new MyRouter(routes);
+
 new Vue({
     el: '#app',
-    data: {
-        routes, // 将路由设置添加到实例
-    },
-    mixins: [MyRouteMixin],
+	// 通过 router 属性注入路由器实例
+	router,
 });
+</script>
 ```
 
 
 ## 基本用法
-1. With Vue.js, we are already composing our application with components. When
-adding Vue Router to the mix, all we need to do is map our components to the
-routes and let Vue Router know where to render them. 这段描述其实和上面基本原理相同
-2. By injecting the router, we get access to it as `this.$router` as well as the
-current route as `this.$route` inside of any component
+1. 使用 Vue.js ，我们已经可以通过组合组件来组成应用程序，当你要把 Vue Router 添加进来，
+我们需要做的是，将组件 (components) 映射到路由 (routes)，然后告诉 Vue Router 在哪里渲
+染它们。这段描述其实和上面基本原理相同。
+2. 通过注入路由器，我们可以在任何组件内通过`this.$router`访问路由器，也可以通过
+`this.$route`访问当前路由。
 
 ```html
 <div id="app">
     <p>
-        <!-- use router-link component for navigation. -->
-        <!-- specify the link by passing the `to` prop. -->
-        <!-- `<router-link>` will be rendered as an `<a>` tag by default -->
+        <!-- 使用 router-link 组件来导航. -->
+        <!-- 通过传入 `to` 属性指定链接. -->
+        <!-- <router-link> 默认会被渲染成一个 `<a>` 标签 -->
         <router-link to="/foo">Go to Foo</router-link>
         <router-link to="/bar">Go to Bar</router-link>
     </p>
-    <!-- route outlet -->
-    <!-- component matched by the route will render here -->
+    <!-- 路由出口 -->
+    <!-- 路由匹配到的组件将渲染在这里 -->
     <router-view></router-view>
 </div>
 ```
 ```js
-// 0. If using a module system (e.g. via vue-cli), import Vue and VueRouter
-// and then call `Vue.use(VueRouter)`.
-
-// 1. Define route components.
-// These can be imported from other files
+// 1. 定义 (路由) 组件。
+// 可以从其他文件 import 进来
 const Foo = { template: '<div>foo</div>' };
 const Bar = { template: '<div>bar</div>' };
 
-// 2. Define some routes
-// Each route should map to a component. The "component" can
-// either be an actual component constructor created via
-// `Vue.extend()`, or just a component options object.
+// 2. 定义路由
+// 每个路由应该映射一个组件。 其中"component" 可以是
+// 通过 Vue.extend() 创建的组件构造器，
+// 或者，只是一个组件配置对象。
 const routes = [
     { path: '/foo', component: Foo },
     { path: '/bar', component: Bar },
 ];
 
-// 3. Create the router instance and pass the `routes` option
+// 3. 创建 router 实例，然后传 routes 配置
 const router = new VueRouter({
     routes,
 });
 
-// 4. Create and mount the root instance.
-// Make sure to inject the router with the router option to make the
-// whole app router-aware.
+// 通过 router 配置参数注入路由，
+// 从而让整个应用都有路由功能
 const app = new Vue({
-    // 虽然没有明确在实例里定义 router-link 和 router-view 两个组件，但确实在实例挂
-    // 载的元素内这两个组件是可用的。这说明在内部 Vue Router 给该实例注册了这两个组件
-    // 虽然不知道实际是不是像我上面的 MyRouteMixin 一样，但总之是注册了这两个组件。
     router,
     created(){
         console.log(this.$router);
@@ -130,6 +148,17 @@ const app = new Vue({
     },
 }).$mount('#app');
 ```
+
+
+## 重定向和默认路由
+* 下面的例子中，在试图路由至`/foo`时，会被重定向至`/bar`
+    ```js
+    {path: '/foo', redirect: '/bar'}
+    ```
+* 下面的例子，在路径匹配不到任何一条设定的路由时，会重定向至指定的路由
+    ```js
+    {path: '*', redirect: '/'}
+    ```
 
 
 ## Matching Priority
@@ -168,7 +197,7 @@ new Vue({
 <div id="app">
     <router-link to="/user/33">user33</router-link>
     <!--
-        声明式导航时，命名路由可以向下面这样设置动态路由匹配，比上面的的要麻烦，不过意
+        声明式导航时，命名路由可以像下面这样设置动态路由匹配，比上面的的要麻烦，不过意
         思更明确一些
     -->
     <router-link :to="{ name: 'user', params: { username: '22' }}">User22</router-link>
@@ -193,11 +222,11 @@ new Vue({
     mounted(){
         setInterval(()=>{
             if (this.$route.params.username === '22'){
-                this.$router.push('33');
+                this.$router.push('/user/33');
             }
             else {
-                // 编程式导航时，相比于上面直接`push('33')`也是更麻烦了，不过确实意思
-                // 更明确
+                // 编程式导航时，相比于上面直接`push('/user/33')`也是更麻烦了，不过
+                // 确实意思更明确
                 this.$router.push({name: 'user', params: {username: '22'}});
             }
         }, 3000);

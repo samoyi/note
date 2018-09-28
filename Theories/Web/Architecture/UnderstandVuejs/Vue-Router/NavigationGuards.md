@@ -1,22 +1,18 @@
 # Navigation Guards
 
-1. As the name suggests, the navigation guards provided by vue-router are
-primarily used to guard navigations either by redirecting it or canceling it. 与
-其说是 guarding，倒不如说是 controlling。
-2. There are a number of ways to hook into the route navigation process:
-globally, per-route, or in-component.
-3. Remember that params or query changes won't trigger enter/leave navigation
-guards. You can either watch the `$route` object to react to those changes, or
-use the `beforeRouteUpdate` in-component guard.
+1. `vue-router`提供的导航守卫主要用来通过跳转或取消的方式守卫导航。与其说是 guarding，
+倒不如说是 controlling。
+2. 有多种机会植入路由导航过程中：全局的, 单个路由独享的, 或者组件级的。
+3. 参数或查询的改变并不会触发进入/离开的导航守卫。你可以通过 watch `$route`对象来应对
+这些变化，或使用`beforeRouteUpdate`的组件内守卫。
 
 
 ## `router.beforeEach`
-1. 开始任何一次路由时（包括组件内路由），都会触发该钩子函数。在所有的路由钩子函数里，只
-有`beforeRouteLeave`是在它之前被触发。看来逻辑是只有导航离开一个组件，才能开始下一次路
-由。
-2. 如果创建了多个该方法，则按照创建顺序调用。
-3. 守卫是异步解析执行，此时导航在所有守卫 resolve 完之前一直处于 等待中。类似于
-`Promise.all`的感觉，不知道源码是怎么实现的。不懂
+1. 开始任何一次路由时（包括组件内路由），都会触发该钩子函数。
+2. 在所有的路由钩子函数里，只有`beforeRouteLeave`是在它之前被触发。看来逻辑是只有导航
+离开一个组件，才能开始下一次路由。
+3. 如果创建了多个该方法，则按照创建顺序调用。守卫是异步解析执行，此时导航在所有守卫
+resolve 完之前一直处于等待中。类似于`Promise.all`的感觉，不知道源码是怎么实现的。不懂
 4. 下面的例子中，在进行导航时，会立刻依次输出`"first"`和`"second"`，然后在三秒钟之后，
 进行实际的组件切换，并且 URL 发生变化。
     ```html
@@ -55,7 +51,7 @@ use the `beforeRouteUpdate` in-component guard.
     });
 
     router.beforeEach((to, from, next) => {
-        console.log('send');
+        console.log('second');
         setTimeout(function(){
             next();
         }, 3000);
@@ -104,12 +100,8 @@ use the `beforeRouteUpdate` in-component guard.
 
 
 ## `router.beforeResolve`
-1. This is similar to `router.beforeEach`, with the difference that resolve
-guards will be called right before the navigation is confirmed, after all
-in-component guards and async route components are resolved.
-2. 上面说到，管道中全部的钩子执行完了，导航的状态才会变成 confirmed。所以
-`router.beforeResolve`会在`router.beforeEach`之后执行。
-
+可以用`router.beforeResolve`注册一个全局守卫。这和`router.beforeEach`类似，区别是在
+导航被确认之前，同时在所有组件内守卫和异步路由组件被解析之后，解析守卫就被调用。
 ```js
 // 先立刻依次输出 "beforeEach" 和 "beforeResolve"，三秒钟后切换组件变更 URL
 router.beforeEach((to, from, next) => {
@@ -128,8 +120,8 @@ router.beforeResolve((to, from, next)=>{
 ## `router.afterEach`
 1. 和`router.beforeEach`对应，结束任何一次路由时（包括组件内路由），都会触发该钩子函数
 。
-2. 在组件内路由时，这个方法是最后一个钩子。在组件间路由时，这个钩子是路由结束的标志。之
-后会创建新组件实例，触发组件实例的`beforeCreate`和`created`。
+2. 在组件内路由时，这个方法是所有类型钩子中的最后一个。在组件间路由时，这个钩子是路由结
+束的标志。之后会创建新组件实例，触发组件实例的`beforeCreate`和`created`。
 3. 因为是路由结束后才触发，所以不接受`next`。
 ```js
 router.beforeResolve((to, from, next)=>{
@@ -182,7 +174,7 @@ router.beforeResolve((to, from, next)=>{
 });
 ```
 
-2. `beforeEach`是路由器每次开始路由时触发，开始路由时，要确定路由线路，要查看选定的路由
+4. `beforeEach`是路由器每次开始路由时触发，开始路由时，要确定路由线路，要查看选定的路由
 内部是否有`beforeEnter`钩子，有的话就触发。所以`beforeEnter`是在`beforeEach`之后触发。
 上面的输出顺序为：
 ```
