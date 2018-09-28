@@ -257,28 +257,27 @@ new Vue({
         // 也可以局部注册
         directives: {
             _bind: {
-                bind: function (el, binding vnode) {
+                bind: function (el, binding, vnode) {
                     console.log(el.textContent); // 22   虚拟 DOM 替换了真实 DOM
                     alert('bind');
                 },
             },
         },
         beforeMount(){
-            console.log(this.$el.textContent);
+            console.log(this.$el.textContent); // {{ num1 }}
             alert('beforeMount');
         },
         mounted(){
-            console.log(this.$el.textContent);
+            console.log(this.$el.textContent); // 22
             alert('mounted');
         },
     });
     ```
 
 #### `binding`
-An object containing the following properties:
-* `name`: The name of the directive, without the `v-` prefix.
-* `value`: The value passed to the directive. For example in
-    `v-my-directive="1 + 1"`, the value would be `2`.
+一个对象，包含以下属性：
+* `name`: 指令名，不包括`v-`前缀。
+* `value`: 指令的绑定值，例如：`v-my-directive="1 + 1"`中，绑定值为`2`。
     ```html
     <div id="components-demo" v-my-directive="1 + 1">{{ num1 }}</div>
     ```
@@ -293,15 +292,14 @@ An object containing the following properties:
                 bind: function (el, binding){
                     console.log(el.textContent); // "22"
                     console.log(binding.name); // "my-directive"
-                    console.log(binding.value); 2
+                    console.log(binding.value); // 2
                 }
             },
         },
     });
     ```
-* `oldValue`: The previous value, only available in update and componentUpdated.
-    It is available whether or not the value has changed.不懂，值不改变怎么触发钩子
-    函数？
+* `oldValue`: 指令绑定的前一个值，仅在`update`和`componentUpdated`钩子中可用。在其他
+钩子函数中值为`undefined`。无论值是否改变都可用。
     ```html
     <div id="components-demo" v-_update="num1" v-_componentupdated="num2"></div>
     ```
@@ -332,14 +330,34 @@ An object containing the following properties:
         },
     });
     ```
-* `expression`: The expression of the binding as a string. For example in
-    `v-my-directive="1 + 1"`, the expression would be `"1 + 1"`. 不懂，有什么用
-* `arg`: The argument passed to the directive, if any. For example in
-    `v-my-directive:foo`, the arg would be `"foo"`.
+* `expression`: 字符串形式的指令表达式。例如`v-my-directive="1 + 1"`中，表达式为
+`"1 + 1"`。不懂，有什么用
+    ```html
+    <div id="components-demo" v-_bind1="22 + 33" v-_bind2></div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        directives: {
+            _bind1: {
+				bind(el, {expression}){
+					console.log(expression); // "22 + 33"
+				},
+			},
+			_bind2: {
+				bind(el, {expression}){
+					console.log(expression); // undefined
+				},
+			},
+        },
+    });
+    ```
+* `arg`: 传给指令的参数，可选。例如`v-my-directive:foo`中，参数为`"foo"`。
     ```html
     <div id="components-demo">
         <span v-font-color:red>111</span>
         <span v-font-color:royalblue>222</span>
+        <span v-font-color>333</span>
     </div>
     ```
     ```js
@@ -347,16 +365,17 @@ An object containing the following properties:
         el: '#components-demo',
         directives: {
             'font-color': {
-                inserted: function(el, binding){
-                    el.style.color = binding.arg;
+                inserted: function(el, {arg}){
+    				if (arg){
+    					el.style.color = arg;
+    				}
                 },
             },
         },
     });
     ```
-* `modifiers`: An object containing modifiers, if any. For example in
-    `v-my-directive.foo.bar`, the modifiers object would be
-    `{ foo: true, bar: true }`.
+* `modifiers`: 一个包含修饰符的对象。例如：`v-my-directive.foo.bar`中，修饰符对象为
+`{ foo: true, bar: true }`。
     ```html
     <div id="components-demo">
         <span v-font.bold>111</span>
@@ -369,14 +388,14 @@ An object containing the following properties:
         el: '#components-demo',
         directives: {
             'font': {
-                inserted: function(el, binding){
-                    if (binding.modifiers.bold){
+                inserted: function(el, {modifiers}){
+                    if (modifiers.bold){
                         el.style.fontWeight = 'bold';
                     }
-                    if (binding.modifiers.italic){
+                    if (modifiers.italic){
                         el.style.fontStyle = 'italic';
                     }
-                    if (binding.modifiers.underline){
+                    if (modifiers.underline){
                         el.style.textDecoration = 'underline';
                     }
                 },
@@ -386,8 +405,8 @@ An object containing the following properties:
     ```
 
 #### `vnode`
-* The virtual node produced by Vue’s compiler.
-* 比较常用的是在钩子函数里引用 VUe 实例
+* Vue 编译生成的虚拟节点。
+* 比较常用的是在钩子函数里引用 Vue 实例
     ```html
     <div id="components-demo" v-show_this></div>
     ```
@@ -404,8 +423,7 @@ An object containing the following properties:
     ```
 
 #### `oldVnode`
-The previous virtual node, only available in the update and componentUpdated
-hooks.
+上一个虚拟节点，仅在`update`和`componentUpdated`钩子中可用。
 ```html
 <div id="components-demo" v-_update v-_componentupdated>{{ num1 }}</div>
 ```
@@ -417,13 +435,13 @@ new Vue({
     },
     directives: {
         _update: {
-            update: function (el, binding vnode, oldVnode) {
+            update: function (el, binding, vnode, oldVnode) {
                 console.log(vnode.children[0].text); // 33
                 console.log(oldVnode.children[0].text); // 22
             },
         },
         _componentupdated: {
-            componentUpdated: function (el, binding vnode, oldVnode) {
+            componentUpdated: function (el, binding, vnode, oldVnode) {
                 console.log(vnode.children[0].text); // 33
                 console.log(oldVnode.children[0].text); // 22
             },
@@ -437,20 +455,26 @@ new Vue({
 
 ### 钩子函数不是方法调用
 ```js
-directives: {
-    focus: {
-        inserted: function (el) {
-            console.log(this); // undefined
-        },
-    },
-},
-mounted(){
-    console.log(this.inserted); // undefined
-},
+new Vue({
+    el: '#components-demo',
+	directives: {
+	    focus: {
+	        inserted: function (el, b, vnode) {
+	            console.log(this); // undefined  非严格模式下是 window
+	            console.log(vnode.context); // 需要这样引用当前实例
+	        },
+	    },
+	},
+	mounted(){
+	    console.log(this.focus); // undefined
+		console.log(this.$options.directives.focus); // 需要这样引用指令
+	},
+});
 ```
 
 ### 在`bind`和`update`时触发相同行为时的简写
-下面的例子会打印`22`和`33`
+在很多时候，你可能想在`bind`和`update`时触发相同行为，而不关心其它的钩子，可以直接把指
+令设定为函数。下面的例子会打印`22`和`33`
 ```html
 <div id="components-demo" v-console="num1"></div>
 ```
@@ -473,17 +497,17 @@ new Vue({
 
 ### 可以传入引用类型字面量
 ```html
-<div id="components-demo" v-object="{name: '33', age: 22}" v-array="['hime', 'hina']"></div>
+<div id="components-demo" v-object="{name: '33', age: 22}" v-array="['Hime', 'Hina']"></div>
 ```
 ```js
 new Vue({
     el: '#components-demo',
     directives: {
-        object: function(el, binding){
-            console.log(binding.value.name + ': ' + binding.value.age); // "33: 22"
+        object: function(el, {value}){
+            console.log(value.name + ': ' + value.age); // "33: 22"
         },
-        array: function(el, binding){
-            console.log(binding.value[0] + ' & ' + binding.value[1]); // "hime & hina"
+        array: function(el, {value}){
+            console.log(value[0] + ' & ' + value[1]); // "Hime & Hina"
         },
     },
 });
