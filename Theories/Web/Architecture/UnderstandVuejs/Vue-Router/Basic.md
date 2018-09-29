@@ -150,21 +150,9 @@ const app = new Vue({
 ```
 
 
-## 重定向和默认路由
-* 下面的例子中，在试图路由至`/foo`时，会被重定向至`/bar`
-    ```js
-    {path: '/foo', redirect: '/bar'}
-    ```
-* 下面的例子，在路径匹配不到任何一条设定的路由时，会重定向至指定的路由
-    ```js
-    {path: '*', redirect: '/'}
-    ```
-
-
 ## Matching Priority
-Sometimes the same URL may be matched by multiple routes. In such a case the
-matching priority is determined by the order of route definition: the earlier a
-route is defined, the higher priority it gets.
+有时多个 route 可能设置了相同的`path`，这种情况下的匹配优先级取决于设定的顺序：越早设定
+的路由拥有更高的优先级
 ```html
 <div id="app">
     <!-- 渲染为 “先定义” -->
@@ -236,11 +224,14 @@ new Vue({
 
 
 ## `$route.matched`
-1. Each route object in the `routes` configuration is called a route record.
-2. Route records may be nested. Therefore when a route is matched, it can
-potentially match more than one route record.
-3. All route records matched by a route are exposed on the `$route` object
-(and also route objects in navigation guards) as the `$route.matched` Array.
+1. `routes`中的每个路由对象被称为一个路由记录（route record）。
+2. 路由记录可以嵌套。因此当匹配到某个路由时，可能同时匹配到了好几个路由记录。
+3. 这些所有匹配到的路由记录，以数组的形式暴露在组件`$route`对象和导航钩子路由对象的
+`matched`属性中。
+4. 一个 route record 对象保存的是关于路由设置的若干属性，而一个`route`对象保存的是路由
+行为相关的属性。虽然两者会有重复的属性，但也有一些是根据其定位而独有的属性。例如前者会有
+`redirect`属性，显然是只和路由设置有关的；而后者会有`query`属性，显然是只和实际路由行
+为有关的。
 
 ```html
 <div id="app">
@@ -278,6 +269,11 @@ const Detail2 = {
 };
 const Setting = {
     template: `<p>setting</p>`,
+	mounted(){
+		console.log('↓------从组件实例里读取 matched ----开始----------')
+		console.log(this.$route.matched);
+		console.log('↑------从组件实例里读取 matched ----结束----------\n\n')
+	},
 };
 
 const routes = [
@@ -296,6 +292,7 @@ const routes = [
                         path: 'setting',
                         component: Setting,
                         meta: {requiresAuth: true},
+						name: 'setting',
                     }
                 ],
                 meta: ['Hime', 'Hina'],
@@ -314,23 +311,26 @@ const router = new VueRouter({routes});
 
 router.beforeEach((to, from, next)=>{
     // 路由至 Setting 组件时
-
-    console.log(to.matched.length); // 3
-    console.log(to.matched.map(route=>route.path));
-    // ["/profile", "/profile/detail", "/profile/detail/setting"]
-    console.log(JSON.stringify(to.matched.map(route=>route.meta), null, 4));
-    // [
-    //     {
-    //         "name": "33"
-    //     },
-    //     [
-    //         "Hime",
-    //         "Hina"
-    //     ],
-    //     {
-    //         "requiresAuth": true
-    //     }
-    // ]
+	if (to.name === 'setting'){
+		console.log('↓------从路由钩子里读取 matched ----开始----------')
+		console.log(to.matched.length); // 3
+		console.log(to.matched.map(route=>route.path));
+		// ["/profile", "/profile/detail", "/profile/detail/setting"]
+		console.log(JSON.stringify(to.matched.map(route=>route.meta), null, 4));
+		// [
+		//     {
+		//         "name": "33"
+		//     },
+		//     [
+		//         "Hime",
+		//         "Hina"
+		//     ],
+		//     {
+		//         "requiresAuth": true
+		//     }
+		// ]
+		console.log('↑------从路由钩子里读取 matched ----结束----------\n\n')
+	}
     next();
 });
 
