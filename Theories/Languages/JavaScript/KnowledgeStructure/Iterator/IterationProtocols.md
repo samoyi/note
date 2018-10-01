@@ -186,25 +186,34 @@ let arr = ['b', 'c'];
 ### 其他场合
 由于数组的遍历会调用遍历器接口，所以任何接受数组作为参数的场合，其实都调用了遍历器接口。
 
-
 ### `for...of`
 一个数据结构只要部署了`Symbol.iterator`属性，就被视为具有 iterator 接口，就可以用
 `for...of`循环遍历它的成员。也就是说，`for...of`循环内部调用的是数据结构的
 `Symbol.iterator`方法。
 
-### `for...of`只能遍历自身属性
-这一点与`for...in`可遍历原型属性不同
+### 与`for...in`不是一类方法
+`for...in`是遍历对象属性的方法，而`for...of`是使用可迭代对象的迭代规则进行迭代的方法
 ```js
-Array.prototype.temp = 666;
-let obj = [11, 22, 33];
-// 会遍历到 temp
-for (let key in obj){
-    console.log(key);
+let arr = ['a', 'b', 'c'];
+arr[3] = 'd';
+arr.foo = 'bar';
+
+let of_result = [];
+for(let val of arr){
+    of_result.push(val);
 }
-// 不会遍历到 666
-for (let val of obj){
-    console.log(val);
+
+// 数组的迭代规则就是迭代 index 属性，而不是其他任意属性
+console.log(of_result); // ["a", "b", "c", "d"]
+
+
+let in_result = [];
+for(let val in arr){
+    in_result.push(val);
 }
+
+// 而对象的遍历则不受迭代规则的影响
+console.log(in_result); // ["0", "1", "2", "3", "foo"]
 ```
 
 ### 直接遍历 Array、Set、Map 的 key、value 和 entry

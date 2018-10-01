@@ -448,92 +448,187 @@ var baz = { [foo]: 'abc'};
 
 
 ## 遍历对象
-### ES5、ES6
-#### 一共有5种方法
-1. `for...in`
+### `for...in`
 循环遍历对象自身的和继承的可枚举属性（不含 Symbol 属性）。
-2. `Object.keys(obj)`
-`Object.keys`返回一个数组，包括对象自身的（不含继承的）所有可枚举属性（不含 Symbol 属
-性）
-3. `Object.getOwnPropertyNames(obj) `
-`Object.getOwnPropertyNames`返回一个数组，包含对象自身的所有属性（不含 Symbol 属性，
-但是包括不可枚举属性）。
-4. ES6 `Object.getOwnPropertySymbols(obj)`
+```js
+let obj = {};
+obj.__proto__.protoPro = 'protoPro';
+
+let symbol = Symbol('symbol');
+Object.defineProperties(obj, {
+	foo: {
+		value: 'foo',
+		enumerable: true,
+	},
+	bar: {
+		value: 'bar',
+	},
+	[symbol]: {
+		value: 'baz',
+		enumerable: true,
+	},
+});
+
+console.log(obj.foo); // "foo"
+console.log(obj.bar); // "bar"
+console.log(obj[symbol]); // "baz"
+
+let arr = [];
+for(let key in obj){
+	arr.push(key);
+}
+console.log(arr); // ["foo", "protoPro"]
+```
+
+### `for...of`不能算是遍历对象的方法
+1. 它是一个对可迭代对象进行迭代的方法，不是遍历对象的方法。
+2. 首先它就不能遍历平对象。而且即使是可迭代对象，它也只会按照`Symbol.iterator`方法返回
+的迭代器中的迭代规则来迭代，而不一定就是迭代对象属性
+    ```js
+    let arr = ['a', 'b', 'c'];
+    arr[3] = 'd';
+    arr.foo = 'bar';
+
+    let of_result = [];
+    for(let val of arr){
+    	of_result.push(val);
+    }
+
+    // 数组的迭代规则就是迭代 index 属性，而不是其他任意属性
+    console.log(of_result); // ["a", "b", "c", "d"]
+
+
+    let in_result = [];
+    for(let val in arr){
+    	in_result.push(val);
+    }
+
+    // 而对象的遍历则不受迭代规则的影响
+    console.log(in_result); // ["0", "1", "2", "3", "foo"]
+    ```
+
+### `Object.keys(obj)`  `Object.values(obj)` `Object.entries(obj)`
+1. 返回一个数组，包括对象自身的（不含继承的）所有可枚举属性（不含 Symbol 属性）的键或值
+或键值对。没有`own`居然也不含继承的！
+    ```js
+    let obj = {};
+    obj.__proto__.protoPro = 'protoPro';
+
+    let symbol = Symbol('baz');
+    Object.defineProperties(obj, {
+    	foo: {
+    		value: 'foo_value',
+    		enumerable: true,
+    	},
+    	qux: {
+    		value: 'qux_value',
+    		enumerable: true,
+    	},
+    	bar: {
+    		value: 'bar_value',
+    	},
+    	[symbol]: {
+    		value: 'baz_value',
+    		enumerable: true,
+    	},
+    });
+
+    console.log(Object.keys(obj)); // ["foo", "qux"]
+    console.log(Object.values(obj)); // ["foo_value", "qux_value"]
+    console.log(Object.entries(obj)); // [["foo", "foo_value"], ["qux", "qux_value"]]
+    ```
+2. 如果参数不是对象，会先将其转为对象。由于数值和布尔值的包装对象，都不会为实例添加非继
+承的属性。所以会返回空数组。
+    ```js
+    console.log(Object.keys('hello')); // ["0", "1", "2", "3", "4"]
+    console.log(Object.values('hello')); // ["h", "e", "l", "l", "o"]
+    console.log(Object.entries('hello')); // [["0","h"],["1","e"],["2","l"],["3","l"],["4","o"]]
+    console.log(Object.keys(123)); // []
+    console.log(Object.values(true)); // []
+    console.log(Object.entries(false)); // []
+    ```
+3. `Object.entries`方法的一个用处是，将对象转为真正的 Map 结构
+    ```js
+    let obj = { foo: 'bar', baz: 'qux' };
+
+    let entries = Object.entries(obj);
+    console.log(entries); // [["foo", "bar"], ["baz", "qux"]]
+
+    let map = new Map(entries);
+    console.log(map); // {"foo" => "bar", "baz" => "qux"}
+    ```
+
+### `Object.getOwnPropertyNames(obj) `
+返回一个数组，包含对象自身的所有属性（不含 Symbol 属性，但是包括不可枚举属性）
+```js
+let obj = {};
+obj.__proto__.protoPro = 'protoPro';
+
+let symbol = Symbol('symbol');
+Object.defineProperties(obj, {
+	foo: {
+		value: 'foo',
+		enumerable: true,
+	},
+	bar: {
+		value: 'bar',
+	},
+	[symbol]: {
+		value: 'baz',
+		enumerable: true,
+	},
+});
+
+console.log(Object.getOwnPropertyNames(obj)); // ["foo", "bar"]
+```
+
+### `Object.getOwnPropertySymbols(obj)`
 `Object.getOwnPropertySymbols`返回一个数组，包含对象自身的所有 Symbol 属性。
-5. ES6 `Reflect.ownKeys(obj)`
+```js
+let obj = {};
+obj.__proto__.protoPro = 'protoPro';
+
+let symbol = Symbol('symbol');
+Object.defineProperties(obj, {
+	foo: {
+		value: 'foo',
+		enumerable: true,
+	},
+	bar: {
+		value: 'bar',
+	},
+	[symbol]: {
+		value: 'baz',
+		enumerable: true,
+	},
+});
+
+console.log(Object.getOwnPropertySymbols(obj)); // [Symbol(symbol)]
+```
+
+### `Reflect.ownKeys(obj)`
 `Reflect.ownKeys`返回一个数组，包含对象自身的所有属性，不管是属性名是 Symbol 或字符串，
 也不管是否可枚举。
-
-#### 遍历次序
-以上的5种方法遍历对象的属性，都遵守同样的属性遍历的次序规则：
-1. 首先遍历所有属性名为数值的属性，按照数字排序。
-2. 其次遍历所有属性名为字符串的属性，按照生成时间排序。
-3. 最后遍历所有属性名为 Symbol 值的属性，按照生成时间排序。
-
-### ES7
-#### `Object.values(obj)`
-1. 返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历属性的值。
-2. `Object.values`会过滤属性名为 Symbol 值的属性。
-3. 如果参数不是对象，`Object.values`会先将其转为对象。由于数值和布尔值的包装对象，都不
-会为实例添加非继承的属性。所以，`Object.values`会返回空数组。
 ```js
-console.log(Object.values('你好')); // ["你", "好"]
-```
+let obj = {};
+obj.__proto__.protoPro = 'protoPro';
 
-#### `Object.entries(obj)`
-1. 返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历属性的键值对数组。
-2. 如果原对象的属性名是一个 Symbol 值，该属性会被省略
-3. `Object.entries`方法的一个用处是，将对象转为真正的 Map 结构
-```js
-var obj = { foo: 'bar', baz: 42 };
-var map = new Map(Object.entries(obj));
-map // Map { foo: "bar", baz: 42 }
-```
-
-### 示例
-```js
-let proto = {};
-Object.defineProperties(proto, {
-    protoEnumerable: {
-        enumerable: true,
-        value: 'protoEnumerable',
-    },
-    protoNonEnumerable: {
-        value: 'protoNonEnumerable',
-    },
-});
-proto[Symbol('protoSymbol')] = 'protoSymbol';
-
-let obj = Object.create(proto);
+let symbol = Symbol('symbol');
 Object.defineProperties(obj, {
-    ownEnumerable: {
-        enumerable: true,
-        value: 'ownEnumerable',
-    },
-    ownNonEnumerable: {
-        value: 'ownNonEnumerable',
-    },
+	foo: {
+		value: 'foo',
+		enumerable: true,
+	},
+	bar: {
+		value: 'bar',
+	},
+	[symbol]: {
+		value: 'baz',
+		enumerable: true,
+	},
 });
-obj[Symbol('ownSymbol')] = 'ownSymbol';
 
-
-for (let key in obj){
-    console.log(key);
-    // ownEnumerable
-    // protoEnumerable
-}
-
-console.log(Object.keys(obj)); // ['ownEnumerable']
-
-console.log(Object.getOwnPropertyNames(obj)); // ['ownEnumerable', 'ownNonEnumerable']
-
-console.log(Object.getOwnPropertySymbols(obj)); // [Symbol(ownSymbol)]
-
-console.log(Reflect.ownKeys(obj)); // ['ownEnumerable', 'ownNonEnumerable', Symbol(ownSymbol)]
-
-console.log(Object.values(obj)); // ['ownEnumerable']
-
-console.log(Object.entries(obj)); // [['ownEnumerable', 'ownEnumerable']]
+console.log(Reflect.ownKeys(obj)); // ["foo", "bar", Symbol(symbol)]
 ```
 
 

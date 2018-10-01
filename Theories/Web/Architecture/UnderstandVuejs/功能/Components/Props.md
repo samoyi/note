@@ -1,28 +1,27 @@
 # Props
 
 ## Prop Casing (camelCase vs kebab-case)
-1. HTML attribute names are case-insensitive, so browsers will interpret any
-uppercase characters as lowercase.
-```html
-<ul id="components-demo">
-    <child-component :myNum="num"></child-component>
-    <!-- <child-component :my-num="num"></child-component> -->
-</ul>
-```
-```js
-new Vue({
-    el: '#components-demo',
-    components: {
-        'child-component': {
-            props: ['myNum'],
-            template: `<li>{{myNum}}</li>`,
-        }
-    },
-    data: {
-        num: 2233,
-    },
-});
-```
+1. HTML 中的特性名是大小写不敏感的，所以浏览器会把所有大写字符解释为小写字符
+    ```html
+    <ul id="components-demo">
+        <child-component :myNum="num"></child-component>
+        <!-- <child-component :my-num="num"></child-component> -->
+    </ul>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        components: {
+            'child-component': {
+                props: ['myNum'],
+                template: `<li>{{myNum}}</li>`,
+            }
+        },
+        data: {
+            num: 2233,
+        },
+    });
+    ```
 2. 在实例里使用 camelCase 肯定是没有问题，因为是 JS 变量名。而在 HTML 中的 camelCase
 特性，正如前面说的，会被转换为纯小写的`mynum`。Vue 也会给出如下提示：
 >[Vue tip]: Prop "mynum" is passed to component <Anonymous>, but the declared
@@ -34,37 +33,120 @@ templates. You should probably use "my-num" instead of "myNum".
 形式。
 
 
-## 类型检测和默认值
+## 类型检测
 1. 需要把`prop`从数组变成对象形式，并在内部指定通过每个数据的构造函数来约束类型（对应
-`Object.prototype.toString.call`显示的那个）。源码参考`assertType`函数
-2. The type can be one of the following native constructors，或者自定义构造函数:
-    * String
-    * Number
-    * Boolean
-    * Array
-    * Object
-    * Date
-    * Function
-    * Symbol
-3. 因为是使用构造函数来检测，所以包装类型是用其构造函数而不是`Object`。例如
-`new Number(22)`会通过`Number`的检测。
-4. `null` matches any type
-5. `type` can also be a custom constructor function and the assertion will be
-made with an `instanceof` check. For example, given the following constructor
-function exists:
+`Object.prototype.toString.call`显示的那个）。源码参考`assertType`函数。注意是使用
+构造函数而不是`instanceof`，所以，比如说数组，只能通过`Array`的验证而不能通过`Object`
+的验证。
+2. 可以通过任何内置构造函数或者是自定义构造函数来指定类型；也可以设置为`null`来匹配任何
+类型。
+3. 设置为对象时：通过`type`属性设定上述三种值，通过`default`属性指定默认值；如果设置了
+`require`属性且值为`true`，则必须传值。
+4. 可以设置为对象并添加`validator`，在该方法内部可通过自定义逻辑来验证传入的值
+
+```html
+<div id="app">
+    <child v-bind="props"></clild>
+</div>
+```
+```js
+new Vue({
+	el: '#app',
+	data: {
+		props: {
+			propA1: '123',
+			propA2: 123,
+			propA3: false,
+			propA4: [],
+			propA5: new Set(),
+			propA6: new Map(),
+			propA7: {},
+			propA8: new Date,
+			propA9: function(){},
+			propA10: Symbol('symbol'),
+
+			propB1: 123,
+			propB2: '123',
+
+			// propC: 123,
+
+			propD: '123',
+
+			propE: 'warning',
+		}
+	},
+	components: {
+		child: {
+			template: `<p>{{propC}}</p>`,
+			props: {
+			    // Basic type check
+				propA1: String,
+			    propA2: Number,
+			    propA3: Boolean,
+			    propA4: Array,
+			    propA5: Set,
+			    propA6: Map,
+			    propA7: Object,
+			    propA8: Date,
+			    propA9: Function,
+			    propA10: Symbol,
+				propA0: null, // 什么类型都可以
+
+			    // 多个允许的类型
+			    propB1: [String, Number],
+			    propB2: [String, Number],
+
+			    // default 属性设定默认值
+			    propC: {
+			        type: Number,
+			        default: 100
+			    },
+
+				// required 属性要求必须传值
+			    propD: {
+			        type: String,
+			        required: true, // 必填
+			    },
+
+				propE: {
+	      			validator: function (value) {
+	        			// 这个值必须匹配下列字符串中的一个
+	        			return ['success', 'warning', 'danger'].indexOf(value) !== -1
+	      			},
+				}
+			},
+		},
+	}
+});
+```
+
+4. 因为是使用构造函数来检测，所以包装类型是用其构造函数而不是`Object`。例如
+`new Number(22)`会通过`Number`的检测，而不是`Object`
+    ```js
+    console.log(typeof new Number(22)); // "object"
+    console.log(Object.prototype.toString.call(new Number(22))); // "[object Number]"
+    ```
+5. 如果默认值为引用类型，则该值必须要通过工厂函数来返回
+    ```js
+    propF: {
+        type: Array,
+        default: function(){
+            return [1, 2, 3];
+        },
+    }
+    ```
+5. 如果要使用自定义构造函数来判断传入值是否是其实例，则判断的逻辑是`instanceof`
     ```js
     function Person (firstName, lastName) {
         this.firstName = firstName
         this.lastName = lastName
     }
     ```
-You could use:
     ```js
     props: {
         author: Person
     }
     ```
-to validate that the value of the `author` prop was created with `new Person`.
 6. Note that props are validated before a component instance is created, so
 instance properties (e.g. `data`, `computed`, etc) will not be available inside
 `default` or `validator` functions.
@@ -105,7 +187,7 @@ props: {
 ```
 
 
-## Static or Dynamic Props
+## 静态 prop 和动态 prop
 Static prop 的值永远是作为字符串传入的，而 dynamic prop 是作为一个表达式传入的。
 ```html
 <child-component value="23"></child-component>     <!-- 传入的是字符串 -->
@@ -144,7 +226,7 @@ new Vue({
 ```
 
 
-## One-Way Data Flow
+## 单向数据流
 1. 父组件使用一个子组件时，通过`prop`对其传参经常是很必要的需求。
 2. 但如果子组件可以修改父组件传入的数据，那就会带来一些麻烦。
 3. 如果传入的是引用类型，而子组件修改了该引用类型，则会直接影响到父组件中的数据。
