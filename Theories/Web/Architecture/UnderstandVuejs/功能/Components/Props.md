@@ -147,44 +147,8 @@ new Vue({
         author: Person
     }
     ```
-6. Note that props are validated before a component instance is created, so
-instance properties (e.g. `data`, `computed`, etc) will not be available inside
-`default` or `validator` functions.
-
-```js
-props: {
-    // Basic type check
-    propA: Number,
-    // Multiple possible types
-    propB: [String, Number],
-    // Required string
-    propC: {
-        type: String,
-        required: true
-    },
-    // Number with a default value
-    propD: {
-        type: Number,
-        default: 100
-    },
-    // Object with a default value
-    propE: {
-        type: Object,
-        // Object or array defaults must be returned from
-        // a factory function
-        default: function () {
-            return { message: 'hello' }
-        }
-    },
-    // Custom validator function
-    propF: {
-        validator: function (value) {
-            // The value must match one of these strings
-            return ['success', 'warning', 'danger'].indexOf(value) !== -1
-        }
-    }
-}
-```
+6. 注意 prop 会在组件实例创建之前进行验证，所以实例的属性 (如 `data`、`computed` 等)
+在 `default` 或 `validator` 函数中是不可用的。
 
 
 ## 静态 prop 和动态 prop
@@ -282,8 +246,10 @@ new Vue({
 
 
 ## Non-Prop Attributes
-A non-prop attribute is an attribute that is passed to a component, but does not
-have a corresponding prop defined.
+1. A non-prop attribute is an attribute that is passed to a component, but does
+not have a corresponding prop defined.
+2. 可以通过实例的`$attrs`属性获取。也可以通过 DOM 的`getAttribute()`方法获取。
+
 ```html
 <div id="components-demo">
     <child-component age="22"></child-component>
@@ -304,15 +270,17 @@ new Vue({
 });
 ```
 
-
-## Replacing/Merging with Existing Attributes
-1. For most attributes, the value provided to the component will replace the
-value set by the component.
-2. The `class` and `style` attributes are a little smarter, both values are
-merged.
+### Replacing/Merging with Existing Attributes
+对于绝大多数特性，从外部传入的值会覆盖组件内部设定的同名特性的值。例外是`class`和
+`style`，这两个特性的外部值和内部值会结合到一起。
 ```html
 <div id="components-demo">
-    <child-component type="number" style="text-decoration: line-through;"></child-component>
+    <child-component type="number" style="text-decoration: line-through;">
+    </child-component>
+    <!--
+        组件被渲染为
+        <input type="number" style="color: red; text-decoration: line-through;">
+    -->
 </div>
 ```
 ```js
@@ -325,12 +293,9 @@ new Vue({
     },
 });
 ```
-只能输入数字，红色，有 text-decoration
 
-
-## Disabling Attribute Inheritance
-1. If you do not want the root element of a component to inherit attributes, you
-can set `inheritAttrs: false` in the component’s options.
+### Disabling Attribute Inheritance
+1. 如果你不希望组件的根元素继承特性，你可以设置在组件的选项中设置`inheritAttrs: false`
 2. 这时虽然在元素上访问不到特性，但是在实例中仍然可见。也就是说，在该特性传入组件后，并
 没有被设置到组件模板的元素之上
 ```html

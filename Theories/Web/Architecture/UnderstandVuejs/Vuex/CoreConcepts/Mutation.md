@@ -9,8 +9,10 @@
 
 
 ## 基本用法
-1. 每个 mutation 对应`mutations`对象下的一个属性，属性值为函数，是该 mutation 实际要
-进行的修改，该函数接受 state 作为第一个参数。
+1. Vuex 中的 mutation 非常类似于事件：每个 mutation 都有一个字符串的事件类型(type)和
+一个回调函数(handler)。
+1. 每个 mutation 对应`mutations`对象下的一个属性，属性名相当于事件类型，属性值为函数，
+相当于回调函数，是该 mutation 实际要进行的修改，该函数接受 state 作为第一个参数。
     ```js
     mutations: {
         increment (state) {
@@ -18,7 +20,10 @@
         },
     },
     ```
-2. 组件只能进行 mutations 中已定义的修改操作，通过提交 mutation 的方式
+2. 组件只能进行 mutations 中已定义的修改操作，通过 commit mutation 的方式。你不能直接
+调用一个 mutation handler。这个选项更像是事件注册：“当触发一个类型为 increment 的
+mutation 时，调用此函数”。要触发一个 mutation handler，你需要以相应的 type 调用
+`store.commit` 方法：
     ```js
     methods: {
         increment(){

@@ -3,9 +3,8 @@
 1. 当打包构建应用时，Javascript 包会变得非常大，影响页面加载。如果我们能把不同路由对应
 的组件分割成不同的代码块，然后当路由被访问的时候才加载对应组件，这样就更加高效了。
 2. 需要把组件定义为一个函数，该函数返回一个 promise，该 promise 的解析结果应该是组件选
-项
+项对象。
 3. 结合 webpack，完整的代码如下：
-
 
 * `src\index.js`
     ```js
@@ -135,8 +134,9 @@
 `2.bundle.js`。
 7. 这样其实挺好，在用户只打算去`/profile`而不打算去`/profile/detail`时，就省去了加载
 `2.bundle.js`。
-8. 但如果`Detail`组件并没有多大，那么把这两个组件打包成一个文件，就会更整齐一些。想象
-如果`Profile`不止一个`Detail`组件，它还有其他好几个后代组件，那就会打包生成一对小文件。
+8. 但如果`Detail`组件并没有多大，那么把这两个组件打包成一个文件，可以减少省去一次请求时
+间，而且会更整齐一些。想象如果`Profile`不止一个`Detail`组件，它还有其他好几个后代组件，
+那就会打包生成一堆小文件。
 9. 通过设定被打包组件的 chunk name，相同 chunk name 的组件会被打包到一起
     ```js
     const Profile = () => import(/* webpackChunkName: "group-profile" */ './Profile.vue')
@@ -148,7 +148,6 @@
 11. 上面虽然设定了 chunk name 为`"group-profile"`，但输出的文件名还是`1.bundle.js`。
 因为还没有在`webpack.config.js`配置`chunkFilename`，配置之后，打包输出的文件名就是
 `group-profile.js`。下面是完整的代码：
-
 
 * `src\index.js`
     ```js

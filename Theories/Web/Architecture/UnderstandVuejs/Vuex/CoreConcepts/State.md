@@ -16,10 +16,16 @@
 1. 从 store 实例中读取状态最简单的方法就是在计算属性中直接引用 store 实例并返回某个状
 态
     ```js
-    const store = new Vuex.Store({
-        // ...
+    // store.js
+    export default new Vuex.Store({
+        state: {
+            total: 0,
+        },
     });
-
+    ```
+    ```js
+    // index.js
+    import store from './store.js';
     new Vue({
         // ...
         computed: {
@@ -30,31 +36,14 @@
         // ...
     });
     ```
-2. 但这里首先的一个问题是，你要知道定义 store 实例是的命名。例如上面的例子，如果 store
-和 Vue 实例不是同一个人开发，那必须要协商好 store 实例的命名，并且要求以后不能变。这种
-依赖显然是不好的。
-3. 更严重的问题是，假设在一个模块化系统里，现在根实例有个子组件，内部也想用`store`，该
-怎么办？因为是模块化系统，不存在跨组件的公共作用域，所以子组件无法引用到`store`。
-4. 那要么通过 prop 把`store`传给子组件，不过要是还这样通过组件传值的话，那 Vuex 也就没
-意义了；要么就是把`store`定义到一个模块里，在每个要用到它的组件里都`import`一下。第二种
-方法仍然有些麻烦，而且在测试组件时需要模拟状态。不懂这里模拟状态的情况是什么。
-    ```js
-    // 子组件
-    import {store} from '../store/index';
-    export default {
-        computed: {
-            count(){
-                return store.state.count;
-            },
-        },
-    }
-    ```
-5. Vuex 通过`store`选项，提供了一种机制将状态从根组件“注入”到每一个子组件中（需调用
+2. 然而，这种模式导致组件依赖全局状态单例。在模块化的构建系统中，在每个需要使用 state
+的组件中都需要单独导入一遍，并且在测试组件时需要模拟状态。不懂这里模拟状态的情况是什么。
+3. Vuex 通过`store`选项，提供了一种机制将状态从根组件“注入”到每一个子组件中（需调用
 `Vue.use(Vuex)`）。通过在根实例中注册`store`选项，该 store 实例会注入到根组件下的所有
 子组件中，且子组件能通过`this.$store`访问到。当然根实例也应该通过`this.$store`访问。
     ```js
     // 根组件
-    import {store} from './store/index';
+    import store from './store.js';
 
     new Vue({
         // ...
@@ -84,8 +73,7 @@
     ```
 
 ### `mapState`辅助函数
-1.
-2. 加入现在`state`中有三个值
+1. 假如现在`state`中有三个值
     ```js
     state: {
         count: 0,
@@ -93,7 +81,7 @@
         age: 22,
     },
     ```
-3. 你现在想要在一个组件里面用这三个值，可以分别定义三个计算属性
+2. 你现在想要在一个组件里面用这三个值，可以分别定义三个计算属性
     ```js
     computed: {
         myCount(){
@@ -107,7 +95,7 @@
         },
     },
     ```
-4. 其实也不算麻烦，不过 Vuex 还是提供了简单的写法
+3. 其实也不算麻烦，不过 Vuex 还是提供了简单的写法
     ```js
     import { mapState } from 'vuex'
 
@@ -128,7 +116,8 @@
 名称，对应的属性值可以是一个函数或者是一个字符串。
     * 如果是一个函数，该函数接受一个参数，引用`this.$store.state`。返回值为计算属性的
         值。
-    * 如果是一个字符串`str`，则表示直接返回`this.$store.state.str`。
+    * 如果是一个字符串`str`，则表示直接返回`this.$store.state.str`。像下面说的一样，
+      使用字符串的方法不适合模块化 store。
 6. 如果你打算让计算属性和`state`中的对应属性的名值都保持相同，那么直接给`mapState`传一
 个数组，把所有属性名作为字符串数组项即可，这倒是明显简便了
     ```js
@@ -136,3 +125,5 @@
         ...mapState(['count', 'name', `age`]),
     },
     ```
+    不过在模块化 store 的情况下，这种方法并不适用。因为`state`是还要分为具体的模块，所
+    以比如这里的`count`是`store.state.count`，而不能是`store.state.foo.count`。
