@@ -2,7 +2,7 @@
 
 
 1. Vuex 插件就是一个函数，它接收 store 作为唯一参数。其中的`subscribe`方法是任何一次
-mutation 的钩子
+mutation 的钩子。不懂为什么插件的功能只局限于 mutation 的回调里面
     ```js
     const myPlugin = store => {
         // 当 store 初始化后调用

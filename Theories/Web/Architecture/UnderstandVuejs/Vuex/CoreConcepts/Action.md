@@ -85,7 +85,9 @@ mutation —— 状态立刻改变 —— 快照。
         },
     },
     ```
-3. 同样，action 也可以通过`mapActions`将 action 定义为实例 method。方法也都是一样的。
+3. 同样，action 也可以通过`mapActions`将 action 定义为实例 method。方法也都是一样的，
+即支持对象字符串形式和数组形式
+
     ```js
     // vm
     methods: {
@@ -102,7 +104,7 @@ mutation —— 状态立刻改变 —— 快照。
 
 
 ## 获取 action 完成通知
-1. 加入你提交了一个付款的 action，你希望完成后收到通知进行一些其他操作比如提示付款成功。
+1. 假如你提交了一个付款的 action，你希望完成后收到通知进行一些其他操作比如提示付款成功。
 2. 上面的例子中，只能在 action 的异步回调进行 store 状态更改，组件并不能加入回调机制。
 3. 实际上，`dispatch`方法可以返回一个 Promise 实例，这样，组件就可以在 method 里加入
 回调
@@ -168,8 +170,8 @@ mutation —— 状态立刻改变 —— 快照。
 6. 文档中最后的一段话不懂：It's possible for a `store.dispatch` to trigger
 multiple action handlers in different modules. In such a case the returned value
 will be a Promise that resolves when all triggered handlers have been resolved.
-`store.dispatch` 可以像上面的例子一样链式的触发多个多个 action 可以理解，但是怎么在不
-同的模块中触发？看起来不像是说下面这种情况：
+`store.dispatch` 可以像上面的例子一样链式的触发多个 action 可以理解，但是怎么在不同的
+模块中触发？看起来不像是说下面这种情况：
     ```js
     // store
     actions: {
