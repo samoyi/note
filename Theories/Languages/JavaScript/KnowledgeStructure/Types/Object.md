@@ -307,22 +307,32 @@ console.log(arr.toString()); // “1,2,3”
 是部署这个算法的新方法。
 
 ### `Object.assign(target, ...sources)`
-1. Copy(Shallow-clone) the values of all enumerable own properties from one or
-more source objects to a target object.
+1. 只会拷贝可枚举属性，且会把访问器属性变成数据属性
     ```js
-    var obj = Object.create({foo: 1}, { // foo 是个继承属性。
-        bar: {
-            value: 2  // bar 是个不可枚举属性。
-        },
-        baz: {
-            value: 3,
-            enumerable: true  // baz 是个自身可枚举属性。
-        }
+    const source = {};
+    Object.defineProperties(source, {
+    	foo: {
+    		get(){
+    			return 22;
+    		},
+    		enumerable: true,
+    	},
+    	bar: {
+    		get(){
+    			return 33;
+    		},
+    	},
     });
 
-    var copy = Object.assign({}, obj);
-    console.log(copy); // { baz: 3 }
+    let target = {};
+    Object.assign(target, source);
+    console.log(target); // {foo: 22}
+    console.log(target.bar); // undefined
+    const descriptors = Object.getOwnPropertyDescriptors(target);
+    console.log(descriptors.foo); // {value: 22, writable: true, enumerable: true, configurable: true}
     ```
+    看起来只是遍历读取属性值然后赋值给 target 对象，而且这个赋值是直接赋值，所以导致了
+    那三个`true`。
 2. 调用该方法会直接改变目标对象，并且返回目标对象
     ```js
     let target = {
