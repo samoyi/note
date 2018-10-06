@@ -41,8 +41,8 @@ templates. You should probably use "my-num" instead of "myNum".
 2. 可以通过任何内置构造函数或者是自定义构造函数来指定类型；也可以设置为`null`来匹配任何
 类型。
 3. 设置为对象时：通过`type`属性设定上述三种值，通过`default`属性指定默认值；如果设置了
-`require`属性且值为`true`，则必须传值。
-4. 可以设置为对象并添加`validator`，在该方法内部可通过自定义逻辑来验证传入的值
+`required`属性且值为`true`，则必须传值。
+4. 可以设置为对象并添加`validator`方法，在该方法内部可通过自定义逻辑来验证传入的值
 
 ```html
 <div id="app">

@@ -21,57 +21,37 @@
 以会执行转账。
 
 
-## Definition
-### Definition of same origin
-Two pages have the same origin if the **protocol**, **port**(if one is specified
-), and **host** are the same for both pages.
+## 定义
+### 同源（same origin）的定义
+相同的协议（protocol）、相同的端口（port）和相同的主机（host）
 
-### Definition of origin
-* A script can read only the properties of windows and documents that have the
-same origin as the document that **contains the script**, the origin of the
-script itself is not relevant to the same-origin policy.
-* Suppose, for example, that a script hosted by host A is included (using the
-`src` property of a `<script>` element) in a web page served by host B. The
-origin of that script is host B and the script has full access to the content of
-the document that contains it. If the script opens a new window and loads a
-second document from host B, the script also has full access to the content of
-that second document. But if the script opens a third window and loads a
-document from host C (or even one from host A) into it, the same-origin policy
-comes into effect and prevents the script from accessing this document.
+### 源（origin）的定义
+1. 脚本本身的来源和同源策略并不相关，相关的是脚本所嵌入的文档的来源。
+2. 例如，假设一个来自主机 A 的脚本被包含到（使用`<script>`标记的`src`属性）宿主 B 的一
+个Web页面中。这个脚本的源是主机 B，因此可以完整地访问包含它的文档的内容。
+3. 如果脚本打开一个新窗口并载入来自主机 B 的另一个文档，脚本对这个文档的内容也具有完全的
+访问权限。
+4. 但是，如果脚本打开第三个窗口并载入一个来自主机 C 的文档（或者是来自主机 A），同源策
+略就会发挥作用，阻止脚本访问这个文档。
 
 
-## Inherited origins
-Content from `about:blank` and `javascript:` URLs inherits the origin from the
-document that loaded the URL, since the URL itself does not give any information
-about the origin. `data:` URLs get a new, empty, security context.
+## 继承源
+1. 来自`about:blank`或`javascript:`URL 的脚本内容会继承加载该 URL 的文档的源，因为这些
+URL 自身没有给出关于源的信息。
+2. 例如`about:blank`通常作为副脚本写入内容的空白弹出窗口的 URL（比如通过
+`Window.open()`），如果弹出的窗口包含代码，则代码会继承和弹出该窗口的脚本相同的源。
+3. `data:` URL 会获得一个新的、空的、安全的环境。
 
 
-## IE Exceptions
-Internet Explorer has two major exceptions when it comes to same origin policy
-### 1. Trust Zones
-If both domains are in highly trusted zone e.g, corporate domains, then the same
- origin limitations are not applied
-### 2. Port
-IE doesn't include port into Same Origin components, therefore
-`http://company.com:81/index.html` and `http://company.com/index.html` are
-considered from same origin and no restrictions are applied.
-
-
-## Bypassing
-### 跨域访问DOM
+## 绕过同源策略
+### 跨域访问 DOM
 #### `document.domain`
-1. A frame or child page can bypass this restriction by setting `document.domain`
-variable to the same domain name as the parent’s domain name.
-2. When using `document.domain` to allow a subdomain to access its parent
-securely, you need to set `document.domain` to the same value in both the parent
-domain and the subdomain. This is necessary even if doing so is simply setting
-the parent domain back to its original value. Failure to do this may result in
-permission errors.
-3. The port number is kept separately by the browser. Any call to the setter,
-including `document.domain = document.domain` causes the port number to be
-overwritten with `null`. Therefore one cannot make `company.com:8080` talk to
-`company.com` by only setting `document.domain = "company.com"` in the first. It
- has to be set in both so that port numbers are both `null`.
+1. frame 或子域可以通过设置与父级相同的`document.domain`来实现跨域访问 DOM。
+2. 父级和子级必须都设置该属性且属性值相等。即使父级设置的该属性值就是当前的域名，也不能
+省略设置。
+3. 对该属性任何赋值操作，都会导致端口号被设置为`null`，即使是
+`document.domain = document.domain`。所以才必须给父子的该属性都赋值，以保证两者的端口
+号都是`null`。
 
 #### Proxy server
 `http://www.qnimate.com/parent.html`:
@@ -90,7 +70,7 @@ window.document.getElementById("myIFrame").contentWindow.document.body.style
 
 #### `window.postMessage()`
 
-### 跨域AJAX
+### 跨域 AJAX
 * CORS
 * JSONP
 * Proxy server
