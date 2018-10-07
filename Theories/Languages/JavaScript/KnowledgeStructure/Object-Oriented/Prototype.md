@@ -4,22 +4,20 @@
 
 
 ## Prototype
-1. Every function has a prototype object.
-2. If a function is called as a constructor, instances inherit properties and
-methods from constructor's prototype.
-3. There are 2 ways to reference a prototype object:
-    * constructor's `prototype` property
-    * instance's `[[Prototype]]` internal slot
-4. Prototype's `constructor` proerty points back to the constructor
+1. 每个函数都有一个原型对象
+2. 如果函数作为构造函数被调用，则实例会继承该构造函数原型的属性和方法。
+3. 有两个方法可以引用到原型对象：
+    * 构造函数的`prototype`属性
+    * 实例的内部 slot `[[Prototype]]`
+4. 原型的`constructor`属性指向引用该原型的构造函数
     ```js
     let obj1 = {},
     	obj2 = {};
     console.log( obj1.constructor.prototype === obj2.constructor.prototype ); // true
     console.log( obj1.constructor === obj2.constructor.prototype.constructor ); // true
     ```
-5. `Object.prototype` is one of the rare objects that has no prototype: it does
-not inherit any properties.
-6. Not all native prototypes are plain object
+5. `Object.prototype`是仅有的没有原型的对象，它不继承任何属性。
+6. 并不是所有的原生原型都是 plain object
     ```js
     console.log( Object.prototype.toString.call(Array.prototype));    // [object Array]
     console.log( Object.prototype.toString.call(Function.prototype)); // [object Function]
@@ -27,7 +25,8 @@ not inherit any properties.
     console.log( Object.prototype.toString.call(Date.prototype));     // [object Object]
     ```
 
-### Prototype chain
+
+## Prototype chain
 ```js
 Object.prototype.say = function(){
     console.log('Object');
@@ -58,50 +57,44 @@ obj3.say2(); // obj2
 
 
 ##  `[[Prototype]]`
-Each time a constructor is called to create a new instance, that instance has
-an internal slot called `[[Prototype]]`, which is a pointer to the constructor’s
-prototype.
+1. 每当构造函数创建一个新的实例时，实例会有一个叫做`[[Prototype]]`的内部 slot，该
+slot 是一个指针，指向构造函数的原型对象。
+2. 使用`Object.getPrototypeOf(obj)`方法从代码中实际引用`obj`对象的`[[Prototype]]`
+    ```js
+    let obj = {};
+    console.log( obj.__proto__ === obj.constructor.prototype); // true
+    console.log( Object.getPrototypeOf(obj) === obj.constructor.prototype); // true
+    ```
+3. 不要使用已经废弃的`Object.prototype.__proto__`
+3. 看起来，与实例相关的原型操作，都是使用使用实例的`[[Prototype]]`，而不是使用其构造函
+数的`prototype`属性。
 
-### References `[[Prototype]]` by 2 ways:
-* `Object.prototype.__proto__`
-* `Object.getPrototypeOf`
 
+## 检测原型
+`isPrototypeOf()`检测一个对象是否在另一个对象的原型链上
 ```js
-let obj = {};
-console.log( obj.__proto__ === obj.constructor.prototype); // true
-console.log( Object.getPrototypeOf(obj) === obj.constructor.prototype); // true
-```
-
-### Check prototype by `[[Prototype]]`
-The `isPrototypeOf()` method checks if an object exists in another object's
-prototype chain.
-```js
-let proto = {},
-	obj = Object.create(proto);
+let proto = {};
+let subProto = Object.create(proto);
+let obj = Object.create(subProto);
+console.log( subProto.isPrototypeOf(obj) ); // true
 console.log( proto.isPrototypeOf(obj) ); // true
 ```
 
-### Change instance's prototype
-#### Two ways
-* Reassign `__proto__` property
-* `Object.setPrototypeOf(instance, prototype)`。该方法等同于下面的函数：
+## 改变实例原型
+1. `Object.setPrototypeOf(instance, prototype)`。
+2. 该方法等同于下面的函数：
     ```js
     function (obj, proto) {
         obj.__proto__ = proto;
         return obj;
     }
     ```
+3. 不要使用已经废弃的`Object.prototype.__proto__`
 
-#### Performance
-* Changing the `[[Prototype]]` of an object is, by the nature of how modern
-JavaScript engines optimize property accesses, a very slow operation, in every
-browser and JavaScript engine. The effects on performance of altering
-inheritance are subtle and far-flung, and are not limited to simply the time
-spent in `obj.__proto__ = ...` statement, but may extend to any code that has
-access to any object whose `[[Prototype]]` has been altered. If you care about
-performance you should avoid setting the `[[Prototype]]` of an object. Instead,
-create a new object with the desired `[[Prototype]]` using `Object.create()`.
-* 内置构造函数的原型都是不可写、不可枚举、不可配置的
+### 改变原型的性能问题
+1. 根据现代浏览器优化属性访问的实质，修改一个对象`[[Prototype]]`是一个影响性能的行为。
+2. 这种性能影响是微妙且广泛的，不仅仅是修改原型本身的缓慢，之后任何会用到该对象
+`[[Prototype]]`的操作都会收到影响。
 
 
 ## References

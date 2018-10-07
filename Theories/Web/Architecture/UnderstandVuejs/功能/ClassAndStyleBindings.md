@@ -27,29 +27,32 @@ new Vue({
     },
     methods: {
         isPlainObject(o){
-            return Object.prototype.toString(o) === '[object Object]';
+            return Object.prototype.toString.call(o) === '[object Object]';
         },
         isArray(o){
             return Array.isArray(o);
         },
     },
     directives: {
-        myclass: (el, binding, vnode)=>{
-            let value = binding.value;
-            let vm = vnode.context;
-
-            if (vm.isPlainObject(value)){
+        myclass: (el, {value}, {context})=>{
+            // 如果指令值是平对象
+            if (context.isPlainObject(value)){
+                // 遍历每一个属性名，即实际的 class 名
                 for (let classname in value){
                     if (value[classname]){
+                        // 如果对应的值为真值，则为该节点添加该 class 名
+                        // 因为不是重写整个 class，所以节点本来就有过的 class 名不会
+                        // 被覆盖，在本例中就是 class3
                         el.classList.add(classname);
                     }
                     else {
+                        // 相反则移除
                         el.classList.remove(classname);
                     }
                 }
             }
-
-            if (vm.isArray(value)){
+            // 如果指令值是数组
+            if (context.isArray(value)){
                 // 省略
             }
         },

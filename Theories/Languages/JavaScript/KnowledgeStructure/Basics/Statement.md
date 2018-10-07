@@ -227,7 +227,7 @@ for(initialization; expression; post-loop-expression) statement
     ```
 
 
-## for-in语句
+## for-in 语句
 * The for/in loop does not actually enumerate all properties of an object, only the enumerable properties.
 * JavaScript arrays are simply a specialized kind of object and array indexes are object properties that can be enumerated with a for/in loop.
     ```

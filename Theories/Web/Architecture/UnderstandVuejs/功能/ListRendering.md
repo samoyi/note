@@ -3,8 +3,7 @@
 ## `v-for`
 ```html
 <div id="components-demo">
-    <!-- You can also use of as the delimiter instead of in, so that it is
-    closer to JavaScript’s syntax for iterators -->
+    <!-- 你也可以用 of 替代 in 作为分隔符，因为它是最接近 JavaScript 迭代器的语法 -->
     <p v-for="(value, key, index) of obj">
         {{index}}. {{key}}: {{value}}
     </p>
@@ -21,32 +20,20 @@ new Vue({
         }
     },
     mounted(){
-        // When iterating over an object, the order is based on the key
-        // enumeration order of Object.keys(), which is not guaranteed to be
-        // consistent across JavaScript engine implementations.
+        // 在遍历对象时，是按 Object.keys() 的结果遍历，但是不能保证它的结果在不同的
+        // JavaScript 引擎下是一致的。
         console.log(Object.keys(this.obj)); // ["name", "age", "sex"]
     },
 });
 ```
 
 ### `key`
-1. The `key` special attribute is primarily used as a hint for Vue’s virtual DOM
-algorithm to identify VNodes when diffing the new list of nodes against the old
-list.
-2. When Vue is updating a list of elements rendered with `v-for`, by default it
-uses an “in-place patch” strategy. Without keys, Vue uses an algorithm that
-minimizes element movement and tries to patch/reuse elements of the same type
-in-place as much as possible. If the order of the data items has changed,
-instead of moving the DOM elements to match the order of the items, Vue will
-patch each element in-place and make sure it reflects what should be rendered at
-that particular index.
-3. With keys, it will reorder elements based on the order change of keys, and
-elements with keys that are no longer present will always be removed/destroyed.
-4. This default mode is efficient, but only suitable when your list render
-output does not rely on child component state or temporary DOM state (e.g. form
-input values).
+1. 当 Vue.js 用 v-for 正在更新已渲染过的元素列表时，它默认用“就地复用”策略。
+2. 如果数据项的顺序被改变，Vue将不会移动 DOM 元素来匹配数据项的顺序， 而是简单复用此处
+每个元素，并且确保它在特定索引下显示已被渲染过的每个元素。
+3. 这个默认的模式是高效的，但是只适用于不依赖子组件状态或临时 DOM 状态的列表渲染输出。
 
-#### rely on child component state
+#### 依赖子组件状态的列表
 ```html
 <ul id="components-demo" @click="reverse">
     <li v-for="val of arr">
@@ -81,11 +68,11 @@ new Vue({
 });
 ```
 1. 会渲染出来两个`<span>`，每个`<span>`对应一个组件实例。span1 对应 comp1，span2 对
-应comp2。
+应 comp2。
 2. 现在想要颠倒页面上的两个`<span>`，如果直接操作的话就是修改 DOM。但 DOM 操作消耗比较
 大，所以 Vue 不想实际颠倒两个 VNode 及真实 `<span>`，只会让 span1 的数据和 span2 的
 数据交换一下即可。
-3. 如果没有`innerValue`，那现在的数据依赖仅仅是 span1 的`outerValue` 依赖`arr[0]`，
+3. 如果没有`innerValue`，那现在的数据依赖仅仅是 span1 的`outerValue`依赖`arr[0]`，
 span2 的`outerValue`依赖`arr[1]`。Vue 只需要通过`reverse`方法把`arr`颠倒一下，span1
 和 span2 中的`outerValue`就颠倒了。看起来好像真的把节点颠倒了一样。
 4. 但现在的情况是，组件内部还有自己的状态`innerValue`，而且这个状态还会影响渲染。

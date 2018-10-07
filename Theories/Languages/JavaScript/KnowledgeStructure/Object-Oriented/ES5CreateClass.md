@@ -22,13 +22,12 @@ console.log(person1.sayName === person2.sayName); // false
 ```
 
 ### Cons
-1. Factory pattern didn’t address the issue of object identification，即第一个
-`false`。
+1. 工厂模式无法解决实例识别的问题，即第一个`false`。因为实例不是由工厂函数创建的。
 2. 每次调用该函数，都要创建新函数`sayName`方法，意味着每个对象都有自己的`sayName`版本。
 而事实上，每个对象都共享同一个函数。ECMAScript 中的函数是对象，因此每调用一次构造函数，
 就会重新定义一个函数，也就是实例化了一个`Function`对象。如果对不同实例的同名方法进行比
 较，也会得到`false`的结果。
-3. 一般的实例化形式都要用到`new`才显得合乎寓意。
+3. 一般的实例化形式都要用到`new`才显得合乎语义。
 
 
 ## Constructor Pattern
@@ -50,16 +49,13 @@ console.log(person1.sayName === person2.sayName); // false
 ```
 
 ### 使用`new`的内部过程
-When the code `new Foo(...)` is executed, the following things happen:
-1. A new object is created, inheriting from `Foo.prototype`. 所以可以用
-`instanceof`.
-2. The constructor function `Foo` is called with the specified arguments, and
-with `this` bound to the newly created object.
-3. Unless the function returns its own alternate object, `Foo()` will
-automatically return the newly created object.
+当`new Foo(...)`被执行，会发生以下的过程：
+1. 创建一个新对象，继承`Foo.prototype`。（所以可以用`instanceof`）
+2. 执行函数`Foo`，函数内部的`this`绑定到上一步新创建的对象上。
+3. 除非`Foo`明确返回一个引用类型值，则`new Foo(...)`返回刚才新创建的对象。
 
 ### Cons
-实例依然没有共享方法
+因为构造函数内部`this`指向实例，所以实例依然没有共享方法
 
 
 ## Prototype Pattern
@@ -73,8 +69,10 @@ are shared among object instances. Instead of assigning object information in
 the constructor, they can be assigned directly to the prototype.
 
 ```js
+// 定义构造函数
 function Person(){}
 
+// 设定构造函数的原型
 Person.prototype = {
     name: "Nicholas",
     age: 29,
@@ -98,7 +96,7 @@ const person1 = new Person();
 const person2 = new Person();
 
 console.log(person1 instanceof Person); // true
-console.log(person1.sayName === person2.sayName); // true
+console.log(person1.rename === person2.rename); // true
 
 console.log(person1.age === person2.age); // true
 console.log(person1.getName() === person2.getName()); // true
@@ -126,17 +124,24 @@ console.log(person2.getName()); // "Nicholas"
 例也拥有个性化的信息。
 3. 但现在再看看第三个和第四个 `console.log`，在实例创建之后，每个实例的属性信息是完全
 相同的；想要对每个实例进行个性化的初始化，必须在创建之后更改它们的属性。
-4. 但其实这没什么，因为可以再定义一个初始化方法，一次性对实例所有属性进行初始化。但如果
-把注释的5行代码打开，就会发现真正无法回避的问题了：`person1.friends` 引用的是原型上的
-数组，对其进行 `push`，就是修改了原型的数组，所以每一个实例都可以共享这次修改。
-5. 当然硬要绕过这个问题也有办法，就是不对引用类型进行修改，而是每次想修改时就直接用实例
+4. 但其实这没什么，因为可以再定义一个初始化方法，一次性对实例所有属性进行初始化。
+5. 但如果把注释的5行代码打开，就会发现真正无法回避的问题了：`person1.friends`引用的是
+原型上的数组，对其进行`push`，就是修改了原型的数组，所以每一个实例都可以共享这次修改。
+6. 当然硬要绕过这个问题也有办法，就是不对引用类型进行修改，而是每次想修改时就直接用实例
 的同名属性覆盖：`person1.friends = ['a', 'b', 'c', 'd'];`。但显然这样放弃的太多了。
+
+### 对比一下构造函数模式和原型模式的缺点
+* 构造函数模式是把所有属性和方法都定义到实例上，虽然实例不会共享引用类型属性，但也不能共
+享实例方法。
+* 原型模式是都定义到原型上，虽然实例可以共享原型上的方法，但同时也会共享原型上的引用类型
+属性。
 
 
 ## Combination Constructor/Prototype Pattern
-The hybrid constructor/prototype pattern is the most widely used and accepted
-practice for defining custom reference types in ECMAScript. Generally speaking,
-this is the default pattern to use for defining reference types.
+1. 上面的构造函数模式和原型模式各有利弊，下面要说的混合模式这是两者的结合，扬长避短。
+2. 扬长避短的思路就是：不需要共享的属性用构造函数来定义，需要共享的方法用原型来定义。
+3. 这种构造函数与原型混成的模式，是目前在 ES5 中使用最广泛、认同度最高的一种创建自定义
+类型的方法。可以说，这是用来定义引用类型的一种默认模式。
 
 ```js
 function Person(name, age, job){
@@ -164,8 +169,8 @@ console.log(person1 instanceof Person); // true
 console.log(person1.sayName === person2.sayName); // true
 
 person1.friends.push("Van");
-console.log(person1.friends);    //"Shelby,Count,Van"
-console.log(person2.friends);    //"Shelby,Count"
+console.log(person1.friends);    // ["Shelby", "Court", "Van"]
+console.log(person2.friends);    // ["Shelby", "Court"]
 ```
 
 

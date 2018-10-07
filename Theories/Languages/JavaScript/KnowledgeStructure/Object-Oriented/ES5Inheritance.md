@@ -7,14 +7,15 @@
 
 
 ## by Prototype Chain
-SubType's `prototype` property reference SuperType's instance, so SubType's
-instance gets properties in SuperType's constructor and prototype.
+子类构造函数的`prototype`属性指向父类的实例，这样子类的实例就会获得父类构造函数和原型中
+的属性
 
 ### Process of inheritance
 ```js
-function SuperType(){}
+function SuperType(){
+	this.name = 'is SuperType';
+}
 
-SuperType.prototype.name = 'is SuperType';
 SuperType.prototype.getName = function(){
 	return this.name
 };
@@ -26,26 +27,21 @@ SubType.prototype = proto;
 let obj = new SubType();
 console.log( obj.getName() ); // is SuperType
 ```
-When executing `obj.getName()`:
-1. Instance `obj` has neither property `name` nor method `getName`.
-2. So check prototype by `obj`'s `[[prototype]]`.
-3. The prototype is instance `proto`, which is also the instance of `SuperType`.
-4. Similarly, `proto` has neither property `name` nor method `getName`.
-5. Also, check `foo`'s prototype, get the property `name` nor method `getName`.
+
+当执行`obj.getName()`时：
+1. 实例`obj`本身既没有`name`属性也没有`getName`方法。
+2. 所以需要检查`obj`的`[[prototype]]`来查看原型。
+3. 原型是`proto`，同时是`SuperType`的实例。
+4. `proto`只有`name`属性而没有`getName`方法
+5. 所以继续查找`proto`的原型，获得了`getName`方法。
 
 ### Chain
-1. The inheritance relationship above can be extended by adding any other
-objects, but the end of the chain will always be `Object.prototype`.
-2. Any a reference type data is derived from `Object`, and will inherit
-properties and methods in `Object.prototype`.
+1. 上面的继承关系链可以通过不断的添加对象来被不断延长，但链的端点总是
+`Object.prototype`。
+2. 任何引用类型都派生自`Object`，因此都会继承`Object.prototype`的属性和方法。
 
-### Problems with Prototype Chaining
-**Reference properties in prototype chain**
-1. Instances in prototype chain have not their own methods, they share same one
-function, this is what we want.
-2. But they also inherit the same reference properties, that means, if your
-modify an inherited reference property in an instance, all this property in
-other instances will be modified.
+### 原型链继承的问题
+和使用原型方法创建对象一样，实例会共享原型的引用类型属性。
 
 ```js
 function SuperType(){
@@ -71,7 +67,7 @@ console.log(instance1.colors === instance2.colors); // true
 
 
 ## by Constructor Stealing
-Copy constructor properties of SuperType into SubType's constructor.
+将父类构造函数中的属性赋值到子类构造函数中
 
 ### Process of inheritance
 1. 继承原理
@@ -109,13 +105,12 @@ console.log(instance2.colors); // [ 'red' ]
 ```
 
 ### 复制式继承和引用式继承
-Prototype Chain 是引用时继承，即子类不拥有父类属性，需要查询属性值时直接去父类查询。
+Prototype Chain 是引用式继承，即子类不拥有父类属性，需要查询属性值时直接去父类查询。
 Constructor Stealing 是复制式继承，即把父类属性复制一份到自己这里。
 
 ### Problems with Constructor Stealing
-**Can not inherit prototype properties and methods**
-This method actually is not really inheritance, it's just copy properties and
-methods only from `SuperType` constructor, but not from `SuperType`' prototype.
+从这个方法的名字可以看出来，它只是窃取了父类构造函数中的属性，所以父类原型中的属性也就无
+法获得了
 ```js
 function SuperType(){
 	this.colors = ["red"];
@@ -132,10 +127,17 @@ console.log(instance.name); // undefined
 ```
 
 
+## Prototype Chain 继承和 Constructor Stealing 继承的对比
+* Prototype Chain 继承父类构造函数和原型的属性，但所有的实例会继承相同的引用类型属性
+* Constructor Stealing 继承会继承独立的属性，但无法继承父类原型中的属性
+
+
 ## by Combination Inheritance
 ### 有缺陷的组合继承
-Put shared properties into prototype, put private properties into `SuperType`
-constructor, set prototype in `SubType` constructor.
+1. 把不想实例共享的属性放进父类构造函数，把想要实例共享的属性放进父类原型。
+2. 通过 Constructor Stealing 继承父类构造函数中的属性，通过把实例的原型指向父类原型来
+继承父类原型中的属性。
+
 ```js
 function SuperType(){
 	this.colors = ["red"];
@@ -147,11 +149,12 @@ function SubType(){
 	// 下面这一行，与 Prototype Chain 继承方法不同，这里子类的原型没有指向父类的实例。
 	// 因此只会继承父类的原型属性。
 	// 父类的实例属性是通过上面一行的 Constructor Stealing 方法来继承的。
-	this.__proto__ = SuperType.prototype; // 继承原型属性，和父类使用同样的原型
+	// 继承原型属性，和父类使用同样的原型
+	Object.setPrototypeOf(this, SuperType.prototype);
 }
 
-var instance1 = new SubType();
-var instance2 = new SubType();
+let instance1 = new SubType();
+let instance2 = new SubType();
 console.log(instance1.colors === instance2.colors); // false
 
 instance1.colors.push("black");
@@ -166,7 +169,7 @@ console.log(instance2.name); // 22
 // 以下是不合理的地方：
 console.log(instance1 instanceof SubType); // false
 console.log(instance1 instanceof SuperType); // true
-console.log(instance1.__proto__.constructor);
+console.log(Object.getPrototypeOf(instance1).constructor);
 // ƒ SuperType(){
 // 	this.colors = ["red"];
 // }
@@ -245,15 +248,24 @@ console.log(instance.colors); // ["red"]
 
 
 ## by Prototypal Inheritance
-Create objects using an object as prototype
 ```js
 Object.create()
 ```
-Like the way in Prototype Chain method, every created instance shared the same
-reference properties in prototype object.
+和 Prototype Chain 方法一样，每个创建的实例都共享相同的引用类型属性。
+```js
+let proto = {
+	age: 22,
+	friends: ['Hime', 'Hima'],
+};
+
+let obj1 = Object.create(proto);
+let obj2 = Object.create(proto);
+console.log(obj1.friends === obj2.friends);
+```
 
 
 ## by Parasitic Inheritance
+1.
 1. Create a function that does the inheritance, augments the object in some way,
 and then returns the object.  
 2. The Prototypal Inheritance method's logic is set an object as new objects'
@@ -297,28 +309,28 @@ anotherPerson2.sayAge(); // 22
 
 
 ## by Parasitic Combination Inheritance
-1. Like Combination Inheritance, use Constructor Stealing to inheritance private
- properties from SuperType's consturctor
-2. Unlike Combination Inheritance, this method doesn't use Prototype Chain to
-inheritance SuperType's prototype properties, but just makes a copy of
-SuperType's prototype, augments this copy, and uses it as SubType's prototype.
+1. 和组合继承一样使用构造函数窃取继承父类构造函数的属性作为实例属性。
+2. 和组合继承不同的是，这个方法不是用原型链来继承父类的原型属性，而是直接将子类构造函数
+的`prototype`属性指向父类原型。
 
-子类使用 Constructor Stealing 继承父类实例属性，并把子类构造函数的`prototype`指向父类
-`prototype`：
 ```js
+// 把不共享的属性定义到构造函数里
 function SuperType(name){
     this.name = name;
     this.colors = ["red", "blue", "green"];
 }
 
+// 把共享的属性定义到原型里
 SuperType.prototype.sayName = function(){
     console.log(this.name);
 };
 
+// 通过构造函数窃取继承父类的构造函数属性作为实例属性
 function SubType(name){
     SuperType.call(this, name);
 }
 
+// 直接将子类构造函数的 prototype 属性指向父类原型来继承父类原型属性
 function inheritPrototype(subType, superType){
 	let prototype = superType.prototype;
     prototype.constructor = subType; // 父类原型构造函数指向子类构造函数
