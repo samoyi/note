@@ -28,7 +28,7 @@ new Vue({
 ```
 
 ### `key`
-1. 当 Vue.js 用 v-for 正在更新已渲染过的元素列表时，它默认用“就地复用”策略。
+1. 当 Vue.js 用`v-for`正在更新已渲染过的元素列表时，它默认用“就地复用”策略。
 2. 如果数据项的顺序被改变，Vue将不会移动 DOM 元素来匹配数据项的顺序， 而是简单复用此处
 每个元素，并且确保它在特定索引下显示已被渲染过的每个元素。
 3. 这个默认的模式是高效的，但是只适用于不依赖子组件状态或临时 DOM 状态的列表渲染输出。
@@ -67,35 +67,42 @@ new Vue({
     },
 });
 ```
-1. 会渲染出来两个`<span>`，每个`<span>`对应一个组件实例。span1 对应 comp1，span2 对
-应 comp2。
-2. 现在想要颠倒页面上的两个`<span>`，如果直接操作的话就是修改 DOM。但 DOM 操作消耗比较
-大，所以 Vue 不想实际颠倒两个 VNode 及真实 `<span>`，只会让 span1 的数据和 span2 的
-数据交换一下即可。
-3. 如果没有`innerValue`，那现在的数据依赖仅仅是 span1 的`outerValue`依赖`arr[0]`，
-span2 的`outerValue`依赖`arr[1]`。Vue 只需要通过`reverse`方法把`arr`颠倒一下，span1
-和 span2 中的`outerValue`就颠倒了。看起来好像真的把节点颠倒了一样。
-4. 但现在的情况是，组件内部还有自己的状态`innerValue`，而且这个状态还会影响渲染。
-5. `reverse`虽然颠倒了`outerValue`依赖的`arr`，但却没有颠倒`innerValue`依赖的组件内
-部属性`innerValue`。
-6. 当然你也可以改造一下`reverse`方法，让它连两个`innerValue`也颠倒：
-```js
-reverse(){
-    this.arr.reverse();
+1. 因为列表是根据`arr`的顺序渲染的，所以颠倒了`arr`，理应再反向渲染列表。
+2. 但这样会导致直接修改 DOM 节点，是比较耗时的操作。如果仅仅颠倒列表项的数据，不真的颠
+倒重渲染整个列表，就会节省时间。
+3. Vue 默认也是这么做的。本来传入列表项的`outerValue`是`22`和`33`，现在改为传入`33`和
+`22`。
+4. 这样，子组件的`outerValue`就发生了颠倒。
+5. 但是`innerValue`并没发发生更新，因为`data`里面的属性并不会根据依赖动态更新。所以就
+会出现`outerValue`更新了但对应的`innerValue`没有更新的情况。
+6. 如果是真的颠倒渲染列表，则不会出现这个问题。
+7. 使用`key`就可以阻止 Vue 的复用策略，让它真的按照新的顺序重新渲染。
+8. 给每个列表项添加各不相同的`key`之后，Vue 就会知道这个列表项是唯一的，不应该被复用。
+    ```html
+    <child-component :outer-value="val" :key="val"></child-component>
+    ```
+9. 上面给每个列表项都设置了一个唯一的`key`值，这样它们都不会被复用。当然你也可以设置相
+同的`key`值，则相同`key`值的列表项因为是同一个身份，所以还是可以继续复用。
+10. 不过仅就本里这种数据依赖不复杂的情况来说，即使不使用`key`也有办法实现正常的顺序颠倒。
+因为上面说了，不能正确颠倒的原因是作为`data`属性的`innerValue`不能根据依赖动态更新，那
+只要把`innerValue`定义为计算属性就行了
+    ```js
+    components: {
+        'child-component': {
+            props: ['outerValue'],
+            template: `<span>
+                outerValue: {{outerValue}}  innerValue: {{innerValue}}
+            </span>`,
+			computed: {
+				innerValue(){
+					return '_' + this.outerValue;
+				},
+			},
+        }
+    },
+    ```
 
-    let innerValue0 = this.$children[0].innerValue;
-    let innerValue1 = this.$children[1].innerValue;
-    this.$children[0].innerValue = innerValue1;
-    this.$children[1].innerValue = innerValue0;
-}
-```
-7. 不过还是使用`key`更简单一些。By adding a `key` to the components, however, you
-are telling Vue that each component has a specific ID that and Vue will only
-re-use that component if it has the same ID.
-8. 本例很简单，所以修改`reverse`就可以。对于复杂的情况，显然使用`key`禁止复用强制进行
-DOM 移动更简单。但是，性能上哪个更好的？
-
-#### rely on temporary DOM state
+#### 依赖临时 DOM 状态
 ```html
 <ul id="components-demo" @click="reverse">
     <li v-for="n of arr">
@@ -131,8 +138,7 @@ new Vue({
 `input`的`value`
 
 ### `v-for` with a Range
-`v-for` can also take an integer. In this case it will repeat the template that
-many times.
+下面的设置，将渲染十个节点出来
 ```html
 <div>
   <span v-for="n in 10">{{ n }} </span>
@@ -140,8 +146,7 @@ many times.
 ```
 
 ### `v-for` on a `<template>`
-Similar to template `v-if`, you can also use a `<template>` tag with `v-for` to
-render a block of multiple elements.
+类似于`v-if`时的情况，你也可以利用带有`v-for`搭配`<template>`循环渲染多个元素
 ```html
 <ul>
   <template v-for="item in items">
@@ -152,59 +157,42 @@ render a block of multiple elements.
 ```
 
 ### `v-for` with `v-if`
-When they exist on the same node, `v-for` has a higher priority than `v-if`.
-That means the `v-if` will be run on each iteration of the loop separately. 这是
-理所应当的，如果`v-if`那它就可以控制是否进行列表渲染，而这个工作完全可以交给`v-for`来执
-行，比如让数组长度为0。
+1. 当它们处于同一节点，`v-for`的优先级比`v-if`更高，这意味着`v-if`将分别重复运行于每个
+`v-for`循环中。
+2. 这是理所应当的，如果`v-if`优先级更高那它就可以控制是否进行列表渲染，而这个工作完全可
+以交给`v-for`来执行，比如让数组长度为`0`。
 
 ### `v-for` with a Component
-1. You can directly use `v-for` on a custom component, like any normal element.
-2. However, this won’t automatically pass any data to the component, because
-components have isolated scopes of their own.
-3. In order to pass the iterated data into the component, we should also use
-`props`.
-```html
-<my-component
-  v-for="(item, index) in items"
-  v-bind:item="item"
-  v-bind:index="index"
-  v-bind:key="item.id"
-></my-component>
-```
-4. The reason for not automatically injecting item into the component is because
-that makes the component tightly coupled to how `v-for` works. Being explicit
-about where its data comes from makes the component reusable in other situations.
-5. 想象能自动注入的情况：组件内部就可以直接使用`this.item`，而组件编写者不知道谁将使用
-这个组件，也就不知道有什么变量会被自动注入。所以在组件内部，在运行时，`this`上面可以出现
-任何属性。
+1. 在组件元素上设置`v-for`时，必须要设置`key`。不懂为什么
+2. 循环时的值也一样要通过`props`传到组件内部
+    ```html
+    <my-component
+      v-for="(item, index) in items"
+      v-bind:item="item"
+      v-bind:index="index"
+      v-bind:key="item.id"
+    ></my-component>
+    ```
+4. 不自动将 item 注入到组件里的原因是，这会使得组件与`v-for`的运作紧密耦合。这种耦合不
+利于组件复用于其他场合。
+5. 如果能自动注入，那上面的组件内部就可以直接使用`this.item`、`this.index`和`this.id`
+，这显然就需要组件编写者和组件使用者商量好要传入哪些属性。
 
 
 ## Array Change Detection
-### Mutation Methods
-
-### Replacing an Array
-You might think this will cause Vue to throw away the existing DOM and re-render
-the entire list - luckily, that is not the case. Vue implements some smart
-heuristics to maximize DOM element reuse, so replacing an array with another
-array containing overlapping objects is a very efficient operation. 需要查看源码
-
-### Caveats
-1. 由于属性的子属性的变动不会触发属性的 setter, Vue cannot detect the following
-changes to an array:
-    1. When you directly set an item with the index, e.g.
-        `vm.items[indexOfItem] = newValue`
-    2. When you modify the length of the array, e.g.
-        `vm.items.length = newLength`
-2. 针对第一种情况，可以使用以下两个方法：
+1. 由于属性的子属性的变动不会触发属性的 setter，Vue 不能检测以下的数组变动：
+    * 利用索引直接设置一个项时：`vm.items[2] = 33`
+    * 修改数组的长度：`vm.items.length = 3`
+2. 针对第一种情况，可以使用以下两个方法解决：
     * `Vue.set`方法
     ```js
-    Vue.set(vm.items, indexOfItem, newValue)
+    Vue.set(vm.items, 2, 33)
     // or
-    vm.$set(vm.items, indexOfItem, newValue)
+    vm.$set(vm.items, 2, 33)
     ```
     * `Array.prototype.splice`
     ```js
-    vm.items.splice(indexOfItem, 1, newValue)
+    vm.items.splice(2, 1, 33)
     ```
 3. 其实`Vue.set`在内部也是使用`Array.prototype.splice`
     ```js
@@ -216,17 +204,20 @@ changes to an array:
     ```
 4. 针对第二种情况，也是要用`Array.prototype.splice`
     ```js
-    vm.items.splice(newLength)
+    vm.items.splice(3)
     ```
 
 
 ## Object Change Detection Caveats
-*  同样不能检测对象属性的添加或删除
-* Vue does not allow dynamically adding new root-level reactive properties to
-an already created instance.不懂为什么
-* Sometimes you may want to assign a number of new properties to an existing
-object, for example using `Object.assign()` or` _.extend()`. In such cases, you
-should create a fresh object with properties from both objects.
+* 同样不能检测对象属性的添加或删除
+* 对于已经创建的实例，Vue 不能动态添加根级别的响应式属性。不懂为什么
+    ```js
+    this.$set(this.$data, 'n', 33);
+    // [Vue warn]: Avoid adding reactive properties to a Vue instance or its
+    // root $data at runtime - declare it upfront in the data option.
+    ```
+* 有时你可能需要为已有对象赋予多个新属性，比如使用`Object.assign()`。在这种情况下，你
+应该用两个对象的属性创建一个新的对象。
     1. 不能使用下面这样的方法：
         ```js
         Object.assign(vm.userProfile, anotherObj)
@@ -237,6 +228,11 @@ should create a fresh object with properties from both objects.
         ```js
         vm.userProfile = Object.assign({}, vm.userProfile, anotherObj)
         ```
+        但是不能这样，不懂：
+        ```js
+        vm.userProfile = Object.assign(vm.userProfile, anotherObj)
+        ```
+
 
 ## References
 * [StackOverflow](https://stackoverflow.com/a/44079395)

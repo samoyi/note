@@ -6,24 +6,22 @@
 2. 所谓的“普通”实例其实也是一个组件，都是组件，共同组成一个组件系统。
 3. 要说不同的话，就是狭义的组件需要自创模板，可以自定义标签名，以及可复用。
 4. 给所谓的“非组件”实例添加模板，一样会覆盖元素本来的 HTML
-```html
-<!-- 将被渲染成 <p>p</p> -->
-<div id="app">div</div>
-```
-```js
-new Vue({
-    el: '#app',
-    template: `<p>p</p>`
-})
-```
+    ```html
+    <!-- 将被渲染成 <p>p</p> -->
+    <div id="app">div</div>
+    ```
+    ```js
+    new Vue({
+        el: '#app',
+        template: `<p>p</p>`
+    })
+    ```
 
 
 ## Registration
-* Global registration often isn’t ideal. For example, if you’re using a build
-system like Webpack, globally registering all components means that even if you
-stop using a component, it could still be included in your final build. This
-unnecessarily increases the amount of JavaScript your users have to download.
-
+全局注册往往是不够理想的。比如，如果你使用一个像 webpack 这样的构建系统，全局注册所有的
+组件意味着即便你已经不再使用一个组件了，它仍然会被包含在你最终的构建结果中。这造成了用户
+下载的 JavaScript 的无谓的增加。
 
 
 ## 复用
@@ -52,7 +50,7 @@ unnecessarily increases the amount of JavaScript your users have to download.
 供的参数在允许的范围内定制子函数的行为，但如果你能修改子函数中的任何变量，相当于就可以随
 意改变的彻底的改变一个函数，那这个函数封装性就无从谈起了。
 3. Vue 也是基于以上两点设计的组件通信规则，即通过自定义事件和 prop。
-4. 当然，Vue 虽然不推荐，但也提供了可以直接修改的方法，即`$root`、`$parent`和`res`。
+4. 当然，Vue 虽然不推荐，但也提供了可以直接修改的方法，即`$root`、`$parent`和`$ref`。
 5. 但不管是非直接修改还是直接修改，都不能很好的解决多层组件嵌套情况下的通信问题。
 6. 那你可能会问，为什么不设计成既可以约束随意修改又能方便的在多层嵌套下通信的模式，答案
 就是 Vuex。
@@ -80,30 +78,27 @@ new Vue({
 ```
 
 ### 使用`is`解决子节点类型限制的问题
-1. Some HTML elements, such as `<ul>`, `<ol>`, `<table>` and `<select>` have
-restrictions on what elements can appear inside them, and some elements such as
-`<li>`, `<tr>`, and `<option>` can only appear inside certain other elements.
-2. This will lead to issues when using components with elements that have such
-restrictions. For example:
+1. 有些 HTML 元素，诸如`<ul>`、`<ol>`、`<table>`和`<select>`，对于哪些元素可以出现在
+其内部是有严格限制的。而有些元素，诸如`<li>`、`<tr>`和`<option>`，只能出现在其它某些特
+定的元素内部。
+2. 这会导致我们使用这些有约束条件的元素时遇到一些问题。例如：
     ```html
     <table>
       <blog-post-row></blog-post-row>
     </table>
     ```
-3. The custom component `<blog-post-row>` will be hoisted out as invalid content
-, causing errors in the eventual rendered output.
-4. Fortunately, the `is` special attribute offers a workaround:
+3. 这个自定义组件`<blog-post-row>`会被作为无效的内容提升到外部，并导致最终渲染结果出错
+。
+4. 幸好这个特殊的`is`特性给了我们一个变通的办法：
     ```html
     <table>
       <tr is="blog-post-row"></tr>
     </table>
     ```
-5. It should be noted that this limitation does not apply if you are using
-string templates from one of the following sources:
-    * String templates (e.g. `template: '...'`)
-    * Single-file (`.vue`) components
+5. 需要注意的是如果我们从以下来源使用模板的话，这条限制是不存在的：
+    * 字符串 (例如：`template: '...'`)
+    * 单文件组件 (`.vue`)
     * `<script type="text/x-template">`
-
 
 
 ## Demo
@@ -152,15 +147,15 @@ const vm = new Vue({
 ```
 
 ### Customizing Component `v-model`
-1. 如果使用 HTML 自有的表单标签作为组件模板，加在其上的 `v-model` 可以根据表单类型自动
-绑定到表单相应的属性上，并且正确接收表单组件 emit 的事件。例如如果表单类型是 `text`，会
-把 `v-model` 绑定到其表单 `value` 上，且接收表单 emit 的 `input` 事件；如果表单类型是
-`checkbox`，则会绑定到 `checked` 上，且接收表单 emit 的 `change` 事件。
-2. 但对于自定义子组件，Vue 并不能自动识别并正确绑定，`v-model` 默认绑定到子组件名为
-`value` 的 prop 上，且默认接收子组件 emit 的 `input` 事件。显然，如果自定义组件是
-`checkbox` 类型，默认的情况就是不行的。
-3. 为了可以正确绑定，需要用到组件的 `model` 属性。`model.prop` 指定 `v-model` 绑定到
-子组件的哪个 prop 上，`model.event` 指定接收组件 emit 的什么事件。
+1. 如果使用 HTML 自有的表单标签作为组件模板，加在其上的`v-model`可以根据表单类型自动
+绑定到表单相应的属性上，并且正确接收表单组件 emit 的事件。例如如果表单类型是`text`，会
+把`v-model`绑定到其表单`value`上，且接收表单 emit 的`input`事件；如果表单类型是
+`checkbox`，则会绑定到`checked`上，且接收表单 emit 的`change`事件。
+2. 但对于自定义子组件，Vue 并不能自动识别并正确绑定，`v-model`默认绑定到子组件名为
+`value`的 prop 上，且默认接收子组件 emit 的`input`事件。显然，如果自定义组件是
+`checkbox`类型，默认的情况就是不行的。
+3. 为了可以正确绑定，需要用到组件的`model`属性。`model.prop`指定`v-model`绑定到子组件
+的哪个 prop 上，`model.event`指定接收组件 emit 的什么事件。
     ```html
     <div id="components-demo">
         <custom-input v-model="bChecked"></custom-input>
@@ -190,10 +185,10 @@ const vm = new Vue({
         },
     });
     ```
-4. 不过其实也并不是必须要用 `model` 属性。虽然 `v-model` 默认是绑定到子组件的 `value`
-prop 上且接收 `input` 事件，但 `value` 只用 prop 名而已，且 emit 的事件名也不是必须要
-和表单真实的事件名相同。所以子组件里就用 `value` 来接受、同时 emit 的事件名就使用
-`input` 也没有什么问题：
+4. 不过其实也并不是必须要用`model`属性。虽然`v-model`默认是绑定到子组件的`value` prop
+上且接收`input`事件，但`value`只用 prop 名而已，且 emit 的事件名也不是必须要和表单真
+实的事件名相同。所以子组件里就用`value`来接收，同时 emit 的事件名就使用`input`也没有什
+么问题：
     ```html
     <div id="components-demo">
         <custom-input v-model="bChecked"></custom-input>
@@ -218,8 +213,8 @@ prop 上且接收 `input` 事件，但 `value` 只用 prop 名而已，且 emit 
         },
     });
     ```
-当然，这样看起来可能稍微有一点点混乱，因为 `value` 和 `input` 与组件内的表单属性和变动
-事件名不同。
+当然，这样看起来可能稍微有一点点混乱，因为`value`和`input`与组件内的表单属性和变动事件
+名不同。
 
 ### `.sync` Modifier，双向绑定 prop 的简写
 1. Vue 不允许子组件直接修改 prop 所引用的父组件数据，如果要修改，则子组件先要 emit 事
