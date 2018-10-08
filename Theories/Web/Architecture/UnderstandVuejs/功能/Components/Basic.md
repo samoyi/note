@@ -216,52 +216,10 @@ const vm = new Vue({
 当然，这样看起来可能稍微有一点点混乱，因为`value`和`input`与组件内的表单属性和变动事件
 名不同。
 
-### `.sync` Modifier，双向绑定 prop 的简写
-1. Vue 不允许子组件直接修改 prop 所引用的父组件数据，如果要修改，则子组件先要 emit 事
-件给父组件，父组件接收事件后改写相应的数据。
-2. `.sync` Modifier 并不是另一套改写父组件的方法，而只是上述事件操作的简写形式。
-```html
-<div id="components-demo">
-    <!-- `.sync` 表示该属性可以被子组件内部的 `update:prop-name` 事件自动更新 -->
-    <child-component :text.sync="text"></child-component>
-</div>
-```
-```js
-Vue.component('child-component', {
-    props: ['text'],
-    template: `<div @click="modifyParentData">{{ text }}</div>`,
-    methods: {
-        modifyParentData(ev){
-            // emit text 的更新时间，第二个参数为更新的值
-            this.$emit('update:text', Math.random());
-        },
-    },
-});
-const vm = new Vue({
-    el: '#components-demo',
-    data: {
-        text: '123',
-    },
-    watch: {
-        text(newText){
-            console.log(newText);
-        },
-    },
-});
-```
-3. 同样也可以一个对象的所有属性整体进行双向绑定
-```html
-<child-component v-bind.sync="obj"></child-component>
-```
-这样子组件内部 emit 任何一个属性的更新事件时，父组件相应的属性都会自动更新
-4. Using `v-bind.sync` with a literal object, such as in
-`v-bind.sync="{ title: doc.title }"`, will not work, because there are too many
-edge cases to consider in parsing a complex expression like this.
-
 ### `keep-alive` with Dynamic Components
-子组件会在 `input-component` 和 `textarea-component` 之间切换。如果不加
-`<keep-alive>`，对 `input` 或 `textarea` 的修改再切换之后不会保存，切换回来之后会重新
-实例化组件。加上 `<keep-alive>` 就不会重新实例化，而是保存组件状态。
+子组件会在`input-component`和`textarea-component`之间切换。如果不加`<keep-alive>`，
+对`input`或`textarea`的修改再切换之后不会保存，切换回来之后会重新实例化组件。加上
+`<keep-alive>`就不会重新实例化，而是保存组件状态。
 ```html
 <div id="components-demo">
     <input type="button" value="切换" @click="changeComponent" /><br />
