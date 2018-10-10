@@ -4,7 +4,7 @@
 1. 有时一个组件位置，可能你会期望它可以在不同的组件之间切换。比如一个登陆控件，你
 可能希望它在邮箱登录组件和手机号登陆组件之间切换。
 2. 那么你可以在当前位置随便放一个标签，然后为其添加`is`特性。`is`的值设定为哪个组
-件名，当前就会显示哪个组件：
+件名，当前就会渲染为哪个组件：
 ```html
 <div id="components-demo">
     <any-name :is="currentComponentName"></any-name>
@@ -134,6 +134,7 @@ components: {
     'async-component': (resolve, reject)=>{
         import('./component1.js')
         .then(res=>{
+            // 其实`res.default`才是选项对象，不过可以如下省略
             resolve(res);
         })
         .catch(err=>{
@@ -143,7 +144,19 @@ components: {
 },
 ```
 
-5. 或者更方便的，你可以直接让该工厂函数返回一个 Promise 实例，该实例的解析结果应该为异
+5. 其实 Vue 根本不关心你是不是动态加载组件，它只是提供给你一个函数`resolve`，你只要调
+用这个函数并传参组件选项对象，Vue 就会解析这个组件。所以下面的用法也是可以的
+    ```js
+    components: {
+        'async-component': async (resolve, reject)=>{
+            resolve({
+            	template: `<p>p</p>`,
+            });
+        },
+    },
+    ```
+
+6. 或者更方便的，你可以直接让该工厂函数返回一个 Promise 实例，该实例的解析结果应该为异
 步加载的组件选项对象
     ```js
     components: {
