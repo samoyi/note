@@ -435,99 +435,179 @@ new Vue({
 常传入的，只是不能从子组件里向外更新。
 
 
-## 其他三个事件方法
+## 四个事件相关的实例方法
 都是针对当前实例，而非子组件实例
 
 ### `vm.$on( event, callback )`
-监听的是当前实例 emit 的事件，而不是子组件实例 emit 的
-```html
-<div id="app">
-    <child-component></child-component>
-</div>
-```
-```js
-new Vue({
-    el: '#app',
-    components: {
-        'child-component': {
-            template: `<p @click="$emit('inner-click')">child-component</p>`,
-            mounted(){
-                this.$on('inner-click', ()=>{
-                    console.log(333);
-                });
+1. 监听的是当前实例 emit 的事件，而不是子组件实例 emit 的。下面的例子中，父组件通过自定
+义事件名监听子组件自定事件，而子组件本身则通过该实例方法监听自身的事件
+    ```html
+    <div id="app">
+        <child-component @inner-click="fromChild"></child-component>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#app',
+        components: {
+            'child-component': {
+                template: `<p @click="$emit('inner-click')">child-component</p>`,
+                mounted(){
+                    this.$on('inner-click', ()=>{
+                        console.log('inner');
+                    });
+                },
             },
         },
-    },
-});
-```
+        methods: {
+            fromChild(){
+                console.log('fromChild');
+            },
+        },
+    });
+    ```
+3. 一个事件可以添加多个回调
+    ```js
+    new Vue({
+        el: '#app',
+        components: {
+            'child-component': {
+                template: `<p @click="$emit('inner-click')">child-component</p>`,
+                mounted(){
+                    let times = 1;
+                    this.$on('inner-click', ()=>{
+                        console.log('inner1');
+                    });
+                    this.$on('inner-click', ()=>{
+                        console.log('inner2');
+                    });
+                },
+            },
+        },
+        methods: {
+            fromChild(){
+                console.log('fromChild');
+            },
+        },
+    });
+    ```
+
+### `vm.$emit`
+1. `vm.$emit( eventName, […args] )`
+2. 触发当前实例上的事件。附加参数都会传给监听器回调。
+3. 把上面的例子改成每两秒子自动触发一次
+    ```js
+    new Vue({
+        el: '#app',
+        components: {
+            'child-component': {
+                template: `<p>child-component</p>`,
+                mounted(){
+                    this.$on('inner-click', ()=>{
+                        console.log('inner');
+                    });
+                    setInterval(()=>{
+                        this.$emit('inner-click');
+                    }, 2000);
+                },
+            },
+        },
+        methods: {
+            fromChild(){
+                console.log('fromChild');
+            },
+        },
+    });
+    ```
+4. emit 的同时传参
+    ```js
+    new Vue({
+        el: '#app',
+        components: {
+            'child-component': {
+                template: `<p>child-component</p>`,
+                mounted(){
+                    this.$on('inner-click', (m, n)=>{
+                        console.log('inner: ' + m +' '+ n);
+                    });
+                    setInterval(()=>{
+                        this.$emit('inner-click', 22, 33);
+                    }, 2000);
+                },
+            },
+        },
+        methods: {
+            fromChild(m, n){
+                console.log('fromChild: ' + m +' '+ n);
+            },
+        },
+    });
+    ```
 
 ### `vm.$once( event, callback )`
 也是监听的是当前实例 emit 的事件，而不是子组件实例 emit 的
 
 ### `vm.$off( [event, callback] )`
-* `{string | Array<string>} event` (array only supported in 2.2.2+)
-* `{Function} [callback]`
-* If no arguments are provided, remove all event listeners;
-* If only the event is provided, remove all listeners for that event;
-* If both event and callback are given, remove the listener for that
-    specific callback only.
-* 也是移除的是当前实例 emit 的事件的监听
-
-```html
-<div id="app">
-    <child-component></child-component>
-</div>
-```
-```js
-new Vue({
-    el: '#app',
-    components: {
-        'child-component': {
-            template: `<p @click="emit">child-component</p>`,
-            methods: {
-                emit(){
-                    this.$emit('event1');
-                    this.$emit('event2');
-                    console.log('-------------------');
+1. 移除自定义事件监听器。
+2. 如果没有提供参数，则移除所有的事件监听器；
+3. 如果只提供了事件，则移除该事件所有的监听器。下面的例子中，`inner-click1`的监听会关
+闭`inner-click2`的监听器，于是`inner-click2`就没法被监听了
+    ```js
+    new Vue({
+        el: '#app',
+        components: {
+            'child-component': {
+                template: `<p @click="$emit('inner-click1');
+                                      $emit('inner-click2');">
+                                child-component
+                            </p>`,
+                mounted(){
+                    this.$on('inner-click1', ()=>{
+                        console.log('inner-click1');
+                        this.$off('inner-click2');
+                    });
+                    this.$on('inner-click2', ()=>{
+                        console.log('inner-click2');
+                    });
                 },
-                handler11(){
-                    console.log('event1-1');
-                },
-                handler12(){
-                    console.log('event1-2');
-                },
-                handler21(){
-                    console.log('event2-1');
-                },
-                handler22(){
-                    console.log('event2-2');
-                },
-            },
-            mounted(){
-                this.$on('event1', this.handler11);
-                this.$on('event1', this.handler12);
-                this.$on('event2', this.handler21);
-                this.$on('event2', this.handler22);
-
-                setTimeout(()=>{
-                    console.log('remove event1 handler12');
-                    console.log('-------------------');
-                    this.$off('event1', this.handler12);
-                }, 3000);
-
-                setTimeout(()=>{
-                    console.log('remove event2 handlers');
-                    console.log('-------------------');
-                    this.$off('event2');
-                }, 6000);
-
-                setTimeout(()=>{
-                    console.log('remove all event handlers');
-                    console.log('-------------------');
-                    this.$off();
-                }, 9000);
             },
         },
-    },
-});
-```
+        methods: {
+            fromChild(){
+                console.log('fromChild');
+            },
+        },
+    });
+    ```
+4. 如果同时提供了事件与回调，则只移除这个回调的监听器。下面的例子中，`inner-click2`的第
+二个事件监听器在处理一次之后就会被注销
+    ```js
+    new Vue({
+        el: '#app',
+        components: {
+            'child-component': {
+                template: `<p @click="$emit('inner-click1'); $emit('inner-click2');">child-component</p>`,
+                mounted(){
+                    this.$on('inner-click1', ()=>{
+                        console.log('inner-click1');
+                    });
+
+                    function handler1(){
+                        console.log('inner-click2-1');
+                    }
+                    function handler2(){
+                        console.log('inner-click2-2');
+                        this.$off('inner-click2', handler2);
+                    }
+                    this.$on('inner-click2', handler1);
+                    this.$on('inner-click2', handler2);
+                },
+            },
+        },
+        methods: {
+            fromChild(){
+                console.log('fromChild');
+            },
+        },
+    });
+    ```

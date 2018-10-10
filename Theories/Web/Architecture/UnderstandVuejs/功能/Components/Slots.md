@@ -1,34 +1,34 @@
 # Slots
 
 ## Slot Content
-1. 没有`name`的默认插槽会接收所有插入组件的内容，所以它只能有一个的。
+1. 没有`name`的默认插槽会接收所有插入组件的内容，所以它只能有一个。
 2. 如果设置了多个的话，则每个插槽都会重复的接收插入的内容，Vue 也会给出错误警告。
-```html
-<div id="components-demo">
-    <child-component>123</child-component>
-</div>
-```
-```js
-template: `<div>
-    <slot></slot>
-    <slot></slot>
-    <slot></slot>
-</div>`
-```
-会渲染出三个`123`
+    ```html
+    <div id="components-demo">
+        <child-component>123</child-component>
+    </div>
+    ```
+    ```js
+    template: `<div>
+        <slot></slot>
+        <slot></slot>
+        <slot></slot>
+    </div>`
+    ```
+    会渲染出三个`123`
 3. 但如果就是希望插入一个渲染出多个的效果呢？
 4. 可以考虑`v-for`，但`v-for`不能加在`<slot>`或其父级上，这样也会产生多个插槽。只能加
 在插入的内容之上，比如这样：
-```html
-<div id="components-demo">
-    <child-component>
-        <template v-for="n in 3">
-            123
-        </template>
-    </child-component>
-</div>
-```
-5. 看起来也挺麻烦的
+    ```html
+    <div id="components-demo">
+        <child-component>
+            <template v-for="n in 3">
+                123
+            </template>
+        </child-component>
+    </div>
+    ```
+    看起来也挺麻烦的
 
 ### Default Slot Content
 ```html
@@ -109,8 +109,7 @@ new Vue({
 默认插槽。如果默认插槽不存在，这些内容就会被丢弃。
 
 
-
-## 编译作用于和组件的“函数性”
+## 编译作用域和组件的“函数性”
 [文档](https://vuejs.org/v2/guide/components-slots.html#Compilation-Scope)说的没
 看懂，直接看例子：
 ```html
@@ -126,10 +125,10 @@ new Vue({
     el: '#components-demo',
     components: {
         'child-component': {
-            template: `<div>
+            template: `<p>
                 {{text}}
                 <slot></slot>
-            </div>`,
+            </p>`,
             data(){
                 return {
                     text: 'hello',
@@ -149,94 +148,97 @@ new Vue({
 其中插入的实参的作用域显然是函数外部的，在其中使用函数内部的变量`text`肯定是不行的。
 
 
-## Scoped Slots
+## 暴露插槽作用域
 1. 先看下面这个自我介绍组件，可以让多个人分别自我介绍
-```html
-<div id="components-demo">
-    <self-introduction :persons="persons"></self-introduction>
-</div>
-```
-```js
-new Vue({
-    el: '#components-demo',
-    components: {
-        'self-introduction': {
-            props: ['persons'],
-            template: `<ul>
-                            <li v-for="person in persons" :key="person.name">
-                                我叫{{person.name}}，{{person.age}}岁
-                            </li>
-                        </ul>`
+    ```html
+    <div id="components-demo">
+        <self-introduction :persons="persons"></self-introduction>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        components: {
+            'self-introduction': {
+                props: ['persons'],
+                template: `<ul>
+                                <li v-for="person in persons" :key="person.name">
+                                    我叫{{person.name}}，{{person.age}}岁
+                                </li>
+                            </ul>`
+            },
         },
-    },
-    data: {
-        persons: [
-            {
-                name: 'Hime',
-                age: 17,
-            },
-            {
-                name: 'Hina',
-                age: 18,
-            },
-        ],
-    },
-});
-```
-2. 显然加入你想让她们自我介绍的时候，根据自己的信息来做进一步介绍。例如根据自己的年龄来
-说自己是否是成年人，在根据年龄判断是否出现可以喝酒的按钮。那么最简单的情况就是在
+        data: {
+            persons: [
+                {
+                    name: 'Hime',
+                    age: 17,
+                },
+                {
+                    name: 'Hina',
+                    age: 18,
+                },
+            ],
+        },
+    });
+    ```
+2. 现在假如你想让她们自我介绍的时候，根据自己的信息来做进一步介绍。例如根据自己的年龄来
+说自己是否是成年人，再根据年龄判断是否出现可以喝酒的按钮。那么最简单的情况就是在
 `self-introduction`的模板里加上一些内容
-```js
-template: `<ul>
-                <li v-for="person in persons" :key="person.name">
-                    我叫{{person.name}}，{{person.age}}岁
-                    所以我是{{person.age>17 ? '成年人' : '未成年人'}}
-                    <input v-if="person.age>17" type="button" value="请我喝酒" />
-                </li>
-            </ul>`
-```
+    ```js
+    template: `<ul>
+                    <li v-for="person in persons" :key="person.name">
+                        我叫{{person.name}}，{{person.age}}岁
+                        所以我是{{person.age>17 ? '成年人' : '未成年人'}}
+                        <input v-if="person.age>17" type="button" value="请我喝酒" />
+                    </li>
+                </ul>`
+    ```
 3. 但是，如果这个公共组件供多个人使用，每个使用者都想要组件根据年龄有一些个性化的功能，
 并不都是要显示是否成年及能喝酒。这种情况下，就不能在组件里直接添加了，必须把每个使用者的
 需求作为参数传入。
 4. 如果通过`props`传递这种需求显然过于复杂，所以要用到插槽。
 5. 但对于普通的插槽，组件标签中间插值的地方是不能获得组件内部数据的。也就是说下面这样是
 不行的
-```html
-<self-introduction :persons="persons">
-    所以我是{{person.age>17 ? '成年人' : '未成年人'}}
-    <input v-if="person.age>17" type="button" value="请我喝酒" />
-</self-introduction>
-```
-6. 所以就要用到作用域插槽，使得组件标签中间插值的地方可以访问到插槽的作用域
-7. 先看 JS 的写法
-```js
-template: `<ul>
-                <li v-for="person in persons" :key="person.name">
-                    我叫{{person.name}}，{{person.age}}岁
-                    <slot :myname="person.name" :age="person.age"></slot>
-                </li>
-            </ul>`
-```
-这里添加了一个默认插槽，而且传入了`myname`（不能用`name`，否则成了具名插槽了）和`age`。
-现在插槽的作用域里面已经有了`myname`和`age`属性了，就等着被 HTML 中插值的地方访问了。
-8. 插值的部分，要通过一个节点的`slot-scope`特性来访问插槽的作用域。如果不想让这个节点被
-渲染，那就是用`<template>`。
-9. 通过`slot-scope`，把插槽作用域里的变量都保存到了`slotProps`对象里。
-10. 现在就可以根据读取到的`age`来插入任何形式的 DOM 节点了
-```html
-<div id="components-demo">
+    ```html
     <self-introduction :persons="persons">
-        <template slot-scope="slotProps">
-            所以我是{{slotProps.age>17 ? '成年人' : '未成年人'}}
-            <input v-if="slotProps.age>17" type="button" :value=`请${slotProps.myname}喝酒` />
-        </template>
+        所以我是{{person.age>17 ? '成年人' : '未成年人'}}
+        <input v-if="person.age>17" type="button" value="请我喝酒" />
     </self-introduction>
-</div>
-```
+    ```
+6. 所以就要暴露插槽作用域，使得组件标签中间插值的地方可以访问到插槽的作用域
+7. 先看 JS 的写法
+    ```js
+    template: `<ul>
+                    <li v-for="person in persons" :key="person.name">
+                        我叫{{person.name}}，{{person.age}}岁
+                        <slot :myname="person.name" :age="person.age"></slot>
+                    </li>
+                </ul>`
+    ```
+这里添加了一个默认插槽，而且传入了`myname`（不能用`name`，否则成了具名插槽了）和`age`。
+有些类似于传递 prop，将插槽内部的`person.name`和`person.age`通过`myname`和`age`传递
+到组件标签之间。
+8. 插值的部分，要设置一个拥有`slot-scope`特性的节点，该特性会暴露插槽作用域（slot
+scope），该特性的值会被作为一个对象，该对象包含插槽暴露出来的若干个类似于 prop 的值。
+如果不想让这个节点被渲染，那就是用`<template>`。
+9. 例如下面的例子，`slot-scope`被设置为`slotProps`，那么`slotProps.myname`的值就是插
+槽作用域中通过`myname`暴露出来的`person.name`。
+10. 现在就可以根据读取到的插槽作用域的值来插入自定义的 DOM 节点了
+    ```html
+    <div id="components-demo">
+        <self-introduction :persons="persons">
+            <template slot-scope="slotProps">
+                所以我是{{slotProps.age>17 ? '成年人' : '未成年人'}}
+                <input v-if="slotProps.age>17" type="button" :value=`请${slotProps.myname}喝酒` />
+            </template>
+        </self-introduction>
+    </div>
+    ```
 11. 文档上说的解构`slot-scope`没看到，不知道是不是就是像下面这样用
-```html
-<template slot-scope="{myname, age}">
-    所以我是{{age>17 ? '成年人' : '未成年人'}}
-    <input v-if="age>17" type="button" :value=`请${myname}喝酒` />
-</template>
-```
+    ```html
+    <template slot-scope="{myname, age}">
+        所以我是{{age>17 ? '成年人' : '未成年人'}}
+        <input v-if="age>17" type="button" :value=`请${myname}喝酒` />
+    </template>
+    ```
