@@ -1,179 +1,173 @@
 # Handling Edge Cases
 
-All the features on this section document the handling of edge cases, meaning
-unusual situations that sometimes require bending Vue’s rules a little. Note
-however, that they all have disadvantages or situations where they could be
-dangerous, so keep them in mind when deciding to use each feature.
+这里记录的都是和处理边界情况有关的功能，即一些需要对 Vue 的规则做一些小调整的特殊情况。
+不过注意这些功能都是有劣势或危险的场景的。我们会在每个案例中注明，所以当你使用每个功能的
+时候请稍加留意。
 
 
 ## Element & Component Access
-* In most cases, it’s best to avoid reaching into other component instances
-or manually manipulating DOM elements. There are cases, however, when it
-can be appropriate.
+* 在绝大多数情况下，我们最好不要触达另一个组件实例内部或手动操作 DOM 元素。不过也确实在
+一些情况下做这些事情是合适的。
 * 通过直接访问其他组件，可以调用其他组件的方法，但注意方法的定义是通过`bind()`绑定到定
 义时的组件上的，所以方法内部的`this`永远指向定义它的组件实例。参考`原理\Misc.md`。
 
 ### Accessing the Root Instance
 * All subcomponents will be able to access root instance and use it as a global
 store.
-* This can be convenient for demos or very small apps with a handful of
-components. However, the pattern does not scale well to medium or large-scale
-applications, so we strongly recommend using Vuex to manage state in most cases.
-
-下面的例子，点击最内部的`inner-component`组件，会直接修改根实例的`outerNum`，从
-而影响到中间的`child-component`组件
-```html
-<div id="components-demo">
-    <child-component :num="outerNum"></child-component>
-</div>
-```
-```js
-new Vue({
-    el: '#components-demo',
-    components: {
-        'child-component': {
-            props: ['num'],
-            template: `<p>
-                            child-component: {{num}} <br />
-                            <inner-component></inner-component>
-                        </p>`,
-            components: {
-                'inner-component': {
-                    template: `<span @click="increaseRoot">inner component</span>`,
-                    methods: {
-                        increaseRoot(){
-                            this.$root.outerNum++;
+1. 所有组件后代组件都可以通过`$root`访问根实例，并将其作为一个全局 store 来使用。
+2. 下面的例子，点击最内部的`inner-component`组件，会直接修改根实例的`outerNum`，从而
+影响到中间的`child-component`组件
+    ```html
+    <div id="components-demo">
+        <child-component :num="outerNum"></child-component>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        components: {
+            'child-component': {
+                props: ['num'],
+                template: `<p>
+                child-component: {{num}} <br />
+                <inner-component></inner-component>
+                </p>`,
+                components: {
+                    'inner-component': {
+                        template: `<span @click="increaseRoot">inner component</span>`,
+                        methods: {
+                            increaseRoot(){
+                                this.$root.outerNum++;
+                            },
                         },
                     },
                 },
             },
         },
-    },
-    data: {
-        outerNum: 0,
-    },
-});
-```
+        data: {
+            outerNum: 0,
+        },
+    });
+    ```
+2. 对于 demo 或非常小型的有少量组件的应用来说这是很方便的。不过这个模式扩展到中大型应用
+来说就不然了。因此在绝大多数情况下，都应该使用 Vuex 来管理应用的状态。
+
 
 ### Accessing the Parent Component Instance
-* This can be tempting to reach for as a lazy alternative to passing data with a
-prop.
-* In most cases, reaching into the parent makes your application more difficult
-to debug and understand, especially if you mutate data in the parent. When
-looking at that component later, it will be very difficult to figure out where
-that mutation came from.
-
-下面的例子，点击任何一个子组件，都会直接修改父组件数据
-```html
-<div id="components-demo">
-    <child-component :num="outerNum"></child-component>
-    <child-component :num="outerNum"></child-component>
-    <child-component :num="outerNum"></child-component>
-</div>
-```
-```js
-new Vue({
-    el: '#components-demo',
-    components: {
-        'child-component': {
-            props: ['num'],
-            template: '<p @click="increase">{{num}}</p>',
-            methods: {
-                increase(){
-                    this.$parent.outerNum++;
+1. 和`$root`类似，`$parent`属性可以用来从一个子组件访问父组件的实例。它提供了一种机会，
+可以在后期随时触达父级组件，以替代将数据以 prop 的方式传入子组件的方式。
+2. 下面的例子，点击任何一个子组件，都会直接修改父组件数据
+    ```html
+    <div id="components-demo">
+        <child-component :num="outerNum"></child-component>
+        <child-component :num="outerNum"></child-component>
+        <child-component :num="outerNum"></child-component>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        components: {
+            'child-component': {
+                props: ['num'],
+                template: '<p @click="increase">{{num}}</p>',
+                methods: {
+                    increase(){
+                        this.$parent.outerNum++;
+                    },
                 },
             },
         },
-    },
-    data: {
-        outerNum: 0,
-    },
-});
-```
+        data: {
+            outerNum: 0,
+        },
+    });
+    ```
+3. 在绝大多数情况下，触达父级组件会使得你的应用更难调试和理解，尤其是当你变更了父级组件
+的数据的时候。当我们稍后回看那个组件的时候，很难找出那个变更是从哪里发起的。
+
 
 ### Accessing Child Component Instances & Child Elements
 1. 可以通过`ref`特性为一个子组件标签指定一个被应用的 ID，父组件通过`$refs`可以找到所有
 指定了`ref`特性的子组件。
 2. 不仅是组件，还可以给组件内的非自定义元素指定`ref`特性，也可以被实例的`$refs`引用。
-3. `$refs` are only populated after the component has been rendered, and they
-are not reactive. It is only meant as an escape hatch for direct child
-manipulation - you should avoid accessing `$refs` from within templates or
-computed properties. 看看`vm.$refs`的说明：An object of DOM elements and
-component instances, registered with ref attributes。引用的不只是实例，还有 DOM。
-```html
-<div id="components-demo">
-    <child-component ref="first"></child-component>
-    <child-component ref="second"></child-component>
-    <child-component ref="third"></child-component>
-    <div ref="div">123</div>
-</div>
-```
-```js
-new Vue({
-    el: '#components-demo',
-    components: {
-        'child-component': {
-            template: `<p>{{num}}</p>`,
-            data: function(){
-                return {
-                    num: 0,
-                };
-            },
-            methods: {
-                sayNum(){
-                    console.log(this.num);
+看看`vm.$refs`的说明：An object of DOM elements and component instances,
+registered with `ref` attributes。引用的不只是实例，还有 DOM。
+    ```html
+    <div id="components-demo">
+        <child-component ref="first"></child-component>
+        <child-component ref="second"></child-component>
+        <child-component ref="third"></child-component>
+        <div ref="div">123</div>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        components: {
+            'child-component': {
+                template: `<p>{{num}}</p>`,
+                data: function(){
+                    return {
+                        num: 0,
+                    };
+                },
+                methods: {
+                    sayNum(){
+                        console.log(this.num);
+                    },
                 },
             },
         },
-    },
-    mounted(){ // 这里不能使用 created，
+        mounted(){ // 这里不能使用 created，
 
-        // 直接调用子组件方法
-        this.$refs.third.sayNum(); // "0"
+            // 直接调用子组件方法
+            this.$refs.third.sayNum(); // "0"
 
-        setTimeout(()=>{
-            // 直接修改子组件属性
-            this.$refs.first.num = 1;
-            this.$refs.second.num = 2;
-            this.$refs.third.num = 3;
-            this.$refs.third.sayNum(); // "3"
+            setTimeout(()=>{
+                // 直接修改子组件属性
+                this.$refs.first.num = 1;
+                this.$refs.second.num = 2;
+                this.$refs.third.num = 3;
+                this.$refs.third.sayNum(); // "3"
 
-            // 访问和修改自定义元素
-            this.$refs.div.textContent = '456';
-        }, 2000);
-    },
-});
-```
-4. When `ref` is used together with `v-for`, the `ref` you get will be an array
-containing the child components mirroring the data source.
-```html
-<div id="components-demo">
-    <child-component v-for="n in 3" ref="children" :key="n"></child-component>
-</div>
-```
-```js
-new Vue({
-    el: '#components-demo',
-    components: {
-        'child-component': {
-            template: `<p>{{num}}</p>`,
-            data: function(){
-                return {
-                    num: 0,
-                };
+                // 访问和修改自定义元素
+                this.$refs.div.textContent = '456';
+            }, 2000);
+        },
+    });
+    ```
+3. `$refs`只会在组件渲染完成之后生效，并且它们不是响应式的。你应该避免在模板或计算属性
+中访问`$refs`。
+4. 当`ref`和`v-for`一起使用时，得到的引用是一个包含了循环出来的若干个实例的数组
+    ```html
+    <div id="components-demo">
+        <child-component v-for="n in 3" ref="children" :key="n"></child-component>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        components: {
+            'child-component': {
+                template: `<p>{{num}}</p>`,
+                data: function(){
+                    return {
+                        num: 0,
+                    };
+                },
             },
         },
-    },
-    mounted(){
-        // this.$refs.children 是一个三项数组，包含三个循环出来的组件
-        setTimeout(()=>{
-            this.$refs.children.forEach((child, index)=>{
-                child.num = index + 1;
-            });
-        }, 2000);
-    },
-});
-```
+        mounted(){
+            // this.$refs.children 是一个三项数组，包含三个循环出来的组件
+            setTimeout(()=>{
+                this.$refs.children.forEach((child, index)=>{
+                    child.num = index + 1;
+                });
+            }, 2000);
+        },
+    });
+    ```
 
 ### Dependency Injection
 #### 使用`$parent`的问题
@@ -203,6 +197,7 @@ new Vue({
 #### 前辈组件使用依赖注入明确表示将哪些数据和方法继承给后辈组件
 1. 前辈组件使用`provide`表明要把哪些数据和方法提供给后辈组件
 2. 后辈组件使用`inject`选择接受前辈组件提供的哪些数据和方法
+
 ```html
 <div id="components-demo">
     <middle-component></middle-component>
@@ -250,38 +245,39 @@ new Vue({
     },
 });
 ```
+
 3. 你可以把依赖注入看作一部分“大范围有效的 prop”
 4. 但依赖注入是非响应的
-```html
-<div id="components-demo">
-    <child-component></child-component>
-</div>
-```
-```js
-new Vue({
-    el: '#components-demo',
-    components: {
-        'child-component': {
-            inject: ['age'],
-            template: '<div>{{age}}</div>',
+    ```html
+    <div id="components-demo">
+        <child-component></child-component>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        components: {
+            'child-component': {
+                inject: ['age'],
+                template: '<div>{{age}}</div>',
+            },
         },
-    },
-    data: {
-        age: 22,
-    },
-    provide(){
-        return {
-            age: this.age,
-        };
-    },
-    mounted(){
-        setTimeout(()=>{
-            this.age = 33;
-            console.log(this.age)
-        }, 1000);
-    }
-});
-```
+        data: {
+            age: 22,
+        },
+        provide(){
+            return {
+                age: this.age,
+            };
+        },
+        mounted(){
+            setTimeout(()=>{
+                this.age = 33;
+                console.log(this.age)
+            }, 1000);
+        }
+    });
+    ```
 
 
 ## Programmatic Event Listeners
@@ -298,60 +294,52 @@ new Vue({
 
 ## Controlling Updates
 ### Forcing an Update
-1. If you find yourself needing to force an update in Vue, in 99.99% of cases,
-you’ve made a mistake somewhere.
-2. You may not have accounted for change detection caveats with arrays or
-objects, or you may be relying on state that isn’t tracked by Vue’s reactivity
-system, e.g. with data.
-3. However, if you’ve ruled out the above and find yourself in this extremely
-rare situation of having to manually force an update, you can do so with
-`$forceUpdate`.
-4. 强制更新因为不会更改数据，所以不会触发 watcher，但会触发实例生命周期钩子函数和自定义
+1. 如果你发现你自己需要在 Vue 中做一次强制更新，99.9% 的情况，是你在某个地方做错了事。
+你可能还没有留意到数组或对象的变更检测注意事项，或者你可能依赖了一个未被 Vue 的响应式系
+统追踪的状态。
+2. 然而，如果你已经做到了上述的事项仍然发现在极少数的情况下需要手动强制更新，那么你可以
+通过`$forceUpdate`来做这件事。
+3. 强制更新因为不会更改数据，所以不会触发 watcher，但会触发实例生命周期钩子函数和自定义
 组件钩子函数。
 
 ### Cheap Static Components with `v-once`
-1. Rendering plain HTML elements is very fast in Vue, but sometimes you might
-have a component that contains a lot of static content. In these cases, you can
-ensure that it’s only evaluated once and then cached by adding the `v-once`
-directive to the root element
-2. `v-once`原理：Render the element and component once only. On subsequent
-re-renders, the element/component and all its children will be treated as static
-content and skipped.
-```html
-<div id="components-demo">
-    <child-component></child-component>
-</div>
-```
-```js
-new Vue({
-    el: '#components-demo',
-    components: {
-        'child-component': {
-            template: `<p v-once>{{num}}</p>`,
-            data(){
-                return {
-                    num: 22,
-                };
-            },
-            watch: {
-                num(newVal){ // 数据可以正常更新
-                    console.log(newVal);
+1. 渲染普通的 HTML 元素在 Vue 中是非常快速的，但有的时候你可能有一个组件，这个组件包含
+了大量静态内容。在这种情况下，你可以在根元素上添加`v-once`特性以确保这些内容只计算一次
+然后缓存起来。
+2. 如果后续该组件有数据更新操作，则数据会正常更新（watcher 正常触发），组件也会正常更新
+（更新钩子函数正常触发），但之后不会重渲染。
+    ```html
+    <div id="components-demo">
+        <child-component></child-component>
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        components: {
+            'child-component': {
+                template: `<p v-once>{{num}}</p>`,
+                data(){
+                    return {
+                        num: 22,
+                    };
+                },
+                watch: {
+                    num(newVal){ // 数据可以正常更新
+                        console.log(newVal);
+                    },
+                },
+                updated(){ // 组件更新仍然会触发，但不会使用新的 num 重新渲染
+                    console.log('updated');
+                },
+                mounted(){
+                    this.num = 33;
                 },
             },
-            updated(){ // 组件更新仍然会触发，但不会使用新的 num 重新渲染
-                console.log('updated');
-            },
-            mounted(){
-                this.num = 33;
-            },
         },
-    },
-});
-```
-3. Once again, try not to overuse this pattern. While convenient in those rare
-cases when you have to render a lot of static content, it’s simply not necessary
-unless you actually notice slow rendering
-4. Plus, it could cause a lot of confusion later. For example, imagine another
-developer who’s not familiar with `v-once` or simply misses it in the template.
-They might spend hours trying to figure out why the template isn’t updating
-correctly.
+    });
+    ```
+3. 再说一次，试着不要过度使用这个模式。当你需要渲染大量静态内容时，极少数的情况下它会给
+你带来便利，除非你非常留意渲染变慢了，不然它完全是没有必要的。
+4. 再加上它在后期会带来很多困惑。例如，设想另一个开发者并不熟悉`v-once`或漏看了它在模板
+中，他们可能会花很多个小时去找出模板为什么无法正确更新。
