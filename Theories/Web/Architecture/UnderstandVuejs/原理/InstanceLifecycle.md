@@ -42,8 +42,6 @@
     因此如果要断点测试，需要使用`alert`
 
 
-
-
 ## 实例生命周期
 ### 第一步 实例初始化
 * 不懂这个初始化到底做了什么，必须要看源码。但总之是很初步的工作，没做什么重要内容。
@@ -51,7 +49,7 @@
 
 #### `beforeCreate`
 Called synchronously immediately after the instance has been initialized, before
-data observation and event/watcher setup.
+data observation and event/watcher setup. 也就是说还没有开始处理实例的选项。
 ```js
 const vm = new Vue({
     el: '#components-demo',
@@ -69,7 +67,7 @@ const vm = new Vue({
     * 实现 data observation。应该就是指 Observer 模块使用 setter、getter 劫持了实例
         数据。
     * 处理了 computed properties, methods, watch/event callbacks。
-* 这一阶段还不涉及模板，只是纯 JS 的部分。实例的所以`$el`也还不可用。
+* 这一阶段还不涉及模板，只是纯 JS 的部分。所以实例的`$el`也还不可用。
 * 创建实例结束后触发`created`
 
 #### `created`
@@ -96,8 +94,8 @@ new Vue({
 
 ### 第三阶段 编译模板
 * 编译模板只是根据数据更新虚拟 DOM，只有 mounting 才会涉及真实 DOM。所以真实的 DOM 并
-不会更新，下面的例子中，虽然这是`this.$el`已经指向了实际的 DOM 节点，但还是该节点还是
-没有被更新渲染过的。
+不会更新，下面的例子中，虽然这时`this.$el`已经指向了实际的 DOM 节点，但该节点还是没有
+被更新渲染过的。
 * `beforeMount`钩子在服务器端渲染期间不被调用。
 * 因为涉及挂载的两个钩子函数在服务端渲染期间不会被调用，所以他们不能用于获取数据这样的操
 作。这样的操作应该在`created()`中进行。
@@ -120,7 +118,7 @@ new Vue({
         // <div id="components-demo">
         //     {{ num1 }}
         // </div>
-        console.log(this.$el.__vue__); // undefined
+        console.log(this.$el.__vue__); // undefined  尚未挂载
     },
 });
 ```
@@ -132,9 +130,6 @@ new Vue({
 * If the root instance is mounted to an in-document element, `vm.$el` will also
 be in-document when mounted is called. 不懂，但总之 mounting 阶段会进行渲染，而
 `mounted`触发时已经完成了渲染
-* Note that `mounted` does not guarantee that all child components have also
-been mounted. If you want to wait until the entire view has been rendered, you
-can use `vm.$nextTick` inside of `mounted`:
 * `mounted`触发时只保证该组件已经被挂载，但不保证它的所有子组件也已经被挂载。如果你要确
 保它的子组件都已经挂载，就要在该钩子函数里使用`vm.$nextTick`。
     ```js
@@ -160,8 +155,7 @@ new Vue({
         foo(){return 22},
     },
     beforeMount(){
-        console.log(this.$el);
-        // 打印如下：
+        console.log(this.$el); // 已编译为挂载，打印如下：
         // <div id="components-demo">
         //     {{ num1 }}
         // </div>
@@ -198,8 +192,7 @@ new Vue({
     	},
     	directives: {
     		foo: {
-    			bind(el, binding){
-    			},
+    			bind(el, binding){},
     		},
     	},
     	beforeUpdate(){
@@ -234,7 +227,8 @@ new Vue({
        },
     });
     ```
-* 该阶段结束后，触发`beforeUpdate`，之后将进入虚拟 DOM 更新和重渲染阶段
+* 该阶段结束后，触发`beforeUpdate`，之后将进入虚拟 DOM 更新和重渲染阶段。看起来也就是
+说这一阶段只是数据更新的相关工作，还不涉及 DOM 更新。
 * 如果要在更新前做点什么，那就应该在`beforeUpdate`钩子函数中执行。比如移除节点的事件绑
 定。
 * 这个钩子函数也不会在服务端渲染被调用，因为只有初始渲染是在服务端进行的。
@@ -260,7 +254,7 @@ new Vue({
 * 实例的所有指令会被解绑，事件监听会被移除，子实例也会销毁。
 * 销毁完毕后，会触发`destroyed()`。
 * `destroyed()`用于销毁实例后的后续清理工作，或者通知远程服务器该本次销毁。
-* 样在服务端渲染中不会被触发。
+* 同样在服务端渲染中不会被触发。
 
 
 ## 父子组件生命周期顺序
@@ -335,6 +329,8 @@ child -- beforeMount
 child -- mounted
 parent -- mounted
 ```
+这里比较有意思的是子实例的创建时间，是在父实例编译完成之后。父实例编译的过程中才会发现子
+组件标签，所以应该就是发现之后，在编译完成后就紧接着开始创建刚发现的子实例。
 
 update prop 时的输出：
 ```shell
@@ -395,6 +391,7 @@ child1 -- mounted
 child2 -- mounted
 parent -- mounted
 ```
+编译完成后统一挂载渲染？
 
 update prop 时的输出：
 ```shell
@@ -405,6 +402,7 @@ child2 -- updated
 child1 -- updated
 parent -- updated
 ```
+也是先编译然后再统一重渲染？
 
 destroy parent 时的输出：
 ```shell

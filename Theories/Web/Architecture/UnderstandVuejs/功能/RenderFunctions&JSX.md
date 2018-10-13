@@ -2,26 +2,10 @@
 
 
 ## Basic
-* What is `createElement` actually returning? It’s not exactly a real DOM
-element. It could perhaps more accurately be named `createNodeDescription`, as
-it contains information describing to Vue what kind of node it should render on
-the page, including descriptions of any child nodes. We call this node
-description a “virtual node”, usually abbreviated to VNode. “Virtual DOM” is
-what we call the entire tree of VNodes, built by a tree of Vue components.
-
-
-## 模板渲染和渲染函数渲染的过程
-### 模板渲染的过程：
-1. 从 HTML 中找到组件标签
-2. 从组件实例中找到模板
-3. 根据模板上面的 directives 和 filters，结合数据，把模板编译成实际的 HTML
-4. 用编译好的 HTML 替换之前的组件标签
-
-### 渲染函数渲染的过程：
-1. 从 HTML 中找到组件标签
-2. 从组件实例中找到渲染函数 `render`
-3. 根据 `render` 的内部逻辑，结合数据，把模板编译成实际的 HTML
-4. 用编译好的 HTML 替换之前的组件标签
+`createElement`返回的并不是一个实际的 DOM 元素。它更准确的名字也许应该是
+`createNodeDescription`，因为它所包含的信息会告诉 Vue 页面上需要渲染什么样的节点，及
+其子节点。我们把这样的节点描述为“虚拟节点 (Virtual Node)”，也常简写它为“VNode”。“虚拟
+DOM”是我们对由 Vue 组件树建立起来的整个 VNode 树的称呼。
 
 
 ## `createElement` Arguments
@@ -66,46 +50,48 @@ Vue.component('child-component', {
 
 ```js
 {
-    // Same API as `v-bind:class`, accepting either
-    // a string, object, or array of strings and objects.
+
+    // 设定节点的 class 特性，和`v-bind:class`一样的 API
+    // 接收一个字符串、对象或字符串和对象组成的数组
     class: {
         foo: true,
         bar: false
     },
-    // Same API as `v-bind:style`, accepting either
-    // a string, object, or array of objects.
+
+    // 设定节点的 style 特性，和`v-bind:style`一样的 API
+    // 接收一个字符串、对象或对象组成的数组
     style: {
         color: 'red',
         fontSize: '14px'
     },
-    // Normal HTML attributes
+
+    // 设定普通的节点特性
     attrs: {
         id: 'foo'
     },
-    // Component props
+
+    // 设定组件 props
     props: {
         myProp: 'bar'
     },
-    // DOM properties
+
+    // 设定节点 DOM 属性
     domProps: {
         innerHTML: 'baz'
     },
-    // Event handlers are nested under `on`, though
-    // modifiers such as in `v-on:keyup.enter` are not
-    // supported. You'll have to manually check the
-    // keyCode in the handler instead.
+
+    // 设置事件监听
+    // 没有了修饰符功能，需要自己操作事件对象
     on: {
         click: this.clickHandler
     },
-    // For components only. Allows you to listen to
-    // native events, rather than events emitted from
-    // the component using `vm.$emit`.
+
+    // 监听原生事件，而非组件 emit 出来的自定义事件
     nativeOn: {
         click: this.nativeClickHandler
     },
-    // Custom directives. Note that the `binding`'s
-    // `oldValue` cannot be set, as Vue keeps track
-    // of it for you.
+
+    // 设置自定义指令
     directives: [
         {
             name: 'my-custom-directive',
@@ -117,15 +103,19 @@ Vue.component('child-component', {
             }
         }
     ],
+
     // Scoped slots in the form of
     // { name: props => VNode | Array<VNode> }
     scopedSlots: {
         default: props => createElement('span', props.text)
     },
+
+    // 不懂这个怎么用
     // The name of the slot, if this component is the
     // child of another component
     slot: 'name-of-slot',
-    // Other special top-level properties
+
+    // 其他特殊顶层属性
     key: 'myKey',
     ref: 'myRef'
 }
@@ -172,6 +162,36 @@ render(h) {
     456789
 </p>
 ```
+
+
+## 向模板中插入实例数据
+1. 如果`createElement`函数的第一个参数是节点名字符串，则可以像下面这样插入比如实例的
+data
+    ```js
+    render(h){
+        return h('p', this.age);
+    },
+    data(){
+        return {
+            age: 22,
+        }
+    },
+    ```
+2. 如果`createElement`函数的第一个参数是组件对象的，可以直接写进`template`属性里
+    ```js
+    render(h){
+        return h(
+            {
+                template: `<p>子组件年龄：${this.age}</p>`
+            },
+        );
+    },
+    data(){
+        return {
+            age: 22,
+        }
+    },
+    ```
 
 
 ## Complete Example
@@ -237,7 +257,7 @@ new Vue({
 ```
 
 
-## Replacing Template Features with Plain JavaScript
+## 使用 JavaScript 代替模板功能
 ### `v-if` and `v-for`
 ```js
 new Vue({
@@ -372,11 +392,10 @@ new Vue({
 
 
 ## `renderError`
-* Only works in development mode.
-* Provide an alternative render output when the default render function
-encounters an error.
-* The error will be passed to renderError as the second argument.
-* This is particularly useful when used together with hot-reload.
+1. 当`render`函数遭遇错误时，提供另外一种渲染输出。
+2. 其错误将会作为第二个参数传递到`renderError`。
+3. 这个功能配合 hot-reload 非常实用。
+4. 只在开发者环境下工作。
 
 ```js
 // 会渲染出红色的 “渲染出错！错误原因：自定义错误”
@@ -386,9 +405,13 @@ new Vue({
         throw new Error('自定义错误');
     },
     renderError(h, err){
-        return h('p', {
-            style: {color: 'red'},
-        }, `渲染出错！错误原因：${err.message}`);
+        return h(
+            'p',
+            {
+                style: {color: 'red'},
+            },
+            `渲染出错！错误原因：${err.message}`
+        );
     },
 });
 ```

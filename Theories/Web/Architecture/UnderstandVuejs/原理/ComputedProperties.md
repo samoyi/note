@@ -49,18 +49,19 @@ new Vue({
 知道它是一个计算属性。
 2. 但是 Vue 是怎么知道`reversedMessage`依赖谁的？虽然可以一眼看出来依赖的是`message`,
 但程序并不能做到。
-3. 但 Vue 不关心在这里知道`reversedMessage`依赖的是谁，它可能依赖任何一个属性。
+3. 但 Vue 不关心在这里`reversedMessage`依赖的是谁，它可能依赖任何一个属性。
 4. 当一个计算属性被访问的时候，它也不知道自己依赖的是谁。但是它会放出去一个更新函数，这
 个函数的作用是：如果我的依赖项更新了，就用这个函数把新值传给我。
 5. 现在的问题是，它所依赖的数据`message`怎么知道自己是被`reversedMessage`依赖的。
 6. 实际上`message`也不知道自己被依赖了。但`reversedMessage`的计算属性函数会触发
 `message`的 getter。
-7. `message`直到现在被访问了，但不能离开知道这是直接访问还是通过其他的计算属性访问。
-8. 它要看看外面有没有某个被放出更新函数，如果有的话，那就证明这是一次计算属性访问。它会
-在返回自己的值之前把这个更新函数收藏起来，当自己的值发生变化时，会在 setter 里调用这个
-更新函数通知依赖自己的计算属性。
-9. `reversedMessage`获得了`message`的返回之后，就把刚才放出去到公共区域的更新函数删除，
-不影响其他计算属性的更新函数放出，也不影响非计算属性的直接访问。
+7. `message`现在被访问了，但不能立刻知道这是直接访问还是通过其他的计算属性访问。
+8. 它要看看外面有没有某个被放出的更新函数，如果有的话，那就证明这是一次计算属性访问，并
+且知道自己需要用这个更新函数去更新某个不知道是谁的计算属性。
+9. 它会在返回自己的值之前把这个更新函数收藏起来，当自己的值发生变化时，会在 setter 里调
+用这个更新函数通知依赖自己的计算属性。
+9. `reversedMessage`获得了`message`的返回之后，就把刚才放出去到公共区域的更新函数删除
+，不影响其他计算属性的更新函数放出，也不影响非计算属性的直接访问。
 10. 这样，就完成了依赖的绑定。
 
 ### 缓存的实现
@@ -127,38 +128,37 @@ let Dep = {
 ```
 4. 当第一次访问一个计算属性时，要先把它的`onDependencyUpdated`通过依赖管理器`Dep`传递
 给它所依赖的属性
-```js
-function defineComputed(obj, key, computeFunc){
-    let cache; // 计算属性的缓存值
-    let bInitRead = true; // 是否是第一次访问该计算属性
+    ```js
+    function defineComputed(obj, key, computeFunc){
+        let cache; // 计算属性的缓存值
+        let bInitRead = true; // 是否是第一次访问该计算属性
 
-    // 这个函数就是依赖更新时要执行的，用来通知计算属性更新它缓存的值
-    function onDependencyUpdated(){
-        cache = computeFunc();
+        // 这个函数就是依赖更新时要执行的，用来通知计算属性更新它缓存的值
+        function onDependencyUpdated(){
+            cache = computeFunc();
+        }
+        Object.defineProperty(obj, key, {
+            get: function(){
+                // 只有在第一次访问该计算属性的时候才需要提交依赖关系
+                if (bInitRead){
+                    Dep.target = onDependencyUpdated; // 先传给 Dep，
+                    // computeFunc 是计算属性的方法，里面会访问依赖的属性
+                    // 访问依赖的属性时，其 getter 会从 Dep 读取到 onDependencyUpdated
+                    // 依赖的属性会保存下来这个 onDependencyUpdated，当属性值发生变化时，
+                    // 调用这个 onDependencyUpdated，通知其对应的计算属性
+                    cache = computeFunc();
+                    // 当一个计算属性提交完它的 onDependencyUpdated 之后，就清空 Dep，
+                    // 供下一次其他计算属性提交 onDependencyUpdated
+                    Dep.target = null;
+
+                    bInitRead = false;
+                }
+
+                return cache;
+            },
+        })
     }
-    Object.defineProperty(obj, key, {
-        get: function(){
-            // 只有在第一次访问该计算属性的时候才需要提交依赖关系
-            if (bInitRead){
-                Dep.target = onDependencyUpdated; // 先传给 Dep，
-                // computeFunc 是计算属性的方法，里面会访问依赖的属性
-                // 访问依赖的属性时，其 getter 会从 Dep 读取到 onDependencyUpdated
-                // 依赖的属性会保存下来这个 onDependencyUpdated，当属性值发生变化时，调
-                // 用这个 onDependencyUpdated，通知其对应的计算属性
-                cache = computeFunc();
-                // 当一个计算属性提交完它的 onDependencyUpdated 之后，就清空 Dep，供下一
-                // 次其他计算属性提交 onDependencyUpdated。当然下一次也有可能是同一个计算
-                // 属性提交，不过依赖的不会重复添加同一个 onDependencyUpdated
-                Dep.target = null;
-
-                bInitRead = false;
-            }
-
-            return cache;
-        },
-    })
-}
-```
+    ```
 5. 上一步保证了一个计算属性提交了自己的更新函数，下面看看依赖属性是怎么接收计算属性的更
 新函数的。为了接收更新函数，以及为了属性值变化时可以执行更新函数，依赖属性也要变成访问器
 属性
@@ -171,11 +171,9 @@ function defineReactive (obj, key, val) {
 
     Object.defineProperty (obj, key, {
         get: function () {
-            // 因为上一步可以看到，每次访问计算属性时，都会提交更新函数，所以这里不但
-            // 要检查有没有计算属性提交更新函数（如果是直接访问这个属性而不是通过其他
-            // 计算属性，那么 Dep.target就是 null），还要检查提交的更新函数是不是已经
-            // 记录过了
-            if (Dep.target && deps.indexOf (Dep.target) === -1) {
+            // 计算属性只有在第一次被访问的时候才会提交 onDependencyUpdated，那这里
+            // 的 deps.indexOf(Dep.target) === -1 是不是就没什么必要了
+            if (Dep.target && deps.indexOf(Dep.target) === -1) {
                 // 将新的更新函数记下来
                 deps.push(Dep.target);
             }
@@ -183,37 +181,39 @@ function defineReactive (obj, key, val) {
         },
         set: function (newValue) {
             // 依赖的属性值发生了改变
-            val = newValue;
-            // 需要通知所有依赖该属性的计算属性
-            for (let i = 0; i < deps.length; i++) {
-                deps[i]();
+            if (newValue !== val){
+                val = newValue;
+                // 需要通知所有依赖该属性的计算属性
+                for (let i = 0; i < deps.length; i++) {
+                    deps[i]();
+                }
             }
         }
     })
 }
 ```
 6. 测试
-```js
-var person = {};
-defineReactive (person, 'age', 16);
+    ```js
+    var person = {};
+    defineReactive (person, 'age', 16);
 
-defineComputed (person, 'status', function () {
-    console.log('没有使用缓存'); // 测试是否使用了缓存
-    if (person.age > 18) {
-        return 'Adult'
-    }
-    else {
-        return 'Minor'
-    }
-});
+    defineComputed (person, 'status', function () {
+        console.log('没有使用缓存'); // 测试是否使用了缓存
+        if (person.age > 18) {
+            return 'Adult'
+        }
+        else {
+            return 'Minor'
+        }
+    });
 
-// 四次访问，只有第一次和依赖更新后没使用缓存
-console.log(person.status);
-console.log(person.status);
-console.log(person.status);
-person.age = 22;
-console.log(person.status);
-```
+    // 四次访问，只有第一次和依赖更新后没使用缓存
+    console.log(person.status);
+    console.log(person.status);
+    console.log(person.status);
+    person.age = 22;
+    console.log(person.status);
+    ```
 
 
 ## References

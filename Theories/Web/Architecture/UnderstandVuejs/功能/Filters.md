@@ -1,16 +1,12 @@
 # Filters
 
-1. Vue.js allows you to define filters that can be used to apply common text
-formatting.
-2. Filters are usable in two places: mustache interpolations and `v-bind`
-expressions.
-3. Filters should be appended to the end of the JavaScript expression, denoted
-by the “pipe” symbol.
-4. You can define local filters in a component’s options or define a filter
-globally before creating the Vue instance.
-5. Filters can be chained.
-6. Filters are JavaScript functions, therefore they can take arguments. 函数默认
-的第一个参数是之前的表达式的值，传入的一个或多个参数被认为是第二个及更靠后的参数
+1. Vue.js 允许你自定义过滤器，可被用于一些常见的文本格式化。
+2. 过滤器可以用在两个地方：双花括号插值和 v-bind 表达式。
+3. 过滤器应该被添加在 JavaScript 表达式的尾部，由`|`符号指示。
+4. 你可以在组件内通过`fileter`选项定义局部过滤器，也可以在实例创建前定义全局过滤器。
+5. 过滤器可以串联使用。
+6. 过滤器是函数，因此可以接受参数。函数默认的第一个参数是之前的表达式的值，传入的一个或
+多个参数被认为是第二个及更靠后的参数
 
 ```html
 <div id="components-demo">

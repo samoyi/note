@@ -1,6 +1,6 @@
 # Misc
 
-## methods 中的函数会被 bind 到当前实例
+## `methods`中的函数会被 bind 到当前实例
 ```html
 <div id="components-demo">
     {{str}}
@@ -31,7 +31,9 @@ new Vue({
         str: 'parent',
     },
     methods: {
-        say(){console.log(this.str);},
+        say(){
+            console.log(this.str);
+        },
     },
 });
 ```
