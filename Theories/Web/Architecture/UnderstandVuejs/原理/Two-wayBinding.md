@@ -71,7 +71,7 @@ function initCompile (node, vm) {
     let child;
     while (child = node.firstChild) {
         compile(child, vm);
-        fragment.appendChild(child);
+        fragment.appendChild(child); // appendChild 对节点直接移动，而非拷贝
     }
     return fragment;
 }
@@ -230,10 +230,10 @@ Publisher.prototype = {
 
     notify(newVal){
         this.subscribers.forEach(sub=>{
+            // 每个 subscriber 实例都有一个 update 方法，调用该方法就可以更新节点
             sub.update(newVal);
         });
     },
-
 };
 ```
 
@@ -244,7 +244,7 @@ Publisher.prototype = {
 
 ```js
 /*
- * 实例化时候，需要执行该 subscriber 负责更新哪个节点；
+ * 实例化时候，需要指明该 subscriber 负责更新哪个节点；
  * 并指明更新类型。比如是更新 textContent、更新表单 value、更新 class 属性等
  */
 function Subscriber (node, updateType) {
@@ -352,86 +352,86 @@ function compile (node, vm) {
 
 #### 把 subscriber 注册到 publisher
 1. 注册需要用到`Publisher`实例的`addSubscriber`方法，即：
-```js
-publisher.addSubscriber(subscriber);
-```
+    ```js
+    publisher.addSubscriber(subscriber);
+    ```
 2. 但是`Publisher`实例和`subscriber`不在相同的作用域，没办法直接添加。那就想办法把
 `Publisher`实例传到`subscriber`的作用域。
 3. 生成`Publisher`实例时，将该实例保存到一个公共属性中：`Publisher.curPub`。这样，在
 `subscriber`的作用域，即`compile`函数中也可以访问到当前的`Publisher`实例。
 4. `defineReactive`函数变成如下：
-```js
-function defineReactive(data, key, val) {
-    const publisher = new Publisher();
-    Publisher.curPub = publisher;
+    ```js
+    function defineReactive(data, key, val) {
+        const publisher = new Publisher();
+        Publisher.curPub = publisher;
 
-    Object.defineProperty(data, key, {
-        enumerable: true,
-        get: function() {
-            return val;
-        },
-        set: function(newVal) {
-            val = newVal;
+        Object.defineProperty(data, key, {
+            enumerable: true,
+            get: function() {
+                return val;
+            },
+            set: function(newVal) {
+                val = newVal;
 
-            publisher.notify(newVal);
-        },
-    });
+                publisher.notify(newVal);
+            },
+        });
 
-    // 递归监听子属性
-    observe(val);
-}
-```
+        // 递归监听子属性
+        observe(val);
+    }
+    ```
 5. 这样就可以在`compile`函数中添加生成的`subscriber`：
-```js
-function compile (node, vm) {
+    ```js
+    function compile (node, vm) {
 
-    // 节点类型为元素
-    if (node.nodeType === 1) {
-        // 解析节点属性
-        const aAttr = [...node.attributes];
-        aAttr.forEach(attr=>{
-            if (attr.nodeName === 'v-model') {
-                 // 获取 v-model 绑定的 data 属性名
-                const sPropName = attr.nodeValue;
+        // 节点类型为元素
+        if (node.nodeType === 1) {
+            // 解析节点属性
+            const aAttr = [...node.attributes];
+            aAttr.forEach(attr=>{
+                if (attr.nodeName === 'v-model') {
+                     // 获取 v-model 绑定的 data 属性名
+                    const sPropName = attr.nodeValue;
 
-                // 对 v-model 节点进行初始化赋值
-                // 根据获得的 data 属性名将 model 中该属性的值赋给该节点
-                node.value = vm.data[sPropName];
+                    // 对 v-model 节点进行初始化赋值
+                    // 根据获得的 data 属性名将 model 中该属性的值赋给该节点
+                    node.value = vm.data[sPropName];
 
-                // 编译后的节点不应该再出现 v-model 属性
-                node.removeAttribute('v-model');
+                    // 编译后的节点不应该再出现 v-model 属性
+                    node.removeAttribute('v-model');
 
-                // 通过 input 事件实现从 view 到 model 的绑定
-                node.addEventListener('input', function (ev) {
-                    vm.data[sPropName] = ev.target.value;
-                });
+                    // 通过 input 事件实现从 view 到 model 的绑定
+                    node.addEventListener('input', function (ev) {
+                        vm.data[sPropName] = ev.target.value;
+                    });
 
-                const subscriber = new Subscriber(node, 'model');
+                    const subscriber = new Subscriber(node, 'model');
+                    Publisher.curPub.addSubscriber(subscriber);
+                }
+            });
+
+            // 编译子节点
+            node.childNodes.forEach(child=>{
+                compile(child, vm);
+            });
+        }
+
+        // 节点类型为 text
+        if (node.nodeType === 3) {
+            // 将 “Mustache” syntax 中的变量替换为 model 中相应的数据
+            const reg = /\{\{(.*)\}\}/;
+            const aMatch = node.nodeValue.match(reg);
+            if (aMatch) {
+                const sPropName = aMatch[1].trim();
+                node.nodeValue = vm.data[sPropName];
+
+                const subscriber = new Subscriber(node, 'text');
                 Publisher.curPub.addSubscriber(subscriber);
             }
-        });
-
-        // 编译子节点
-        node.childNodes.forEach(child=>{
-            compile(child, vm);
-        });
-    }
-
-    // 节点类型为 text
-    if (node.nodeType === 3) {
-        // 将 “Mustache” syntax 中的变量替换为 model 中相应的数据
-        const reg = /\{\{(.*)\}\}/;
-        const aMatch = node.nodeValue.match(reg);
-        if (aMatch) {
-            const sPropName = aMatch[1].trim();
-            node.nodeValue = vm.data[sPropName];
-
-            const subscriber = new Subscriber(node, 'text');
-            Publisher.curPub.addSubscriber(subscriber);
         }
     }
-}
-```
+    ```
 
 
 ## 修改完成最终的 MVVM 构造函数

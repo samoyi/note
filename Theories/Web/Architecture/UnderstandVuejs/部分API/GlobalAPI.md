@@ -1,10 +1,9 @@
 # Global API
 
 ## `Vue.extend( options )`
-1. Create a “subclass” of the base Vue constructor.
-2. The argument should be an object containing component options.
-3. The special case to note here is the data option - it must be a function when
-used with `Vue.extend()`.
+1. 使用基础 Vue 构造器，创建一个“子类”，即一个组件原型。
+2. 参数是一个包含组件选项的对象。其中`data`属性必须是一个函数。
+
 ```html
 <div id="app">
     <template id="girl1"></template>
@@ -43,9 +42,8 @@ profile2.$mount('#girl2');
 
 
 ## `Vue.nextTick( [callback, context] )`
-1. 虽然文档中的说法是 “Defer the callback to be executed after the next DOM update
-cycle”，但它可能就是 JS 中的 `process.nextTick` microtask。在下面的例子中，在根本不
-涉及 DOM 更新甚至没有数据变动的情况下，`nextTick`的回调依然会被执行
+1. 根据[文档](https://vuejs.org/v2/guide/reactivity.html#Async-Update-Queue)说的，
+该方法再内部会优先 Promise 来实现，如果环境不支持，则使用`setTimeout(fn, 0)`。
     ```js
     new Vue({
         created(){
@@ -55,8 +53,8 @@ cycle”，但它可能就是 JS 中的 `process.nextTick` microtask。在下面
         }
     });
     ```
-2. Returns a Promise if no callback is provided and Promise is supported in the
-execution environment. resolve 的结果是 nextTick 的实例
+2. 如果没有提供回调且在支持 Promise 的环境中，则返回一个 Promise。resolve 的结果是
+next tick 时的实例
     ```html
     <div id="app">{{age}}</div>
     ```

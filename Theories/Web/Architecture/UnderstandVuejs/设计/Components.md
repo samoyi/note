@@ -10,9 +10,6 @@
 ## Misc
 ### 一个组件也是一个 Vue 实例
 * 定义组件相当于定义一个组件的构造函数，使用组件相当于实例化。
-* TODO：关于组件的 `data` 必须定义为函数的内部原因，要看源码。
-* 它不是通过 `el` 来把已有的 HTML 节点定义为模板，而是自定义 HTML 并通过
-`template` 将其指定为模板。
 
 
 ## *functional* component -- decoupled
@@ -29,11 +26,11 @@
 be affected by external environment.
 * Reusable components should define a clean public interface and make no
 assumptions about the context it’s used in.
-* 虽然可以通过 `$parent` 之类的绕过这个限制，但还是能不用尽量就不用。保持组件的独立
-性对于维护显然很有好处。
+* 虽然可以通过`$parent`之类的绕过这个限制，但还是能不用尽量就不用。保持组件的独立性对于
+维护显然很有好处。
 * 组件的事件也应该由组件自己来处理。正常情况下，你不能在组件的标签上随便监听组件 emit
 出来的以外的事件，即 [native 事件](https://vuejs.org/v2/guide/components-custom-events.html#Binding-Native-Events-to-Components)。
-比如这样：
+比如这样是不行的：
 ```html
 <parent-component>
     <child-component @click="handleClick"></child-component>
@@ -51,8 +48,8 @@ Vue.component('child-component', {
     },
 });
 ```
-当然，Vue 仍然提供了 `.native` modifier 来绕过这个限制。但还是不要在非必要的情况下进行
-绕过，应该让组件尽可能的独立，和环境解耦。
+当然，Vue 仍然提供了`.native`modifier 来绕过这个限制。但还是不要在非必要的情况下进行绕
+过，应该让组件尽可能的独立，和环境解耦。
 * prop 和 slot 也和函数参数一样，可以提供默认值。
 
 ### 组件不能有副作用

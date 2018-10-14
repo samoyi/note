@@ -46,47 +46,15 @@ Bind as a DOM property instead of an attribute
 #### `.camel`
 transform the kebab-case attribute name into camelCase. 不懂怎么用
 
-#### `.sync`
-a syntax sugar that expands into a `v-on` handler for updating the bound
-value.
-
 
 ## `v-html`
-* Dynamically rendering arbitrary HTML on your website can be very dangerous
-because it can easily lead to XSS attacks.
+* 在网站上动态渲染任意 HTML 是非常危险的，因为容易导致 XSS 攻击。
 * 虽然根据[规范](https://www.w3.org/TR/2008/WD-html5-20080610/dom.html#innerhtml0)，
 通过`innerHTML`插入的`<script>`不会被执行，但还是可以通过插入`<img>`来执行脚本：
     ```js
     document.body.innerHTML = '<img src="x" onerror="alert(666)" />';
     ```
-* Only use `v-html` on trusted content and never on user-provided content.
-
-
-## `v-once`
-1. Render the element and component once only.
-2. On subsequent re-renders, the element/component and all its children will be
-treated as static content and skipped.
-3. This can be used to optimize update performance.
-4. 会作用到后辈节点
-
-```html
-<div id="components-demo" v-once>
-    {{num1}}
-    <span>{{num2}}</span>
-</div>
-```
-```js
-const vm = new Vue({
-    el: '#components-demo',
-    data: {
-        num1: 22,
-        num2: 33,
-    },
-});
-// 之后的修改都无效
-vm.num1 = 222;
-vm.num2 = 333;
-```
+* 只在可信内容上使用 v-html，永不用在用户提交的内容上。
 
 
 ## `v-on`
@@ -171,14 +139,24 @@ TODO：需要确认源码。这里先推测一下 Vue 内部的处理方法：
 
 
 ## `v-pre`
-不编译元素及其后代元素。但自定义子组件仍能编译。
+1. 不编译元素及其后代元素。但自定义子组件仍能编译。
+2. 文档说“You can use this for displaying raw mustache tags. Skipping large
+numbers of nodes with no directives on them can also speed up compilation.” 不懂
+到底有什么用？
+
 ```html
 <div id="app" v-pre>
     {{name}}
-    <span>{{age}}</span>
+    <span v-text="age"></span>
     <child-component></child-component>
 </div>
-<!-- 渲染为：{{name}} {{age}} child -->
+<!--
+    <div id="app">
+        {{name}}
+        <span v-text="age"></span>
+        <span>child</span>
+    </div>
+-->
 ```
 ```js
 new Vue({
@@ -197,18 +175,16 @@ new Vue({
             },
         },
     },
-
 });
 ```
 
 
 ## `v-cloak`
-1. This directive will remain on the element until the associated Vue instance
-finishes compilation.
-2. Combined with CSS rules such as `[v-cloak] { display: none }`, this directive
-can be used to hide un-compiled mustache bindings until the Vue instance is
-ready.
+1. 这个指令保持在元素上直到关联实例结束编译。
+2. 和 CSS 规则如`[v-cloak] { display: none }`一起用时，这个指令可以隐藏未编译的
+Mustache 标签直到实例准备完毕。
 3. 不懂，还有什么用
+
 ```css
 [v-cloak] {
     display: none;

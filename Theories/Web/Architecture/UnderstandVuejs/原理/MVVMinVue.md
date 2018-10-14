@@ -64,7 +64,7 @@ to update the View. Whenever the data changes, the View is updated on the next
 frame.
 6. Vue instances proxy all properties on data objects they observe. So once an
 object `{ a: 1 }` has been observed, both `vm.$data.a` and `vm.a` will return
-the same value, and setting `vm.a = 2` will modify vm.$data. 即 ViewModel 和
+the same value, and setting `vm.a = 2` will modify `vm.$data`. 即 ViewModel 和
 Model 的数据保持一致。
 7. The data objects are mutated in place, so modifying it by reference has the
 same effects as modifying `vm.$data`. This makes it possible for multiple Vue
@@ -72,8 +72,9 @@ instances to observe the same piece of data.
 8. In larger applications it is also recommended to treat Vue instances as pure
 views, and externalize the data manipulation logic into a more discrete store
 layer. 这里的意思可能就是上面在解释 ViewModel 说的那样，把 ViewModel 当做 Model 层的
-view。尽量只是往里面插入变量，至于数据层面的各种计算，不要放到 ViewModel 里面来进行。
-因为 ViewModel 只是 Model 层的 view，在 view 层进行复杂的运算显然只会添加混乱。
+view。尽量只是往里面插入变量，至于数据层面的各种计算，不要放到 ViewModel 里面来进行。因
+为 ViewModel 只是 Model 层的 view，虽然它比 View 层更数据，但它本质上还是属于 Model
+层的模板，显然不应该在模板里进行复杂的运算。
 
 
 ## Directives

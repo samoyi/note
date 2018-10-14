@@ -11,14 +11,14 @@
 
 
 ### vm.$children
-Note there’s no order guarantee for `$children`, and it is not reactive.
+当前实例的直接子组件。需要注意`$children`并不保证顺序，也不是响应式的。
 
 
 ### vm.$slots
-1. Used to programmatically access content distributed by slots.
-2. Each named slot has its own corresponding property (e.g. the contents of
-`slot="foo"` will be found at `vm.$slots.foo`).
-3. The `default` property contains any nodes not included in a named slot.
+1. 用来访问被插槽分发的内容。
+2. 每个具名插槽 有其相应的属性 (例如：`slot="foo"`中的内容将会在`vm.$slots.foo`中被找
+到)。
+3. `default`属性包括了所有没有被包含在具名插槽中的节点。
 4. 不管插入的内容是一个还是多个，`vm.$slots.foo`或`vm.$slots.default`的值都是一个数
 组，里面包含一个或多个 VNode。
 
@@ -80,23 +80,7 @@ new Vue({
 `{Function} unwatch`
 
 #### 更强大的数据监听
-1. 不同的是，该方法可以监听子属性
-    ```js
-    const vm = new Vue({
-        el: '#components-demo',
-        data: {
-            name: '33',
-            age: 22,
-            other: {
-                sex: 'female',
-            },
-        },
-    });
-    vm.$watch('other.sex', function(){
-        console.log('⑨');
-    });
-    ```
-2. 更高级的是，它可以监听一个表达式的值是否变动
+##### 它可以监听一个表达式的值是否变动
     ```js
     // 监听一个不等式的结果是否变动，默认是 true
     const vm = new Vue({
@@ -131,7 +115,7 @@ new Vue({
     })
     ```
 
-#### 可以取消监听
+##### 可以取消监听
 `vm.$watch` returns an unwatch function that stops firing the callback
 ```js
 const vm = new Vue({
@@ -198,7 +182,7 @@ vm.$watch('arr', (n)=>{
 vm.arr.push(3);
 ```
 
-#### 立即以属性的当前值触发监听回调
+##### 立即以属性的当前值触发监听回调
 第三个参数的`immediate`属性设为`true`的话，添加 watcher 之后不用再修改该属性，就会立刻
 以当前的属性值触发回调
 ```js
@@ -219,15 +203,14 @@ let unwatch = vm.$watch('num1', (n)=>{
 vm.num1 = 20; // 会触发 watcher 回调
 // unwatch(); // 只能阻止 20 的触发，无法阻止 22 的触发
 ```
-看起来内部的逻辑就是，在添加的时候就顺便调用以下回调，然后才进入真正的 watch 状态。
+看起来内部的逻辑就是，在添加的时候就顺便调用一下回调，然后才进入真正的 watch 状态。
 
 
 ### `vm.$destroy()`
-1. Completely destroy a vm.
-2. Clean up its connections with other existing vms, unbind all its directives,
-turn off all event listeners. 但这里并不能完全清除。看下面的例子，`destroy`子组件之
-后，它上面的事件监听就会失效。但是通过父级的`$refs`仍然可以应用甚至调用它的方法，而且组
-件的元素仍然会留在 DOM中。看起来这两个都需要手动清除。看看这个[提问](https://forum.vuejs.org/t/how-to-wait-for-element-removal-from-doc-after-vm-destroy/5258)
+1. 完全销毁一个实例。清理它与其它实例的连接，解绑它的全部指令及事件监听器。
+2. 但这里并不能完全清除。看下面的例子，`destroy`子组件之后，它上面的事件监听就会失效。
+但是通过父级的`$refs`仍然可以引用甚至调用它的方法，而且组件的元素仍然会留在 DOM中。看起
+来这两个都需要手动清除。看看这个[提问](https://forum.vuejs.org/t/how-to-wait-for-element-removal-from-doc-after-vm-destroy/5258)
     ```html
     <div id="app">
         <child-component ref="child" @fromchild="getEmit"></child-component>
@@ -269,7 +252,6 @@ turn off all event listeners. 但这里并不能完全清除。看下面的例�
         },
     });
     ```
-3. Triggers the `beforeDestroy` and `destroyed` hooks.
-4. In normal use cases you shouldn’t have to call this method yourself. Prefer
-controlling the lifecycle of child components in a data-driven fashion using
-`v-if` and `v-for`.
+3. 触发`beforeDestroy`和`destroyed`钩子.
+4. 在大多数场景中你不应该调用这个方法。最好使用`v-if`和`v-for`指令以数据驱动的方式控制
+子组件的生命周期。
