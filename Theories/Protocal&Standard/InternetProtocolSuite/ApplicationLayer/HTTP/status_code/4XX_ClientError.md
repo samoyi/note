@@ -26,15 +26,15 @@ syntax.
 3. In an API, this can also mean that the endpoint is valid but the resource
 itself does not exist.
 4. Servers may also send this response instead of 403 to hide the existence of a
- resource from an unauthorized client.
+resource from an unauthorized client.
 
 
 ## `405 Method Not Allowed`
-1. The request method is known by the server but has been disabled and cannot be used.
-For example, an API may forbid DELETE-ing a resource.
+1. The request method is known by the server but has been disabled and cannot be
+used. For example, an API may forbid DELETE-ing a resource.
 2. 该响应必须返回一个 `Allow` 头信息用以表示出当前资源能够接受的请求方法的列表。 　　
-3. 鉴于 `PUT`、`DELETE` 方法会对服务器上的资源进行写操作，因而绝大部分的网页服务器都不
-支持或者在默认配置下不允许上述请求方法，对于此类请求均会返回 `405` 错误。
+3. 鉴于`PUT`、`DELETE`方法会对服务器上的资源进行写操作，因而绝大部分的网页服务器都不支
+持或者在默认配置下不允许上述请求方法，对于此类请求均会返回`405`错误。
 4. The two mandatory methods, `GET` and `HEAD`, must never be disabled and
 should not return this error code.
 

@@ -33,68 +33,63 @@ Fetch spec defines as being a [CORS-safelisted request-header](https://fetch.spe
 
 
 ## "Preflighted requests"
-1. Unlike “simple requests”, "preflighted" requests first send an HTTP request
-by the `OPTIONS` method to the resource on the other domain, in order to
-determine whether the actual request is safe to send. Cross-site requests are
-preflighted like this since they may have implications to user data.
-2. 如果一个跨域请求不是简单请求，则客户端首先会使用发送一个`OPTION`请求，询问服务器是
+1. 如果一个跨域请求不是简单请求，则客户端首先会使用发送一个`OPTION`请求，询问服务器是
 否支持该跨域请求的设置。
-3. Along with the OPTIONS request, two other request headers are sent:
-    * `Access-Control-Request-Method`: notifies the server which HTTP method
-    will be used when the actual request is made.
-    * `Access-Control-Request-Headers`: notifies the server which HTTP headers
-    will be used when the actual request is made.
-4. Chrome 中测试发现，如果 method 是非简单请求的 method，而 header 是简单请求的，则
-不会发送`Access-Control-Request-Headers`；如果 header 是非简单请求的，而 method 是
-简单请求的，仍然会发送`Access-Control-Request-Method`。
-```js
-// 请求
-let xhr = new XMLHttpRequest();
+2. 这个`OPTION`请求中有两个跨域相关的 header：
+    * `Access-Control-Request-Method`:告知服务器稍后的实际请求将要使用的请求方法。
+    * `Access-Control-Request-Headers`: 告知服务器稍后的实际请求将会设置的 header。
+3. Chrome 中测试发现，如果`Access-Control-Request-Method`是非简单请求的方法，而
+`Access-Control-Request-Headers`是简单请求的 header，则不会发送
+`Access-Control-Request-Headers`；如果`Access-Control-Request-Headers`是非简单请求
+的，而`Access-Control-Request-Method`是简单请求的，仍然会发送`Access-Control-Request-Method`。
+    ```js
+    // 请求
+    let xhr = new XMLHttpRequest();
 
-xhr.addEventListener('readystatechange', function(){
-    if (xhr.readyState === 4 ){
-        if ((xhr.status>=200 && xhr.status<300) || xhr.status === 304){
-            console.log(xhr.responseText);
+    xhr.addEventListener('readystatechange', function(){
+        if (xhr.readyState === 4 ){
+            if ((xhr.status>=200 && xhr.status<300) || xhr.status === 304){
+                console.log(xhr.responseText);
+            }
         }
-    }
-});
+    });
 
-xhr.open('INPUT', 'http://localhost:3000?name=33&age=22', true); // 非简单请求 method
-xhr.setRequestHeader("From", "https://github.com/samoyi"); // 非简单请求 header
-xhr.send();
-```
-```
-// OPTIONS 请求相关 header
-OPTIONS /?name=33&age=22 HTTP/1.1
-Access-Control-Request-Method: INPUT
-Access-Control-Request-Headers: from
-```
-5. 如果响应只设置了`Access-Control-Allow-Origin`，则首先会报错：
+    xhr.open('INPUT', 'http://localhost:3000?name=33&age=22', true); // 非简单请求 method
+    xhr.setRequestHeader("From", "https://github.com/samoyi"); // 非简单请求 header
+    xhr.send();
+    ```
+    OPTIONS 请求相关 header
+    ```
+    OPTIONS /?name=33&age=22 HTTP/1.1
+    Access-Control-Request-Method: INPUT
+    Access-Control-Request-Headers: from
+    ```
+4. 如果响应只设置了`Access-Control-Allow-Origin`，则首先会报错：
 `Method INPUT is not allowed by Access-Control-Allow-Methods in preflight response.`
-6. 如果 method 改为比如`GET`，则报错是：
+5. 如果 method 改为比如`GET`，则报错是：
 `Request header field From is not allowed by Access-Control-Allow-Headers in preflight response.`
-7. 服务器通过设置 response 首部的`Access-Control-Allow-Methods`和/或
+6. 服务器通过设置 response 首部的`Access-Control-Allow-Methods`和
 `Access-Control-Allow-Headers`来设置允许的跨域方法和首部字段。
-```js
-// 响应
-require('http').createServer((req, res)=>{
-    if (req.url !== '/favicon.ico'){
-        res.setHeader('Access-Control-Allow-Origin', 'http://localhost');
+    ```js
+    // 响应
+    require('http').createServer((req, res)=>{
+        if (req.url !== '/favicon.ico'){
+            res.setHeader('Access-Control-Allow-Origin', 'http://localhost');
 
-        res.setHeader('Access-Control-Allow-Methods', 'INPUT');
-        // 如果允许多个方法，用逗号隔开
-        // res.setHeader('Access-Control-Allow-Methods', 'DELETE, INPUT, TRACE');
+            res.setHeader('Access-Control-Allow-Methods', 'INPUT');
+            // 如果允许多个方法，用逗号隔开
+            // res.setHeader('Access-Control-Allow-Methods', 'DELETE, INPUT, TRACE');
 
-        res.setHeader('Access-Control-Allow-Headers', 'From');
+            res.setHeader('Access-Control-Allow-Headers', 'From');
 
-    }
-    res.end('roger that');
-}).listen(3000);
-```
-8. 如果实际请求的方法是`GET`、`HEAD`或`POST`，即使因为其他原因触发了Preflight，服务
+        }
+        res.end('roger that');
+    }).listen(3000);
+    ```
+7. 如果实际请求的方法是`GET`、`HEAD`或`POST`，即使因为其他原因触发了 preflight，服务
 器端所设置的`Access-Control-Allow-Methods`也不会对这三个安全的方法进行限制。也就是说
 `Access-Control-Allow-Methods`设置的是：不安全的方法中，哪些是被允许的。
-6. `Access-Control-Max-Age` gives the value in seconds for how long the response
+8. `Access-Control-Max-Age` gives the value in seconds for how long the response
 to the preflight request can be cached for without sending another preflight
 request. Note that each browser has a maximum internal value that takes
 precedence when the `Access-Control-Max-Age` is greater.
@@ -141,10 +136,9 @@ clients to be able to access other headers, you have to list them using the
     ```
     'Access-Control-Expose-Headers': 'Age, Etag',
     ```
-4. 我在 AJAX 中试图通过 `xhr.getResponseHeader('Etag')` 读取响应的 ETag 时，如果服
-务器没有设置相应的`Access-Control-Expose-Headers`，Chrome报错：`Refused to get
+4. 我在 AJAX 中试图通过`xhr.getResponseHeader('Etag')`读取响应的 ETag 时，如果服务
+器没有设置相应的`Access-Control-Expose-Headers`，Chrome报错：`Refused to get
 unsafe header "Etag"`
-
 
 
 ## Chrome 中跨域 POST 请求 localhost 时的问题

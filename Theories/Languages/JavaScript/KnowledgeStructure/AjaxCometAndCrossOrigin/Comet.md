@@ -13,7 +13,7 @@
 
 ## HTTP streaming
 1. 服务端写入一些数据到输出缓存，然后 flush 缓存，输出给客户端。
-2. 这时服务端脚本并未结束，客户端发起的请求也没有结束相应。
+2. 这时服务端脚本并未结束，客户端发起的请求也没有结束响应。
 3. 但因为已经发送了一部分数据，所以 AJAX 的`readyState`会变成`3`，通过监听
 `readystatechange`事件，就可以获取这一部分数据。
 4. 服务端可以在不结束脚本的情况下一直执行上述过程，客户端也可以监听`readystatechange`
@@ -28,7 +28,7 @@
 1. Server-Sent Events (SSE) is an API and pattern for read-only Comet
 interactions.
 2. The SSE API creates a one-way HTTP connection to the server through which the
- server can pass as much or as little information as necessary.
+server can pass as much or as little information as necessary.
 3. The server response must have a MIME type of `text/eventstream` and outputs
 the information in a specific format that the browser API consumes and makes
 available through JavaScript.

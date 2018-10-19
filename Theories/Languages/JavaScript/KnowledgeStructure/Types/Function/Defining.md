@@ -38,19 +38,28 @@
 * 箭头函数的`this`使用词法作用域
     ```js
     function foo(){
-        let bar = () => console.log(this);
+        let bar = () => console.log(this); // 永远使用 foo 作用域内的 this 值
         bar();
     }
-    foo(); // undefined
+
+    // 这里因为 foo 作用域的 this 就是 undefined，所以箭头函数 bar 的 this 也是
+    foo(); // undefined  
+
     let o = {
         name: "o",
         baz: foo
     }
+    // 这里因为 foo 内部的 this 变成了 o，所以 bar 的 this 也是 o
     o.baz(); // Object {name: "o"}
     ```
 * 箭头函数同样可以使用解构赋值参数        
     ```js
     const full = ({ first, last }) => first + ' ' + last;
+    let person = {
+        first: 22,
+        last: 33,
+    }
+    console.log(full(person)); // 22 33
     ```
 * 使用箭头函数可以很方便的定义回调函数
     ```js
@@ -248,7 +257,7 @@ let baz = function(){}
     中对`length`的定义是：“The value of the length property is an integer that
     indicates the typical number of arguments expected by the function. ”。这样看
     来，默认参数不计入可以理解，但是默认参数后面的也不计入，就有些不符合定义了。
-* 通过将将参数的默认值设定为一个函数调用，可以在未传该参数而调用函数的时候执行某些动作
+* 通过将参数的默认值设定为一个函数调用，可以在未传该参数而调用函数的时候执行某些动作
     ```js
     function noPara(){
         alert('para missing !');
@@ -297,7 +306,8 @@ let baz = function(){}
 ## 箭头函数注意事项
 ### 不能手动绑定`this`
 由于箭头函数没有自己的`this`，所以用`call()`、`apply()`、`bind()`这些方法去改变`this`
-指向是无效的
+指向是无效的。箭头函数里面根本没有`this`，所以也就不存在改变了。在箭头函数里访问`this`
+也不是访问函数内部的`this`，而是直接寻找作用域链上级的`this`
 ```js
 let foo = ()=>{
     console.log(this);

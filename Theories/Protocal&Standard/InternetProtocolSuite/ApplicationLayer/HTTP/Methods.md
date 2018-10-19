@@ -1,7 +1,7 @@
 # Methods
 *  Note that not all methods are implemented by every server. To be compliant
 with HTTP Version 1.1, a server need implement only the `GET` and `HEAD` methods
- for its resources.
+for its resources.
 
 
 ## Safe Methods
@@ -19,7 +19,7 @@ performed (in practice, that is up to the web developers). Safe methods are
 meant to allow HTTP application developers to let users know when an unsafe
 method that may cause some action to be performed is being used. In our Joe’s
 Hardware example, your web browser may pop up a warning message letting you know
- that you are making a request with an unsafe method and that, as a result,
+that you are making a request with an unsafe method and that, as a result,
 something might happen on the server (e.g., your credit card being charged).
 
 
@@ -30,8 +30,8 @@ resource.
 
 
 ## `HEAD`
-1. The `HEAD` method behaves exactly like the GET method, but the server returns
- only the headers in the response. No entity body is ever returned.
+1. The `HEAD` method behaves exactly like the `GET` method, but the server
+returns only the headers in the response. No entity body is ever returned.
 2. This allows a client to inspect the headers for a resource without having to
 actually get the resource.
 3. Using `HEAD`, you can:
@@ -45,9 +45,9 @@ that a `GET` request would return.
 
 ## `PUT`
 1. The `PUT` method writes documents to a server, in the inverse of the way that
- `GET` reads documents from a server.
+`GET` reads documents from a server.
 2. Some publishing systems let you create web pages and install them directly on
- a web server using `PUT`.
+a web server using `PUT`.
 3. The semantics of the `PUT` method are for the server to take the body of the
 request and either use it to create a new document named by the requested URL or
 , if that URL already exists, use the body to replace it.
@@ -58,7 +58,7 @@ log in with a password before you can perform a `PUT`.
 ## `POST`
 1. The `POST` method was designed to send input data to the server.
 2. `POST` is used to send data to a server. `PUT` is used to deposit data into a
- resource on the server (e.g., a file).
+resource on the server (e.g., a file).
 3. In practice, it is often used to support HTML forms. The data from a
 filled-in form typically is sent to the server, which then marshals it off to
 where it needs to go (e.g., to a server gateway program, which then processes it
@@ -99,15 +99,15 @@ capabilities of the web server. You can ask a server about what methods it
 supports in general or for particular resources. (Some servers may support
 particular operations only on particular kinds of objects).
 2. This provides a means for client applications to determine how best to access
- various resources without actually having to access them.
+various resources without actually having to access them.
 
 
 ## `DELETE`
 1. The `DELETE` method does just what you would think—it asks the server to
-deletethe resources specified by the request URL. However, the client
+delete the resources specified by the request URL. However, the client
 application is not guaranteed that the delete is carried out. This is because
 the HTTP specification allows the server to override the request without telling
- the client.
+the client.
 
 
 ## Extension Methods
@@ -118,7 +118,7 @@ specification. They provide developers with a means of extending the
 capabilities of the HTTP services their servers implement on the resources that
 the servers manage.
 3. Some common examples of extension methods are listed below. These methods are
- all part of the WebDAV HTTP extension that helps support publishing of web
+all part of the WebDAV HTTP extension that helps support publishing of web
 content to web servers over HTTP.
 
 Method | description
@@ -129,7 +129,7 @@ COPY | Facilitates copying resources on a server
 MOVE | Moves a resource on a server
 
 4. It’s important to note that not all extension methods are defined in a formal
- specification. If you define an extension method, it’s likely not to be
+specification. If you define an extension method, it’s likely not to be
 understood by most HTTP applications. Likewise, it’s possible that your HTTP
 applications could run into extension methods being used by other applications
 that it does not understand.

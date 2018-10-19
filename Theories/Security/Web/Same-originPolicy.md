@@ -2,9 +2,9 @@
 
 
 ## same-origin policy 限制范围
-* Cookie 无法读取
-* LocalStorage 和 IndexDB 无法读取
 * DOM 无法获得
+* Cookie 无法读取
+* 无法读取本地存储：包括 localStorage、sessionStorage 和 IndexDB
 * AJAX 请求不能发送  
 
 ### AJAX 同源限制是为了防止 CSRF
@@ -21,7 +21,7 @@
 以会执行转账。
 
 
-## 定义
+## 相关定义
 ### 同源（same origin）的定义
 相同的协议（protocol）、相同的端口（port）和相同的主机（host）
 
@@ -44,52 +44,131 @@ URL 自身没有给出关于源的信息。
 
 
 ## 绕过同源策略
-### 跨域访问 DOM
-#### `document.domain`
-1. frame 或子域可以通过设置与父级相同的`document.domain`来实现跨域访问 DOM。
-2. 父级和子级必须都设置该属性且属性值相等。即使父级设置的该属性值就是当前的域名，也不能
+### 使用`document.domain`
+1. 可实现跨域访问 DOM、Cookie 和本地存储
+2. frame 或子域可以通过设置与父级相同的`document.domain`来实现跨域访问 DOM。
+3. 父级和子级必须都设置该属性且属性值相等。即使父级设置的该属性值就是当前的域名，也不能
 省略设置。
-3. 对该属性任何赋值操作，都会导致端口号被设置为`null`，即使是
+4. 对该属性任何赋值操作，都会导致端口号被设置为`null`，即使是
 `document.domain = document.domain`。所以才必须给父子的该属性都赋值，以保证两者的端口
 号都是`null`。
 
-#### Proxy server
-`http://www.qnimate.com/parent.html`:
 ```html
-<iframe src="http://www.qnimate.com/child.php" id="myIFrame"></iframe>
+<!-- http://localhost/test/index.html -->
+<body>
+    <iframe id="myIframe" src="http://localhost:8080/"></iframe>
+</body>
 <script>
-window.document.getElementById("myIFrame").contentWindow.document.body.style
-    .backgroundColor = "red"; // this access is allowed by default
+"use strict";
+
+document.domain = 'localhost';
+
+window.onload = function(){
+    let frameWin = document.getElementById("myIframe").contentWindow;
+    let frameDoc = frameWin.document;
+
+    console.log(frameDoc.querySelector('#child').textContent)
+    console.log(frameDoc.cookie);
+    console.log(frameWin.localStorage);
+    console.log(frameWin.sessionStorage);
+};
+</script>
+```
+```js
+// 8080 端口域服务器
+const http = require('http');
+const fs = require('fs');
+
+http.createServer((req, res)=>{
+    if (req.url !== '/favicon.ico'){
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        fs.createReadStream('./test.html').pipe(res);
+    }
+    else {
+        res.end('');
+    }
+}).listen(8080);
+```
+```html
+<!-- 8080 端口域被访问的静态文件 -->
+<body>
+    <h1 id="child">子级页面</h1>
+</body>
+<script>
+"use strict";
+document.domain = 'localhost';
+
+document.cookie = 'key=2233';
+localStorage.name = '33';
+sessionStorage.age = 22;
 </script>
 ```
 
-`http://www.qnimate.com/child.php`:
-```php
-    echo file_get_contents('http://www.blog.qnimate.com/child.html');
-```
+### 使用 CORS、WebSocket 或 JSONP
+1. 可实现跨域 AJAX
+2. CORS `header`设置方法见`Theories\Protocal&Standard\InternetProtocolSuite\ApplicationLayer\HTTP\CORSAccessControl.md`
+3. WebSocket 配置方法参考这个[Demo](https://github.com/samoyi/Nichijou/tree/master/communication/websocket)
 
-#### `window.postMessage()`
+### 使用代理服务器
+1. 可实现跨域访问 DOM 和跨域 AJAX
+2. 使用代理服务器直接读取跨域的文档
+    ```html
+    <iframe src="http://www.proxy.com/child.php" id="myIFrame"></iframe>
+    ```
+    ```php
+    // http://www.proxy.com/child.php
+    echo file_get_contents('http://www.another-domain/child.html');
+    ```
+3. 跨域 AJAX
+    ```js
+    // 请求页
 
-### 跨域 AJAX
-* CORS
-* JSONP
-* Proxy server
-* WebSocket
+    const xhr = new XMLHttpRequest();
+    xhr.addEventListener('readystatechange', function(){
+        if (this.readyState === 4){
+            if ((this.status >=200 && this.status < 300) || this.status === 304){
+                console.log(this.responseText);
+            }
+        }
+    });
+    xhr.open('GET', 'http://localhost/test/test.php?query=age');
+    xhr.send();
+    ```
+    ```php
+    // 代理服务器转发请求
 
-### 跨域读取 LocalStorage 和 IndexDB
-* `window.postMessage()`
+    function HTTP_GET($url){
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $output = curl_exec($ch);
+        curl_close($ch);
+        return $output;
+    }
+    $url = 'http://localhost:8080?query=' . $_GET['query'];
+    echo HTTP_GET($url);
+    ```
+    ```js
+    // 没有设置 Access-Control-Allow-Origin 的跨域站点
 
-### 跨域读取 Cookie
-* `window.postMessage()`
+    const http = require('http');
+    const url = require('url');
+    http.createServer((req, res)=>{
+        if (req.url !== '/favicon.ico'){
+            let query = url.parse(req.url, true).query.query;
+            res.end(query === 'age' ? '22' : '');
+        }
+        else {
+            res.end('');
+        }
+    }).listen(8080);
+    ```
 
+### `window.postMessage()`
+1. 可实现跨域访问 DOM、Cookie 和本地存储
+2. 用法见`Theories\Languages\JavaScript\KnowledgeStructure\AjaxCometAndCrossOrigin\Cross-OriginMessaging.md`
 
-## 总结一下各个跨域方法的适用范围
-* `document.domain`： Cookie、DOM。
-* Proxy server：DOM、AJAX
-* `window.postMessage()`：DOM、跨域读取 LocalStorage 和 IndexDB
-* JSONP：AJAX
-* CORS：AJAX。`header`设置方法见`Theories\Protocal&Standard\InternetProtocolSuite\ApplicationLayer\HTTP\CORSAccessControl.md`
-* WebSocket：AJAX。配置方法参考这个[Demo](https://github.com/samoyi/Nichijou/tree/master/communication/websocket)
 
 
 ## References

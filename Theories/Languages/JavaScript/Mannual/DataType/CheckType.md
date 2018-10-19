@@ -66,6 +66,7 @@ function isNumericString(v){
     // !!(v.trim()): exclude '' and '   '.
     // Number(v) == v: binary, octal, hexadecimal and exponential could be
     //                 converted correctly.
+    //                 console.log(16 == '0x10'); // true
     // Number.parseFloat(v) == v   can exclude '' and '   ', but can not covert  
     //                             binary, octal, hexadecimal and exponential
     //                             string correctly.
@@ -89,9 +90,12 @@ function isNumeric(v){
 function isNumeric(n) {
     const type = typeof n;
     return ( type === "number" || type === "string" ) &&
-        !isNaN( n - Number.parseFloat( n ) );
+        !isNaN(n - Number.parseFloat(n));
 }
 ```
+如果`n`是非无穷十进制数字或数字字符串，则`!isNaN(n - Number.parseFloat(n))`肯定为
+`true`；如果是其他进制数字或数字字符串，`Number.parseFloat(n)`会返回`0`，经过减法也会
+是数字；如果是无穷，则无穷减无穷会是`NaN`。
 
 * test code
 ```js

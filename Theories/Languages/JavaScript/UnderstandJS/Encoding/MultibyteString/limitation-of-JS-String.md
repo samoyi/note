@@ -4,14 +4,14 @@
 unsigned integer values, as this reason, many JS string methods(and `length`
 property) can only be used for 2-byte characters, which are in Basic
 Multilingual Plane of Unicode.
-* `length` 属性的定义是字符串的长度，这没有错。但字符串的定义 **并不是若干字符组成的序
-列**，而是 **若干用来表示字符的16位值组成的序列**。`length` 统计的是序列中单元的总数，
+* `length`属性的定义是字符串的长度，这没有错。但字符串的定义 **并不是若干字符组成的序
+列**，而是 **若干用来表示字符的16位值组成的序列**。`length`统计的是序列中单元的总数，
 但单元并不是可见的一个字符，而是不可见的一个16位数值。
 * 如果地址没变的话，[这是一个兼容多字节字符的字符串处理class](https://github.com/samoyi/Nichijou/blob/master/js/string/MultiByte.js)
 
 ## Example
 ### `String.prototype.charCodeAt` and `String.fromCharCode`
-Specification:  [String.prototype.charCodeAt](https://tc39.github.io/ecma262/#sec-string.prototype.charcodeat)
+Specification: [String.prototype.charCodeAt](https://tc39.github.io/ecma262/#sec-string.prototype.charcodeat)
 and [String.fromCharCode](https://tc39.github.io/ecma262/#sec-string.fromcharcode).
 * The unicode of `𝑒` is `U+1D452`, when using UTF-8, its code is `d835dc52`. For
 JS, `d835dc52` are two 2-byte characters:

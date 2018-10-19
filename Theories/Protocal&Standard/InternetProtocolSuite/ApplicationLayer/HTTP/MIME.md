@@ -2,7 +2,7 @@
 
 ## 用途
 * MIME media types (MIME types, for short) are standardized names that describe
-the contents of a message entity body (e.g., text/html, image/jpeg).
+the contents of a message entity body (e.g., `text/html`, `image/jpeg`).
 * Because the Internet hosts many thousands of different data types, HTTP
 carefully tags each object being transported through the Web with a data format
 label called a MIME type. MIME (Multipurpose Internet Mail Extensions) was
@@ -45,6 +45,7 @@ If a MIME type describes a collection or encapsulation of other content, the
 MIME type is called a composite type. A composite type describes the format of
 the enclosing package. When the enclosing package is opened, each enclosed
 object will have its own type.
+相当于`rar`后缀和解压后内部文件后缀的意思？
 
 ### Multipart Types
 Multipart media types are composite types. A multipart object consists of

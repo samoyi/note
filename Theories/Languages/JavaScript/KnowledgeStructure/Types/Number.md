@@ -170,7 +170,7 @@ console.log( numbersCloseEnoughToEqual(x, y) );  // true
     console.log(Number(null));      // 0
     console.log(Number(undefined)); // NaN
     ```
-* 如果参数是字符串，则细分为一下的规则：
+* 如果参数是字符串，则细分为以下的规则：
     * 如果字符串是标准二进制、八进制或十六进制数，则转换为相应的十进制数值。如果在该二
     进制、八进制或十六进制前面还带符号或者前导0，则转为`NaN`
         ```js
@@ -264,7 +264,10 @@ console.log( numbersCloseEnoughToEqual(x, y) );  // true
 
 ### `Number.parseFloat()`
 1. `Number.parseFloat(string)`
-2. 与`Number.parseInt()`不同，这个方法只能用于十进制数。
+2. 与`Number.parseInt()`不同的是，这个方法只能用于十进制数字字符串，并不能指定进制
+    ```js
+    console.log(Number.parseFloat('0x10')); // 0
+    ```
 3. Parsing accuracy is limited
     ````js
     let result = Number.parseFloat( '1.337000012397766117451156851189711');

@@ -13,7 +13,7 @@ TCP in the server in the following manner:
 
 ### Step 1
 1. The client-side TCP first sends a special TCP segment to the server-side TCP.
-This special segment contains no application-layer data. But ont of the flag
+This special segment contains no application-layer data. But one of the flag
 bits in the segment's header, the SYN bit, is set to `1`. For this reason, this
 specail segment is referred to as a SYN segment.
 2. In addition, the client randomly chooses an initail sequence number
@@ -32,7 +32,7 @@ sends a connection-granted segment to the client TCP.
 However, it does contain three important pieces of information in the segment
 header.
 3. First, the SYN bit is set to `1`. Second, the acknowledgment field of the TCP
- segment header is set to `client_isn + 1`. Finally, the server chooses its own
+segment header is set to `client_isn + 1`. Finally, the server chooses its own
 initial sequence number (`server_isn`) and puts this value in the sequence
 number field of the TCP segment header.
 4. This connection-granted segment is saying, in effect, "I received your SYN
@@ -61,7 +61,6 @@ in the segment payload.
 3. 另一种错误情况：客户端第一次发送请求时，出现了很长的延迟。客户端认为该请求发送失败，
 重新发送了一次，这次成功建立了链接，传递了数据之后释放了链接。直到这时，第一次延迟的请求
 终于姗姗来迟，服务器却认为这是一次新的请求，于是又建立了链接，然后等待数据传输。
-
 
 
 ## References

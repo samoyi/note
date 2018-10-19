@@ -8,14 +8,14 @@ The four types of common JavaScript leaks:
 
 
 ## Accidental global variables
-1. 如果不使用严格模式，函数内部不使用 `var`/`let`/`const` 声明的变量和 `this` 都会成为
-全局变量。
+1. 如果不使用严格模式，函数内部不使用 `var`/`let`/`const` 声明的变量和 `this` 都会成
+为全局变量。
 2. If you must use a global variable to store data, make sure to null it or
 reassign it after you are done with it.
 3. One common cause for increased memory consumption in connection with globals
 are **caches**. Caches must have an upper bound for its size. Caches that grow
 unbounded can result in high memory consumption because their contents cannot be
- collected.
+collected.
 
 
 ## Forgotten intervals or callbacks

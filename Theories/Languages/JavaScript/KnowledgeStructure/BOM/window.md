@@ -121,7 +121,7 @@ integer overflow when using delays larger than 2147483647 (about 24.8 days),
 resulting in the timeout being executed immediately.
 
 ### 参数的迷惑性
-1. 下面两个`setTimeout`，`22`和`33`都是输出的
+1. 下面两个`setTimeout`，`22`和`33`都是立刻输出的
     ```js
     setTimeout((function() { console.log(22);})(), 3000);
     setTimeout(console.log(33), 3000);
@@ -176,7 +176,7 @@ resulting in the timeout being executed immediately.
 `null`
 * `window.print()`：Starting with Chrome 46.0 this method is blocked inside an
 `<iframe>` unless its sandbox attribute has the value allow-modals.
-* `Window.find()` 可以查找页面文本。但因为是非标准方法且存在bug，所以不应该使用。
+* `Window.find()` 可以查找页面文本。但因为是非标准方法且存在 bug，所以不应该使用。
 
 
 ## 未整理内容，直接看《Professional JavaScript for Web Developers》第八章

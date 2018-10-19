@@ -31,8 +31,9 @@ retrieve a value they can work with.
 ### Spread syntax
 Spread syntax allows an iterable such as an array expression or string to be
 expanded in places where zero or more arguments (for function calls) or elements
- (for array literals) are expected, or an object expression to be expanded in
+(for array literals) are expected, or an object expression to be expanded in
 places where zero or more key-value pairs (for object literals) are expected.
+
 #### Syntax
 * For function calls:
 ```js
@@ -169,51 +170,6 @@ var clonedObj = { ...obj1 };
 
 var mergedObj = { ...obj1, ...obj2 };
 // Object { foo: "baz", x: 42, y: 13 }
-```
-2. Note that `Object.assign()` triggers `setters` whereas spread syntax doesn't.
-```js
-let obj1 = {};
-let obj2 = {};
-
-Object.defineProperties(obj1, {
-    name: {
-        get(){
-            return '33';
-        },
-        enumerable: true,
-    },
-    age: {
-        get(){
-            return 33;
-        },
-        enumerable: true,
-    },
-});
-Object.defineProperties(obj2, {
-    name: {
-        get(){
-            return '33';
-        },
-        enumerable: true,
-    },
-    age: {
-        get(){
-            return 22;
-        },
-        enumerable: true,
-    },
-    sex: {
-        get(){
-            return 'female';
-        },
-        enumerable: true,
-    },
-});
-
-let obj = {...obj1, ...obj2};
-console.log(obj); // {name: "33", age: 22, sex: "female"}
-
-obj = Object.assign(obj1, obj2); // TypeError: Cannot set property name of #<Object> which has only a getter
 ```
 
 

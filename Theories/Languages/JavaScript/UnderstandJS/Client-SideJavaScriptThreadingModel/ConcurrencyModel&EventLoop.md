@@ -20,7 +20,7 @@ JavaScript Runtime
 
 ## The JavaScript Engine
 A popular example of a JavaScript Engine is Google’s V8 engine. The V8 engine is
- used inside Chrome and Node.js for example. Here is a very simplified view of
+used inside Chrome and Node.js for example. Here is a very simplified view of
 what it looks like:  
 
 ![V8 Engine](./images/V8Engine.png)  
@@ -48,11 +48,11 @@ we’re currently executing and what function is to be executed after that. 因�
     console.log(bar(7)); // returns 42
     ```
 3. When calling `bar`, a first frame is created containing `bar`'s arguments and
- local variables.
+local variables.
 4. When `bar` calls `foo`, a second frame is created and pushed on top of the
 first one containing `foo`'s arguments and local variables.
 5. When `foo` returns, the top frame element is popped out of the stack (leaving
- only `bar`'s call frame).
+only `bar`'s call frame).
 6. When `bar` returns, the stack is empty.
 
 ### Memory Heap
@@ -87,36 +87,28 @@ Callback Queue。
 3. 并不是所有的异步操作都会被加入到 Message Queue 中，详见下面的 【Macrotask 和
 Microtask】
 
-### Event Table
+### Event Table（事件表）
 1. This is a data structure which knows that a certain function should be
 triggered after a certain event.
-2. Once that event occurs (timeout, click, mouse move) it sends a notice.
-3. Bear in mind that the Event Table does not execute functions and does not
-add them to the call stack on it’s own. It’s sole purpose is to keep track of
-events and send them to the Event Queue.  
+1. 这个数据结构记录了事件及其对应的回调函数。
+2. 当一个事件发生时，事件表就会把该事件对应的回调函数传递给 event queue。
+3. 事件表不会执行回调（这是调用栈里的工作），也不会把回调推入调用栈（这是事件队列和事件
+循环的工作），它只负责记录事件及其回调，以及在事件发生时把回调传递给事件队列。
 
-看起来是在 Event Table 里记录异步操作和其对应的回调，在其中某个事件发生时，会发出通知给
-Event Queue。
+### Event Queue（事件队列）
+1. 是 queue 结构的数据结构，即新的回调排在队列后面，优先执行队列前面的回调。
+2. 事件队列保证了若干个事件回调按照顺序依次执行。
+3. 事件队列从事件表那里接收到回调函数，但还需要某种机制来把队列里面的回调函数推进调用栈。
+这种机制就是下面要说的事件循环。
 
-### Event Queue
-1. The Event Queue is a data structure similar to the stack — again you add
-items to the back but can only remove them from the front.
-2. It kind of stores the correct order in which the functions should be executed.
-3. It receives the function calls from the Event Table, but it needs to somehow
-send them to the Call Stack? This is where the Event Loop comes in.  
-
-看起来就是会形成上图中的 callback queue。
-
-
-## Event loop
+## Event loop（事件循环）
 1. Event loop is a constantly running process that checks if the call stack is
 empty.
-2. Imagine it like a clock and every time it *ticks* it looks at the call stack
-and if it is empty it looks into the Event Queue. If there is something in the
-event queue that is waiting it is moved to the call stack. If not, then nothing
-happens.  
+1. 事件循环是一个持续运行的进程，它不断的检查调用栈是否被清空。
+2. 一次检查周期被称为一次 *tick*，每次 tick 事件循环机制会检查调用栈是否被清空。
+3. 如果清空了，事件循环机制会看看事件队列里有没有待执行的回调，如果有的话，就把排在最前
+面的回调推进调用栈。如果没有就什么也不做。
 
-看起来就是上图中那个箭头旋转的过程。
 
 ### 一个事件循环流程
 ```js
@@ -150,7 +142,7 @@ console.log('end');
 2. 那么你可能会这样分析上面代码：
     1. JS 调用了浏览器的 `setTimeout` 接口，告诉浏览器立刻（0毫秒）把
      `console.log('timeout')` 加入 Event Table。
-    2. `setTimeout` 执行完后，她就会被 pop 出调用栈，现在看起来没有函数在运行了，所以
+    2. `setTimeout` 执行完后，它就会被 pop 出调用栈，现在看起来没有函数在运行了，所以
     调用栈空了。
     3. 因此 Event Table 会把 `console.log('timeout')` 加入 Event Queue，紧接着
     Event Queue 把该函数推入调用栈，打印出 `'timeout'`。
@@ -174,7 +166,7 @@ console.log('end');
     ```
 6. 就是最后那个匿名函数。现在不明白它的机制，但它总是作为整个执行环境的最外层被调用。在
 [上面那个视频](https://www.youtube.com/watch?v=8aGhZQkoFbQ)里，这个匿名函数被写为了
-`main`。
+`main`。可能是“全局执行环境栈”，参考这篇：`Theories\Languages\JavaScript\UnderstandJS\ExecutionContext&VariableObject&ScopeChain.md`
 7. 因为它是在整个执行环境的最外层，而不是某个函数的最外层，所以即使异步操作是在函数内部，
 回调也不会在函数返回后执行，而是仍然要等到其他代码执行完：
     ```js
@@ -285,10 +277,12 @@ Promise.resolve()
     console.log('promise 2')
 })
 ```
-1. `setInterval` 和 `setTimeout` 都是 Macrotask，先后加入到 Macrotask Queue。
-2. `Promise` 是 Microtask，所以先打印出 `promise 1` 和 `promise 2`。
-3. 然后执行 `setInterval` 的 Macrotask，打印 `setInterval`。
-4. `setInterval` 会再次加入到 Macrotask Queue，但它前面还有之前的 `setTimeout`。
+1. `setInterval`和`setTimeout` 都是 Macrotask，先后加入到 Macrotask Queue。
+2. `Promise`是 Microtask，所以先打印出`promise 1`和`promise 2`。
+3. 然后执行`setInterval`的 Macrotask，打印`setInterval`。
+4. `setInterval`会再次加入到 Macrotask Queue，但它前面还有之前的 `setTimeout`。注意，
+`setInterval`的这次推栈（以及之后的每一次推栈）都是在它回调刚执行完就进行的，而不需要等
+到调用栈清空才能推栈。
 5. 执行 `setTimeout`  的 Macrotask，打印 `setTimeout 1`。此时 Macrotask Queue 中
 只剩下 `setInterval`。
 6. 之后的 `Promise` 由于是 Microtask，所以会先执行其所有的 `then`，打印出

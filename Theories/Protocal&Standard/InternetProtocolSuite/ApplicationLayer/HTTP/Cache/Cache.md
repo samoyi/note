@@ -33,7 +33,7 @@ accept a response that has exceeded its freshness lifetime. If `max-stale` is
 assigned a value, then the client is willing to accept a response that has
 exceeded its freshness lifetime by no more than the specified number of seconds.  
 * If no value is assigned to `max-stale`, then the client is willing to accept a
- stale response of any age.
+stale response of any age.
 * `max-age`是指定多久之前的响应就算过期作废了，`max-stale`是表示作废多久的响应还能接受
 。不懂，这个是配合`Expires`使用的？否则为什么不直接把`max-age`设置的长一些？
 
@@ -42,7 +42,7 @@ exceeded its freshness lifetime by no more than the specified number of seconds.
 stored response to satisfy the request without successful validation on the
 origin server.
 * As a result, if a proper validation token(ETag) is present, `no-cache` incurs
- a roundtrip to validate the cached response, but can eliminate the download if
+a roundtrip to validate the cached response, but can eliminate the download if
 the resource has not changed.
 
 ##### `no-store`
@@ -51,11 +51,11 @@ any part of either this request or any response to it. 不仅是不应缓存对�
 应，该请求本身的信息也不应存储。
 2. This directive applies to both private and shared caches.  "**must not**
 store" in this context means that the cache **must not** intentionally store the
- information in non-volatile storage, and **must** make a best-effort attempt to
- remove the information from volatile storage as promptly as possible after
+information in non-volatile storage, and **must** make a best-effort attempt to
+remove the information from volatile storage as promptly as possible after
 forwarding it.
 3. This directive is **not** a reliable or sufficient mechanism for ensuring
-privacy.  In particular, malicious or compromised caches might not recognize or
+privacy. In particular, malicious or compromised caches might not recognize or
 obey this directive, and communications networks might be vulnerable to
 eavesdropping.
 4. Note that if a request containing this directive is satisfied from a cache,
@@ -74,10 +74,10 @@ on a slow link. The `no-transform` directive disallows this.
 to obtain a stored response.
 2. If it receives this directive, a cache **should** either respond using a
 stored response that is consistent with the other constraints of the request, or
- respond with a `504` (Gateway Timeout) status code.  
+respond with a `504` (Gateway Timeout) status code.  
 3. If a group of caches is being operated as a unified system with good internal
- connectivity, a member cache **may** forward such a request within that group
- of caches.
+connectivity, a member cache **may** forward such a request within that group
+of caches.
 4. 看起来是用于一个系统中的多个成员使用同样的共享缓存，这样的好处似乎不仅仅是不用重复请
 求，更重要的是保证每个成员都可以加载到同一个版本的资源。
 
@@ -96,10 +96,9 @@ operation, such as a silently unexecuted financial transaction.
 
 ##### `no-cache`
 1. The `no-cache` response directive indicates that the response **must not** be
- used to satisfy a subsequent request without successful validation on the
- origin server.  This allows an origin server to prevent a cache from using it
- to satisfy a request without contacting it, even by caches that have been
- configured to send stale responses.
+used to satisfy a subsequent request without successful validation on the origin server. This allows an origin server to prevent a cache from using it to satisfy
+a request without contacting it, even by caches that have been configured to
+send stale responses.
 2. [后续说明](https://tools.ietf.org/html/rfc7234#section-5.2.2.2)没看懂
 
 ##### `no-store`
@@ -111,14 +110,15 @@ operation, such as a silently unexecuted financial transaction.
 ##### `public`
 The `public` response directive indicates that any cache **may** store the
 response, even if the response would normally be non-cacheable or cacheable only
- within a private cache.
+within a private cache.
 
 ##### `private`
 1. The `private` response directive indicates that the response message is
-intended for a single user and MUST NOT be stored by a shared cache.  A private
+intended for a single user and MUST NOT be stored by a shared cache. A private
 cache **may** store the response and reuse it for later requests, even if the
 response would normally be non-cacheable.
-2. [后续说明](https://tools.ietf.org/html/rfc7234#section-5.2.2.6)没看懂
+2. `public`指明可向任一方提供缓存，而`private`指明只可向特定用户提供缓存。
+3. [后续说明](https://tools.ietf.org/html/rfc7234#section-5.2.2.6)没看懂
 
 ##### `proxy-revalidate`
 The `proxy-revalidate` response directive has the same meaning as the
@@ -135,9 +135,10 @@ not `max-age="5"`.  A sender **should not** generate the quoted-string form.
 1. The `s-maxage` response directive indicates that, in shared caches, the
 maximum age specified by this directive overrides the maximum age specified by
 either the `max-age` directive or the `Expires` header field.  
-2. <mark>不懂</mark> The `s-maxage` directive also implies the semantics of the
-   `proxy-revalidate` response directive.
-3. This directive uses the token form of the argument syntax: e.g.,
+2. 不懂。The `s-maxage` directive also implies the semantics of the
+`proxy-revalidate` response directive.
+3. 作用于共享缓存（例如代理），而且对 private 缓存无效。
+4. This directive uses the token form of the argument syntax: e.g.,
 `s-maxage=10` not `s-maxage="10"`.  A sender **should not** generate the
 quoted-string form.
 
@@ -157,10 +158,9 @@ Validating cached responses with ETags
 变，与此前回应给浏览器的将不再是同样的值。
 3. 浏览器准备再一次发起该请求时，会先检查缓存，查看上一次请求的回应。如果发现上次回
 应时设置的缓存过期时间没到，则直接使用缓存的数据。
-4. 如果已经超了缓存的有效期，则必须要联系服务器进行协商验证。浏览器会把上次回应的
-`Etag`值作为`If-None-Match` header 的值发送给服务器，服务器检查和当前的`Etag`是否一
-致，如果一致就表明所请求的数据一致没有变，则会返回`304`告知，浏览器可以继续使用缓存的数
-据。
+4. 如果已经超了缓存的有效期，则必须要联系服务器进行协商验证。浏览器会把上次回应的`Etag`
+值作为`If-None-Match` header 的值发送给服务器，服务器检查和当前的`Etag`是否一致，如果
+一致就表明所请求的数据一致没有变，则会返回`304`告知，浏览器可以继续使用缓存的数据。
 
 ### `Last-modified`
 #### 工作原理

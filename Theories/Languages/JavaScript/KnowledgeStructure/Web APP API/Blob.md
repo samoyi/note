@@ -3,63 +3,54 @@
 
 
 ## Basic
-* A Blob is an opaque reference to, or handle for, a chunk of data. The name
-comes from SQL databases, where it means “Binary Large Object.”
-* In JavaScript, Blobs often represent binary data, and they can be large, but
-neither is required: a Blob could also represent the contents of a small text
-file.
-* Blobs are opaque: all you can do with them directly is determine their size in
- bytes, ask for their MIME type, and chop them up into smaller Blobs
-* The web browser can store Blobs in memory or on disk, and Blobs can represent
-really enormous chunks of data (such as video files) that are too large to fit
-in main memory without first being broken into smaller pieces with `slice()`.
-* Because Blobs can be so large and may require disk access, the APIs that work
-with them are asynchronous (with synchronous versions available for use by
-    worker threads).
-* Blobs are supported by the structured clone algorithm which means that you can
- obtain one from another window or thread via the message event.
-* Blobs can be retrieved from client-side databases
-* Blobs can be downloaded from the web via scripted HTTP, using cutting-edge
-features of the XHR2 specification.
-* You can create your own blobs, using a `BlobBuilder` object to build them out
-of strings, ArrayBuffer objects, and other Blobs.
-* The client-side JavaScript File object is a subtype of Blob: a File is just a
-Blob of data with a name and a modification date. You can obtain File objects
-from `<input type="file">` elements and from the drag-and-drop API. File objects
- can also be obtained using the Filesystem API.  
-
+1. Blob 是对大数据块的不透明引用或者句柄。名字来源于 SQL 数据库，表示“二进制大对象”
+（Binary Large Object）。
+2. 在 JavaScript 中，Blob 通常表示二进制数据，不过它们不一定非得是大量数据：Blob 也可
+以表示一个小型文本文件的内容。
+3. Blob 是不透明的：能对它们进行直接操作的就只有获取它们的大小（以字节为单位）、MIME 类
+型以及将它们分割成更小的 Blob。
+4. Web 浏览器可以将 Blob 存储到内存中或者磁盘上，Blob 可以表示非常大的数据块（比如视频
+文件），如果事先不用`slice()`方法将它们分割成为小数据块的话，无法存储在主内存中。
+5. 正是因为 Blob 可以表示非常大的数据块，并且它可能需要磁盘的访问权限，所以使用它们的
+API 是异步的（在 Worker 线程中有提供相应的同步版本）。
+6. Blob 本身并没有多大意思，但是它们为用于二进制数据的大量 JavaScript API 提供重要的数
+据交换机制。下图展示了如何从 Web、本地文件系统、本地数据库或者其他的窗口和 Worker 中对
+Blob 进行读写，以及如何以文本、类型化数组或者URL的形式读取 Blob 内容。
 ![Blobs-and-the-APIs-that-use-them.png](Blobs-and-the-APIs-that-use-them.png)
 
 
-
-***
 ## Files as Blobs
-1. The `<input type="file">` element was originally intended to enable file
-uploads in HTML forms. Browsers have always been careful to implement this
-element so that it only allows the upload of files explicitly selected by the
-user.
-2. Scripts cannot set the value property of this element to a filename, so they
-cannot go uploading arbitrary files from the user’s computer.
-3. More recently, browser vendors have extended this element to allow
-client-side access to user-selected files.
-4. Note that allowing a client-side script to read the contents of selected
-files is no more or less secure than allowing those files to be uploaded to the
-server.
-5. The `files` property of an `<input type="file">` element will be a FileList
-object.
-6. This is an array-like object whose elements are zero or more user-selected
-File objects.
-7. A File object is a Blob that also has `name` and `lastModifiedDate`
-properties
-8. In addition to selecting files with an `<input>` element, a user can also
-give a script access to local files by dropping them into the browser.
-9. When an application receives a drop event, the `dataTransfer.files` property
-of the event object will be the FileList associated with the drop, if there was
-one.
+1. `<input type="file">`元素最初是用于在 HTML 表单中实现文件上传的。浏览器总是很小心
+地实现该元素，目的是为了只允许上传用户显式选择的文件。
+2. 脚本是无法将该元素的`value`属性设置成一个文件名的，这样它们就无法实现将用户电脑上任
+意的文件进行上传。
+3. 最近，浏览器提供商已经对该元素进行了扩展，允许客户端可以访问用户选择的文件了。要注意
+的是，允许客户端脚本读取选择的文件内容不会引发安全问题，它和允许这些文件上传到服务器的安
+全级别是一样的。
+4. 在支持本地文件访问的浏览器中，`<input type="file">`元素上的`files`属性则是一个
+`FileList`对象。该对象是一个类数组对象，其元素是若干个用户选择的 File 对象。一个 File
+对象就是一个 Blob，除此之外，还多了`name`和`lastModifiedDate`属性
+
+```html
+<script>
+// Log information about a list of selected files
+function fileinfo(files) {
+    for(var i = 0; i < files.length; i++) { // files is an array-like object
+        var f = files[i];
+        console.log(f.name, // Name only: no path
+            f.size, f.type, // size and type are Blob properties
+            f.lastModifiedDate); // another File property
+    }
+}
+</script>
+<!-- Allow selection of multiple image files and pass them to fileinfo()-->
+<input type="file" accept="image/*" multiple onchange="fileinfo(this.files)"/>
+```
+5. 除了通过`<input>`元素来选择文件之外，用户还可以通过将本地文件拖放到浏览器中来给予脚
+本访问它们的权限。当应用接收到一个`drop`事件，事件对象的`dataTransfer.files`属性就会
+和放入的`FileList`进行关联（如果有的话）。
 
 
-
-***
 ## Downloading Blobs
 使用时要测试兼容性
 ```js
@@ -76,15 +67,12 @@ xhr.send(null);
 ```
 
 
-
-***
 ## Building Blobs
-1. Blobs often represent chunks of data from an external source such as a local
-file, a URL, or a database. But sometimes a web application wants to create its
-own Blobs to be uploaded to the Web or stored in a file or database or passed to
- another thread.  
-2. `BlobBuilder` is obsolete, use `Blob` constructor.
-Use DataURL t build a blob and generate the corresponding Blob URL
+1. Blob 通常表示来自诸如本地文件、URL 以及数据库外部资源的大数据块。然而，有的时候，
+Web 应用想要创建的 Blob，并将其上传到 Web 上或者存储到一个文件或者数据库中或者传递给另
+一个线程。
+2. 要从自己的数据来创建Blob，可以使用`Blob`构造函数（`BlobBuilder`已经被废弃）
+Use DataURLt build a blob and generate the corresponding Blob URL
 ```js
 let sDataURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXA'
               +'vmHAAACrElEQVR42u2Xz2sTQRSAX8VSb1K8iNqKooJH2Ux6Ksn+iPQqxZMIehJB'
@@ -122,20 +110,15 @@ function dataURI2Blob(dataURI) {
 ```
 
 
-
-***
 ## Blob URLs
 ### Create a Blob URL
-1. Pass a blob to `URL.createObjectURL()` and it returns a URL (as an ordinary
-string). The URL will begin with `blob://`, and that URL scheme will be followed
- by a short string of text that identifies the Blob with some kind of opaque
- unique identifier.
-2. Note that this is very different than a `data:// URL`, which encodes its own
-contents. A Blob URL is simply a reference to a Blob that is stored by the
-browser in memory or on the disk.
-3. `blob://` URLs are also quite different from `file://` URLs, which refer
-directly to a file in the local filesystem, exposing the path of the file,
-allowing directory browsing, and otherwise raising security issues.
+1. 传递一个 Blob 给`URL.createObjectURL()`方法会返回一个 URL（以普通字符串形式）。该
+URL 以`blob://`开始，紧跟着是一小串文本字符串，该字符串用不透明的唯一标识符来标识 Blob
+2. 要注意的是，这和`data://` URL是不同的，`data://` URL 会对内容进行编码。Blob URL
+只是对浏览器存储在内存中或者磁盘上的 Blob 的一个简单引用。
+3. `blob://` URL 和`file://` URL 也是不同的，`file://` URL 直接指向本地文件系统中的
+一个文件，暴露了文件的路径，允许目录浏览，因此带来安全问题的。
+
 ```html
 <input type="file" />
 <img src="" id="thumbnail" />
@@ -145,34 +128,25 @@ document.querySelector('input').addEventListener('change', function(ev){
     document.querySelector('img').src = URL.createObjectURL(ev.target.files[0]);
 });
 ```
-4. Blob URLs have the same origin as the script that creates them. This makes
-them much more versatile than `file:// URLs`, which have a distinct origin and
-are therefore difficult to use within a web application.
-5. A Blob URL is only valid in documents of the same origin. If, for example,
-you passed a Blob URL via `postMessage()` to a window with a different origin,
-the URL would be meaningless to that window.
-6. Blob URLs are not permanent. A Blob URL is no longer valid once the user has
-closed or navigated away from the document whose script created the URL. It is
-not possible, for example, to save a Blob URL to local storage and then reuse it
- when the user begins a new session with a web application.
+
+4. Blob URL 和创建它们的脚本拥有同样的源。这使得它们比`file://` URL更加灵活，由于
+`file://` URL是非同源的，因此要在 Web 应用中使用它们相对比较麻烦。
+5. Blob URL 只有在同源的文档中才是有效的。比如，如果将一个 BlobURL 通过
+`postMessage()`传递给一个非同源窗口，则该 URL 对于该窗口来说是没有任何意义的。
+6. Blob URL 并不是永久有效的。一旦用户关闭了或者离开了包含创建 Blob URL 脚本的文档，该
+Blob URL就失效了。比如，将 Blob URL 保存到本地存储器中，然后当用户开始一个新的 Web 应
+用会话的时再使用它，这是不可能的。
 
 #### Revoke a Blob url
-1. It is also possible to manually revoke the validity of a Blob URL by calling `URL.revokeObjectURL()`.
-2. In the above example, once thumbnail image has been displayed, the Blob is no
- longer needed and it should be allowed to be garbage collected.
-3. If the web browser is maintaining a mapping from the Blob URL we’ve created
-to the Blob, that Blob cannot be garbage collected even if we’re not using it.
-The JavaScript interpreter cannot track the usage of strings, and if the URL is
-still valid, it has to assume that it might still be used. This means that it
-cannot garbage collect the Blob until the URL has beenrevoked.
-4. This example uses local files that don’t require any cleanup, but you can
-imagine a more serious memory management issue if the Blob in question were one
-that had been built in memory with a BlobBuilder or one that had been downloaded
- with XMLHttpRequest and stored in a temporary file.
+1. 可以通过调用`URL.revokeObjectURL()`方法（或者`webkitURL.revokeObjectURL()`方法）
+，来手动让 Blob URL 失效，
+2. 之所以提供这样的方式，是因为这和内存管理问题有关。一旦展示了图片的缩略图之后，Blob 就
+不再需要了，应当回收它。但是，如果 Web 浏览器正维护创建的 Blob 和 Blob URL 之间的映射
+关系，那么即使该 Blob 已经不用了，也不会被回收。
+3. JavaScript 解释器无法跟踪字符串的使用情况，如果 URL 仍然是有效的，那么它只能认为该
+URL 可能还在用。这就意味着，在手动撤销该 URL 之前，是不会将其回收的。
 
 
-
-***
 ## Reading Blobs
 1. The `FileReader` object allows us read access to the characters or bytes
 contained in a Blob, and you can think of it as the opposite of a `BlobBuilder`.

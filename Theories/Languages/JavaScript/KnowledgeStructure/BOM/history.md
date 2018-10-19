@@ -1,6 +1,6 @@
 # history
 
-**HTML5 History API** 在 Theories\Languages\JavaScript\KnowledgeStructure\Web APP API\HistoryManagement.md
+**HTML5 History API** 在 `Theories\Languages\JavaScript\KnowledgeStructure\Web APP API\HistoryManagement.md`
 
 * Because `history` is a property of `window`, each browser window, tab, and
 frame has its own `history` object relating specifically to that `window` object.
@@ -20,7 +20,7 @@ user’s history.
 the current page, for example `-1` for the previous page or `1` for the next
 page.
 2. If you specify an out-of-bounds value, this method silently has no effect.
-3. Calling `go()` without parameters or a value of `0` reloads the current page. 
+3. Calling `go()` without parameters or a value of `0` reloads the current page.
 
 ### `history.back()` and `history.forward()`
 mimic the browser Back and Forward buttons

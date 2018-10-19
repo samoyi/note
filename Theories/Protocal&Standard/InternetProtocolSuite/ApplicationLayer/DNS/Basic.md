@@ -25,7 +25,7 @@ to IP addresses:
 1. Busy sites, such as `cnn.com`, are replicated over multiple servers, with
 each server running on a different end system and each having a different IP
 address.
-2. Fro replicated Web servers, a set of IP addresses is thus associated with one
+2. For replicated Web servers, a set of IP addresses is thus associated with one
 canonical hostname. The DNS database contains this set of IP addresses.
 3. When clients make a DNS query for a name mapped to a set of addresses, the
 server responds with the entire set of IP addresses, but rotates the ordering of
@@ -63,7 +63,7 @@ DNS servers. There is another important type of DNS server call the local DNS
 server.
 2. A local DNS server dose not strictly belong to the hierarchy of servers but
 is nevertheless central to the DNS architecture.
-3.  Each ISP -- such as a university, an academic department, an employee's
+3. Each ISP -- such as a university, an academic department, an employee's
 company, or a residential ISP -- has a local DNS server (also called a default
 name Server). When a host connects to an ISP, the ISP provides the host with the
 IP addresses of one or more of its local DNS servers. 这是自动获取，也可以手动设定

@@ -79,9 +79,7 @@ contained statement/expression.
 *
 
 
-
-
-## The if Statement
+## The `if` Statement
 * The condition can be any expression; it doesn’t even have to evaluate to an actual Boolean value. ECMAScript automatically converts the result of the expression into a Boolean by calling the Boolean() casting function on it.
 * JavaScript syntax requires a single statement after the if keyword and parenthesized expression, but you can use a statement block to combine multiple statements into one.
 * It’s considered best coding practice to always use block statements, even if only one line of code is to be executed.
@@ -130,7 +128,7 @@ contained statement/expression.
     		}
     ```
 
-## The switch Statement
+## The `switch` Statement
 * An if statement causes a branch in the flow of a program’s execution, and you can use the else if idiom to perform a multiway branch. This is not the best solution, however, when all of the branches depend on the value of the same expression. In this case, it is wasteful to **repeatedly evaluate that expression in multiple if statements**.
 * It’s best to always put a break statement after each case to avoid having cases fall through into the next one. If you need a case statement to fall through, include a comment indicating that the omission of the break statement is intentional
 * Although the switch statement was borrowed from other languages, it has some unique characteristics

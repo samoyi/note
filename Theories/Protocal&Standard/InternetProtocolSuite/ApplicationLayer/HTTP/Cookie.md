@@ -1,38 +1,32 @@
 # Cookie
 
-## Purpose
-* **Session management** --
-Logins, shopping carts, game scores, or anything else the server should remember
-* **Personalization** --
-User preferences, themes, and other settings
-* **Tracking** --
-Recording and analyzing user behavior
+## Cookie 主要用于以下三个方面：
+* **Session management**(会话状态管理) --
+    如用户登录状态、购物车、游戏分数或其它需要记录的信息
+* **Personalization**(个性化设置) --
+    如用户自定义设置、主题等
+* **Tracking**(浏览器行为跟踪) --
+    如跟踪分析用户行为等
 
-Cookies were once used for general client-side storage. While this was
-legitimate when they were the only way to store data on the client, it is
-recommended nowadays to prefer modern storage APIs. Cookies are sent with every
-request, so they can worsen performance (especially for mobile data connections).
+Cookie 曾一度用于客户端数据的存储，因当时并没有其它合适的存储办法而作为唯一的存储手段，
+但现在随着现代浏览器开始支持各种各样的存储方式，Cookie 渐渐被淘汰。由于服务器指定
+Cookie后，浏览器的每次请求都会携带 Cookie 数据，会带来额外的性能开销（尤其是在移动环境
+下）。
 
 
 ## Creating cookies
-1. When receiving an HTTP request, a server can send a `Set-Cookie` header with
-the response.
+1. 服务器收到 HTTP 请求时，可以在响应里面添加一个`Set-Cookie` header 用来设置 cookie
     ```js
     // Node
     res.setHeader('Set-Cookie', 'CookieName=CookieValue');
+    res.setHeader('Set-Cookie', ['CookieName=CookieValue', 'hehe=hoho']); // 设置多个 cookie
 
     // Browser
     document.cookie = 'CookieName=CookieValue';
     ```
-2. The cookie is usually stored by the browser, and then the cookie is sent with
- requests made to the same server inside a Cookie HTTP header.
-3. An expiration date or duration can be specified, after which the cookie is no
- longer sent.
-4. Additionally, restrictions to a specific domain and path can be set, limiting
- where the cookie is sent.
-5. Now, with every new request to the server, the browser will send back all
-previously stored cookies to the server using the `Cookie` header.
-6. 不管是在服务器还是在浏览器中设置，空格都会被自动忽略
+2. 浏览器收到响应后通常会保存下 Cookie，之后对该服务器每一次请求中都通过`Cookie`请求
+header 将 Cookie 信息发送给服务器。
+3. 不管是在服务器还是在浏览器中设置，空格都会被自动忽略
     ```js
     res.setHeader('Set-Cookie', 'CookieName=CookieValue;max-age=1800');
     res.setHeader('Set-Cookie', ' CookieName=CookieValue ;max-age=3600');
@@ -49,9 +43,9 @@ previously stored cookies to the server using the `Cookie` header.
 deleted when the client shuts down.
 2. Note that this is a subtly different lifetime than `sessionStorage`: cookies
 are not scoped to a single window, and their default lifetime is the same as the
- entire browser process, not the lifetime of any one window.
+entire browser process, not the lifetime of any one window.
 3. However, web browsers may use **session restoring**, which makes most session
- cookies permanent, as if the browser was never closed.
+cookies permanent, as if the browser was never closed.
 
 ### Permanent cookies
 1. Instead of expiring when the client closes, permanent cookies expire at a
@@ -101,23 +95,27 @@ The `Domain` and `Path` directives define the scope of the cookie: what URLs the
 cookies should be sent to.
 
 #### `Domain`
-`Domain` specifies allowed hosts to receive the cookie. If unspecified, it
-defaults to the host of the current document location, **excluding subdomains**.
-If `Domain` is specified, then subdomains are always included.
+1. `Domain` specifies allowed hosts to receive the cookie.
+2. If unspecified, it defaults to the host of the current document location,
+**excluding subdomains**.
+3. If `Domain` is specified, then subdomains are always included. For example,
+if `Domain=mozilla.org` is set, then cookies are included on subdomains like
+`developer.mozilla.org`.
 
 #### `Path`
 1. `Path` indicates a URL path that must exist in the requested URL in order to
-send the `Cookie` header. The %x2F ("/") character is considered a directory
-separator, and subdirectories will match as well.  
-For example, if `Path=/docs` is set, these paths will match:
+send the `Cookie` header.
+2. The %x2F (`/`) character is considered a directory separator, and
+subdirectories will match as well. For example, if `Path=/docs` is set, these
+paths will match:
     * `/docs`
     * `/docs/Web/`
     * `/docs/Web/HTTP`
-2. 在请求的路径不符合`Path`的设定时，仍然可以正常的保存响应的 cookie。之后请求路径修改
+3. 在请求的路径不符合`Path`的设定时，仍然可以正常的保存响应的 cookie。之后请求路径修改
 为符合的情况时，可以正常发送之前收到的 cookie。
-3. 另外，在网页不符合`Path`指定的路径时，前端使用`document.cookie`也无法读取使用该
-`Path`指定的 cookie。也就是说，不管是浏览器自动发送，还是前端主动获取，只要路径不对，都
-没有权限使用该 cookie。
+4. 另外，在网页不符合`Path`指定的路径时，前端使用`document.cookie`也无法读取使用该
+`Path`指定的 cookie。也就是说，不管是浏览器自动发送，还是前端主动获取，只要路径不对，虽
+然仍会保存，但都没有权限使用该 cookie。
 
 ### SameSite (experimental by 2018.6)
 `SameSite` cookies let servers require that a cookie shouldn't be sent with
@@ -126,7 +124,7 @@ attacks (CSRF). `SameSite` cookies are still experimental and not yet supported
 by all browsers.
 
 ### `document.cookie`
-* 可以设置 cookies 和读取 非`HttpOnly`cookies。XSS 盗取 cookies 就是使用这个方法。
+* 可以设置 cookies 和读取非`HttpOnly`cookies。XSS 盗取 cookies 就是使用这个方法。
     ```js
     document.cookie = 'CookieName1=CookieValue1';
     document.cookie = 'CookieName2 = CookieValue2 ;max-age=3600';
@@ -138,7 +136,6 @@ by all browsers.
     });
     console.log(oCookies); // {CookieName1: "CookieValue1", CookieName2: "CookieValue2"}
     ```
-
 * 和`res.setHeader`多次使用会覆盖的情况不同，第二次的`document.cookie`并不会覆盖第一
 次的。因为不会覆盖，所以也无法通过赋值`undefined`进行删除。但是可以修改已经存在的值：
     ```js
@@ -165,9 +162,9 @@ Engineering or exploiting an XSS vulnerability in the application.
 preventing access to cookie value through JavaScript.
 
 ### Cross-site request forgery (CSRF)
-《白帽子讲Web安全》中写到的防御 CSRF 的三个手段：
+上面说到的`SameSite`属性以及《白帽子讲Web安全》中写到的防御 CSRF 的三个手段：
 * 验证码：保证只有用户明确交互才会发送请求
-* Referer Check：通过检查请求的 `Referer` 首部来确定请求页面“来路正当”
+* Referer Check：通过检查请求的`Referer`首部来确定请求页面“来路正当”
 * Anti CSRF Token：大意就是设置 cookie 时生成一个随机 token，同时保存在用户表单隐藏域
     和 cookie 里。用户提交表单时，服务器会检查这两个 token 是否一致。如果有人 CSRF ，
     除非他看到了用户的前端代码，否则不会知道这个 token，因而即使发送了请求，服务器也可

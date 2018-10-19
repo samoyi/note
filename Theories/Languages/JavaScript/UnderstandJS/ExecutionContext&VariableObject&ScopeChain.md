@@ -48,7 +48,8 @@ JavaScript engine creates the execution context in the following two stages:
 ### Creation phase
 Creation phase is the phase in which JS engine has called a function but it’s
 execution has not started. In the creation phase, JS engine is in the
-compilation phase and it scans over the function to compile the code.
+compilation phase and it scans over the function to compile the code.  
+创建变量对象——创建作用域链——确定`this`
 
 #### 1. Creates the Activation object or the variable object
 Activation object is a special object in JS which contain all the variables,
@@ -136,7 +137,7 @@ a = 1; // Line 1
 
 var b = 2; // Line 3
 
-cFunc = function(e) { // Line 5
+function cFunc(e) { // Line 5
 	var c = 10;
 	var d = 15;
 
@@ -153,20 +154,16 @@ cFunc(10); // Line 18
 ```
 
 ### 1. JS engine will enter the compilation phase to create the execution objects
-1. **Line 1**: In the line variable `a` is assigned a value of `1`, so JS
-engines does not think of it as a variable declaration or function declaration
-and it moves to line 3. It does not do anything with this line in compilation
-phase as it is not any declaration.
-2. **Line 3**: As the code is in global scope and it’s a variable declaration,
-JS engines will create a property with the name of this variable in the global
-execution context object and will initialize it with `undefined` value.
-3. **Line 5**: JS engine finds a function declaration, so it will store the
-function definition in a heap memory and create a property which will point to
-location where function definition is stored. JS engines doesn’t know what is
-inside of `cFunc`.
-4. **Line 18**
-(原文是13): This code is not any declaration hence, JS engine will not do
-anything.
+1. **Line 1**: 编译器看到直接给变量`a`赋值的代码，所以这不是变量声明也不是函数声明，因
+此不归编译阶段负责，因为具体赋值是运行时的操作。编译器不会对这一行做什么，而是继续往下移
+动寻找其他代码。
+2. **Line 3**: 编译器发现这一行是全局环境的变量声明，因此会在全局变量对象上创建一个属性
+`b`，并且初始化为`undefined`。
+3. **Line 5**: 编译器发现一个函数声明，因为编译阶段既会处理函数声明又会处理该函数的初始
+化，所以编译器会在堆内存中保存这个函数，然后在全局变量对象上创建属性`cFunc`，该属性是一
+个指针，指向堆内存中的函数值。但因为现在不会执行该函数，所以编译器不会知道该函数内部的情
+况。
+4. **Line 18**(原文是13): 没有变量和函数的声明，因此编译器什么都不会做。
 
 ### 2. Global Execution Context object after the creation phase stage:
 ```
@@ -184,13 +181,10 @@ globalExecutionContextObj = {
 ```
 
 ### 3. JS engine will now enter the execution phase and will scan the function again
-1. **Line 1**: JS engines find that there is no property with name `a` in the
-variable object, hence it adds this property in the global execution context and
-initializes it’s value to `1`.
-2. **Line 3**: JS engines checks that there is a property with name `b` in the
-variable object and hence update it’s value with `2`.
-3. **Line 5**: As it is a function declaration, it doesn’t do anything and moves
-to line 18.
+1. **Line 1**: 引擎发现全局变量对象上没有定义`a`，因此现在需要定义一个`a`，并初始化赋
+值`1`。
+2. **Line 3**: 引擎发现全局变量对象上定义了`b`，现在把它的值从`undefined`更新为`2`。
+3. **Line 5**: 这是函数声明，编译器已经处理过了。
 
 ### 4. Global execution context object after the execution phase:
 ```
@@ -211,6 +205,13 @@ globalExecutionContextObj = {
 ### 5. Create other execution contexts on top of the stack
 For `cfunc`, then for `dFunc`
 
+
+## 总结一下
+1. 执行环境是一个函数执行时需要的完整的环境。它包括：
+	* 当前函数中有哪些可访问的变量：变量对象
+	* 当前函数外部有哪些可访问的变量：作用域链。每个链节点是一个变量对象。
+	* 当前函数的`this`值
+2. 可以看出来，只要在编译阶段确定了这三个部分，那么就可以确定函数的具体执行了。
 
 
 ## References

@@ -1,20 +1,23 @@
 # ClickJacking
 
 ## 原理
-页面上有一个可见的点击区域，但是在该区域上面覆盖了另一个不可见的点击区域，用户被诱导点击
-不可见的点击区域，实现了攻击者的目的。
+1. 页面上有一个可见的点击区域，但是在该区域上面覆盖了另一个不可见的点击区域，用户被诱导
+点击不可见的点击区域，实现了攻击者的目的。
+2. 可见的页面是攻击者自己开发的一个诱导用户点击的页面，上面比如有个诱导性的播放按钮；而
+不可见的区域一般是以 frame 的形式加载的一个合法网站的网页，但有个位置相同的按钮点击后会
+触发某个用户不期望的操作，比如注销按钮。
 
 
 ## 防御
 ### frame busting
+使用 JS 判断当前网页是否被作为 frame 加载。具体方法见《白帽子讲Web安全》
 
 ### `X-Frame-Options` header
 * [白帽子讲Web安全](https://book.douban.com/subject/10546925/)上说的应该不对，上面
 说这个 header 是禁止当前页面加载其他 frame，但实际上应该是禁止当前页面被其他页面加载为
 frame。
 * 首部字段`X-Frame-Options`有以下三个可指定的字段值。
-    * `DENY`：The page cannot be displayed in a frame, regardless of the site
-    attempting to do so.
+    * `DENY`：该页面不能作为 frame 显示。
     * `SAMEORIGIN`：仅同源域名下的页面（Top-level-browsing-context）匹配时许可。
     （比如，当指定 http://hackr.jp/sample.html 页面为`SAMEORIGIN`时，那么
     `hackr.jp`上所有页面的`frame`都被允许可加载该页面，而`example.com`等其他域

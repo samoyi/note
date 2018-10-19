@@ -57,7 +57,7 @@ arr["2"] = 666;
 串数字的形式作为属性名。所以其实`arr['2']`才是正规的写法，而常用的`arr[2]`只是针对
 数组提供的一种方便写法。数组作为对象，它的键名本来就是字符串而不是数字。
 * 还可以使用扩展运算符来构建字面量数组
-    1. 任何Iterator接口的对象，都可以用扩展运算符转为真正的数组。
+    1. 任何 Iterator 接口的对象，都可以用扩展运算符转为真正的数组。
     ```js
     function foo(){
         let args = [...arguments];
@@ -84,12 +84,11 @@ using array literal notation
 
 ### The third way to create an array is by using ES6 `Array.of()`
 针对构造函数创建数组时的不一致性，即`Array(5)`表示五项数组，而`Array(5, 6)`表示两项
-数组。ES6中使用该方法进行了统一，其参数永远是数组项。
+数组。ES6 中使用该方法进行了统一，其参数永远是数组项。
 
 
 
 ## 数组是特殊的对象
-
 * All indexes are property names, but only property names that are integers between 0 and 2^32 –1 are indexes. All arrays are objects, and you can create properties of any name on them. If you use properties that are array indexes, however, arrays have the special behavior of updating their  length property as needed.
 * Note that you can index an array using numbers that are negative or that are not inte-gers. When you do this, the number is converted to a string, and that string is used as the property name.
 * The fact that array indexes are simply a special type of object property name means that JavaScript arrays have no notion of an “out of bounds” error. When you try to query a nonexistent property of any object, you don’t get an error, you simply get undefined . This is just as true for arrays as it is for objects.
@@ -315,12 +314,12 @@ were removed from the array (or an empty array if no items were removed).
 ##### ES6 copyWithin()
 [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/copyWithin)
 1. 在当前数组内部，将指定位置的成员复制到其他位置（会覆盖原有成员），然后返回修改后的数组
-    ```
+    ```js
     let log = Array.prototype.copyWithin.call({length: 5, 3: 1}, 0, 3);
     console.log( log );// Object {0: 1, 3: 1, length: 5}
     ```
 这一例子中，把一个对象作为数组来操作，相当于数组[undefined, undefined, undefined, 1, undefined]。从第0位开始覆盖，覆盖物从第3位开始，直到结尾，即 1, undefined。覆盖之后的数组是[1, undefined, undefined, 1, undefined]。因为这个不是Array.prototype.slice，所以并不会真的转化为数组，其依然是对象，即{0: 3, 3: 1, length: 5}
-2. Array.prototype.copyWithin(target, start = 0, end = this.length)
+2.` Array.prototype.copyWithin(target, start = 0, end = this.length)`
     第一个参数是从第几位开始覆盖，第二个参数是选取第几位作为覆盖物的起始，第三个参数是选取第几位之前的那一位作为覆盖物的结尾
 3. 会修改原数组
 4. ==不懂[兼容ES5的写法](http://es6.ruanyifeng.com/?search=Int32Array&x=6&y=8#docs/array)==
@@ -329,7 +328,7 @@ were removed from the array (or an empty array if no items were removed).
 fills all the elements of an array from a start index to an end index with a **static** value.
 1. 第一个参数是用来填充的值，第二个参数是填充起始位置，第三个参数是填充结束位置之后的位置。后两个参数都是可选的。第二个参数大于数组length也不会延长数组。
 2. The fill method is a mutable method, it will change this object itself, and return it, not just return a copy of it.
-3. The fill function is intentionally generic, it does not require that its this value be an Array object. 实则可以用在```arguments```上，但用在```HTMLCollection```无效，仍然返回该HTMLCollection对象。
+3. The fill function is intentionally generic, it does not require that its this value be an Array object. 实则可以用在`arguments`上，但用在`HTMLCollection`无效，仍然返回该HTMLCollection对象。
 
 
 
@@ -351,7 +350,7 @@ fills all the elements of an array from a start index to an end index with a **s
 
 
 三. ES7 includes方法返回一个布尔值，表示某个数组是否包含给定的值
-可以查找NaN
+可以查找`NaN`
 
 
 

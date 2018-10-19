@@ -6,7 +6,6 @@
 * 忘了深拷贝为什么要检测到第三层
 
 
-***
 ## 根据以下几个标准来对各种拷贝方法进行分类。
 是对被拷贝对象的属性进行判断，而不是对被拷贝对象本身。
 * 深/浅：深拷贝和浅拷贝。  
@@ -17,7 +16,6 @@
 * 不可拷贝类型：不能拷贝被拷贝对象中某些类型的属性
 
 
-***
 ## 测试代码
 ```js
 // 保证自己的拷贝函数接受待拷贝对象作为参数，并返回拷贝后的对象。例如：
@@ -243,7 +241,6 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
 ```
 
 
-***
 ## 拷贝方法
 ### 方法一：`Object(source)`
 `PlainObject`浅拷贝 + `Array`浅拷贝 + 可拷贝原型属性 + 可拷贝不可枚举  
@@ -387,20 +384,16 @@ function clone(src)
 6. 如果是Array或PlainObject类型，就不能直接拷贝，而是需要深入其内部再遍历数组项或对象属性。如果是Symbol属性，则需要通过`Object.getOwnPropertySymbols()`方法进行遍历。
 
 
-
-***
 ## 浏览器尚未实现的拷贝功能
 ### `localStorage`和`sessionStorage`对引用类型的拷贝
 虽然目前还没有浏览器支持这两个对象操作引用类型，不过根据《权威指南》上面说的：
 > Objects and array values are normally mutable, so a Storage object is required to make a copy when you store a value, so that any subsequent changes to the original value have no effect on the stored value. The Storage object is also required to make a copy when you retrieve a value so that any changes you make to the retrieved value have no effect on the stored value.
 
 
-***
 ## References
 * [也来谈一谈js的浅复制和深复制](http://www.imooc.com/article/11253)
 * [Clone Anything with JavaScript](https://davidwalsh.name/javascript-clone)
 
 
-***
 ## 附：
 * [The structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm)

@@ -87,7 +87,7 @@ Content`的响应。无法处理该范围请求时，则会返回状态码 200 O
 * The `Referer` request header contains the address of the previous web page
 from which a link to the currently requested page was followed.
 * The `Referer` header allows servers to identify where people are visiting them
- from and may use that data for analytics, logging, or optimized caching, for
+from and may use that data for analytics, logging, or optimized caching, for
 example.
 * The `Referer` header has the potential to reveal information about the
 browsing history of the user, which is a privacy concern.

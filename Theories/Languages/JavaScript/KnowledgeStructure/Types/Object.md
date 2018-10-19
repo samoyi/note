@@ -20,7 +20,8 @@
     obj.find() // "hello"
     ```
 * JavaScript 引擎内部，`super.foo`等同于`Object.getPrototypeOf(this).foo`（属性
-或`Object.getPrototypeOf(this).foo.call(this)`（方法）
+或`Object.getPrototypeOf(this).foo.call(this)`（方法，虽然使用的原型方法，但`this`
+还是指向实例）
     ```js
     const proto = {
         x: 'hello',
@@ -403,20 +404,20 @@ For copying property definitions, including their enumerability, into prototypes
 
     obj = Object.assign(obj1, obj2); // TypeError: Cannot set property name of #<Object> which has only a getter
     ```
-4. 如果 `target` 不是对象，则会先试图将其转成对象。由于 `undefined` 和 `null` 无法转成对象
-    ，所以如果它们作为 `target`，就会报错：
+4. 如果`target`不是对象，则会先试图将其转成对象。由于`undefined`和`null`无法转成对象
+，所以如果它们作为`target`，就会报错：
     ```js
     let source = { a: 1 };
     console.log( Object.assign(999, source) ); // "Number {a: 1, [[PrimitiveValue]]: 999}"
     console.log( Object.assign(999, source) instanceof Number ); // true
     console.log( Object.assign(null, source) ); // TypeError: Cannot convert undefined or null to object
     ```
-5. 当只有一个参数时，即只有 `target`：如果该参数是对象，`Object.assign` 会直接返回该参数；
+5. 当只有一个参数时，即只有`target`：如果该参数是对象，`Object.assign`会直接返回该参数；
 如果不是对象，则会试图将其转换为对象再返回。
-6. 如果 `source` 不是对象，则会试图将其转成对象。由于 `undefined` 和 `null` 无法转成对象，
-所以如果它们作为 `source`，与作为 `target` 的情况不同，它们会被跳过。
-7. 虽然基本类型的值作为 `source` 会被转换为对象，但只有字符串的包装对象才可能有自身可枚举属
-性，其他基本类型虽然会被转换为对象，但也没有效果：
+6. 如果`source`不是对象，则会试图将其转成对象。由于`undefined`和`null`无法转成对象，所
+以如果它们作为`source`，与作为`target`的情况不同，它们会被跳过。
+7. 虽然基本类型的值作为`source`会被转换为对象，但只有字符串的包装对象才可能有自身可枚举
+属性，其他基本类型虽然会被转换为对象，但也没有效果：
     ```js
     let v1 = "abc";
     let v2 = true;
@@ -426,35 +427,6 @@ For copying property definitions, including their enumerability, into prototypes
     let obj = Object.assign({}, v1, null, v2, undefined, v3, v4);
     console.log(obj); // { "0": "a", "1": "b", "2": "c" }
     ```
-
-### 四 . ES6可以使用变量和表达式来命名属性和方法
-    let propKey = 'foo';
-    function bar() {
-        return '22';
-    }
-
-    let obj = {
-        [propKey]: true,
-        ['a' + 'bc']: 123,
-        ['h'+'ello']() { return 'hi';},
-        [bar()]: 33
-    };
-
-    console.log(obj.foo); // true
-    console.log(obj.abc); // 123
-    console.log(obj.hello()); // hi
-    console.log(obj['22']); // 33
-
-该方法不能和直接使用变量来创建对象的方法混合使用
-// 报错
-var foo = 'bar';
-var bar = 'abc';
-var baz = { [foo] };
-
-// 正确
-var foo = 'bar';
-var baz = { [foo]: 'abc'};
-
 
 
 ## 遍历对象
@@ -642,14 +614,10 @@ console.log(Reflect.ownKeys(obj)); // ["foo", "bar", Symbol(symbol)]
 ```
 
 
-## ES7 对象的扩展运算符
-==不懂 没看==
-
-
-
 ## Testing Properties
-* 方法一：```in``` operator, it returns true if the object has an own property or an inherited property .
-```
+### `in` operator
+It returns `true` if the object has an own property or an inherited property .
+```js
 let proto = {name: 33},
 	obj = Object.create( proto );
 obj.age = 22;
@@ -657,9 +625,11 @@ obj.age = 22;
 console.log("name" in obj);  // true
 console.log("age" in obj);  // true
 ```
-* 方法二：```hasOwnProperty()```
-It tests whether an object has an own property with the given name. It returns false for inherited properties
-```
+
+### `hasOwnProperty()`
+It tests whether an object has an own property with the given name. It returns
+`false` for inherited properties
+```js
 let proto = {name: 33},
 	obj = Object.create( proto );
 obj.age = 22;
@@ -667,12 +637,16 @@ obj.age = 22;
 console.log(obj.hasOwnProperty("name"));  // false
 console.log(obj.hasOwnProperty("age"));  // true
 ```
-* 方法三：```propertyIsEnumerable()```
-It returns true only if the named property is an own property and its enumerable attribute is true.
-```
+
+### `propertyIsEnumerable()`
+It returns `true` only if the named property is an own property and its
+`enumerable` attribute is `true`.
+```js
 let proto = {name: 33},
 	obj = Object.create( proto );
+
 obj.age = 22;
+
 Object.defineProperty(obj, "sex", {
 	configurable: false,
 	value: "female"

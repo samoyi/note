@@ -55,8 +55,8 @@ Date: Tue, 03 Jul 2012 04:40:59 GMT
 
 
 ## Transfer-Encoding
-* Specifies the the form of encoding used to safely transfer the entity to the
-user.
+* 规定了传输报文主体时采用的编码方式。
+* Specifies the form of encoding used to safely transfer the entity to the user.
 * `Transfer-Encoding` is a hop-by-hop header, that is applied to a message
 between two nodes, not to a resource itself. Each segment of a multi-node
 connection can use different `Transfer-Encoding` values.
@@ -93,12 +93,11 @@ field whenever `Upgrade` is present in an HTTP/1.1 message.
 
 
 ## Via
-* The `Via` general-header field MUST be used by gateways and proxies to
-indicate the intermediate protocols and recipients between the user agent and
-the server on requests, and between the origin server and the client on
-responses.
-* 首部字段`Via`不仅用于追踪报文的转发，还可避免请求回环的发生。所以必须在经过代理时附加
-该首部字段内容。
+1. 使用首部字段`Via`是为了追踪客户端与服务器之间的请求和响应报文的传输路径。
+2. 报文经过代理或网关时，会先在首部字段`Via`中附加该服务器的信息，然后再进行转发。这个
+做法和 traceroute 及电子邮件的 Received 首部的工作机制很类似。
+3. 首部字段`Via`不仅用于追踪报文的转发，还可避免请求回环的发生。所以必须在经过代理时附
+加该首部字段内容。
 
 ![Via1](./images/GeneralHeaders/Via1.png)
 

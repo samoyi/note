@@ -140,6 +140,13 @@ the value that was passed into `bind()`.
     ```
 3. Function objects created using `Function.prototype.bind` are exotic objects.
 They also do not have a `prototype` property.
+    ```js
+    function foo(){}
+    console.log(foo.prototype); // {constructor: ƒ}
+
+    let bar = foo.bind({});
+    console.log(bar.prototype); // undefined
+    ```
 4. If the function returned by `bind()` is used as a constructor:
     * the `this` passed to `bind()` is ignored, and the original function is
     invoked as a constructor, with some arguments already bound.
@@ -192,7 +199,7 @@ They also do not have a `prototype` property.
     console.log( g(3) ); // => 6: this.x is bound to 1, y is bound to 2 and z is 3
     ```
     ```js
-    // example3  实现在不能传参得到情况下进行预传参
+    // example3  实现在不能传参的情况下进行预传参
     let name = 33,
         oBtn = document.querySelector("#btn");
 

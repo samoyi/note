@@ -1,7 +1,7 @@
 # Response headers
 Response messages have their own set of headers that provide information to the
 client (e.g., what type of server the client is talking to). For example, the
-following Server header tells the client that it is talking to a Version 1.0
+following `Server` header tells the client that it is talking to a Version 1.0
 Tiki-Hut server:
 ```
 Server: Tiki-Hut/1.0
@@ -50,15 +50,15 @@ Location: http://www.usagidesign.jp/sample.html
 ```
 Retry-After: 120
 ```
-1. 告知客户端应该在多久之后再次发送请求。主要配合状态码`503 Service Unavailabl`响应，
- 或`3xx Redirect`响应一起使用。
+1. 告知客户端应该在多久之后再次发送请求。主要配合状态码`503 Service Unavailable`响应，
+或`3xx Redirect`响应一起使用。
 2. 字段值可以指定为具体的日期时间（Wed, 04 Jul 2012 06：34：24 GMT 等格式），也可以是
 创建响应后的秒数。至少对于浏览器来说，并不会在指定的时间到达后重新访问。
 
 ```js
 require('http').createServer((req, res)=>{
     if (req.url !== '/favicon.ico'){
-        res.writeHead(503, 'Service Unavailabl', {
+        res.writeHead(503, 'Service Unavailable', {
             'Retry-After': 3600,
             'Content-Type': 'text/plain; charset=utf-8',
         });

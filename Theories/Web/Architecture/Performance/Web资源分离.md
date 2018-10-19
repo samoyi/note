@@ -41,8 +41,8 @@ jS 脚本和 CSS 文件等。
 ### 浏览器并发数限制
 1. Even though parallel connections may be faster, however, they are not always
 faster. When the client’s network bandwidth is scarce, most of the time might be
- spent just transferring data. In this situation, a single HTTP transaction to a
- fast server could easily consume all of the available modem bandwidth. If
+spent just transferring data. In this situation, a single HTTP transaction to a
+fast server could easily consume all of the available modem bandwidth. If
 multiple objects are loaded in parallel, each object will just compete for this
 limited bandwidth, so each object will load proportionally slower, yielding
 little or no performance advantage.

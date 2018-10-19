@@ -2,8 +2,8 @@
 
 **收录原则：**  
 如果实现同一目的的两种方法，一种方法和另一种相比没有任何优点而只有缺点，则不收录。例如，
-使用 `Set` 数据结构可以很好地实现数组去重，替代了之前需要自己编写去重函数，则这里不收录
-自编写的去重函数。对自编写去重函数的研究会放在算法研究部分。
+使用`Set`数据结构可以很好地实现数组去重，替代了之前需要自己编写去重函数，则这里不收录自
+编写的去重函数。对自编写去重函数的研究会放在算法研究部分。
 
 
 ##  创建数组
@@ -31,7 +31,7 @@ assert.deepEqual(arr1, arr2); // AssertionError
 
 ## 查询数组
 ### 查找数组项
-#### indexOf()和lastIndexOf()
+#### `indexOf()`和`lastIndexOf()`
 相等性算法：Strict Equality Comparison
 ```js
 const arr = [-0, NaN, 0];
@@ -54,8 +54,10 @@ console.log(arr.includes(NaN)); // true
 ### 改变顺序
 #### 翻转顺序
 `reverse()`  改变原数组
+
 #### 排序
 * `sort()`     改变原数组
+
 #### 乱序
 参考 `Theories\Algorithm\Misc\Fisher-Yates shuffle.md`
 
@@ -78,7 +80,7 @@ console.log(arr.includes(NaN)); // true
     ```
 
 ### 删除数组项
-* 修改length   改变原数组
+* 修改`length`   改变原数组
 * `pop()`      改变原数组
 * `shift()`    改变原数组
 * `splice()`   改变原数组
@@ -141,23 +143,23 @@ console.log(new Set(arr2)); // {0, NaN}
 
 ### 找出重复项
 * 方法一：先把所有重复的项组成新数组，然后去重
-```js
-function duplicateItems(arr){
-  let aDuplicate = arr.filter(function(value, index, array){
-      return array.indexOf(value) !== array.lastIndexOf(value);
-  });
-  return [...new Set(aDuplicate)];
-}
-```
+    ```js
+    function duplicateItems(arr){
+      let aDuplicate = arr.filter(function(value, index, array){
+          return array.indexOf(value) !== array.lastIndexOf(value);
+      });
+      return [...new Set(aDuplicate)];
+    }
+    ```
 * 方法二：直接找到若干个重复项中的第一项（或最后一项）
-```js
-function duplicateItems(arr){
-  return arr.filter(function(value, index, array){
-      // && 前保证是第一项， && 后保证后面还有重复的
-      return array.indexOf(value)===index && array.lastIndexOf(value)!==index;
-  });
-}
-```
+    ```js
+    function duplicateItems(arr){
+      return arr.filter(function(value, index, array){
+          // && 前保证是第一项， && 后保证后面还有重复的
+          return array.indexOf(value)===index && array.lastIndexOf(value)!==index;
+      });
+    }
+    ```
 
 ### 找出所有重复的 index
 ```js
@@ -167,7 +169,7 @@ function findDuplicateIndexes(arr){
         let firstIndex = arr.indexOf(item),
             lastIndex = arr.lastIndexOf(item);
         if (index===firstIndex && firstIndex!==lastIndex){ // 重复项第一次出现
-            oSameIndexes[item] = [firstIndex]; // 记录第一次出现的重复项的index
+            oSameIndexes[item] = [firstIndex]; // 记录该重复值第一次出现的 index
             // 向后遍历找到所有重复项
             let nNextIndex = firstIndex + 1;
             while (nNextIndex!==lastIndex){
@@ -176,7 +178,7 @@ function findDuplicateIndexes(arr){
                 }
                 nNextIndex++;
             }
-            oSameIndexes[item].push(lastIndex);
+            oSameIndexes[item].push(lastIndex); // 记录重复值的最后一项 index
         }
     });
     return oSameIndexes;
@@ -184,8 +186,8 @@ function findDuplicateIndexes(arr){
 ```
 
 
-## 空数组项和 `undefined` 项
-### 空数组项和 `undefined` 项的区别
+## 空数组项和`undefined`项
+### 空数组项和`undefined`项的区别
 ```js
 console.log(arr1); // ["a", empty, "c"]
 console.log(arr2); // ["a", undefined, "c"]
@@ -346,6 +348,7 @@ console.log('1' in arr2); // true
 * `splice()``
 * `copyWithin()`
 * `fill()`
+
 #### 不会改变的
 * 遍历方法
 * `join()`

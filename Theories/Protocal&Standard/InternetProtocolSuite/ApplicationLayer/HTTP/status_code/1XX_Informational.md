@@ -3,7 +3,7 @@
 
 ## `100 Continue`
 This interim response indicates that everything so far is OK and that the client
- should continue with the request or ignore it if it is already finished.
+should continue with the request or ignore it if it is already finished.
 
 
 ## `101 Switching Protocol`

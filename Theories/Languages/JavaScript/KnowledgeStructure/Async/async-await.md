@@ -8,7 +8,7 @@
 ### `await`
 1. 当`async`函数中出现一个`await`，表明它后面将会是一个异步操作。
 2. 正常情况下，`await`命令后面是一个 Promise 对象。如果不是，会被转成一个立即 resolve
-的Promise 对象。
+的 Promise 对象。
 3. 函数内部遇到`await`时，不会继续执行，而是等待异步返回结果。
 4. 当然程序不会就停在这里，因为这是`async`函数，所以在等待异步返回结果的同时，函数外部
 的代码会进行异步的并行执行。
@@ -69,20 +69,23 @@ console.log(2);
 
 ## 错误处理
 1. 不管是`await`后面的 promise 被 reject，还是其他错误，都可以被`async`函数返回的
-promise 的`then`或`catch`捕获，并且之后的代码不会再被执行。
-    ```js
-    async function foo(){
-        console.log(await Promise.reject(22));
-        // throw new Error();
-        console.log('不会被执行');
-    }
+promise 的`then`或`catch`捕获。
+2. 与 promise 中 reject 之后的代码仍然会执行不同，这里之后的代码不会再被执行。
 
-    foo()
-    .catch(err=>{
-        console.error(err);
-    });
-    ```
-2. 为了不影响后面的代码继续执行，可以用以下两种 catch
+```js
+async function foo(){
+    console.log(await Promise.reject(22));
+    // throw new Error();
+    console.log('不会被执行');
+}
+
+foo()
+.catch(err=>{
+    console.error(err);
+});
+```
+
+3. 为了不影响后面的代码继续执行，可以用以下两种 catch
     ```js
     try {
         await Promise.reject('出错了');
@@ -94,8 +97,8 @@ promise 的`then`或`catch`捕获，并且之后的代码不会再被执行。
         .catch(e => console.log(e));
     ```
 3. 因为 async 函数并不总是返回一个单独 promise 并后续调用其`then`或`catch`方法，经常
-也是作为其他 async 函数内部 await 之后的 promise，所以更通用的捕获错误的方法还是直接在
-async 函数内部`try...catch`
+也是作为其他 async 函数内部 `await` 之后的 promise，所以更通用的捕获错误的方法还是直接
+在 async 函数内部`try...catch`
     ```js
     async function foo(){
         try{

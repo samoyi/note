@@ -52,19 +52,19 @@ let foo = handler.handleClick;
 foo(); // undefined
 ```
 1. 第一处  
-不是虽然表面上是方法，但**没有调用**，只是进行了传参。传入的事件处理函数实际上是一个指针
-，指向`handler`对象的`handlerClick`方法，也就是说真正传入的是这个**独立的函数**，而不
-是**在`handlerClick`上调用这个函数**。你只能传参/拷贝一个方法，但不能传参/拷贝一个方法
-调用。
+不是虽然表面上是方法，但 **没有调用**，只是进行了传参。传入的事件处理函数实际上是一个指
+针，指向`handler`对象的`handlerClick`方法，也就是说真正传入的是这个 **独立的函数**，
+而不是 **在`handlerClick`上调用这个函数**。你只能传参/拷贝一个方法，但不能传参/拷贝一
+个方法调用。
 2. 第二处  
-这个是典型的在handlerClick上调用这个函数，即典型的方法调用。
+这个是典型的在`handlerClick`上调用这个函数，即典型的方法调用。
 3. 第三处  
 和第一处一样，只不过前者是传参，这里是拷贝。
 
 
 ## Constructor Invocation
 1. 参考这篇对`new`调用的解释：
-Theories\Languages\JavaScript\UnderstandJS\Function Invoking\2.thisBindingRules.md
+`Theories\Languages\JavaScript\UnderstandJS\Function Invoking\2.thisBindingRules.md`
 2. Note that the new object is used as the invocation context even if the
 constructor invocation looks like a method invocation.
     ```js
@@ -97,4 +97,4 @@ actually a method of that object.
 
 
 ## 尾调用优化   
-Theories\Languages\Common\Function\RecursionStackOverflowAndTCO.md
+`Theories\Languages\Common\Function\RecursionStackOverflowAndTCO.md`

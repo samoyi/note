@@ -2,46 +2,35 @@
 
 
 ## `XMLHttpRequest` Object
-1. Browsers define their HTTP API on an `XMLHttpRequest` class.
-2. Each instance of this class represents a single request/response pair, and
-the properties and methods of the object allow you to specify request details
-and extract response data.
-3. You can also reuse an existing XMLHttpRequest object, but note that doing so
-  will abort any request pending through that object.
-4. XMLHttpRequest is designed to work with the HTTP and HTTPS protocols. In
-theory, it could be made to work with other protocols, such as FTP, but parts of
- the API, such as the request method and the response status code, are
-HTTP-specific.
+1. 浏览器在`XMLHttpRequest`类上定义了它们的 HTTP API。
+2. 这个类的每个实例都表示一个独立的请求/响应对，并且这个对象的属性和方法允许指定请求细节
+和提取响应数据。
+3. 使用这个 HTTP API 必须做的第一件事就是实例化`XMLHttpRequest`对象。你也能重用已存在
+的`XMLHttpRequest`，但注意这将会终止之前通过该对象挂起的任何请求。
+4. XMLHttpRequest 用于同 HTTP 和 HTTPS 协议一起工作。理论上，它能够同像 FTP 这样的其
+他协议一起工作，但比如像请求方法和响应状态码等部分 API 是 HTTP 特有的。
 
 
 ## Use `open()` to specify the method and the URL
-* In addition to `GET` and `POST`, the XMLHttpRequest specification also allows
-`DELETE`, `HEAD`, `OPTIONS`, and `PUT` as the first argument to `open()`. (The
-`HTTP CONNECT`, `TRACE`, and `TRACK` methods are explicitly forbidden as
-security risks.)
-* The second argument to `open()` is the URL that is the subject of the request.
- This is relative to the URL of the document that contains the script that is
-calling `open()` . If you specify an absolute URL, the protocol, host, and port
-must generally match those of the containing document.
+* 除了`GET`和`POST`之外，XMLHttpRequest 规范也允许把`DELETE`、`HEAD`、`OPTIONS`和
+`PUT`作为`open()`的第1个参数。（`HTTPCONNECT`、`TRACE`和`TRACK`因为安全风险已被明确
+禁止）。
+* `open()`的第2个参数是 URL，它是请求的主题。这是相对于文档的 URL，这个文档包含调用
+`open()`的脚本。如果指定绝对 URL、协议、主机和端口通常必须匹配所在文档的对应内容。
 
 
 ## Use `setRequestHeader()` to set the request headers
-* `POST` requests  need a `Content-Type` header to specify the MIME type of the
-request body
+* `POST`请求需要`Content-Type`头指定请求主体的 MIME 类型
     ```js
     // 模拟表单 POST 时的设置：
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     ```
-* If you call `setRequestHeader()` multiple times for the same header, the new
-value does not replace the previously specified value: instead, the HTTP request
- will include multiple copies of the header or the header will specify multiple
-values.
-* You cannot specify the `Content-Length`, `Date`, `Referer`, or `User-Agent`
-headers yourself: `XMLHttpRequest` will add those automatically for you and will
- not allow you to spoof them.
-* Similarly, `XMLHttpRequest` object automatically handles cookies, and
-connection lifetime, charset, and encoding negotiations, so you’re not allowed
-to pass any of these headers to `setRequestHeader()`:
+* 如果对相同的头调用`setRequestHeader()`多次，新值不会取代之前指定的值，相反，HTTP 请
+求将包含这个头的多个副本或这个头将指定多个值。
+* 你不能自己指定`Content-Length`、`Date`、`Referer`或`User-Agent`头，
+`XMLHttpRequest`将自动添加这些头而防止伪造它们。
+* 类似地，XMLHttpRequest对象自动处理 cookie、连接时间、字符集和编码判断，所以你无法向
+`setRequestHeader()`传递这些头
     ```
     Accept-Charset     Content-Transfer-Encoding    TE
     Accept-Encoding    Date                         Trailer
@@ -50,16 +39,13 @@ to pass any of these headers to `setRequestHeader()`:
     Cookie             Keep-Alive                   User-Agent
     Cookie2            Referer                      Via
     ```
-* You can specify an “Authorization” header with your request, but you do not
-normally need to do so. If you are requesting a password-protected URL, pass the
- username and password as the fourth and fifth arguments to `open()`, and
-XMLHttpRequest will set appropriate headers for you.    
+* 你能为请求指定`Authorization`头，但通常不需要这么做。如果请求一个受密码保护的 URL，
+把用户名和密码作为第4个和第5个参数传递给`open()`，则`XMLHttpRequest`将设置合适的头。
 
 
 ## Use `send()` to specify the optional request body and send it off to the server
-GET requests never have a body, so you should pass  null or omit the argument.
-POST requests do generally have a body, and it should match the “Content-Type”
-header you specified with `setRequestHeader()`.
+`GET`请求绝对没有主体，所以应该传递`null`或省略这个参数。`POST`请求通常拥有主体，同时
+它应该匹配使用`setRequestHeader()`指定的`Content-Type`头。
 
 ### 发送字符时的编码问题
 1. 服务端接收到字符串数据时，会找到其中的转义序列，进行 decode。例如`1+2`会被 decode
@@ -73,24 +59,26 @@ encode，所以`1+2`这个数学表达式发送到服务端时还是`1+2`。服�
 成了`1 2`。
 5. 因此通过 AJAX 发送数据时，如果不能确保发送的字符不包括转义序列字符，那就应该使用
 `encodeURIComponent`对其 encode。
-如果`xhr.send('str=我+你转义后是%e6%88%91%2b%e4%bd%a0')`，服务端最终解析获得的是
-`我 你转义后是我+你`；如果
+6. 例如，`xhr.send('str=我+你转义后是%e6%88%91%2b%e4%bd%a0')`，服务端最终解析获得的
+是`我 你转义后是我+你`；而
 `xhr.send('str=' + encodeURIComponent('我+你转义后是%e6%88%91%2b%e4%bd%a0'))`，服
 务端最终解析获得的就是`我+你转义后是%e6%88%91%2b%e4%bd%a0`
 
 
 ## Aborting Requests and Timeouts
 ### `XMLHttpRequest.abort()`
-1. You can cancel an HTTP request in process by calling the `abort()` method of
-the XMLHttpRequest object. The `abort()` method is available in all versions of
-XMLHttpRequest, and in XHR2, calling `abort()` triggers an abort event on the
-object.
+1. 可以通过调用`XMLHttpRequest`对象的`abort()`方法来取消正在进行的 HTTP 请求。
+`abort()`方法在所有的 XMLHttpRequest 版本和 XHR2 中可用，调用`abort()`方法在这个对象
+上触发`abort`事件。
 2. The primary reason to call `abort()` is to cancel or time-out requests that
 have taken too long to complete or when the responses become irrelevant. Suppose
  you’re using XMLHttpRequest to request auto-complete suggestions for a text
 input field. If the user types a new character into the field before the
 server’s suggestions can arrive, then the pending request is no longer
 interesting and can be aborted.
+2. 对于耗时过长或者已经不需要的请求，可以调用`abort()`进行取消。例如使用
+XMLHttpRequest 为文本输入域请求自动完成推荐，如果用户在服务器的建议达到之前输入了新字符
+，这时等待请求不再有用，应该中止。
 
 ### `XMLHttpRequest.timeout`
 * The `XMLHttpRequest.timeout` property is an unsigned long representing the
@@ -115,21 +103,21 @@ Value | Meaning
 4 | Complete. All of the response data has been retrieved and is available
 
 #### `readystatechange` event
-1. In theory, the readystatechange event is triggered every time the `readyState`
-property changes. In practice, the event may not be fired when  readyState
-changes to `0` or `1`.
-2. All browsers do fire the `readystatechange` event when `readyState` has
-changed to the value `4` and the server’s response is complete.
+1. 理论上，每次`readyState`属性改变都会触发`readystatechange`事件。实际中，当
+`readyState`改变为`0`或`1`时可能没有触发这个事件。
+2. 当`readyState`值改变为`4`或服务器的响应完成时，所有的浏览器都触发`readystatechange`
+事件。
 
 ### HTTP status
 `status` and `statusText`
 
 ### Response headers
 `getResponseHeader()` and `getAllResponseHeaders()`
-1. XMLHttpRequest handles cookies automatically: it filters cookie headers out
-of the set returned by `getAllResponseHeaders()` and returns `null` if you pass
-“Set-Cookie”  or “Set-Cookie2” to `getResponseHeader()`
-2. 在跨域的情况下，默认只能读取“Simple response header”，即以下六个：
+1. 使用`getResponseHeader()`和`getAllResponseHeaders()`能查询响应头。
+XMLHttpRequest 会自动处理 cookie：它会从`getAllResponseHeaders()`头返回集合中过滤掉
+cookie 头，而如果给`getResponseHeader()`传递`'Set-Cookie'`和`'Set-Cookie2'`则返回
+`null`。
+2. 在跨域的情况下，默认只能读取 “Simple response header”，即以下六个：
     * `Cache-Control`
     * `Content-Language`
     * `Content-Type`
@@ -143,7 +131,7 @@ of the set returned by `getAllResponseHeaders()` and returns `null` if you pass
 ## Response body
 ### Handle text response
 The response body is available in textual form from the `responseText` property
- or in Document form from the `responseXML` property.
+or in Document form from the `responseXML` property.
 
 ### Handle binary response
 #### `response`
@@ -153,25 +141,25 @@ The response body is available in textual form from the `responseText` property
 * Value of `response` is `null` if the request is not complete or was not
 successful.
 * However, if the value of `responseType` was set to `text` or the empty string,
- `response` can contain the partial text response while the request is still in
- the `loading` state.
+`response` can contain the partial text response while the request is still in
+the `loading` state.
 * If your cross-origin request requires these kinds of credentials to succeed,
 you must set the `withCredentials` property of the `XMLHttpRequest` to `true`
 before you `send()` the request.
 
 #### `responseType`
 * The `XMLHttpRequest.responseType` property is an enumerated value that returns
- the type of the response.
+the type of the response.
 * It also lets the author change the response type to one `arraybuffer`, `blob`,
- `document`, `json`, or `text`.
+`document`, `json`, or `text`.
 * If an empty string is set as the value of `responseType`, it is assumed as
 type `text`.
 * Setting the value of responseType to `document` is ignored if done in a Worker
- environment.
+environment.
 * When setting `responseType` to a particular value, the author should make sure
- that the server is actually sending a response compatible to that format. If
+that the server is actually sending a response compatible to that format. If
 the server returns data that is not compatible to the responseType that was set,
- the value of response will be `null`.
+the value of response will be `null`.
 * [兼容性不好](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType#Browser_compatibility)
 
 ```js
@@ -188,19 +176,16 @@ xhr.send(null);
 ```
 
 ### `overrideMimeType()`
-1. If a server sends an XML document without setting the appropriate MIME type,
-for example, the XMLHttpRequest object will not parse it and set the responseXML
-property. Or if a server includes an incorrect “charset” parameter in the
-`content-type` header, the XMLHttpRequest will decode the response using the
-wrong encoding and the characters in  responseText may be wrong.
-2. XHR2 defines an `overrideMimeType()` method to address this problem and a
-number of browsers have already implemented it. If you know the MIME type of a
-resource better than the server does, pass the type of `overrideMimeType()`
-before you call `send()` — this will make XMLHttpRequest ignore the
-`content-type` header and use the type you specify instead.
-3. Suppose you’re downloading an XML file that you’re planning to treat as plain
-text. You can use `setOverrideMimeType()` to let the XMLHttpRequest know that
-it does not need to parse the file into an XML document:
+1. 服务器响应的正常解码是假设服务器为这个响应发送了`Content-Type`头和正确的 MIME 类型。
+2. 假如，如果服务器发送 XML 文档但没有设置适当的 MIME 类型，那么 XMLHttpRequest 对象
+将不会解析它且设置`responseXML`属性。或者，如果服务器在`Content-Type`头中包含了错误的
+`charset`参数，那么 XMLHttpRequest 将使用错误的编码来解析响应，并且`responseText`中
+的字符可能是错的。
+3. XHR2 定义了`overrideMimetype()`方法来解决这个问题。如果相对于服务器你更了解资源的
+MIME 类型，那么在调用`send()`之前把类型传递给`over-rideMimeType()`，这将使
+XMLHttpRequest 忽略`Content-Type`头而使用指定的类型。
+4. 假设你将下载 XML 文件，而你计划把它当成纯文本对待。可以使用`setOverrideMimeType()`
+让 XMLHttpRe-quest 知道它不需要把文件解析成 XML 文档。
 ```js
 // Don't process the response as an XML document
 request.overrideMimeType("text/plain; charset=utf-8")
@@ -212,8 +197,10 @@ request.overrideMimeType("text/plain; charset=utf-8")
 1. XHR2 defines a more useful set of events, the `XMLHttpRequest` object
 triggers different types of events at different phases of the request so that it
  is no longer necessary to check the `readyState` property
-    1. `loadstart`: Fires when the first byte of the response has been
-        received.
+1. 在之前的示例中，使用`readystatechange`事件探测 HTTP 请求的完成。XHR2 规范草案定义
+了更有用的事件集，在这个新的事件模型中，XMLHttpRequest 对象在请求的不同阶段触发不同类
+型的事件，所以它不再需要检查`readyState`属性。
+    1. `loadstart`: Fires when the first byte of the response has been received.
     2. `progress`: Fires repeatedly as a response is being received. If a
         request completes very quickly, it may never fire a `progress` event. 测
         试响应为空时，不会触发`progress`，但仍然会触发下面的`load`和`loadend`
@@ -228,7 +215,7 @@ triggers different types of events at different phases of the request so that it
 2. Each request begins with the `loadstart` event being fired; followed by one
 or more `progress` events; then one of `error`, `abort`, or `load`; finally
 ending with `loadend`.
-3. IE到10才开始支持
+3. IE 到10才开始支持
 
 ### 事件顺序
 1. When the `send()` method is called, a single `loadstart` event is fired.
@@ -310,7 +297,7 @@ document.querySelector('#file').addEventListener("change", function() {
 
 
 ## Upload progress
-* `XMLHttpRequest.upload` 对象也拥有上面响应的7个事件。
+* `XMLHttpRequest.upload`对象也拥有上面响应的7个事件。
 * 这里的`timeout`事件时在请求等待超时时触发。如果在规定时间内请求完成了，即使响应过慢而
 导致超时，只会触发`XMLHttpRequest.ontimeout`，而不会触发
 `XMLHttpRequest.upload.ontimeout`。但如果`XMLHttpRequest.upload.ontimeout`被触发

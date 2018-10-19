@@ -3,8 +3,9 @@
 ## TODO
 * ES6的新类型中只检测了是否可拷贝`Symbol`
 
+
 ## 测试代码
-```
+```js
 // 保证自己的拷贝函数接受待拷贝对象作为参数，并返回拷贝后的对象。例如：
 function fnClone(source){
     return source.slice(0);
@@ -175,15 +176,6 @@ function consoleCloneType(fnClone, bCheckNodeType=true){
 ```
 
 
-
-
-
-
-
-
-
-
-***
 ## 拷贝方法
 ### 方法一：`source.slice(0)` / `source.concat()` / `Array.of.apply(null, source)`
 `PlainObject`浅拷贝 `Array`浅拷贝 `Node`浅拷贝
@@ -196,11 +188,12 @@ function consoleCloneType(fnClone, bCheckNodeType=true){
 
 ### 方法四：自定义方法1
 `PlainObject`深拷贝 + `Array`深拷贝 + `Node`深拷贝
+
 #### 来源：
 * 在[这篇文章](https://davidwalsh.name/javascript-clone)的`clone`函数中加入了对`Symbol`的支持
 * 在 [plain_object_clone](plain_object_clone.md) 这篇中有对这个函数的分析
 
-```
+```js
 function clone(src)
 {
     function mixin(dest, source, copyFunc)
@@ -265,14 +258,11 @@ function clone(src)
 ```
 
 
-
-***
 ## 浏览器尚未实现的拷贝功能
 ### `localStorage`和`sessionStorage`对引用类型的拷贝
 虽然目前还没有浏览器支持这两个对象操作引用类型，不过根据《权威指南》上面说的：
 > Objects and array values are normally mutable, so a Storage object is required to make a copy when you store a value, so that any subsequent changes to the original value have no effect on the stored value. The Storage object is also required to make a copy when you retrieve a value so that any changes you make to the retrieved value have no effect on the stored value.
 
 
-***
 ## References
 * [Clone Anything with JavaScript](https://davidwalsh.name/javascript-clone)

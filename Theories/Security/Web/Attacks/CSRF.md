@@ -19,7 +19,8 @@ cookie。
     和 cookie 里。用户提交表单时，服务器会检查这两个 token 是否一致。如果有人 CSRF ，
     除非他看到了用户的前端代码，否则不会知道这个 token，因而即使发送了请求，服务器也可
     以发现请求中没有 token 或者和 cookie 中的 token 不同。
-
+* `SameSite` cookies：不允许跨站请求提交该 cookie。截止 2018.6 仍是实验性质。
+[参考](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#SameSite_cookies)
 
 ## References
 * [白帽子讲Web安全](https://book.douban.com/subject/10546925/)

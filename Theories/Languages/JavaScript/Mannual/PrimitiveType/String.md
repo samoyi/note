@@ -2,9 +2,9 @@
 
 ## 查询字符串
 ### 正确识别字符串长度
-1. 因为JavaScript的字符串规则是UCS-2，所以16位以上的Unicode字符，识别为2个字符。
-2. 使用ES6的扩展运算符或者`Array.from()`将字符串转化为数组则可以正确的识别字符的数量，
-因此最好使用如下方法来取得字符串的长度
+1. 因为 JavaScript 的字符串规则是 UCS-2，所以16位以上的 Unicode 字符，识别为2个字符。
+2. 使用 ES6 的扩展运算符或者`Array.from()`将字符串转化为数组则可以正确的识别字符的数量
+，因此最好使用如下方法来取得字符串的长度
 ```js
 function length(str){
     return [...str].length;
@@ -20,15 +20,17 @@ function length(str){
 ### 查找子字符串的位置
 #### `indexOf()`和`lastIndexOf()`
 不支持正则表达式
+
 #### `match()`
 支持正则表达式
+
 #### `search()`
 只支持正则表达式或者可以转换成正则表达式的参数
 
 ### 获得子字符串
-* slice()
-* substring()
-* substr()
+* `slice()`
+* `substring()`
+* `substr()`
 
 ### 是否（在头或尾）包含某子字符串
 * `includes()`
@@ -47,7 +49,7 @@ function isPalindrome(str){
 1. `+`和`concat()`
 2. [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/concat):
 >It is strongly recommended that the assignment operators (+, +=) are used
-instead of the concat() method.According to this performance test,
+instead of the concat() method. According to this performance test,
 the assignment operators are several times faster.
 
 ### 增长字符串

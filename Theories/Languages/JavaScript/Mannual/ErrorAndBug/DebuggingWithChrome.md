@@ -1,6 +1,6 @@
 # Debug with Chrome
 
-***
+
 ## `debugger`
 You can also wrap it in conditional
 ```js
@@ -12,8 +12,6 @@ console.log(i++);
 ```
 
 
-
-***
 ## `console`
 ### `console` 系的一个通病
 ```js

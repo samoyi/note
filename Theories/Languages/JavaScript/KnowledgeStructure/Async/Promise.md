@@ -68,43 +68,45 @@ setTimeout(()=>{
 
 
 ## Nested promise
-1. The result of a promise is another promise, the first promise will have the
-asynchoronous result of the second one.
-```js
-let p1 = new Promise(function (resolve, reject) {
-    setTimeout(() => reject(new Error('fail')), 3000)
-});
+1. 一个 promise 实例作为另一个 promise 的结果
+    ```js
+    let p1 = new Promise(function (resolve, reject) {
+        setTimeout(() => reject(new Error('fail')), 3000)
+    });
 
-let p2 = new Promise(function (resolve, reject) {
-    setTimeout(() => resolve(p1), 1000)
-});
+    let p2 = new Promise(function (resolve, reject) {
+        setTimeout(() => resolve(p1), 1000)
+    });
 
-p2 // After 3 secondes to get the fail
-.then(result => console.log('fulfilled:' + result))
-.catch(error => console.log('rejected:' + error)); // rejected:Error: fail
-```
+    p2 // After 3 secondes to get the fail
+    .then(result => console.log('fulfilled:' + result))
+    .catch(error => console.log('rejected:' + error)); // rejected:Error: fail
+    ```
 2. 最外部 promise 的结果是 fullfilled 还是 rejected，并不取决于最外部 promise 里调用
 的是`resolve`还是`reject`。比如上面例子中虽然最外部 promise 的调用了`resolve`，但其结
 果还是 rejected。而是，只要其中有一个是调用了`reject`，最外部 promise 的结果就是
-rejected，否则就是fullfilled。而且，只要有`reject`被调用，则最外层 promise 立刻就会
+rejected，否则就是 fullfilled。
+3. 不懂，为什么是这个机制。直观的感觉应该是一秒钟之后`p2`就应该 resolve，然后`result`
+的值是 promise 实例。
+4. 而且，只要有`reject`被调用，则最外层 promise 立刻就会
 rejected。例如下面的例子，`p2`在两秒后调用了`reject`了，所以`p3`立刻就 rejected。
-```js
-let p1 = new Promise(function (resolve, reject) {
-    setTimeout(() => resolve('ok'), 3000)
-});
+    ```js
+    let p1 = new Promise(function (resolve, reject) {
+        setTimeout(() => resolve('ok'), 3000)
+    });
 
-let p2 = new Promise(function (resolve, reject) {
-    setTimeout(() => reject(p1), 2000)
-});
+    let p2 = new Promise(function (resolve, reject) {
+        setTimeout(() => reject(p1), 2000)
+    });
 
-let p3 = new Promise(function (resolve, reject) {
-    setTimeout(() => resolve(p2), 1000)
-});
+    let p3 = new Promise(function (resolve, reject) {
+        setTimeout(() => resolve(p2), 1000)
+    });
 
-p3 // After 2 secondes to get the fail
-.then(result => console.log('fulfilled:' + result))
-.catch(error => console.log('rejected:' + error)); // rejected:[object Promise]
-```
+    p3 // After 2 secondes to get the fail
+    .then(result => console.log('fulfilled:' + result))
+    .catch(error => console.log('rejected:' + error)); // rejected:[object Promise]
+    ```
 
 
 ## Chaining promise
@@ -195,7 +197,8 @@ new Promise((resolve, reject)=>{
         (err)=>{console.log(err)} // rejected
     )
     ```
-2. 但`resolve`和`reject`调用之后发生的错误不会被捕获，不过仍然会中断执行
+2. 但`resolve`和`reject`调用之后，并不是像`return`一样后面的代码就不执行。后面仍然会
+执行，只不过其中的错误既不会被捕获也不会被抛出。但是，仍然会中断执行。懂不，机制很奇怪
     ```js
     new Promise((resolve, reject)=>{
         resolve(22); // 不管是 resolve
@@ -234,7 +237,7 @@ new Promise((resolve, reject)=>{
         setTimeout(()=>{
             resolve(22);
             throw new Error(); // 会被抛出，不会被捕获
-        }, 200);
+        }, 2000);
     })
     .then(res=>{
         console.log(res); // 22
@@ -243,6 +246,7 @@ new Promise((resolve, reject)=>{
         console.log(err); // 不会被捕获
     });
     ```
+    注意是先抛出错误再打印22，因为打印22属于 microTask。
 6. 因为现阶段（2018.8）`promise`中的未被捕获的错误不一定会暴露到外面（Chrome 抛出但
 FF 不会）。就导致在`Promise`链的最后一环如果出错，这个错误可能就不会被发现：
     ```js
@@ -256,11 +260,12 @@ FF 不会）。就导致在`Promise`链的最后一环如果出错，这个错�
     ```
 上面的例子在 Chrome 可以抛出一个错误，但在 FF 什么也观察不到。  
 
-不过可以通过自己添加的方法来实现抛出最后一环的错误。不过这个方法在Mocha的测试脚本中无效。
+不过可以通过自己添加的方法来实现抛出最后一环的错误。其实就是在最后一环再加上一个`catch`，
+catch 到错误后通过`setTimeout`抛出到 promise 外部。但是这个方法在 Mocha 的测试脚本中
+无效
     ```js
     Promise.prototype.done = function (onFulfilled, onRejected) {
-        this.then(onFulfilled, onRejected)
-        .catch(function (reason) {
+        this.catch(function (reason) {
             // 抛出一个全局错误到 promise 外部
             setTimeout(() => { throw reason });
         });
@@ -309,31 +314,10 @@ error
 4
 ReferenceError
 ```
-
-比较特殊的是，`Promise {<pending>}`在`3`之前输出，即下面这种情况：
-```js
-let p = new Promise((res, rej)=>{
-    res();
-});
-
-console.log(p.then(res=>{
-    console.log(6);
-}));
-```
-先输出`Promise {<pending>}`后输出`6`。不懂原因  
-
-这和一般的回调输出顺序是相反的：
-```js
-let obj = {
-    foo(fn){
-        fn();
-    },
-};
-console.log(obj.foo(res=>{
-    console.log(5)
-}));
-```
-先是`5`才是`undefined`
+注意输出结果的第三个行和第四行，第一次的 promise 实例的 rejected 的状态，而`p.catch`
+返回的实例就是没有结果的 pending 状态。不懂，是不是因为第一次 promise 内部已经 reject
+了，所以是 rejected 状态；而第二次已经 catch 了这个错误，已经没有错误了，所以成了
+pending 状态。
 
 
 ## `Promise.all(iterable)`
@@ -417,7 +401,27 @@ console.log(obj.foo(res=>{
 
 
 ## `Promise.race()`
-可以用来给某个异步操作设定一个时限
+1. 同样是将多个 Promise 实例，包装成一个新的 Promise 实例。而且和`Promise.all`的参数
+也是相同的。不同的是，可以从名字看出来，race 和 all，`Promise.race()`参数的若干个
+promise 实例只要有一个出结果了，该结果就会作为`Promise.race()`返回的总体的 promise 实
+例的结果。
+    ```js
+    let p1 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve(111);
+        }, 1000);
+    });
+    let p2 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve(222);
+        }, 3000);
+    });
+    Promise.race([p1, p2])
+    .then(res=>{
+        console.log(res); // 一秒钟之后输出 111
+    })
+    ```
+2. 可以用来给某个异步操作设定一个时限
 ```js
 const p = Promise.race([
     fetch('/resource-that-may-take-a-while'),
@@ -432,7 +436,11 @@ p.catch(error => console.log(error));
 
 
 ## Promise.resolve & Promise.reject
-<mark>没看懂有什么用处</mark>
+将一个非 promise 值转换为 promise 实例，并立即 resolve/reject
+```js
+console.log(Promise.resolve(111)); // Promise {<resolved>: 111}
+console.log(Promise.reject(111)); // Promise {<rejected>: 111}
+```
 
 
 ## 其他一些自定义的有用的方法
