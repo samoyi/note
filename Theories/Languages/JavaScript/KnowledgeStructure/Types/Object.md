@@ -627,8 +627,10 @@ console.log("age" in obj);  // true
 ```
 
 ### `hasOwnProperty()`
-It tests whether an object has an own property with the given name. It returns
-`false` for inherited properties
+1. It tests whether an object has an own property with the given name.
+2. It returns `false` for inherited properties.
+3. 可以检测到不可遍历的。
+
 ```js
 let proto = {name: 33},
 	obj = Object.create( proto );

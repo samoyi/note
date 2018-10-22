@@ -2,15 +2,11 @@
 
 配置方法参考这个[Demo](https://github.com/samoyi/Nichijou/tree/master/communication/websocket)
 
+## 与 HTTP 相比
+### 持久连接
+* 省去了每次发起请求的耗时及每次发起请求的头信息。
+* `keep-alive`是只建立一次 TCP 链接就能发送多次请求，但每个请求仍然要发送各自的头信息。
 
-1. The goal of Web Sockets is to provide full-duplex, bidirectional
-communication with the server over a single, long-lasting connection.
-2. When a Web Socket is created in JavaScript, an HTTP request is sent to the
-server to initiate a connection. When the server responds, the connection uses
-HTTP upgrade to switch from HTTP to the Web Socket protocol.
-3. Since Web Sockets uses a custom protocol, the URL scheme is slightly
-different. Instead of using the `http://` or `https://` schemes, there are
-`ws://` for an unsecured connection and `wss://` for a secured connection. When
-specifying a Web Socket URL, you must include the scheme since other schemes may
- be supported in the future.  
-4. 使用自定义协议而非HTTP协议的好处是，能够在客户端和服务器之间发送非常少量的数据，而不必担心HTTP那样字节级的开销。由于传递的数据包很小，因此Web Sockets非常适合移动应用。
+### 全双工
+* 非【请求—响应】式的通信模式，多次通信也不需要轮询
+* 实现服务器主动发送信息

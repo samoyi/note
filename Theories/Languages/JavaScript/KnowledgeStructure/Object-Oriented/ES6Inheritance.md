@@ -153,9 +153,8 @@ console.log(ColorPoint.x); // 3
 2. 但只要仔细看上面注释中的分析，就会发现问题：如果`this`指向父类原型对象，`this.x`也不
 会是`1`。因为`x`定义在`A`的`constructor`中，它是`A`的实例属性而非原型属性。所以即使
 `this`指向父类原型对象，`this.x`也是`undefined`(`A.prototype.x`)。
-3. 所以这里的设计就有些不舒服，有些矛盾：`super`要指向父类原型，但还不能是方法调用的
-`this`绑定规则。在规范上看到了`super binding`这个词组，但也没看明白，不知道是不是为
-了定义这种情况下的`this`值：
+3. 其实这里的逻辑和前面说的把`super`作为函数调用以及 constructor stealing 的情况一样，
+虽然调用的是父类原型方法/父类构造函数，但是`this`绑定的是当前`this`/当前构造函数。
 
 **子类普通方法中通过`super`调用父类的方法时，方法内部的`this`指向当前的子类实例。**  
 **子类的静态方法中通过super调用父类的方法时，方法内部的this指向当前的子类（构造函数）。**  
@@ -204,7 +203,7 @@ let b = new B();
 
 ## 继承语法
 ### 子类必须在`constructor`方法中调用`super`方法
-* 用来继承父类`constructor`中的属性
+* 用来继承父类`constructor`中的属性，相当于 contructor stealing
 * 之前说过，如果没有定义`constructor`，也会自动添加一个空的`constructor`。这里又因为子
 类`constructor`必须要调用`super`，所以实际上的效果看起来是，子类自动添加的
 `constructor`内部也会自动调用`super`，并且会把实例化时接收到的参数全部传给`super`。
@@ -231,8 +230,7 @@ let b = new B();
 
 
 ## 类的`prototype`属性和`__proto__`属性
-Class 作为构造函数的语法糖，同时有`prototype`属性和`__proto__`属性，因此同时存在两条
-继承链：
+Class 作为构造函数的语法糖，同时有`prototype`属性和`__proto__`属性，因此同时存在两条继承链：
 
 ### 属性指向
 * 子类的`__proto__`属性，表示构造函数的继承，总是指向父类。
@@ -255,6 +253,8 @@ class A {}
 
 class B {}
 
+// 从这里以及子类必须调用 super() 来看，类似于 Parasitic Combination Inheritance 模式
+// 下面继承构造函数，应该是为了继承静态属性和方法
 Object.setPrototypeOf(B.prototype, A.prototype);
 
 Object.setPrototypeOf(B, A);
@@ -273,29 +273,22 @@ B.__proto__ = A;
 ```
 
 ### 实例的`__proto__`属性
-因为`B.prototype.__proto__ === A.prototype`，所以子类实例的`__proto__`等于父类实例
-的`__proto__`。
+因为`B.prototype.__proto__ === A.prototype`，所以子类实例的`__proto__`等于父类实例的
+`__proto__`。
 
 
 ## 子类`new.target`会返回子类
 ```js
 class Rectangle {
     constructor() {
-        console.log(new.target);
+        console.log(new.target.name);
     }
 }
 
 class Square extends Rectangle {}
 
 new Rectangle();
-// class Rectangle {
-//     constructor() {
-//         console.log(new.target);
-//     }
-// }
-
-new Square();
-// class Square extends Rectangle {}
+// Rectangle
 ```
 利用这个特点，可以写出不能独立使用、必须继承后才能使用的类：
 ```js

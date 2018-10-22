@@ -326,9 +326,32 @@ new Vue({
 
 
 ### Slots
-1. 通过`vm.$slots`获得插入普通插槽的内容，通过`vm.$scopedSlots`获得插入作用域插槽的内
-容
-2. `vm.$scopedSlots.插槽名`数据类型是函数，调用这个函数时，传参一个对象，这个对象指明
+1. 不能像下面这样定义 slot
+    ```js
+    render(h){
+        return h({
+            template: `<p>
+                <slot></slot>
+            </p>`,
+        });
+    },
+    ```
+    因为既然是渲染函数，所以就不具备编译功能，也就是说只能识别原生的 HTML 标签。
+2. 需要通过`vm.$slots`获得插入普通插槽的内容，通过`vm.$scopedSlots`获得插入作用域插槽
+的内容
+    ```js
+    render(h){
+        let vnodes = this.$slots.default;
+        return h('p', vnodes);
+    },
+    ```
+    `this.$slots.default`获得的是一个数组，每个数组项都是一个插入默认插槽的插值虚拟节
+    点。可能是文本节点，也可能是其他带标签的节点。把这些虚拟节点全部或部分通过
+    `createElement`函数的第三个参数插入即可。
+3. 与普通插槽直接通过`vm.$slots`获取插值不同，作用域插槽的使用逻辑是：先要传入作用域，
+然后再获取插值内容。所以这时需要用到传参函数的形式：通过参数传入作用域，函数返回插值虚拟
+节点。
+4. `vm.$scopedSlots.插槽名`数据类型是函数，调用这个函数时，传参一个对象，这个对象指明
 了传入这个插槽的数据
 ```html
 <div id="components-demo">

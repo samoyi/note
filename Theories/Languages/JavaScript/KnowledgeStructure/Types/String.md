@@ -604,6 +604,14 @@ MDN 上说的，该参数默认值是 the host environment’s current locale。
 2. Whitespace in this context is all the whitespace characters (space, tab,
 no-break space, etc.) and all the line terminator characters (LF, CR, etc.). 但不
 包括`\b`，`\b`会有实际字符输出。
+3. 多行 trim
+    ```js
+    let str = `    hel  l o
+       world
+    !`;
+
+    str.replace(/ |\t|\v/g, ''); // 匹配空白字符串、制表符和垂直制表符
+    ```
 3. IE 不支持 `trimStart()`/`trimLeft()`和`trimEnd()`/`trimRight()`
 
 

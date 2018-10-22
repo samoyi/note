@@ -25,106 +25,149 @@
 
 
 ## Server-Sent Events
-1. Server-Sent Events (SSE) is an API and pattern for read-only Comet
-interactions.
-2. The SSE API creates a one-way HTTP connection to the server through which the
-server can pass as much or as little information as necessary.
-3. The server response must have a MIME type of `text/eventstream` and outputs
-the information in a specific format that the browser API consumes and makes
-available through JavaScript.
-4. By default, the EventSource object will attempt to keep the connection alive
-with the server. If the connection is closed, a reconnect is attempted.
-5. 如果服务端没有通过`sleep()`等方法来维持脚本运行从而导致请求结束，SSE 也会在一定的时
+1. SSE（Server-Sent Events，服务器发送事件）是围绕只读 Comet 交互推出的 API。只是用来
+接收消息的。
+2. SSE API 用于创建到服务器的单向连接，服务器通过这个连接可以发送任意数量的数据。服务器
+响应的 MIME 类型必须是`text/event-stream`，而且是浏览器中的 JavaScript API 能解析格
+式输出。
+3. 默认情况下，EventSource对象会保持与服务器的活动连接。如果连接断开，还会重新连接。
+4. 如果服务端没有通过`sleep()`等方法来维持脚本运行从而导致请求结束，SSE 也会在一定的时
 间间隔后重新发起连接，但这个时间间隔似乎不能自定义。最终的效果就相当于短轮训。
-6. IE 和 Edge都不支持(2017.5)
 
-### Properties and Methods
-#### `readyState`
-* 0 — connecting
-* 1 — open
-* 2 — closed
+### 客户端用法
+1. 可以传递一个 URL 给`EventSource()`构造函数，然后在返回的实例上监听消息事件。
+    ```js
+    let bFirstConnection = true;
 
-#### url
-A DOMString representing the URL of the source. Read only
+    const connect = new EventSource("http://localhost:8080");
+    connect.onopen = function(){ // 建立连接或重新连接时触发该事件
+        console.log(bFirstConnection ? '建立连接' : '重新连接');
+    };
+    connect.onmessage = function(ev) { // 监听新消息到达
+        console.log(ev.data);
+    };
+    connect.onerror = function(){ // 连接出错时触发该事件
+        console.log('连接错误');
+        // 目前看到的触发情况是，服务端修改了脚本会触发该事件。
+        // 之后 EventSource 会重新发起请求来连接服务端，因此会再次触发 open 事件。
+        bFirstConnection = false;
+    };
+    setTimeout(function(){
+        // SSE 的通讯只能通过这个方法来停止。即使服务端停止了脚本的运行，SSE 也会从客
+        // 户端重新发起连接。
+        connect.close();
+        console.log('关闭连接');
+    }, 20000);
+    ```
+2. 与`message`事件关联的事件对象有一个`data`属性，这个属性保存服务器作为该事件的负载发
+送的任何字符串。
+3. 如同其他类型的事件一样，该对象还有一个`type`属性，默认值是`message`，事件源指定为一
+个其他值。
+4. `onmessage`事件处理程序接收从一个给定的服务器事件源发出的所有事件，如果有必要，也可
+以根据`type`属性派发一个事件。
 
-#### withCredentials
-The withCredentials read-only property of the EventSource interface returns a Boolean indicating whether the EventSource object was instantiated with CORS credentials set.
+### 服务端用法
+```js
+const http = require('http');
+http.createServer((req, res)=>{
+    res.setHeader('Content-Type', 'text/event-stream'); // 响应必须是该类型
+    setInterval(function(){
+        // 必须要以 data: 标注响应的内容，可以没有空格
+        // 且响应内容必须要以一个空行结尾
+        res.write(`data: ${Math.random()}\n\n`);
+    }, 2000);
+}).listen(8080);
+```
 
-#### `close()`
-* Closes the connection
-* SSE的通讯只能通过这个方法来停止。即使服务端停止了脚本的运行，SSE也会从客户端重新发起连接。
+#### 响应格式
+1. 一次响应必须要以一个空行结尾`\n\n`，否则不会作为一次单独的响应
+2. 一次响应可以多个`data:`来标注多个数据，但必须要有换行（`\n`）分割，否则会被认为成一
+个数据
 
-### Event handlers
-#### onopen
-when the connection is established
+```js
+setInterval(function(){
+    res.write('data: foo');
+    res.write('\n\n');
+    res.write('data: bar');
+    res.write('\n\n');
+    res.write('data: baz');
+    res.write('\n');
+    res.write('data: qux');
+    res.write('\n\n');
+    res.write('data: baz');
+    res.write('data: qux');
+    res.write('\n\n');
+}, 5000);
+```
 
-#### onmessage
-* when a new message event is received from the server
-* Information sent back from the server is returned via `event.data` as a string.
+3. 上面的写法中，因为有四个空行`\n\n`，所有每五秒钟会发送四次响应。
+4. 第一次响应的数据是`'foo'`，第二次响应的数据是`'bar'`。
+5. 第三次响应通过换行（`\n`）标注了两个数据，响应的数据是
+    ```
+    baz
+    qux
+    ```
+4. 第四次响应本来也想像第三次响应一样返回两个数据，但因为没有换行，所以实际效果相当于
+`data: bazdata: qux`，于是响应的数据就是`bazdata: qux`
 
-#### onerror
-when an error occurs。目前看到的触发情况是，服务端脚本没有维持从而结束后，会触发该事件。发生该事件后，`EventSource`会重新发起请求来连接服务端，因此会再次触发`open`事件。
 
-#### Custom event
-默认情况下，前端通过`message`事件来接收数据。但也可是使用自定义的事件来发送和接收数据
-  ```
-  // PHP 后端定义一个 customEvent 事件
-  <?php
-      echo 'event: customEvent';
-      echo "\n";
-      echo 'data: customEvent data' ;
-      echo "\n\n";
-  ?>
+### Custom event
+1. 默认情况下，前端通过`message`事件来接收数据。但也可是使用自定义的事件来发送和接收数据
+  ```js
+  // 服务端
+  res.write(`event: customEvent\n`);
+  res.write(`data: ${Math.random()}\n\n`);
   ```
   ```js
-  // JS 前端通过该事件接受数据
-  evtSource.addEventListener("customEvent", function(ev){
-      console.log( ev.data ); // customEvent data
+  // 客户端 现在必须用 addEventListener 来注册事件了
+  evtSource.addEventListener('customEvent', function(ev){
+      console.log(ev.data); // customEvent data
   }, false);
   ```
+2. 注意服务端自定义事件的写法，并不是独立的，而是下载一次响应中的。也就是说，只有这个响
+应是通过`customEvent`事件来接收的。如果服务端这样写
+    ```js
+    res.write(`event: customEvent\n`);
+    res.write(`data: ${Math.random()}\n\n`);
+    res.write(`data: 555\n\n`);
+    ```
+    现在随机数要用`customEvent`来接受，而`555`依然还要用默认的`messaga`来接受。所以客
+    户端需要监听两个事件
+    ```js
+    connect.addEventListener('message', function(ev){
+        console.log(ev.data);
+    }, false);
+    connect.addEventListener('customEvent', function(ev){
+        console.log(ev.data);
+    }, false);
+    ```
 
-### Event stream
-* The server events are sent along a long-lasting HTTP response with a MIME type of `text/eventstream`.
-* The event stream must be encoded using UTF-8.
-* The format of the response is plain text and, in its simplest form, is made up of the prefix `data:` followed by text
-* Messages in the event stream are ended by a pair of newline characters.
-    ```php
-    <?php
-        echo 'data: foo';
-        echo "\n\n";
-        echo 'data: bar';
-        echo "\n\n";
-        echo 'data: baz';
-        echo "\n";
-        echo 'data: qux';
-        echo "\n\n";
-        echo 'data: baz';
-        echo 'data: qux';
-        echo "\n\n";
-    ?>
-    /* 因为有4个 \n\n，所以会发送四次数据，EventSource将接收到四条信息，分别为
-        1. foo
-        2. bar
-        3. bar\nqux
-        4. bazdata: qux
-    */
+### 事件 ID
+1. 通过`id:`前缀可以给特定的事件指定一个关联的 ID，这个 ID 行位于`data:`行前面或后面皆
+可：
+    ```js
+    res.write(`data: ${Math.random()}\n`);
+    res.write(`id: 123\n\n`);
     ```
-* A colon as the first character of a line is in essence a comment, and is ignored.
-    ```php
-    <?php
-        echo 'data: normal data' ;
-        echo "\n\n";
-        echo ':data: comment data'; // 并不会向客户端发送该数据
-        echo "\n\n";
-    ?>
+2. 同时客户端的事件对象上也可以使用`lastEventId`接收到该 ID
+    ```js
+    connect.addEventListener('message', function(ev){
+        console.log(ev.data); // 随机数
+        console.log(ev.lastEventId); // 123
+    }, false);
     ```
-* You can also associate an ID with a particular event by including an `id: line` before or after the `data: line(s)`
-    ```php
-    <?php
-        echo 'data: normal data' ;
-        echo "\n";
-        echo 'id: 314';
-        echo "\n\n";
-    ?>
+3. 设置了 ID 后，`EventSource`对象会跟踪上一次触发的事件。如果连接中断，会向服务器发送
+一个包含名为`last-event-id`的特殊 HTTP 头部的请求，以便服务器知道下一次该触发哪个事件。
+在多次连接的事件流中，这种机制可以确保浏览器以正确的顺序收到连接的数据段。现在不懂具体的
+应用，但是在连接中断时（比如修改服务端脚本），服务端确实可以收到该头信息。通过以下代码验
+证
+    ```js
+    http.createServer((req, res)=>{
+        console.log(req.headers['last-event-id']); // 连接中断后收到 123
+        res.setHeader('Content-Type', 'text/event-stream');
+        setInterval(function(){
+            res.write(`data: ${Math.random()}\n`);
+            res.write(`id: 123\n\n`);
+        }, 2000);
+    }).listen(8080);
     ```
-    By setting an ID, the  EventSource object keeps track of the last event fi red. If the connection is dropped, a special HTTP header called  Last-Event-ID is sent along with the request so that the server can determine which event is appropriate to fi re next. This is important for keeping sequential pieces of data in the correct order over multiple connections.

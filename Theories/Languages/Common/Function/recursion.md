@@ -41,7 +41,7 @@ function factorial(n){
 内部的阶乘函数参数就变成了`0`
 ```js
 function factorial(n){
-    // 还应该约束n为正整数，但这属于参数检查的范畴，和递归判断无关
+    // 还应该约束 n 为正整数，但这属于参数检查的范畴，和递归判断无关
     if (n>1){
         return n * factorial(n-1);
     }
@@ -60,7 +60,7 @@ function Fibonacci(index){
     return Fibonacci(index - 1) + Fibonacci(index - 2);
 }
 ```
-2. 接着考虑临界值，index最小为0：
+2. 接着考虑临界值，`index`最小为`0`：
     * `Fibonacci(2 - 1) + Fibonacci(2 - 2)`，符合。
     * `Fibonacci(1 - 1) + Fibonacci(1 - 2)`，不符合
 ```js
@@ -79,7 +79,7 @@ function Fibonacci(index){
 ```js
 function factorial(n){
     if (n>1){
-        return n * factorial(n-1); // 这里必须要返回factorial()
+        return n * factorial(n-1); // 这里必须要返回 factorial()
     }
     else {
         return 1;
@@ -101,7 +101,8 @@ function factorial(n, accumulator){
 ```
 3. 现在上面有两个问题：
     * 返回的永远是`1`。返回的应该是`accumulator`。
-    * `accumulator`没有传进内部的函数。
+    * 虽然参数`accumulator`接收了上次一的两个数相乘的结果，但是该结果并没有传入下一次
+        阶乘
 4. 因此改成如下：
 ```js
 function factorial(n, accumulator = 1){

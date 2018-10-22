@@ -107,21 +107,20 @@ JSON.stringify()
 
 
 ## multipart/form-data requests
-1. When HTML forms include file upload elements and other elements as well, the
-browser cannot use ordinary form encoding and must POST the form using a special
- `Content-Type` known as `multipart/form-data`. 使用表单上传文件时，`enctype`属性
-也是如此设置。
-2. This encoding involves the use of long “boundary” strings to separate the
-body of the request into multiple parts.
-3. For textual data, it is possible to create `multipart/form-data` request
-bodies by hand, but it is tricky.
-4. XHR2 defines a new `FormData` API that makes multipart request bodies simple.
- With FormData, the `send()` method will define an appropriate boundary string
-and set the `Content-Type` header for the request.
+1. 当 HTML 表单同时包含文件上传元素和其他元素时，浏览器不能使用普通的表单编码而必须使用
+称为`multipart/form-data`的特殊`Content-Type`来用`POST`方法提交表单。使用表单上传文
+件时，`enctype`属性也是如此设置。
+2. 这种编码包括使用长`boundary`字符串把请求主体分离成多个部分。
+3. 对于文本数据，可以动创建`multipart/form-data`请求主体，但很复杂。XHR2 定义了新的
+`FormData` API，它容易实现多部分请求主体。
+4. 首先，使用`FormData()`构造函数创建`FormData`对象，然后按需多次调用这个对象的
+`append()`方法把个体“部分”（可以是字符串、File 或 Blob 对象）添加到请求中。最后，把
+`FormData`对象传递给`send()`方法。`send()`方法将对请求定义合适的`boundary`字符串和设
+置`Content-Type`头。
 
 ```js
-let fd = new FormData(),
-    xhr = new XMLHttpRequest();
+let fd = new FormData();
+let xhr = new XMLHttpRequest();
 
 // 选择了一张名为 640.jpg 的图片
 document.querySelector("#file").addEventListener("change", function(){
@@ -153,12 +152,10 @@ Content-Disposition: form-data; name="text"
 
 
 ## POST Blob
-1. XHR2允许向`send()`方法传入包括`file`类型在内的任何 Blob 对象
-2. The type property of the Blob will be used to set the `Content-Type` header
-for the upload, if you do not set that header explicitly yourself.
-3. If you need to upload binary data that you have generated, you can convert
-the data to a Blob and use it as a request body.
-4. IE 到 10 才开始支持
+1. XHR2 允许向`send()`方法传入包括`file`类型在内的任何 Blob 对象
+2. 如果没有显式设置`Content-Type`头，这个 Blob 对象的`type`属性用于设置待上传的
+`Content-Type`头。
+3. 如果需要上传已经产生的二进制数据，可以把数据转化为 Blob 并将其作为请求主体。
 
 ```html
 <input type="file" id="file" name="file" />

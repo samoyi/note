@@ -29,7 +29,7 @@
 求将包含这个头的多个副本或这个头将指定多个值。
 * 你不能自己指定`Content-Length`、`Date`、`Referer`或`User-Agent`头，
 `XMLHttpRequest`将自动添加这些头而防止伪造它们。
-* 类似地，XMLHttpRequest对象自动处理 cookie、连接时间、字符集和编码判断，所以你无法向
+* 类似地，XMLHttpRequest 对象自动处理 cookie、连接时间、字符集和编码判断，所以你无法向
 `setRequestHeader()`传递这些头
     ```
     Accept-Charset     Content-Transfer-Encoding    TE
@@ -70,12 +70,6 @@ encode，所以`1+2`这个数学表达式发送到服务端时还是`1+2`。服�
 1. 可以通过调用`XMLHttpRequest`对象的`abort()`方法来取消正在进行的 HTTP 请求。
 `abort()`方法在所有的 XMLHttpRequest 版本和 XHR2 中可用，调用`abort()`方法在这个对象
 上触发`abort`事件。
-2. The primary reason to call `abort()` is to cancel or time-out requests that
-have taken too long to complete or when the responses become irrelevant. Suppose
- you’re using XMLHttpRequest to request auto-complete suggestions for a text
-input field. If the user types a new character into the field before the
-server’s suggestions can arrive, then the pending request is no longer
-interesting and can be aborted.
 2. 对于耗时过长或者已经不需要的请求，可以调用`abort()`进行取消。例如使用
 XMLHttpRequest 为文本输入域请求自动完成推荐，如果用户在服务器的建议达到之前输入了新字符
 ，这时等待请求不再有用，应该中止。
@@ -182,10 +176,10 @@ xhr.send(null);
 `charset`参数，那么 XMLHttpRequest 将使用错误的编码来解析响应，并且`responseText`中
 的字符可能是错的。
 3. XHR2 定义了`overrideMimetype()`方法来解决这个问题。如果相对于服务器你更了解资源的
-MIME 类型，那么在调用`send()`之前把类型传递给`over-rideMimeType()`，这将使
+MIME 类型，那么在调用`send()`之前把类型传递给`overrideMimeType()`，这将使
 XMLHttpRequest 忽略`Content-Type`头而使用指定的类型。
 4. 假设你将下载 XML 文件，而你计划把它当成纯文本对待。可以使用`setOverrideMimeType()`
-让 XMLHttpRe-quest 知道它不需要把文件解析成 XML 文档。
+让 XMLHttpRequest 知道它不需要把文件解析成 XML 文档。
 ```js
 // Don't process the response as an XML document
 request.overrideMimeType("text/plain; charset=utf-8")
@@ -194,9 +188,6 @@ request.overrideMimeType("text/plain; charset=utf-8")
 
 ## Response progress
 ### Response progress events
-1. XHR2 defines a more useful set of events, the `XMLHttpRequest` object
-triggers different types of events at different phases of the request so that it
- is no longer necessary to check the `readyState` property
 1. 在之前的示例中，使用`readystatechange`事件探测 HTTP 请求的完成。XHR2 规范草案定义
 了更有用的事件集，在这个新的事件模型中，XMLHttpRequest 对象在请求的不同阶段触发不同类
 型的事件，所以它不再需要检查`readyState`属性。

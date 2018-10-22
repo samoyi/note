@@ -15,7 +15,7 @@ recursive, which is a special case of recursion.
 2. The tail call doesn't have to appear lexically after all other statements in
 the source code; it is only important that the calling function return
 immediately after the tail call, returning the tail call's result if any, since
- the calling function will never get a chance to do anything after the call if
+the calling function will never get a chance to do anything after the call if
 the optimization is performed.
 3. 尾调用的规则必须是：函数**执行**的最后一步是**返回**一个**函数调用**  
 以下三种情况，都不属于尾调用：
@@ -31,7 +31,7 @@ function f(x){
     g(x);
 }
 ```
-下面的函数中的 `m` 虽然 lexically 不是在函数最后一行，但在函数执行上则是最后一步，所以
+下面的函数中的`m`虽然 lexically 不是在函数最后一行，但在函数执行上则是最后一步，所以
 属于尾调用
 ```js
 function f(x) {
@@ -64,22 +64,22 @@ function factorial(n, accumulator = 1){
     }
 }
 ```
-5. 尾递归实现求Fibonacci数
-Fibonacci数列使用`0 0 1...`的模式
+5. 尾递归实现求 Fibonacci 数
+Fibonacci 数列使用`0 0 1...`的模式
 下面这个不是尾递归：
 ```js
 function Fibonacci (n) {
-    if ( n <= 1 ) {return n};
+    if (n <= 1) {return n};
     return Fibonacci(n - 1) + Fibonacci(n - 2);
 }
 ```
 如果实现支持尾递归，可以改成下面的写法：
 ```js
-// ac1是序号为n-2的值，ac2是序号为n-1的值。序号最小为0
+// ac1 是序号为 n-2 的值，ac2 是序号为 n-1 的值。序号最小为 0
 function Fibonacci(n , ac1 = 0 , ac2 = 1){
     if (n > 1){
         // 计算顺序是从左到右，但序号是相反的递减顺序
-        // 本次的ac2会作为下一次的ac1，本次相加的结果会作为下一次的ac2
+        // 本次的 ac2 会作为下一次的 ac1，本次相加的结果会作为下一次的 ac2
         return Fibonacci(n - 1, ac2, ac1 + ac2);
     }
     else if (n === 1){
@@ -90,23 +90,23 @@ function Fibonacci(n , ac1 = 0 , ac2 = 1){
     }
 }
 ```
-6. 因为并不是所有语言及其实现都支持TCO，例如虽然 ES6 的规范要求实现在严格模式下支持
+6. 因为并不是所有语言及其实现都支持 TCO，例如虽然 ES6 的规范要求实现在严格模式下支持
 TCO，但至少截至 Chrome66.0.3359.139 及 Node 8.1.2，并没有支持 TCO。
 
 
 ## Trampoline 解决递归导致的栈溢出
 在不支持尾递归的环境下，可以使用 Trampoline 将递归调用变为循环调用
 ```js
-// 参数fn为要循环调用的函数
-// 执行fn后如果返回值为函数，则继续执行；否则返回该非函数返回值
-// 可以看出来，fn需要循环的返回一个函数，直到循环结束时，返回一个非函数
+// 参数 fn 为要循环调用的函数
+// 执行 fn 后如果返回值为函数，则继续执行；否则返回该非函数返回值
+// 可以看出来，fn 需要循环的返回一个函数，直到循环结束时，返回一个非函数
 function trampoline(fn){
     while (fn && fn instanceof Function) {
         fn = fn();
     }
     return fn;
 }
-// 根据上述对fn的要求，对尾递归的Fibonacci函数进行改写
+// 根据上述对 fn 的要求，对尾递归的 Fibonacci 函数进行改写
 function Fibonacci(n , ac1 = 0 , ac2 = 1){
     if (n>1){
         return Fibonacci.bind(null, n - 1, ac2, ac1 + ac2);
@@ -184,27 +184,27 @@ Fibonacci(100);
 `while`循环结束。返回`value`中保存的最终累加值。`accumulator`调用结束。
 
 
-## JS中使用 `setTimeout` 防止递归栈溢出
+## JS 中使用`setTimeout`防止递归栈溢出
 ```js
-let list = readHugeList(); // list 是一个很大的数组
+let list = readHugeList(); // 一个很大的数组
 function nextListItem() {
     let item = list.pop();
     if (item) {
         // process the list item...
         nextListItem();
     }
-};
+}
 ```
-如果 `list` 足够大，上述递归将导致栈溢出。只需要把 `nextListItem` 做如下修改就可以避免：
+如果`list`足够大，上述递归将导致栈溢出。只需要把`nextListItem`为如下修改就可以避免：
 ```js
 function nextListItem() {
     let item = list.pop();
     if (item) {
-        setTimeout( nextListItem, 0);
+        setTimeout(nextListItem, 0);
     }
 };
 ```
-这样 `nextListItem` 就可以直接返回 `undefined` 从而释放栈内存。
+这样`nextListItem`就可以直接返回`undefined`从而释放栈内存。
 
 
 ## References
