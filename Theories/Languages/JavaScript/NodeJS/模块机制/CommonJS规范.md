@@ -2,16 +2,18 @@
 
 ## CommonJS 规范要解决的 JavaScript 中存在问题
 * **没有模块系统**。
-* **标准库较少**。ECMAScript仅定义了部分核心库，对于文件系统，I/O 流等常见需求却没有标
-准的API。就 HTML5 的发展状况而言，W3C 标准化在一定意义上是在推进这个过程，但是它仅限于
-浏览器端。
-* **没有标准接口**。在JavaScript中，几乎没有定义过如 Web 服务器或者数据库之类的标准统
-一接口。
+* **标准库较少**。ECMAScript 仅定义了部分核心库，对于文件系统，I/O 流等常见需求却没有
+标准的 API。就 HTML5 的发展状况而言，W3C 标准化在一定意义上是在推进这个过程，但是它仅限
+于浏览器端。
+* **没有标准接口**。在 JavaScript 中，几乎没有定义过如 Web 服务器或者数据库之类的标准
+统一接口。
 * **缺乏包管理系统**。这导致 JavaScript 应用中基本没有自动加载和安装依赖的能力。
 
 
 ## Node 与浏览器以及 W3C 组织、CommonJS 组织、ECMAScript之间的关系
-<img src="./images/Node与浏览器以及W3C组织、CommonJS组织、ECMAScript之间的关系.png" alt="Node与浏览器以及W3C组织、CommonJS组织、ECMAScript之间的关系" width=800 style="border:solid white" />
+<img src="./images/Node与浏览器以及W3C组织、CommonJS组织、ECMAScript之间的关系.png"
+alt="Node与浏览器以及W3C组织、CommonJS组织、ECMAScript之间的关系"
+width=800 style="border:solid white" />
 
 
 ## CommonJS 的模块规范

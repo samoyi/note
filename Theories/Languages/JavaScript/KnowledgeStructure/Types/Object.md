@@ -19,9 +19,9 @@
     Object.setPrototypeOf(obj, proto);
     obj.find() // "hello"
     ```
-* JavaScript 引擎内部，`super.foo`等同于`Object.getPrototypeOf(this).foo`（属性
-或`Object.getPrototypeOf(this).foo.call(this)`（方法，虽然使用的原型方法，但`this`
-还是指向实例）
+* JavaScript 引擎内部，`super.foo`等同于`Object.getPrototypeOf(this).foo`（属性）
+或`Object.getPrototypeOf(this).foo.call(this)`（方法）。因此，虽然使用的原型方法，但
+`this`还是指向实例
     ```js
     const proto = {
         x: 'hello',

@@ -198,7 +198,6 @@ console.log( numbersCloseEnoughToEqual(x, y) );  // true
         ```js
         console.log(Number('\n'));  // 0
         console.log(Number('\t'));  // 0
-        console.log(Number('\b'));  // NaN  \b 会有实际字符输出，
         console.log(Number('\r'));  // 0
         console.log(Number('\f'));  // 0
         ```
@@ -224,7 +223,6 @@ console.log( numbersCloseEnoughToEqual(x, y) );  // true
     console.log(Number.parseInt('\t123'));  // 123
     console.log(Number.parseInt('\r123'));  // 123
     console.log(Number.parseInt('\f123'));  // 123
-    console.log(Number.parseInt('\b123'));  // NaN
     ```
 3. 如果有上述可忽略的，在忽略完成后，如果剩下的字符串中，前面的一个或几个字符不是合理的
 数字类型（包括任何进制），`Number.parseInt()`会返回`NaN`。
@@ -247,7 +245,7 @@ console.log( numbersCloseEnoughToEqual(x, y) );  // true
 * 空字符串和空白字符串返回`NaN`，这一点与`Number()`返回`0`不同
     ```js
     console.log(Number.parseInt(''));   // NaN
-    // 其实空白字符串，根据前面忽略前导0的规则，最终识别是和''是一样的
+    // 其实空白字符串，根据前面忽略前导空白的规则，最终识别是和''是一样的
     console.log(Number.parseInt(' '));  // NaN
     ```
 * 能自动识别十六进制字符串，但不能自动识别其他进制的。要想识别就必须带第二个参数。建议永
