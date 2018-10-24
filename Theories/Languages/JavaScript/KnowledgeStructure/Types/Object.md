@@ -298,14 +298,14 @@ console.log(arr.toString()); // “1,2,3”
 ## 属性和方法
 ### `Object.is`
 1. 判断两个值是否相等
-2. 使用 `===` 的问题是，`NaN` 不等于` NaN` 本身，以及 `0` 等于 `-0`
+2. 使用`===`的问题是，`NaN`不等于`NaN`本身，以及`0`等于`-0`
     ```js
     console.log( Object.is(3/"a", NaN) ); // true
     console.log( Object.is(0, +0) ); // true
     console.log( Object.is(0, -0) ); // false
     ```
-3. ES6 提出 “Same-value equality”（同值相等）算法，用来解决这个问题。`Object.is` 就
-是部署这个算法的新方法。
+3. ES6 提出 “Same-value equality”（同值相等）算法，用来解决这个问题。`Object.is`就部
+署这个算法的新方法。
 
 ### `Object.assign(target, ...sources)`
 1. 只会拷贝可枚举属性，且会把访问器属性变成数据属性
@@ -462,7 +462,7 @@ for(let key in obj){
 console.log(arr); // ["foo", "protoPro"]
 ```
 
-### `for...of`不能算是遍历对象的方法
+### `for...of`不是遍历对象的方法
 1. 它是一个对可迭代对象进行迭代的方法，不是遍历对象的方法。
 2. 首先它就不能遍历平对象。而且即使是可迭代对象，它也只会按照`Symbol.iterator`方法返回
 的迭代器中的迭代规则来迭代，而不一定就是迭代对象属性
@@ -632,25 +632,28 @@ console.log("age" in obj);  // true
 3. 可以检测到不可遍历的。
 
 ```js
-let proto = {name: 33},
-	obj = Object.create( proto );
+let proto = {name: 33};
+let obj = Object.create(proto);
 obj.age = 22;
+Object.defineProperty(obj, 'sex', {
+    value: 'female',
+});
 
 console.log(obj.hasOwnProperty("name"));  // false
 console.log(obj.hasOwnProperty("age"));  // true
+console.log(obj.hasOwnProperty("sex"));  // true
 ```
 
 ### `propertyIsEnumerable()`
 It returns `true` only if the named property is an own property and its
 `enumerable` attribute is `true`.
 ```js
-let proto = {name: 33},
-	obj = Object.create( proto );
+let proto = {name: 33};
+let obj = Object.create(proto);
 
 obj.age = 22;
 
 Object.defineProperty(obj, "sex", {
-	configurable: false,
 	value: "female"
 });
 

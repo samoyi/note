@@ -102,7 +102,6 @@ console.log( str ); // hello world !
     ```
 
 
-
 ## 模板字符串
 ### 基本用法
 1. 如果使用模板字符串表示多行字符串，所有的空格和缩进都会被保留在输出之中
@@ -188,12 +187,13 @@ let str = 'a';
 console.log(str.charAt(1)); // ""
 console.log(typeof str[1]); // undefined
 ```
+前者是返回指定位置的字符，所以是空字符串；后者本质上是属性访问。
 
 ### `codePointAt()`
 ```js
 let str = '𝑒';
 console.log(str.codePointAt(0)); // 119890
-console.log(str.charCodeAt(0)); // 55349
+console.log(str.charCodeAt(0));  // 55349
 console.log(str.codePointAt(1)); // 56402
 ```
 * 从上面的例子可以看出来，该方法相比于`charCodeAt()`，对多字节字符的兼容性更好一些。但
@@ -377,26 +377,41 @@ console.log(str.includes('', 99));  // true
 
 ### `indexOf()` `lastIndexOf()`
 1. `str.indexOf(searchValue[, fromIndex])`
-    `str.lastIndexOf(searchValue[, fromIndex])`
+   `str.lastIndexOf(searchValue[, fromIndex])`
 2. 不支持正则
     ```js
     let str = 'abcdefgfedcba';
     console.log(str.indexOf('c'));     // 2
     console.log(str.lastIndexOf('c')); // 10
     ```
-3. 对于第二个参数，`indexOf()`是从左边开始数起点位置，`lastIndexOf()`是从右边开始数起
-点位置，都是和搜索的方向一样
+3. `indexOf()`是从左边开始找，`lastIndexOf()`是从右边开始找。两个方法可选的第二个参数
+都是寻找的起点 index。
+4. 注意`lastIndexOf()`只是寻找方向是从右到左，起返回结果的 index 以及第二个参数的
+index 仍然是正常的以左边作为起点。
     ```js
-    console.log(str.indexOf('c', 3));     // 10   跳过了左边的 c
-    console.log(str.lastIndexOf('c', 3)); // 2    跳过了右边的 c
+    let str = '123321';
+    // 从左数第三个字符的位置开始向右找 3，立刻就找到了，找到时的 index 是 2
+    console.log(str.indexOf(3, 2));  // 2
+    // 从左数第四个字符的位置开始向右找 3，立刻就找到了，找到时的 index 是 3
+    console.log(str.indexOf(3, 3));  // 3
+    // 从左数第五个字符的位置开始向右找 3，余下的字符串是 21，所以找不到
+    console.log(str.indexOf(3, 4));  // -1
+    // 从最后边开始向左找 3，找到时的 index 是 3
+    console.log(str.lastIndexOf(3));  // 3
+    // 从左数第二个字符的位置开始向左找 3，余下的字符串是 12，所以找不到
+    console.log(str.lastIndexOf(3, 1));  // -1
+    // 从左数第三个字符的位置开始向左找 3，立刻就找到了，找到时的 index 是 2
+    console.log(str.lastIndexOf(3, 2));  // 2
+    // 从左数第四个字符的位置开始向左找 3，立刻就找到了，找到时的 index 是 3
+    console.log(str.lastIndexOf(3, 3));  // 3
     ```
-3. 如果第二个参数指定的序号超出了范围，则该序号自动变为距离它最近的序号
+4. 如果第二个参数指定的序号超出了范围，则该序号自动变为距离它最近的序号
     ```js
     let str = 'abcdefgfedcba';
     console.log(str.indexOf('c', -100));     // 2    fromIndex 自动变为 0
     console.log(str.lastIndexOf('c', 100)); // 10    fromIndex 自动变为 12
     ```
-4. 如果第一个参数为空字符串，逻辑有些讲不通，记住规则就行了：
+5. 如果第一个参数为空字符串，逻辑有些讲不通，记住规则就行了：
     * 如果没有第二个参数，一个返回首序号一个返回尾序号：
     ```js
     console.log(str.indexOf(''));         // 0
@@ -422,6 +437,7 @@ console.log(str.includes('', 99));  // true
     console.log(str.startsWith('he'));    // true
     console.log(str.startsWith('he', 1));    // false
     console.log(str.endsWith('ld'));    // true
+    // 如果和`lastIndexOf`的第二个参数一样，下面这一行就应该返回 true 了
     console.log(str.endsWith('ld', 10));    // false
     console.log(str.endsWith('ld', 11));    // true
     ```
@@ -459,7 +475,8 @@ console.log(str.includes('', 99));  // true
 属性不知道是什么，没有地方提到这个属性。
     ```js
     let str = 'abcba';
-    console.log(str.match(/(b(c))(b)/)); // ["bcb", "bc", "c", "b", index: 1, input: "abcba", groups: undefined]
+    console.log(str.match(/(b(c))(b)/));
+    // ["bcb", "bc", "c", "b", index: 1, input: "abcba", groups: undefined]
     console.log(str.match(/bc|ba/g)); // ["bc", "ba"]
     console.log(str.match(/cd/)); // null
     ```
@@ -606,11 +623,20 @@ no-break space, etc.) and all the line terminator characters (LF, CR, etc.). 但
 包括`\b`，`\b`会有实际字符输出。
 3. 多行 trim
     ```js
-    let str = `    hel  l o
-       world
-    !`;
+    let str = `  hel  l o\t\v
+      world\t\v
+      !  `;
 
-    str.replace(/ |\t|\v/g, ''); // 匹配空白字符串、制表符和垂直制表符
+    console.log(str);
+    //   hel  l o
+    //   world
+    //   !
+    str = str.replace(/^( |\t|\v)+/gm, '').replace(/( |\t|\v)+$/gm, '');
+    // 先替换掉多行行首的若干个空白字符，在替换掉多行行尾的若干个空白字符
+    console.log(str);
+    // hel  l o
+    // world
+    // !
     ```
 3. IE 不支持 `trimStart()`/`trimLeft()`和`trimEnd()`/`trimRight()`
 

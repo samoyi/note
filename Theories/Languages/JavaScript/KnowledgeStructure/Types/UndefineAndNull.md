@@ -1,8 +1,6 @@
 # Undefined and Null
 
-
-***
-## Undefined
+## `Undefined`
 * The `undefined` value represents a deeper kind of absence.
 * A variable containing the value of `undefined` is different from a variable
 that hasn’t been defined at all.：

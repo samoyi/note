@@ -10,4 +10,4 @@
 * Symbol 作为属性名，该属性不会出现在`for...in`、`for...of`循环中，也不会被
 `Object.keys()`、`Object.getOwnPropertyNames()`、`JSON.stringify()`返回。但是，它
 也不是私有属性，有一个`Object.getOwnPropertySymbols`方法，可以获取指定对象的所有
-Symbol 属性名。
+Symbol 属性名。`Reflect.ownKeys()`可以获得包括 Symbol 属性在内的所有自身属性属性名。
