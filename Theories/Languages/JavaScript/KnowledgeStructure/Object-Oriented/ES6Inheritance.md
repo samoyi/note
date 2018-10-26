@@ -25,6 +25,24 @@
 
     new B();
     ```
+* 可以给`super()`传参，将使用这些参数调用父类构造函数
+    ```js
+    class Foo {
+        constructor(name){
+            this.name = name;
+        }
+    }
+
+    class Bar extends Foo {
+        constructor(profile){
+            super(profile.name);
+            console.log(profile.age); // 22
+        }
+    }
+
+    let bar = new Bar({age: 22, name: '33'});
+    console.log(bar.name); // "33"
+    ```
 
 ### 作为对象时
 阮一峰的讲解不清晰，看[这个回答](https://www.zhihu.com/question/38292361/answer/105183980)

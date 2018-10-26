@@ -303,8 +303,8 @@ anywhere in the prototype chain of an object. 即，`object`的原型链中是�
 
 ## 解构（Destructuring）赋值
 1. 本质上，这种写法属于“模式匹配”，只要等号两边的模式相同，左边的变量就会被赋予对应的值。
-2. 如果结构赋值不成功，变量的值就等于`undefined`。但是如果是扩展运算符的变量解构赋值失败，则
-值为空数组
+2. 如果解构赋值不成功，变量的值就等于`undefined`。但是如果是扩展运算符的变量解构赋值失
+败，则值为空数组
     ```js
     let [foo] = [];
     let [bar, baz] = [1];
