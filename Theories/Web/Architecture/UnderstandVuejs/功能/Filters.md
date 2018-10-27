@@ -1,9 +1,9 @@
 # Filters
 
 1. Vue.js 允许你自定义过滤器，可被用于一些常见的文本格式化。
-2. 过滤器可以用在两个地方：双花括号插值和 v-bind 表达式。
+2. 过滤器可以用在两个地方：双花括号插值和`v-bind`表达式。
 3. 过滤器应该被添加在 JavaScript 表达式的尾部，由`|`符号指示。
-4. 你可以在组件内通过`fileter`选项定义局部过滤器，也可以在实例创建前定义全局过滤器。
+4. 你可以在组件内通过`filters`选项定义局部过滤器，也可以在实例创建前定义全局过滤器。
 5. 过滤器可以串联使用。
 6. 过滤器是函数，因此可以接受参数。函数默认的第一个参数是之前的表达式的值，传入的一个或
 多个参数被认为是第二个及更靠后的参数
@@ -49,3 +49,31 @@ new Vue({
     },
 });
 ```
+
+7. 因为过滤器只适用于双花括号插值和`v-bind`表达式，所以其他时候想要过滤数据就要使用计算
+属性
+    ```html
+    <div id="app">
+        <form>
+            <input type="text" v-model="str" />
+            {{ UpperCase }}
+        </form>
+    </div>
+    <script>
+    "use strict";
+
+    new Vue({
+        data: {
+            str: '',
+        },
+        computed: {
+            UpperCase(){
+                if (this.str.toLocaleUpperCase().includes('HIME')){
+                    alert('Yeah');
+                }
+                return this.str.toLocaleUpperCase();
+            }
+        },
+    }).$mount('#app');
+    </script>
+    ```
