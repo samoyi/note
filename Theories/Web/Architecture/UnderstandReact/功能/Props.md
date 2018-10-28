@@ -4,6 +4,69 @@
 All React components must act like pure functions with respect to their props.
 
 
+## 指定属性
+### 使用 JavaScript 表达式指定属性
+1. 可以传递任何`{}`包裹的 JavaScript 表达式作为一个属性值
+    ```js
+    <MyComponent foo={1 + 2 + 3 + 4} />
+    ```
+2. `if`语句和`for`循环在 JavaScript 中不是表达式，因此它们不能直接在 JSX 中使用，但是
+你可以将它们放在周围的代码中
+    ```js
+    function NumberDescriber(props) {
+        let description;
+        if (props.number % 2 == 0) {
+            description = <strong>even</strong>;
+        }
+        else {
+            description = <i>odd</i>;
+        }
+        return <div>{props.number} is an {description} number</div>;
+    }
+    ```
+
+### 使用字符串常量指定属性
+1. 你可以将字符串常量作为属性值传递。下面这两个 JSX 表达式是等价的：
+    ```html
+    <MyComponent message="hello world" />
+
+    <MyComponent message={'hello world'} />
+    ```
+2. 当传递一个字符串常量时，该值会被解析为 HTML 非转义字符串，所以下面两个 JSX 表达式是
+相同的：
+    ```html
+    <MyComponent message="&lt;3" />
+
+    <MyComponent message={'<3'} />
+    ```
+
+### 属性默认为`true`
+1. 如果你没有给属性传值，它默认为`true`。因此下面两个 JSX 是等价的：
+    ```html
+    <MyTextBox autocomplete />
+
+    <MyTextBox autocomplete={true} />
+    ```
+2. 一般情况下，我们不建议这样使用，因为它会与 ES6 对象简洁表示法 混淆。比如`{foo} `是
+`{foo: foo}`的简写，而不是`{foo: true}`。这里能这样用，是因为它符合 HTML 的做法。
+
+### 扩展属性
+1. 如果你已经有了个`props`对象，并且想在 JSX 中传递它，你可以使用`...`作为扩展操作符来
+传递整个属性对象。下面两个组件是等效的：
+    ```js
+    function App1() {
+        return <Greeting firstName="Ben" lastName="Hector" />;
+    }
+
+    function App2() {
+        const props = {firstName: 'Ben', lastName: 'Hector'};
+        return <Greeting {...props} />;
+    }
+    ```
+2. 当你构建通用容器时，扩展属性会非常有用。然而，这样做也可能让很多不相关的属性，传递到
+不需要它们的组件中使代码变得混乱。我们建议你谨慎使用此语法。
+
+
 ## 在构造函数中传入 props
 ```js
 class Clock extends React.Component {

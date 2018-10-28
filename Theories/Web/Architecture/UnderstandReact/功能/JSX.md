@@ -4,6 +4,11 @@
 组件应该是独立且完整的，所以组件就应该包含模板和逻辑。
 
 
+## Misc
+* 本质上来讲，JSX 只是为`React.createElement(component, props, ...children)`方法提
+供的语法糖。Vue 的情况也是一样，`template`也只是渲染函数的语法糖。
+
+
 ## 基本语法
 * 可以近似的把 JSX 理解为模板字符串，只是它没有外面的反引号。
 * 因此与模板字符串类似，JSX 中使用 JS 表达式需要放在大括号。
@@ -16,23 +21,22 @@
     书写 JSX 一般都会像 HTML 那样换行，而又因为 JSX 实际上是在 JS 代码中的，所以虽然不
     总是，但某些情况下也有可能会被解析器解析为单独的行，从而引发错误。因此在多行 JSX 的
     情况下，应该把整个 JSX 代码放在小括号内，就像模板字符串的反引号一样。
+    ```js
+    function formatName(user) {
+        return user.firstName + ' ' + user.lastName;
+    }
 
-```js
-function formatName(user) {
-    return user.firstName + ' ' + user.lastName;
-}
+    const user = {
+        firstName: 'Harper',
+        lastName: 'Perez'
+    };
 
-const user = {
-    firstName: 'Harper',
-    lastName: 'Perez'
-};
-
-const element = (
-    <h1>
-    Hello, {formatName(user)}!
-    </h1>
-);
-```
+    const element = (
+        <h1>
+        Hello, {formatName(user)}!
+        </h1>
+    );
+    ```
 
 * 因为 JSX 其实也是和模板字符串一样的 JS 表达式，所以就可以把它当做普通的 JS 表达式来任
 意使用。
@@ -107,7 +111,7 @@ const element = (
     };
     ```
     应该就是虚拟节点了。
-    
+
 
 ## JSX 防注入攻击
 1. 你可以放心地在 JSX 当中使用用户输入。React DOM 在渲染之前默认会过滤所有传入的值。它
