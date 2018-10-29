@@ -243,8 +243,7 @@ consoleCloneType(fnClone); // PlainObject浅拷贝 + Array浅拷贝 + Node浅拷
 
 ## 拷贝方法
 ### 方法一：`Object(source)`
-`PlainObject`浅拷贝 + `Array`浅拷贝 + 可拷贝原型属性 + 可拷贝不可枚举  
-（`source`是`object`类型时, `Object(source)`返回`source`）
+直接返回`source`，即完全是同一个对象
 
 ### 方法二：`Object.assign(target, source)`
 `PlainObject`浅拷贝 + `Array`浅拷贝 + `Node`浅拷贝 + 仅实例 + 仅可枚举
