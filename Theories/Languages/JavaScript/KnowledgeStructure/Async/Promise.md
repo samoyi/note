@@ -67,6 +67,155 @@ setTimeout(()=>{
 ```
 
 
+## 构造函数参数
+1. 不管是调用`resolve`了还是`reject`，后面的代码都会继续执行。但是，后面的`resolve`和
+`reject`都是无效的。而且如果后面有错误，错误不会被抛出到外部也不会被捕获，但是会阻止之
+后代码的执行
+    ```js
+    new Promise((resolve, reject)=>{
+        resolve('resolved'); // 成功解析
+        reject('rejected'); // 不会触发 catch
+        console.log(22); // 可以被打印
+        throw new Error('err'); // 不会抛出到外部也不会被捕获
+        console.log(33); // 不会被打印
+    })
+    .then((res)=>{
+        console.log(res); // "resolved"
+    })
+    .catch(err=>{
+        console.log(err); // 不会捕获到 reject 或 error
+    })
+    ```
+
+
+## 基本实例方法
+### `Promise.prototype.then()`
+#### 链式调用
+1. `then`方法返回的是一个新的`Promise`实例（不是原来那个`Promise`实例）。
+2. 返回的逻辑是；如果`then`方法的回调内部抛出了错误，则`then`方法返回的是
+`Promise.reject(该错误实例)`；否则，返回的是`Promise.resolve(回调返回值)`
+    ```js
+    let p0 = new Promise((resolve, reject)=>{
+        resolve('resolved');
+    });
+
+    let p1 = p0.then(
+        res=>{
+            return 22;
+        },
+    );
+    // 回调返回 22，所以 p1 是 Promise.resolve(22)
+    p1.then(res=>{
+        console.log(res); // 22
+    })
+
+    let p2 = p1.then(res=>{
+        return new Error('error1');
+    });
+    // 回调返回错误实例 Error('error1') ，所以 p2 是 Promise.resolve(Error('error1'))
+    // 注意，p2 仍是被 resolve 了。因为这是返回错误，而不是抛出错误。
+    p2.then(res=>{
+        console.log(res.message); // "error1"
+    })
+
+    let p3 = p2.then(res=>{
+        throw new Error('error2');
+    });
+    // 回调抛出了错误，所以 p3 是 Promise.reject(Error('error2'))
+    p3.catch(err=>{
+        console.log(err.message); // "error2"
+    })
+    ```
+3. 因此可以采用链式写法，即`then`方法后面再调用另一个`then`方法。同时，因为`catch`方法是`then(null, rejection)`方法的别名，所以后面依然可以继续链
+    ```js
+    new Promise((resolve, reject)=>{
+        resolve('resolved');
+    })
+    .then(
+        res=>{
+            console.log(res); // "resolved"
+            return 22;
+        },
+    )
+    .then(res=>{
+        console.log(res); // 22
+        throw new Error('error!')
+    })
+    .catch(err=>{
+        console.log(err.message); // "error!"
+        return 33;
+    })
+    .then(res=>{
+        console.log(res); // 33
+    });
+    ```
+4. 上面例子中返回的`Promise`实例因为都是可以立即 resolve 或 reject 的，所以不能明显的
+感受到异步的感觉。把它们分开写并插入一些同步代码，就可以看出来异步
+    ```js
+    let p0 = new Promise((resolve, reject)=>{
+        resolve('resolved');
+    });
+    console.log('0');
+    let p1 = p0.then(
+        res=>{
+            console.log(res); // "resolved"
+            return 22;
+        },
+    );
+    console.log('1');
+    let p2 = p1.then(res=>{
+        console.log(res); // 22
+        throw new Error('error!')
+    });
+    console.log('2');
+    let p3 = p2.catch(err=>{
+        console.log(err.message); // "error!"
+        return 33;
+    });
+    console.log('3');
+    let p4 = p3.then(res=>{
+        console.log(res); // 33
+    });
+    console.log('4');
+    ```
+5. 不过更实际的使用情况是，在回调里返回就是一个异步操作
+    ```js
+    function resolved(ms, res){
+        return new Promise((resolve, reject)=>{
+            setTimeout(()=>{
+                resolve(res);
+            }, ms);
+        });
+    }
+    function rejected(ms, err){
+        return new Promise((resolve, reject)=>{
+            setTimeout(()=>{
+                reject(err);
+            }, ms);
+        });
+    }
+
+    new Promise((resolve, reject)=>{
+        resolve('resolved');
+    })
+    .then(res=>{
+        console.log(res); // 立刻输出 "resolved"
+        return resolved(2000, 22);
+    })
+    .then(res=>{
+        console.log(res); // 两秒钟后输出 22
+        return rejected(2000, new Error('error!'));
+    })
+    .catch(err=>{
+        console.log(err.message); // 再两秒钟后输出 "error!"
+        return resolved(2000, 33);
+    })
+    .then(res=>{
+        console.log(res); // 再两秒钟后输出 33
+    });
+    ```
+
+
 ## Nested promise
 1. 一个 promise 实例作为另一个 promise 的结果
     ```js
@@ -88,8 +237,8 @@ setTimeout(()=>{
 rejected，否则就是 fullfilled。
 3. 不懂，为什么是这个机制。直观的感觉应该是一秒钟之后`p2`就应该 resolve，然后`result`
 的值是 promise 实例。
-4. 而且，只要有`reject`被调用，则最外层 promise 立刻就会
-rejected。例如下面的例子，`p2`在两秒后调用了`reject`了，所以`p3`立刻就 rejected。
+4. 而且，只要有`reject`被调用，则最外层 promise 立刻就会 rejected。例如下面的例子，
+`p2`在两秒后调用了`reject`了，所以`p3`立刻就 rejected。
     ```js
     let p1 = new Promise(function (resolve, reject) {
         setTimeout(() => resolve('ok'), 3000)
@@ -198,7 +347,7 @@ new Promise((resolve, reject)=>{
     )
     ```
 2. 但`resolve`和`reject`调用之后，并不是像`return`一样后面的代码就不执行。后面仍然会
-执行，只不过其中的错误既不会被捕获也不会被抛出。但是，仍然会中断执行。懂不，机制很奇怪
+执行，只不过其中的错误既不会被捕获也不会被抛出。但是，仍然会中断执行。不懂，机制很奇怪
     ```js
     new Promise((resolve, reject)=>{
         resolve(22); // 不管是 resolve
