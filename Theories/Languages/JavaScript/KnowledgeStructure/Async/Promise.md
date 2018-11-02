@@ -19,13 +19,14 @@
 6. `then`方法接受参数`onFulfilled`，以及一个可选的参数`onRejected`。`catch`方法
 接收一个参数`onRejected`。这三个参数都是函数。成功的话你用成功的结果做你想做的，失败的
 话你用失败信息进行处理。
-7. 如果`executor`内部的异步操作成功，需要调用`resolve`通知`promise`。`resolve`
-的参数应当设为异步操作的结果。当该方法被调用时，`onFulfilled`会被自动调用，参数和
-`resolve`的参数相同。
-8. 如果`executor`内部的异步操作失败，需要调用`reject`通知`promise`。`reject`
-的参数应当设为错误信息。当该方法被调用时，第一个`onRejected`会被自动调用，参数和
-`reject`的参数相同。
-9. 因为异步操作结果会被永久保存，所以之后依然可以从实例中读取结果。
+7. 如果`executor`内部的异步操作成功，需要调用`resolve`通知`promise`。`resolve`的参数
+应当设为异步操作的结果。当该方法被调用时，`onFulfilled`会被自动调用，参数和`resolve`的
+参数相同。
+8. 如果`executor`内部的异步操作失败，需要调用`reject`通知`promise`。`reject`的参数应
+当设为失败信息。当该方法被调用时，`onRejected`会被自动调用，参数和`reject`的参数相同。
+9. 另外，异步操作中，如果在调用`resolve`或`reject`之前抛出了错误，则`onRejected`也会
+被自动调用，参数为抛出的错误实例。
+10. 因为异步操作结果会被永久保存，所以之后依然可以从实例中读取结果。
 
 ```js
 let promise = new Promise((resolve, reject)=>{
@@ -67,7 +68,7 @@ setTimeout(()=>{
 ```
 
 
-## 构造函数参数
+## 对结果不可变的承诺
 1. 不管是调用`resolve`了还是`reject`，后面的代码都会继续执行。但是，后面的`resolve`和
 `reject`都是无效的。而且如果后面有错误，错误不会被抛出到外部也不会被捕获，但是会阻止之
 后代码的执行
@@ -86,6 +87,8 @@ setTimeout(()=>{
         console.log(err); // 不会捕获到 reject 或 error
     })
     ```
+2. 因为 Promise 的状态一旦改变，就永久保持该状态，不会再变了。因此除了之后不能再调用
+`resolve`和`reject`，因为抛出错误也是相当于`reject`，所以错误也不会被抛出到外部。
 
 
 ## 基本实例方法
@@ -215,91 +218,211 @@ setTimeout(()=>{
     });
     ```
 
+### `Promise.prototype.catch()`
+1. 异步操作中调用了`reject`函数，或者在调用`resolve`或`reject`函数之前有错误抛出，
+`Promise`实例的状态都会变为 rejected，导致`catch`的回调被触发。
+    ```js
+    let p = new Promise((res, rej)=>{
+        throw new Error('Error!');
+        res(22);
+    })
+    .catch(err=>{
+        console.log(err.message); // "Error!"
+    })
+    ```
+
+### `Promise.prototype.finally()`
+1. `finally`方法用于指定不管 Promise 对象最后状态如何，都会执行的操作。该方法是
+ES2018 引入标准的。
+2. 只要想想，其实`then`方法只要提供了两个回调参数，也可以实现这个功能。但与`then`方法的
+实现由两点不同：
+3. 其一，`finally`方法的回调函数不接受任何参数，这意味着没有办法知道，前面的 Promise
+状态到底是 fulfilled 还是 rejected。这表明，`finally`方法里面的操作，应该是与状态无关
+的，不依赖于 Promise 的执行结果。异步不管成功或失败之后的收尾工作。
+4. 第二点不同是，虽然`finally`方法也会像`then`和`catch`那样返回一个 Promise 实例，但
+返回的规则却不同：如果`finally`回调里抛出了错误，那返回的实例是和`then`和`catch`返回的
+一样，即`Promise.reject(该错误实例)`；但如果不抛出错误，则会返回一个和上一级相同的一个
+Promise 实例（但不是同一个实例）。
+5. 而是
+    ```js
+    // 因为 finally 回调里没抛出错误，所以返回的相当于 Promise.resolve(22)
+    new Promise((resolve, reject)=>{
+        resolve();
+    })
+    .then(res=>{
+        return 22;
+    })
+    .finally(()=>{
+        return 33;
+    })
+    .then(res=>{
+        console.log(res); // 22
+    })
+
+    // 因为 finally 回调里没抛出错误，所以返回的相当于 Promise.reject(new Error('Error!'))
+    new Promise((resolve, reject)=>{
+        resolve();
+    })
+    .then(res=>{
+        throw new Error('Error!');
+    })
+    .finally(()=>{
+        return 33;
+    })
+    .then(res=>{
+        console.log(res); // 没有输出
+    })
+    .catch(err=>{
+        console.log(err.message); // "Error!"
+    })
+
+    // 因为 finally 回调里抛出了错误，所以返回的相当于 Promise.reject(new Error('Error2'))
+    new Promise((resolve, reject)=>{
+        resolve();
+    })
+    .then(res=>{
+        throw new Error('Error1');
+    })
+    .finally(()=>{
+        throw new Error('Error2');
+        return 33;
+    })
+    .then(res=>{
+        console.log(res); // 没有输出
+    })
+    .catch(err=>{
+        console.log(err.message); // "Error2"
+    })
+    ```
 
 ## Nested promise
 1. 一个 promise 实例作为另一个 promise 的结果
+2. 不懂。嵌套实例的最终解析结果感觉比较混乱，没有总结出规律，先看下面各种情况的例子
+
+### 如果嵌套实例提前 resolve 了
+1. 那就要等被嵌套实例的结果。因为只有两个都 resolve 才能整体 resolve。
+2. 如果被嵌套实例最终 resolve 了，则嵌套实例 resolve，表示整体 resolve
     ```js
     let p1 = new Promise(function (resolve, reject) {
-        setTimeout(() => reject(new Error('fail')), 3000)
+        setTimeout(() => resolve('success'), 3000)
     });
 
     let p2 = new Promise(function (resolve, reject) {
         setTimeout(() => resolve(p1), 1000)
     });
 
-    p2 // After 3 secondes to get the fail
-    .then(result => console.log('fulfilled:' + result))
-    .catch(error => console.log('rejected:' + error)); // rejected:Error: fail
+    p2 // 三秒钟之后 resolve
+    .then(result => console.log('fulfilled: ' + result)) // fulfilled: success
+    .catch(error => console.log('rejected', error));
     ```
-2. 最外部 promise 的结果是 fullfilled 还是 rejected，并不取决于最外部 promise 里调用
-的是`resolve`还是`reject`。比如上面例子中虽然最外部 promise 的调用了`resolve`，但其结
-果还是 rejected。而是，只要其中有一个是调用了`reject`，最外部 promise 的结果就是
-rejected，否则就是 fullfilled。
-3. 不懂，为什么是这个机制。直观的感觉应该是一秒钟之后`p2`就应该 resolve，然后`result`
-的值是 promise 实例。
-4. 而且，只要有`reject`被调用，则最外层 promise 立刻就会 rejected。例如下面的例子，
-`p2`在两秒后调用了`reject`了，所以`p3`立刻就 rejected。
+3. 如果被嵌套实例最终 reject 了，则嵌套实例也 reject，表示整体 reject。不懂为什么最终
+的 error 是解析过的结果而不是未经解析的 rejected 实例
     ```js
     let p1 = new Promise(function (resolve, reject) {
-        setTimeout(() => resolve('ok'), 3000)
+        setTimeout(() => reject('fail'), 3000)
     });
 
     let p2 = new Promise(function (resolve, reject) {
-        setTimeout(() => reject(p1), 2000)
+        setTimeout(() => resolve(p1), 1000)
     });
 
-    let p3 = new Promise(function (resolve, reject) {
-        setTimeout(() => resolve(p2), 1000)
-    });
-
-    p3 // After 2 secondes to get the fail
+    p2 // 三秒钟之后 reject
     .then(result => console.log('fulfilled:' + result))
-    .catch(error => console.log('rejected:' + error)); // rejected:[object Promise]
+    .catch(error => console.log('rejected', error)); // rejected fail
     ```
 
+### 如果嵌套实例提前 reject 了
+1. 因为已经有一个是 reject 了，不用等待被嵌套实例的结果，整体就立刻 reject。
+2. 因为此时被嵌套实例尚未解析完毕，所以嵌套实例的解析结果只是未被解析的嵌套实例。
+    ```js
+    let p1 = new Promise(function (resolve, reject) {
+        setTimeout(() => resolve('success'), 3000)
+    });
 
-## Chaining promise
-`then`返回一个新的`promise`实例，则后续可以再接一个`then`来获取新`promise`异步操作的
-结果
+    let p2 = new Promise(function (resolve, reject) {
+        setTimeout(() => reject(p1), 1000)
+    });
+
+    p2 // 一秒钟之后  reject
+    .then(result => console.log('fulfilled:' + result))
+    .catch(error => console.log('rejected', error)); // rejected Promise {<pending>}
+    ```
+    ```js
+    let p1 = new Promise(function (resolve, reject) {
+        setTimeout(() => reject('fail'), 3000)
+    });
+
+    let p2 = new Promise(function (resolve, reject) {
+        setTimeout(() => reject(p1), 1000)
+    });
+
+    p2 // 一秒钟之后  reject
+    .then(result => console.log('fulfilled:' + result))
+    .catch(error => console.log('rejected', error)); // rejected Promise {<pending>}
+    ```
+
+### 如果被嵌套实例提前 resolve 了
+1. 同样，需要等待嵌套实例的结果，才能确保是否整体 resolve
+2. 因为最终嵌套实例也调用了 resolve 了，则整体 resolve
+    ```js
+    let p1 = new Promise(function (resolve, reject) {
+        setTimeout(() => resolve('success'), 1000)
+    });
+
+    let p2 = new Promise(function (resolve, reject) {
+        setTimeout(() => resolve(p1), 3000)
+    });
+
+    // 三秒钟之后  resolve
+    p2
+    .then(result => console.log('fulfilled: ' + result)) // fulfilled: success
+    .catch(error => console.log('rejected', error));
+    ```
+3. 如果最终嵌套实例 reject 或出错了，则整体 reject
+    ```js
+    let p1 = new Promise(function (resolve, reject) {
+        setTimeout(() => resolve('success'), 1000)
+    });
+
+    let p2 = new Promise(function (resolve, reject) {
+        setTimeout(() => reject(p1), 3000)
+    });
+
+    // 三秒钟之后 reject
+    p2
+    .then(result => console.log('fulfilled:' + result))
+    .catch(error => console.log('rejected:' + error));
+    // rejected: Promise {<resolved>: "success"}
+    ```
+
+### 如果被嵌套实例提前 reject 了
+这是居然仍然要等待被嵌套实例的结果！虽然最终整体结果总是 reject
+
 ```js
-new Promise((resolve, reject)=>{
-    // The first async operation
-    setTimeout(()=>{
-        if(Math.random()>0.5){
-            resolve(200);
-        }
-        else{
-            reject(404);
-        }
-    }, 3000);
-})
-.then(
-    (res)=>{
-        // If the result of the first async is resolved, returns a new promise
-        console.log(res) // 200
-        return new Promise((resolve, reject)=>{
-            setTimeout(()=>{
-                if(Math.random()>0.5){
-                    resolve(201);
-                }
-                else{
-                    reject(500);
-                }
-            }, 3000);
-        });
-    },
-    // If the result of the first async is rejected, log err
-    (err)=>{
-        console.log(err) // 404
-    }
-)
-.then(
-    // Get the result of the second promise async
-    // If the result of the first async is rejected, both res and err here are
-    // undefined
-    (res)=>{res && console.log(res)}, // 201
-    (err)=>{err && console.log(err)} // 500
-);
+let p1 = new Promise(function (resolve, reject) {
+    setTimeout(() => reject('fail'), 1000)
+});
+
+let p2 = new Promise(function (resolve, reject) {
+    setTimeout(() => resolve(p1), 3000)
+});
+
+p2 // 三秒钟之后 reject
+.then(result => console.log('fulfilled:' + result))
+.catch(error => console.log('rejected', error)); // rejected fail
+```
+```js
+let p1 = new Promise(function (resolve, reject) {
+    setTimeout(() => reject('fail'), 1000)
+});
+
+let p2 = new Promise(function (resolve, reject) {
+    setTimeout(() => reject(p1), 3000)
+});
+
+p2 // 三秒钟之后 reject
+.then(result => console.log('fulfilled:' + result))
+.catch(error => console.log('rejected', error)); // rejected Promise {<rejected>: "fail"}
 ```
 
 
@@ -347,7 +470,7 @@ new Promise((resolve, reject)=>{
     )
     ```
 2. 但`resolve`和`reject`调用之后，并不是像`return`一样后面的代码就不执行。后面仍然会
-执行，只不过其中的错误既不会被捕获也不会被抛出。但是，仍然会中断执行。不懂，机制很奇怪
+执行，只不过其中的错误既不会被捕获也不会被抛出。但是，仍然会中断执行。
     ```js
     new Promise((resolve, reject)=>{
         resolve(22); // 不管是 resolve
@@ -359,7 +482,17 @@ new Promise((resolve, reject)=>{
     .then(res=>{console.log(res)})
     .catch(err=>{console.log(err)})
     ```
-3. 会被捕获的错误（不管是`reject`里的还是，`resolve`和`reject`调用之前的），会沿着
+3. 但是，如果是先抛出了错误，则后面的代码不会执行
+    ```js
+    new Promise((resolve, reject)=>{
+        throw new Error('fail');
+        console.log(222); // 不会输出
+    })
+    .catch(err=>{
+        console.log(err.message); // "fail"
+    });
+    ```
+4. 会被捕获的错误（不管是`reject`里的还是，`resolve`和`reject`调用之前的），会沿着
 `promise`链向后传播，直到被捕获为止
     ```js
     new Promise((resolve, reject)=>{
@@ -377,9 +510,9 @@ new Promise((resolve, reject)=>{
     ```
 因为这个特性，像上面的例子一样，前面的`then`方法不用写第二个参数，统一在最后用`catch`
 来捕获错误的写法更加和谐。
-4. 在 Node v8.9.1 中虽然在`promise`中的能够被捕获的错误不加捕获也不会影响外部代码的继
+5. 在 Node v8.9.1 中虽然在`promise`中的能够被捕获的错误不加捕获也不会影响外部代码的继
 续执行，但已经给出了警告说明在未来这么做会中断程序的执行。
-5. 注意在`promise`中`setTimeout`回调的错误影响到外部，因为`setTimeout`回调函数本身就
+6. 注意在`promise`中`setTimeout`回调的错误影响到外部，因为`setTimeout`回调函数本身就
 不在`promise`里。
     ```js
     new Promise(function (resolve, reject) {
@@ -396,7 +529,7 @@ new Promise((resolve, reject)=>{
     });
     ```
     注意是先抛出错误再打印22，因为打印22属于 microTask。
-6. 因为现阶段（2018.8）`promise`中的未被捕获的错误不一定会暴露到外面（Chrome 抛出但
+7. 因为现阶段（2018.8）`promise`中的未被捕获的错误不一定会暴露到外面（Chrome 抛出但
 FF 不会）。就导致在`Promise`链的最后一环如果出错，这个错误可能就不会被发现：
     ```js
     new Promise((res, rej)=>{
@@ -463,14 +596,11 @@ error
 4
 ReferenceError
 ```
-注意输出结果的第三个行和第四行，第一次的 promise 实例的 rejected 的状态，而`p.catch`
-返回的实例就是没有结果的 pending 状态。不懂，是不是因为第一次 promise 内部已经 reject
-了，所以是 rejected 状态；而第二次已经 catch 了这个错误，已经没有错误了，所以成了
-pending 状态。
 
 
 ## `Promise.all(iterable)`
 1. `Promise.all`方法用于将多个 Promise 实例，包装成一个新的 Promise 实例。
+2. `Promise.all`方法的参数可以不是数组，但必须具有 Iterator 接口
     ```js
     let p1 = new Promise((resolve, reject)=>{
         setTimeout(()=>{
@@ -482,12 +612,18 @@ pending 状态。
             resolve(222);
         }, 3000);
     });
+
     Promise.all([p1, p2])
     .then(res=>{
         console.log(res); // 三秒钟之后输出 [111, 222]
     })
+
+    Promise.all(new Set([p2, p1]))
+    .then(res=>{
+        console.log(res); // 三秒钟之后输出 [222, 111]
+    })
     ```
-2. 如果参数可遍历对象的的某项不是 Promise 实例，就会先调用`Promise.resolve`方法，将参
+3. 如果参数可遍历对象的的某项不是 Promise 实例，就会先调用`Promise.resolve`方法，将参
 数转为 Promise 实例，再进一步处理。    
     ```js
     let p1 = new Promise((resolve, reject)=>{
@@ -506,7 +642,7 @@ pending 状态。
         console.log(res); // 三秒钟之后输出 [111, 222, 333]
     })
     ```
-3. 如果其中一个实例 reject 了，那不用等待其他 实例处理，`Promise.all`会立刻 rejcet。
+4. 如果其中一个实例 reject 了，那不用等待其他实例处理，`Promise.all`会立刻 rejcet
     ```js
     let p1 = new Promise((resolve, reject)=>{
         setTimeout(()=>{
@@ -571,20 +707,21 @@ promise 实例只要有一个出结果了，该结果就会作为`Promise.race()
     })
     ```
 2. 可以用来给某个异步操作设定一个时限
-```js
-const p = Promise.race([
-    fetch('/resource-that-may-take-a-while'),
-    new Promise(function (resolve, reject) {
-        setTimeout(() => reject(new Error('request timeout')), 5000)
-    })
-]);
-p.then(response => console.log(response));
-p.catch(error => console.log(error));
-```
-如果第一个异步操作 fetch 五秒之内没有反应，则第二个异步操作执行并作为总体的结果
+    ```js
+    const p = Promise.race([
+        fetch('/resource-that-may-take-a-while'),
+        new Promise((resolve, reject)=>{
+            setTimeout(() => reject(new Error('request timeout')), 5000)
+        })
+    ]);
+    p
+    .then(response => console.log(response));
+    .catch(error => console.log(error));
+    ```
+    如果第一个异步操作 fetch 五秒之内没有反应，则第二个异步操作执行并作为总体的结果
 
 
-## Promise.resolve & Promise.reject
+## `Promise.resolve` & `Promise.reject`
 将一个非 promise 值转换为 promise 实例，并立即 resolve/reject
 ```js
 console.log(Promise.resolve(111)); // Promise {<resolved>: 111}

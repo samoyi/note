@@ -176,30 +176,6 @@ there’s a difference.
     ```
 
 
-#### Vue 的情况
-1. 看了上面的例子，现在能更好的的理解 Vue 列表渲染是`key`的作用了。
-2. 比如下面的更新
-    ```html
-    <ul>
-        <li>Duke</li>
-        <li>Villanova</li>
-    </ul>
-
-    <ul>
-        <li>Villanova</li>
-        <li>Duke</li>
-    </ul>
-    ```
-3. 可能是对数组调用了`reverse()`。那么按照上面的算法说的，Vue 也不会真的颠倒这两个子节
-点，而只是对应的更改`<li>`里面的内容。也就是把旧列表第一项`<li>Duke</li>`里面的文本节
-点`Duke`换为新列表第一项`<li>Villanova</li>`里面的文本节点`Villanova`；把旧列表第二项
-`<li>Villanova</li>`里面的文本节点`Villanova`换为新列表第二项`<li>Duke</li>`里面的文
-本节点`Duke`。
-
-
-
-
-
 ## Tradeoffs
 ### 不满足 reconciliation algorithm 的情况
 Because React relies on heuristics, if the assumptions behind them are not met,
