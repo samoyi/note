@@ -47,7 +47,7 @@ corresponding DOM element.
 root element while setting up the necessary data bindings. After the View is
 compiled, it becomes reactive to data changes.
 4. When using Vue.js, you rarely have to touch the DOM yourself except in custom
- directives. View updates will be automatically triggered when the data changes.
+directives. View updates will be automatically triggered when the data changes.
 5. These view updates are highly granular with the precision down to a textNode.
 They are also batched and executed asynchronously for greater performance.
 
@@ -56,7 +56,7 @@ They are also batched and executed asynchronously for greater performance.
 1. In Vue.js, models are simply plain JavaScript objects, or data objects.
 2. Once an object is used as data inside a Vue instance, it becomes reactive.
 3. You can manipulate their properties and Vue instances that are observing them
- will be notified of the changes.
+will be notified of the changes.
 4. Vue.js achieves transparent reactivity by converting the properties on data
 objects into ES5 getter/setters.
 5. There’s no need for dirty checking, nor do you have to explicitly signal Vue

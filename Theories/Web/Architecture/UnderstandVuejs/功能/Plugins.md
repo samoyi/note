@@ -32,31 +32,39 @@ MyPlugin.install = function (Vue, options) {
     }
 }
 ```
-2. 通过全局方法`Vue.use()`使用插件。它需要在你调用`new Vue()`启动应用之前完成。可以传
-第二个可选参数，对应插件`install`方法的第二个参数。
-3. Vue.js 官方提供的一些插件 (例如`vue-router`) 在检测到 Vue 是可访问的全局变量时会自
+2. 通过全局方法`Vue.use()`使用插件，这需要在调用`new Vue()`启动应用之前完成。
+3. 在执行`Vue.use(MyPlugin)`是，就会调用`MyPlugin`的`install`方法，定义一些全局的东
+西。定义的这些东西就可以实现当前插件的功能。
+4. 可以传第二个可选参数，对应插件`install`方法的第二个参数。对该插件进行一些个性化的配
+置。
+5. Vue.js 官方提供的一些插件 (例如`vue-router`) 在检测到 Vue 是可访问的全局变量时会自
 动调用`Vue.use()`。然而在例如 CommonJS 的模块环境中，你应该始终显式地调用`Vue.use()`。
-4. 根据上述模板做一个简单的插件，可以周期性的改变字体颜色
+6. 根据上述模板做一个简单的插件，可以周期性的改变字体颜色
     ```js
     // FontColor.js
-    let FontColor = {
-        install (Vue, options) {
 
-            // 通过 options 设定若干个初始的颜色。有默认值
-            Vue.randomFontColors = (options && options.randomFontColors) || ['red', 'green', 'blue'];
+    // 插件默认值
+    const defaultOptions = {
+    	randomFontColors: ['red', 'green', 'blue'],
+    	interval: 2000,
+    };
+
+    export default {
+        install (Vue, options=defaultOptions) {
+
+            // 通过 options 设定若干个初始的颜色
+            Vue.randomFontColors = options.randomFontColors;
 
             // 该方法可以在之后添加一个颜色
             Vue.addRandomFontColor = function(sColor){
                 Vue.randomFontColors.push(sColor);
             };
 
-
             // 该指令给节点设定字体颜色，指令的值必须是 curFontColor
             Vue.directive('font-color', function(el, binding) {
                     el.style.color = binding.value;
                 }
             )
-
 
             Vue.mixin({
                 data(){
@@ -70,7 +78,7 @@ MyPlugin.install = function (Vue, options) {
                         // 周期性的改变字体颜色
                         this.$changeRandomFontColor();
                         // 周期可以通过 options 设置，有默认值
-                    }, (options && options.interval) || 2000);
+                    }, options.interval);
                 },
             })
 
@@ -93,8 +101,11 @@ MyPlugin.install = function (Vue, options) {
     };
     ```
     ```html
-    <div id="components-demo" v-font-color="curFontColor">字符</div>
-    <script>
+    <div id="app" v-font-color="curFontColor">字符</div>
+    <script type="module">
+
+    import FontColor from './FontColor.js'
+
     // Vue.use(FontColor); // 不传 options 的话就使用默认的初始色和变化周期
 
     Vue.use(FontColor, {
@@ -104,7 +115,6 @@ MyPlugin.install = function (Vue, options) {
 
     Vue.addRandomFontColor('pink'); // 追加一个颜色
 
-    new Vue({
-        el: '#components-demo',
-    });
+    new Vue({}).$mount('#app');
     </script>
+    ```

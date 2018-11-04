@@ -87,7 +87,7 @@ new Vue({
         // 已经完成了 data observation
         console.log(Object.getOwnPropertyDescriptor(this, 'num1'));
         // {get: ƒ, set: ƒ, enumerable: true, configurable: true}
-        console.log(this.$el); // undefined  仍未挂载
+        console.log(this.$el); // undefined  仍未编译模板
     },
 });
 ```

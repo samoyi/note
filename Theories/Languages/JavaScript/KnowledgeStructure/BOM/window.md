@@ -141,6 +141,28 @@ resulting in the timeout being executed immediately.
 传参表达式是个字符串，没错，但变异成可执行代码后，也变成了未定义的变量`a`，三秒钟后执行
 的时候就会报错。
 
+### 返回值的问题
+1. 虽然经常用到返回值来取消定时器，但是之前还没有看过返回值到底是什么值。
+2. 根据 MDN 说的，返回值是一个正整数。实测当然也是。
+3. 这个返回值是当前定时器的一个 ID，同一个全局对象（window 或 worker）里，保持一个唯一
+的 ID 池。但不同的全局对象有各自独立的 ID 池。
+4. 每次调用`setTimeout`或`setInterval`时，会返回一个递增的正整数 ID。这两个方法共用同
+一个 ID 池。
+5. 有趣的是，第一次定时器函数返回值不一定是`1`，而且比如刷新页面时，也不保证每次的初始
+返回值都是一样
+    ```js
+    let j = setTimeout(()=>{console.log(666)});
+    let k = setInterval(()=>{});
+    let m = setTimeout(()=>{});
+    let n = setInterval(()=>{});
+    console.log(j, k, m, n); // 2 3 4 5
+    clearTimeout(2); // 取消了第一个 setTimeout 的回调
+    ```
+    因为两个方法通用同一个 ID 池，所以都会加一；我这里就是从`2`开始的，网上有人一开始就
+    是一千多，而且每次刷新还都不一样。
+6. 规范里关于返回值这块说了很多也没看懂。网上也没有明确说到更详细的返回值规则的，还有人
+说规范里就没说详细规则。
+
 
 ## URI-Encoding Methods
 ### `encodeURI()`和`encodeURIComponent()`

@@ -163,7 +163,7 @@ components: {
         'async-component': () => import('./component.js'),
     },
     ```
-6. 下面是一个完整的例子
+7. 下面是一个完整的例子
     ```js
     // component.js
     export default {
@@ -198,7 +198,7 @@ components: {
 		<async-component></async-component>
 	</div>
     ```
-7. 从打印结果可以看出来，异步组件内的打印是最后执行的，证明是异步加载。    
+8. 从打印结果可以看出来，异步组件内的打印是最后执行的，证明是异步加载。    
     ```
     "父实例创建"
     "父实例挂载"
