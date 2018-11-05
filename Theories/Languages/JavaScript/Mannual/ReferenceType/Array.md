@@ -141,6 +141,33 @@ console.log(new Set(arr1)); // {0, NaN}
 console.log(new Set(arr2)); // {0, NaN}
 ```
 
+### ES5 去重
+```js
+function dedup(arr){
+    let bHasNaN = false;
+    arr.forEach((item, index)=>{
+        if (Number.isNaN(item)){
+            bHasNaN = bHasNaN ? arr.splice(index, 1) : !bHasNaN;
+            return;
+        }
+
+        let nFirstIndex = arr.indexOf(item);
+        let nLastIndex = arr.lastIndexOf(item);
+        if (nFirstIndex !== nLastIndex) {
+            do {
+                arr.splice(nLastIndex, 1);
+                nLastIndex = arr.lastIndexOf(item);
+            }
+            while (nFirstIndex !== nLastIndex);
+        }
+    });
+    return arr;
+}
+
+let arr = [1, 3, 2, 5, NaN, 4, NaN, 5, 3, 6, 3, 2];
+console.log(dedup(arr)); // [1, 3, 2, 5, NaN, 4, 6]
+```
+
 ### 找出重复项
 * 方法一：先把所有重复的项组成新数组，然后去重
     ```js

@@ -1,14 +1,6 @@
 # Redirect and Alias
 
 
-
-
-
-
-
-
-
-
 ## Redirect
 1. 通过路由配置的`redirect`属性来设置重定向
 2. 如果要设置静态的重定向路径，`redirect`的值可以是路径字符串或者是命名路由对象。
@@ -109,6 +101,14 @@ new Vue({
 
 
 ## Alias
-1. `redirect`的作用是访问`/b`时重定向到`/a`；`alias`的作用是访问`/b`时显示`/a`对应
-的组件。前者是路径的重定向，后者是组件的共用。
-3. 所以使用`redirect`时`/b`会变成`/a`，但使用`alias`是 URL 仍然是`/b`。
+1. 给一个路径设置一个别名，不管用正式名还是别名，都可以路由到相同的组件。
+    ```js
+    {
+        path: '/email',
+        component: email,
+        alias: '/contact',
+    }
+    ```
+    路径为`/email`可以路由到`email`组件，路径为`/contact`时也可以路由到`email`组件
+2. 使用`redirect`时，因为是重定向，所以路径会从输入的路径变为重定向的路径；而`alias`以
+为不是重定向，所以访问`/contact`虽然会路由到`email`组件，但路径仍然保持`/contact`。

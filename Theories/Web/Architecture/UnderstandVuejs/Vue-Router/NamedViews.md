@@ -7,7 +7,7 @@
 article 和 album。当然你也可以只渲染一个包含这三个模块的大模块，但总是有需要独立渲染的
 场景。
 3. 之前配置 routes 的时候，是一个 path 对应 一个 component，现在成了一个 path 对应三
-个 component 了。就需要知道三个 component 分别要渲染到哪个 `route-view`。
+个 component 了。就需要知道三个 component 分别要渲染到哪个`route-view`。
 4. 因此就和 slot 的情况一样，在默认 slot 的基础上又需要 named slot。
 
 
@@ -81,7 +81,7 @@ const UserSettings = {
                   <nav-bar></nav-bar>
                   <!-- 两个嵌套路由出口 -->
                   <router-view></router-view>
-                  <router-view name="helper"></router-view>
+                  <router-view name="preview"></router-view>
                </div>`,
     components: {
         'nav-bar': {
@@ -122,7 +122,7 @@ const routes = [
                 // 第二条嵌套路由渲染两个路由出口
                 components: {
                     default: UserProfile,
-                    helper: UserProfilePreview,
+                    preview: UserProfilePreview,
                 },
             },
         ],

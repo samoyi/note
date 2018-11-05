@@ -42,23 +42,86 @@ vm.$nextTick(()=>{
     unwatch();
     ```
 
-### 监听子属性
+### 监听子属性变动
+#### 监听特定后代属性
 ```js
 new Vue({
     data: {
-        profile:{
-            age: 33,
+        person: {
+            profile: {
+                age: 22,
+            },
         },
     },
     watch: {
-        ['profile.age'](n){ console.log(n) },
-        // 或者
-        // 'profile.age': function(n){ console.log(n) },
+        ['person.profile.age'](val){
+            console.log(val); // 33
+        },
     },
-    created(){
-        this.profile.age = 22;
-    }
-});
+    mounted(){
+        setTimeout(()=>{
+            this.person.profile.age = 33;
+        }, 2000);
+    },
+}).$mount('#app');
+```
+
+#### 监听任意后代属性
+把回调函数变为对象，对象设置`deep`属性为`true`，设置`handler`属性为回调函数
+```js
+new Vue({
+    data: {
+        person: {
+            profile: {
+                age: 22,
+            },
+        },
+    },
+    watch: {
+        person: {
+            deep: true,
+            handler(val){
+                console.log(val.profile.age); // 33
+            },
+        },
+    },
+    mounted(){
+        setTimeout(()=>{
+            this.person.profile.age = 33;
+        }, 2000);
+    },
+}).$mount('#app');
+```
+
+### 监听添加和删除子属性
+监听引用类型，并使用响应式的方法添加或删除子属性，则可以监听到
+```js
+new Vue({
+    data: {
+        arr: [1, 2],
+        obj: {
+            name: '33',
+        },
+    },
+    watch: {
+        arr(val){
+            console.log(val.toString());
+        },
+        obj(val){
+            console.log(JSON.stringify(val));
+        },
+    },
+    mounted(){
+        setTimeout(()=>{
+            this.arr.push(3);
+            this.$set(this.obj, 'age', '22');
+            setTimeout(()=>{
+                this.arr.pop();
+                this.$delete(this.obj, 'age');
+            }, 2000);
+        }, 2000);
+    },
+}).$mount('#app');
 ```
 
 ### 触发标准是 Same-value-zero equality

@@ -55,7 +55,7 @@ new Vue({
         // 下面这种 push 方法可以明确的指明 route 和参数，而不用像 push('/user/11')
         // 这样混在一起
         setTimeout(()=>{
-            this.$router.push({ name: 'user-route', params: { username: '33' }})
+            this.$router.push({ name: 'user', params: { username: '33' }})
             console.log(this.$route.params.username === '33'); // true
             console.log(this.$route.params.username === 33) // false
 			// 如果 { username: 33 }，那就是数字类型了
@@ -63,7 +63,8 @@ new Vue({
 
         // 还可以 push 带查询的
         setTimeout(()=>{
-            this.$router.push({ path: '/user/44', query: { id: 'xyz' }})
+            this.$router.push({ path: '/user/44', query: { id: 'xyz' }});
+            console.log(this.$route.query.id); // "xyz"
         }, 4000);
 
         // 如果提供了 path ，params 会被忽略，因此会路由到 55 的 user 组件
@@ -87,12 +88,10 @@ history 记录。
 this.$router.push('/user', ()=>{
     // 导航成功
     console.log('complete');
-    console.log(this.$route.path);
 });
 this.$router.push('/user', ()=>{}, ()=>{
     // 重复导航
     console.log('abort');
-    console.log(this.$route.path);
 });
 ```
 

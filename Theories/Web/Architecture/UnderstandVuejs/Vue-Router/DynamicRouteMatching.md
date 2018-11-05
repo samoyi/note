@@ -96,8 +96,10 @@
 
 ### 可以通过 watcher 和 Navigation Guards 两种方法来监听参数变化。
 #### watcher 方法
-1. 相比于`update`钩子函数会响应组件的所有更新，watch `$router`就只是监听当前组件的路由
+1. 相比于`update`钩子函数会响应组件的所有更新，watch `$route`就只是监听当前组件的路由
 变化。
+2. The route object is immutable. Every successful navigation will result in a
+fresh route object.
     ```js
     const User = {
         template: `<div>
