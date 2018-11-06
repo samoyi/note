@@ -45,11 +45,12 @@ URL 自身没有给出关于源的信息。
 
 ## 绕过同源策略
 ### 使用`document.domain`
-1. 可实现跨域访问 DOM、Cookie 和本地存储
-2. frame 或子域可以通过设置与父级相同的`document.domain`来实现跨域访问 DOM。
-3. 父级和子级必须都设置该属性且属性值相等。即使父级设置的该属性值就是当前的域名，也不能
+1. 该方法适用于一级域名相同但二级域名不同的两个域，或者域名相同但端口不同的两个域
+2. 可实现跨域访问 DOM、Cookie 和本地存储
+3. frame 或子域可以通过设置与父级相同的`document.domain`来实现跨域访问 DOM。
+4. 父级和子级必须都设置该属性且属性值相等。即使父级设置的该属性值就是当前的域名，也不能
 省略设置。
-4. 对该属性任何赋值操作，都会导致端口号被设置为`null`，即使是
+5. 对该属性任何赋值操作，都会导致端口号被设置为`null`，即使是
 `document.domain = document.domain`。所以才必须给父子的该属性都赋值，以保证两者的端口
 号都是`null`。
 
@@ -166,8 +167,9 @@ sessionStorage.age = 22;
     ```
 
 ### `window.postMessage()`
-1. 可实现跨域访问 DOM、Cookie 和本地存储
-2. 用法见`Theories\Languages\JavaScript\KnowledgeStructure\AjaxCometAndCrossOrigin\Cross-OriginMessaging.md`
+1. 该方法适用于浏览器标签页之间通信，以及页面和`<iframe>`之间通信。
+2. 可实现跨域访问 DOM、Cookie 和本地存储
+3. 用法见`Theories\Languages\JavaScript\KnowledgeStructure\AjaxCometAndCrossOrigin\Cross-OriginMessaging.md`
 
 
 

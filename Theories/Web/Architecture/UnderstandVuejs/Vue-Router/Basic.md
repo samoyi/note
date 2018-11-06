@@ -236,7 +236,8 @@ new Vue({
 ```html
 <div id="app">
     <router-link to="/login">login</router-link> <br />
-    <router-link to="/profile/detail/setting">profile detail setting</router-link> <br /><br />
+    <router-link to="/profile/detail/setting">profile detail setting</router-link>
+    <br /><br />
 
     <router-view></router-view>
 </div>
