@@ -56,7 +56,6 @@ computed: {
 ### `getters`
 1. 和`state`不同，各个 store 模块以及 store root 中的 getter 是定义在同一个`getters`
 对象的。在不同的 store 模块以及 store root 里不能定义同名 getter，否则会报错。  
-不懂为什么不能像`state`那样独立的？
     ```js
     const moduleA = {
         getters: {
@@ -78,7 +77,10 @@ computed: {
     });
     ```
     报错：`[vuex] duplicate getter key: age`
-2. 对于模块内部的 getter，接收的第一个参数是模块的局部（本模块的）state 对象；但由于
+2. 为什么不能像`state`那样独立的？我觉得可能的原因是，因为有些需求是一个 getter 需要从
+不同的模块里获取数据来返回结果。如果它被设计为独立的，但却可以获取其他模块的数据，这样虽
+然也不是不可以，但感觉上却比较奇怪。
+3. 对于模块内部的 getter，接收的第一个参数是模块的局部（本模块的）state 对象；但由于
 `getters`是共享的，所以第二个参数就是共享`getters`对象
     ```js
     // store
@@ -130,10 +132,10 @@ computed: {
 不会报错，而是会共存。在实例里提交该同名 mutation 的时候，所有重复定义的 mutation 回调
 都会按照顺序调用，store root 如果也有同名的 mutation，那最先调用的是 store root 里的。
 2. 这个倒也合理，类似于给同一个事件添加若干个事件监听。但有时也会不希望提交一个 commit
-时所有模块的对应 mutation，这是就不能注册成同名 mutation 了。不过也可以通过传参指明要
-修改哪个模块的 state。
-3. 下面的例子中，不管是调用`aAgeUp`还是`bAgeUp`，`moduleA`和`moduleB`中的`ageUp`都会
-被触发，按照先 a 后 b 的顺序，而且各自的`age`都会得到更新。
+时所有模块的对应 mutation 都被触发，这时就不能注册成同名 mutation 了。不过也可以通过传
+参指明要修改哪个模块的 state。
+3. 下面的例子中，`moduleA`和`moduleB`中的`ageUp`都会被触发，按照先 a 后 b 的顺序，而
+且各自的`age`都会得到更新。
     ```js
     // store
     const moduleA = {
@@ -160,7 +162,7 @@ computed: {
         },
     };
 
-    export const store = new Vuex.Store({
+    export default new Vuex.Store({
         modules: {
             a: moduleA,
             b: moduleB,
@@ -172,19 +174,14 @@ computed: {
     export default {
         computed: {
             a_age(){
-                return this.$store.state.a.age; // Hime
+                return this.$store.state.a.age;
             },
             b_age(){
-                return this.$store.state.b.age; // Hina
+                return this.$store.state.b.age;
             },
         },
-        methods: {
-            aAgeUp(){
-                this.$store.commit('ageUp');
-            },
-            bAgeUp(){
-                this.$store.commit('ageUp');
-            },
+        mounted: {
+            this.$store.commit('ageUp');
         },
     }
     ```
@@ -282,8 +279,7 @@ export const store = new Vuex.Store({
 ### getter
 1. 如之前说到的，store root 里也不能定义和子模块中同名的 getter。
 2. mutation 和 action 可以同名共存是因为一个提交可以让 root 和不同的模块有各自的处理
-逻辑，而 getter 如果同名会导致读取一个数据的时候发生结果冲突。但还不是不懂为什么
-getter 不能设计成 state 那样独立的呢？
+逻辑，而 getter 如果同名会导致读取一个数据的时候发生结果冲突。
 
 ### mutation 和 action
 1. 如之前说的，store root 中和子模块中出现同名的 mutation 和 action，先调用 root 中的，

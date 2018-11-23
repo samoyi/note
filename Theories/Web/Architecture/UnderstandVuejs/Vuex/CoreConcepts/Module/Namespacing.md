@@ -125,7 +125,7 @@ getters。可以通过 getter 的第四个参数以及 action 的`context.rootGe
 3. 和 root state 一样，root getters 不仅包括 root 中的 getter，也包括所有模块的
 getter。
 4. 下面四个`console.log`的输出都是
-`["root_getter", "a_getter", "b/b_getter", "b/page_getter", "b/posts/posts_getter"]`
+`["root_getter", "a/a_getter", "b/b_getter", "b/page_getter", "b/posts/posts_getter"]`
 ，顺序看起来也很合理。
     ```js
     const moduleA = {
@@ -165,7 +165,7 @@ getter。
         },
     };
 
-    export const store = new Vuex.Store({
+    export default new Vuex.Store({
         modules: {
             a: moduleA,
             b: moduleB,
@@ -180,10 +180,9 @@ getter。
 
 
 ## 在带命名空间的模块注册全局 action
-1. 不懂，为什么要在这里注册全局 action？
-2. 若需要在带命名空间的模块注册全局 action，需要把这个 action 注册为一个对象类型，该对
+1. 若需要在带命名空间的模块注册全局 action，需要把这个 action 注册为一个对象类型，该对
 象可添加属性`root: true`，并用`handler`定义 action 的处理函数。
-3. 虽然是定义成了全局 action，但是参数 context 仍然是模块内的
+2. 虽然是定义成了全局 action，但是参数 context 仍然是模块内的
     ```js
     const moduleB = {
         namespaced: true,
@@ -210,10 +209,11 @@ getter。
         },
     });
     ```
-4. 在组件实例里要通过全局的方式来 dispatch
+3. 在组件实例里要通过全局的方式来 dispatch
     ```js
     this.$store.dispatch('b_action');
     ```
+4. 不懂。为什么要注册为全局？通过命名空间的形式来 dispatch 有什么不方便吗？
 5. 在不带命名空间的模块里也可以这样注册 action，但没什么意义
 
 
@@ -292,7 +292,8 @@ getter。
     	computed: {
             ...mapState({
                 root_age: 'root_age',
-                // b_age: 'b/b_age', // 不能这样
+                // 不能这样，这是命名空间的方式，而 state 和命名空间无关
+                // b_age: 'b/b_age',
                 b_age: state=>state.b.b_age,
                 inner_age: state=>state.b.inner.inner_age,
                 inner_ns_age: state=>state.b.inner_ns.inner_ns_age,
@@ -329,6 +330,8 @@ getter。
         ...mapState({
             b_age: state=>state.b.b_age,
         }),
+        // 虽然上面在读取命名空间中的 state 时不能使用命名空间的`/`表示法，不过这里的
+        // 命名空间的 state 却可以使用提取命名空间的方法
         ...mapState('b', {
             inner_age: state=>state.inner.inner_age,
         }),
