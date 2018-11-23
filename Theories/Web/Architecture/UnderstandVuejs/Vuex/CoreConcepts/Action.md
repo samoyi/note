@@ -21,7 +21,7 @@
     ```js
     // vm
     methods: {
-        increment(){
+        myIncrement(){
             this.$store.dispatch('async_increment');
         },
     },
@@ -30,9 +30,10 @@
 `dispatch('async_increment')`。
 3. `async_increment`在收到请求时，先执行异步操作，异步操作结束后，才真正的 commit 来
 执行 mutation。
-4. 如果是在 mutation 里进行异步操作，那顺序是：mutation —— 快照 —— 异步操作 —— 一段时
-间后状态改变；而在 action 里执行异步操作的顺序是：action —— 异步操作 —— 一段时间后执行
-mutation —— 状态立刻改变 —— 快照。
+4. 如果是在 mutation 里进行异步操作，那顺序是：mutation —— 快照(快照这时记录的状态值
+还没有发生改变) —— 异步操作 —— 一段时间后状态改变(其实应该在这里才进行快照)；而在
+action 里执行异步操作的顺序是：action —— 异步操作 —— 一段时间后执行 mutation —— 状态
+立刻改变 —— 快照。
 
 
 ## 定义
@@ -73,11 +74,11 @@ mutation —— 状态立刻改变 —— 快照。
     ```js
     // vm
     methods: {
-        increment(){
+        myIncrement(){
             this.$store.dispatch('async_increment', {n: 2});
         },
         // or
-        increment(){
+        myIncrement(){
             this.$store.dispatch({
                 type: 'async_increment',
                 n: 2,
@@ -92,12 +93,12 @@ mutation —— 状态立刻改变 —— 快照。
     // vm
     methods: {
         ...mapActions({
-            increment: 'async_increment',
+            myIncrement: 'async_increment',
         }),
     },
     ```
     ```html
-    <div @click="increment({n: 2})">
+    <div @click="myIncrement({n: 2})">
         {{count}}
     </div>
     ```
@@ -155,52 +156,67 @@ mutation —— 状态立刻改变 —— 快照。
     成 actionB。
 5. 使用`async`/`await`可以更有条例的定义组合 action
     ```js
-    // 假设 getData() 和 getOtherData() 返回的是 Promise
+    // store
+
+    // 预先定义的 sleep 函数用来模拟异步
+    // function sleep(ms){
+    //     return new Promise((resolve)=>{
+    //         setTimeout(resolve, ms);
+    //     });
+    // }
 
     actions: {
-        async actionA ({ commit }) {
-            commit('gotData', await getData())
+        async decrement({commit}, payload){
+            await sleep(2000);
+            commit('decrement', payload);
         },
-        async actionB ({ dispatch, commit }) {
-            await dispatch('actionA') // 等待 actionA 完成
-            commit('gotOtherData', await getOtherData())
-        }
+        async increment({commit, dispatch}, payload){
+            // 先执行 increment 的异步
+            await sleep(2000);
+            commit('increment', payload);
+            // 返回结果后再 执行后续的 action
+            await dispatch('decrement', {num: 22});
+        },
     }
     ```
-6. 文档中最后的一段话不懂：It's possible for a `store.dispatch` to trigger
-multiple action handlers in different modules. In such a case the returned value
-will be a Promise that resolves when all triggered handlers have been resolved.
-`store.dispatch` 可以像上面的例子一样链式的触发多个 action 可以理解，但是怎么在不同的
-模块中触发？看起来不像是说下面这种情况：
+    ```js
+    // vm
+    async myIcrement(){
+        await this.$store.dispatch('increment', {num: 100});
+        console.log('完成！');
+    },
+    ```
+6. 一个`store.dispatch`在不同模块中可以触发多个 action 函数。在这种情况下，只有当所有
+触发函数完成后，返回的 Promise 才会执行。
     ```js
     // store
-    actions: {
-        actionA(){
-            return new Promise((resolve)=>{
-                setTimeout(()=>{
-                    resolve();
-                }, 1000);
-            });
+    modules: {
+        hello: {
+            actions: {
+                async console(){
+                    await sleep(2000);
+                    console.log('hello');
+                },
+            },
         },
-        actionB({dispatch}){
-            return new Promise((resolve)=>{
-                dispatch('actionA').then(()=>{
-                    setTimeout(()=>{
-                        resolve();
-                    }, 3000);
-                });
-            });
+        world: {
+            actions: {
+                async console(){
+                    await sleep(4000);
+                    console.log('world');
+                },
+            },
         },
-    },
+    }
     ```
     ```js
     // vm
     methods: {
-        increment(){
-            this.$store.dispatch('actionB')
-            .then(()=>{
-                console.log('4秒钟之后输出');
-            });
+        async myIcrement(){
+            await this.$store.dispatch('console');
+            console.log('hello world');
+            // 两秒钟之后打印`"hello"`，四秒钟之后打印`"world"`，
+            // 紧接着打印`"hello world"`
         }
     },
     ```

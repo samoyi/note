@@ -71,8 +71,11 @@ computed: {
 
 
 ## `mapGetters`
-相比于`mapState`的对象字符串、对象函数和数组的三种形式，`mapGetters`只支持对象字符串和
-数组的形式。
+1. 相比于`mapState`的对象字符串、对象函数和数组的三种形式，`mapGetters`只支持对象字符
+串和数组的形式。
+2. 不懂为什么不能和`mapState`一样设置为函数。要说是因为用处不大，但`mapState`中设为函
+数用处也没有比这里大吧
+
 ```js
 ...mapGetters({
     // 不能使用函数
