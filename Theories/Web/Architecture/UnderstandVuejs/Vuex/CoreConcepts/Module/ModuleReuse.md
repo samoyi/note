@@ -28,7 +28,7 @@
         },
     };
 
-    export const store = new Vuex.Store({
+    export default new Vuex.Store({
         modules: {
             a: moduleA,
             b: moduleA,

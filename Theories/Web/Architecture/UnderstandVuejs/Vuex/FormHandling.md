@@ -80,7 +80,7 @@
 以你就可以自定义对它的修改。之前居然没想到可以这样！
     ```js
     // store
-    export const store = new Vuex.Store({
+    export default new Vuex.Store({
         strict: true,
         state: {
             obj: {

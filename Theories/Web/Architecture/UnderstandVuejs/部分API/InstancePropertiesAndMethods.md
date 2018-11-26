@@ -6,8 +6,8 @@
 ### vm.$options
 1. The instantiation options used for the current Vue instance.
 2. 但是看起来，应该是 Observer 对实例化传入的数据进行了改造，导致某些选项和传入是的不一
-样。比如 `vm.$options.data` 变成了一个函数，而想要访问 `mounted` 的函数，必须要按照这
-样的方法: `vm.$options.mounted[0]`。
+样。比如 `vm.$options.data` 变成了一个函数，而想要访问`mounted`的函数，必须要按照这样
+的方法: `vm.$options.mounted[0]`。
 
 
 ### vm.$children
