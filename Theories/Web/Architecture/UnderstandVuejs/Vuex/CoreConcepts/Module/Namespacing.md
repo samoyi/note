@@ -117,7 +117,7 @@ new Vue({
 ```
 
 
-## Global getters
+## 访问 global getters
 1. 在命名空间模块里，因为 getters 也变成局部的了，所以在 getter 的第二个参数以及
 action 的`context.getters`也都是局部的了。
 2. 如果要在命名空间模块里访问全局的 getter，这里有了和 root state 类似的 root
@@ -177,6 +177,50 @@ getter。
         },
     });
     ```
+
+
+## 提交全局 mutation 以及 分发全局 action
+1. 在命名空间模块里 commit 和 dispatch 时，mutation 名和 action 名默认都是在该模块里
+寻找，而不会全局寻找。
+2. 如果想让它们找全局的 mutation 名和 action 名，需要传第三个参数`{root: true}`
+
+```js
+new Vuex.Store({
+    mutations: {
+        some_mutation(){
+            console.log('globle_mutation');
+        },
+    },
+    actions: {
+        some_action(){
+            console.log('globle_action');
+        },
+    },
+    modules: {
+        foo: {
+            namespaced: true,
+            mutations: {
+                some_mutation(){
+                    console.log('module_mutation');
+                },
+            },
+            actions: {
+                some_action(){
+                    console.log('module_action');
+                },
+
+                testAction({commit, dispatch}){
+                    commit('some_mutation'); // module_mutation
+                    dispatch('some_action'); // module_action
+
+                    commit('some_mutation', null, {root: true}); // globle_mutation
+                    dispatch('some_action', null, {root: true}); // globle_action
+                },
+            },
+        },
+    },
+});
+````
 
 
 ## 在带命名空间的模块注册全局 action
