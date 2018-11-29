@@ -117,7 +117,7 @@ new Vue({
 ```
 
 
-## Global getters
+## 访问 global getters
 1. 在命名空间模块里，因为 getters 也变成局部的了，所以在 getter 的第二个参数以及
 action 的`context.getters`也都是局部的了。
 2. 如果要在命名空间模块里访问全局的 getter，这里有了和 root state 类似的 root
@@ -177,6 +177,74 @@ getter。
         },
     });
     ```
+
+
+## 提交全局 mutation 以及 分发全局 action
+1. 在命名空间模块里 commit 和 dispatch 时，mutation 名和 action 名默认都是在该模块里
+寻找，而不会全局寻找。
+2. 如果想让它们找全局的 mutation 名和 action 名，需要传第三个参数`{root: true}`
+
+```js
+new Vuex.Store({
+    mutations: {
+        some_mutation(){
+            console.log('globle_mutation');
+        },
+    },
+    actions: {
+        some_action(){
+            console.log('globle_action');
+        },
+    },
+    modules: {
+        foo: {
+            namespaced: true,
+            mutations: {
+                some_mutation(){
+                    console.log('foo_mutation');
+                },
+            },
+            actions: {
+                some_action(){
+                    console.log('foo_action');
+                },
+            },
+        },
+        bar: {
+            namespaced: true,
+            mutations: {
+                some_mutation(){
+                    console.log('bar_mutation');
+                },
+            },
+            actions: {
+                some_action(){
+                    console.log('bar_action');
+                },
+
+                testAction({commit, dispatch}){
+                    // 下面两个没加第三个参数，所以是找到了模块内的
+                    commit('some_mutation'); // bar_mutation
+                    dispatch('some_action'); // bar_action
+
+                    // 下面两个加了，所以找到的是全局的
+                    commit('some_mutation', null, {root: true}); // globle_mutation
+                    dispatch('some_action', null, {root: true}); // globle_action
+
+                    // 下面两个加了，先是进入全局环境，然后因为又有模块路径，所以找到 foo 模块里的
+                    commit('foo/some_mutation', null, {root: true}); // foo_mutation
+                    dispatch('foo/some_action', null, {root: true}); // foo_action
+
+                    // 下面两个没加，所以是在模块内找 foo/some_mutation 和 foo/some_action，
+                    // vuex 不会识别为模块路径，除非你真的在模块里注册了这样带斜杠的名字
+                    commit('foo/some_mutation', null); // unknown local mutation type: foo/some_mutation, global type: bar/foo/some_mutation
+                    dispatch('foo/some_action', null); // unknown local action type: foo/some_action, global type: bar/foo/some_action
+                },
+            },
+        },
+    },
+});
+````
 
 
 ## 在带命名空间的模块注册全局 action
