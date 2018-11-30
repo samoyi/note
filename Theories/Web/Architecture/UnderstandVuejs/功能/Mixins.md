@@ -4,7 +4,8 @@
 1. 实现复用的组件选项
 2. 混入对象可以包含任意组件选项。当组件使用混入对象时，所有混入对象的选项将被混入该组件
 本身的选项。
-
+3. 混入时，可以使用`mixins`选项传入一个数组，数组选项是若干个混入对象。如果只混入一个混
+入对象，也可以使用`extends`选项
 ```js
 // 通过 PublicOptions 定义了两个公共的组件选项：一个 age 数据，一个 sayAge 方法
 const PublicOptions = {
@@ -20,10 +21,11 @@ const PublicOptions = {
     },
 };
 
-// 任何组件都可以通过 mixins 选项来混入若干个待混入对象
+// 任何组件都可以通过 mixins 选项或 extends 选项来混入若干个待混入对象
 new Vue({
     el: '#components-demo',
     mixins: [PublicOptions],
+    // extends: PublicOptions, 
     created(){
         this.sayAge(this.age); // 触发输出 22
     },
