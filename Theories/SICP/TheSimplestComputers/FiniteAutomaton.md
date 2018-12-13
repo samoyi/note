@@ -388,10 +388,112 @@ puts nfa_design.accepts?('aaaaaa') # true
 ```
 
 
-
-
-
 ## 正则表达式
 1. 能被一台特定机器接受的字符串集合称为一种语言：我们说这台机器识别了这种语言。不是所有的语言都有一台 DFA 或者 NFA 能识别它们，但那些能被有限自动机识别的语言称为正则语言（regular language）。
 2. 正则表达式就是这样的原理：正则表达式就是一个有若干规则的有限状态机，而待检验的字符串就是输入到机器的字符序列。
 3. 正则表达式可以使用 DFA 的形式完全匹配某个特定的字符串，也可以用 NFA 的形式匹配到一类字符串。
+
+### 语法
+使用 ruby 表示正则表达式的抽象语法树
+```ruby
+module Pattern
+
+    def bracket(outer_precedence)
+        if precedence < outer_precedence
+            '(' + to_s + ')'
+        else
+            to_s
+        end
+    end
+
+    def inspect
+        "/#{self}/"
+    end
+end
+
+class Empty
+    include Pattern
+
+    def to_s
+        ''
+    end
+
+    def precedence
+        3
+    end
+end
+
+class Literal < Struct.new(:character)
+    include Pattern
+
+    def to_s
+        character
+    end
+
+    def precedence
+        3
+    end
+end
+
+class Concatenate < Struct.new(:first, :second)
+    include Pattern
+
+    # 连接两个模式，如果模式的优先级小于 1，则给模式加括号
+    # 可以看到，优先级为 0 的模式只有 Choose
+    # 所以如果想连接 a|b 和 a，就会给优先级更低的 a|b 加上括号，变成 (a|b)b
+    def to_s
+        puts precedence
+        [first, second].map { |pattern| pattern.bracket(precedence) }.join
+    end
+
+    def precedence
+        1
+    end
+end
+
+class Choose < Struct.new(:first, :second)
+    include Pattern
+
+    # 该模式的优先级是 0，只有 first 或 second 的模式为负数时，firts 或 second 才会被加上括号
+    # 目前其他模式里最低的是 Concatenate，为 1，也不会加括号。所以 ab|c 的模式里，ab 的优先级为 1，匹配的是 ab 或者 c，而不是 a 加 b或c
+    def to_s
+        [first, second].map { |pattern| pattern.bracket(precedence) }.join('|')
+    end
+
+    def precedence
+        0
+    end
+end
+
+class Repeat < Struct.new(:pattern)
+    include Pattern
+
+    # 该模式的优先级为 2，如果要重复 Choose 模式或 Concatenate 模式，就要给这两个模式加上括号
+    def to_s
+        pattern.bracket(precedence) + '*'
+    end
+
+    def precedence
+        2
+    end
+end
+
+# (ab|a)*
+pattern = Repeat.new(
+    # ab|a
+    Choose.new(
+        # ab
+        Concatenate.new(Literal.new('a'), Literal.new('b')),
+        # a
+        Literal.new('a')
+    )
+)
+
+puts pattern
+```
+
+### 语义
+上面已经用 ruby 实现了正则表达式的抽象语法树，下面要把每种正则匹配的模式转换为 NFA，用来接受相应到的字符串
+
+#### 接受空字符串的 NFA
+用来正则匹配空串
