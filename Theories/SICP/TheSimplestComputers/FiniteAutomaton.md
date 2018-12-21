@@ -160,7 +160,7 @@ Nondeterministic Finite Automaton
 2. 这里的规则是：只要一个字符序列有可能被接受，那就认为它是被接受的。
 
 ### 模拟
-##### 逻辑
+#### 逻辑
 1. 初始状态接收一个字符，可能会变更到若干个状态。
 2. 在这若干个状态，分别再接收第二个字符，又会分别变更到若干个状态
 3. 以此类推，在倒数第二个状态后，会变更到若干个状态
@@ -389,13 +389,102 @@ puts nfa_design.accepts?('aaaaaa') # true
 
 
 ## 正则表达式
+正则表达式提供了书写**模式**的语言。  
+
 1. 能被一台特定机器接受的字符串集合称为一种语言：我们说这台机器识别了这种语言。不是所有的语言都有一台 DFA 或者 NFA 能识别它们，但那些能被有限自动机识别的语言称为正则语言（regular language）。
 2. 正则表达式就是这样的原理：正则表达式就是一个有若干规则的有限状态机，而待检验的字符串就是输入到机器的字符序列。
 3. 正则表达式可以使用 DFA 的形式完全匹配某个特定的字符串，也可以用 NFA 的形式匹配到一类字符串。
 
 ### 语法
-使用 ruby 表示正则表达式的抽象语法树
+使用 ruby 为每类正则表达式定义一个类，并使用这些类的实例表示任何正则表达式的抽象语法树
+
+### 语义
+上面已经用 ruby 实现了正则表达式的抽象语法树，下面要把每种正则匹配的模式转换为 NFA，用来接受相应到的字符串
+
 ```ruby
+require 'set'
+
+class FARule < Struct.new(:state, :character, :next_state)
+    def applies_to?(state, character)
+        self.state == state && self.character == character
+    end
+
+    def follow
+        next_state
+    end
+
+    def inspect
+        "#<FARule #{state.inspect} --#{character}--> #{next_state.inspect}>"
+    end
+end
+
+class NFARulebook < Struct.new(:rules)
+    def next_states(states, character)
+        states.flat_map { |state| follow_rules_for(state, character) }.to_set
+    end
+
+    def follow_rules_for(state, character)
+        rules_for(state, character).map(&:follow)
+    end
+
+    def rules_for(state, character)
+        rules.select { |rule| rule.applies_to?(state, character) }
+    end
+
+    # 从某个位置开始，可以自由移动到的所有状态
+    def follow_free_moves(states)
+        more_states = next_states(states, nil)
+        # more_states 是否是 states 的子级
+        # 第一步时，从若干个初始状态开始，返回自由移动之后的若干个目标状态
+        # 除非这些初始状态都不能自由移动，否则 more_states 就不会是 states 的子集
+        # 这些目标状态如果还可以再自由移动到其他新的目标状态
+        # 只有最终遍历到所有的自由移动的目标位以后，这个判断值才会为 true
+        if more_states.subset?(states)
+            states
+        else
+            # 从初始状态和上一轮自由移动的目标状态开始，再进行自由移动，会返回目前所在的状态和本次自由移动之后的状态的集合
+            # 如果还可以移动到新的目标状态，则因为是新的，所以不可能是现有状态集合的子集，因此就可以继续移动
+            # 该步骤不断进行，就能遍历到所有的可自由移动到的目标状态
+            follow_free_moves(states + more_states)
+        end
+    end
+end
+
+
+class NFA < Struct.new(:current_states, :accept_states, :rulebook)
+
+    # 每次使用 current_states 时，都不仅仅是当前上次移动到的状态，还要包括上次移动完再自由移动后的状态
+    def current_states
+        rulebook.follow_free_moves(super)
+    end
+
+    def accepting?
+        (current_states & accept_states).any?
+    end
+
+    def read_character(character)
+        self.current_states = rulebook.next_states(current_states, character)
+    end
+
+    def read_string(string)
+        string.chars.each do |character|
+            read_character(character)
+        end
+    end
+end
+
+
+class NFADesign < Struct.new(:start_state, :accept_states, :rulebook)
+    def accepts?(string)
+        to_nfa.tap { |nfa| nfa.read_string(string) }.accepting?
+    end
+
+    def to_nfa
+        NFA.new(Set[start_state], accept_states, rulebook)
+    end
+end
+
+
 module Pattern
 
     def bracket(outer_precedence)
@@ -406,6 +495,10 @@ module Pattern
         end
     end
 
+    def matches?(string)
+        to_nfa_design.accepts?(string)
+    end
+
     def inspect
         "/#{self}/"
     end
@@ -413,6 +506,18 @@ end
 
 class Empty
     include Pattern
+
+    def to_nfa_design
+        # 开始状态是一个对象实例
+        start_state = Object.new
+        # 接收状态同样的对象实例。也就是说不需要移动，就是被接受的。
+        accept_states = [start_state]
+        # 没有任何匹配规则，不会有移动，直接就是接受
+        # 但没看懂为什么非空字符为什么会返回 false。如果没有规则，难道不是状态永远不会改变吗？
+        rulebook = NFARulebook.new([])
+
+        NFADesign.new(start_state, accept_states, rulebook)
+    end
 
     def to_s
         ''
@@ -426,6 +531,19 @@ end
 class Literal < Struct.new(:character)
     include Pattern
 
+    def to_nfa_design
+        # 开始状态是一个对象实例
+        start_state = Object.new
+        # 接受状态是另一个对象实例。这是两个不同的实例，所以是不相等的。
+        accept_state = Object.new
+        # 这个规则，只要输入字符是创建 Literal 实例时的参数，就可以把当前状态从初始状态变到接收状态
+        rule = FARule.new(start_state, character, accept_state)
+
+        rulebook = NFARulebook.new([rule])
+
+        NFADesign.new(start_state, [accept_state], rulebook)
+    end
+
     def to_s
         character
     end
@@ -438,11 +556,32 @@ end
 class Concatenate < Struct.new(:first, :second)
     include Pattern
 
+    def to_nfa_design
+        # 两个要连接的 NFA
+        first_nfa_design = first.to_nfa_design
+        second_nfa_design = second.to_nfa_design
+
+        # 连接后的整体初始状态是第一个 NFA 的初始状态
+        start_state = first_nfa_design.start_state
+
+        # 连接后的整体接受状态是第二个 NFA 的接收状态
+        accept_states = second_nfa_design.accept_states
+
+        # 现在的规则是原有的两者的所有规则再加上从第一个 NFA 的接受状态自由移动到第二个 NFA 开始状态的规则
+        rules = first_nfa_design.rulebook.rules +
+                second_nfa_design.rulebook.rules
+        extra_rules = first_nfa_design.accept_states.map { |state|
+            FARule.new(state, nil, second_nfa_design.start_state)
+        }
+        rulebook = NFARulebook.new(rules + extra_rules)
+
+        NFADesign.new(start_state, accept_states, rulebook)
+    end
+
     # 连接两个模式，如果模式的优先级小于 1，则给模式加括号
     # 可以看到，优先级为 0 的模式只有 Choose
     # 所以如果想连接 a|b 和 a，就会给优先级更低的 a|b 加上括号，变成 (a|b)b
     def to_s
-        puts precedence
         [first, second].map { |pattern| pattern.bracket(precedence) }.join
     end
 
@@ -453,6 +592,27 @@ end
 
 class Choose < Struct.new(:first, :second)
     include Pattern
+
+    def to_nfa_design
+        # 两个或关系的 NFA
+        first_nfa_design = first.to_nfa_design
+        second_nfa_design = second.to_nfa_design
+
+        # 整体的初始状态
+        start_state = Object.new
+        # 因为是或关系，所以整体的接受状态包含两者的所有接受状态
+        accept_states = first_nfa_design.accept_states + second_nfa_design.accept_states
+
+        rules = first_nfa_design.rulebook.rules +
+                second_nfa_design.rulebook.rules
+        # 这里额外的规则，是从整体的初始状态自由移动到两个 DFA 各自的初始状态，进而两者的规则都可以被应用
+        extra_rules = [first_nfa_design, second_nfa_design].map { |nfa_design|
+            FARule.new(start_state, nil, nfa_design.start_state)
+        }
+        rulebook = NFARulebook.new(rules + extra_rules)
+
+        NFADesign.new(start_state, accept_states, rulebook)
+    end
 
     # 该模式的优先级是 0，只有 first 或 second 的模式为负数时，firts 或 second 才会被加上括号
     # 目前其他模式里最低的是 Concatenate，为 1，也不会加括号。所以 ab|c 的模式里，ab 的优先级为 1，匹配的是 ab 或者 c，而不是 a 加 b或c
@@ -468,6 +628,53 @@ end
 class Repeat < Struct.new(:pattern)
     include Pattern
 
+    # def to_nfa_design
+    #     # 即将被重复零次或多次的 NFA
+    #     pattern_nfa_design = pattern.to_nfa_design
+    #
+    #     # 总的起始状态
+    #     start_state = Object.new
+    #
+    #     # 重复模式下：如果重复了零次，则接受状态就是初始状态；如果重复了若干次，则最终的接受状态其实就是不重复状态下的接受状态
+    #     accept_states = pattern_nfa_design.accept_states + [start_state]
+    #
+    #     rules = pattern_nfa_design.rulebook.rules
+    #     extra_rules = pattern_nfa_design.accept_states.map { |accept_state|
+    #         # 每次进行重复，其实都是从接受状态自由移动到初始状态，然后进行下一轮的匹配
+    #         # 所以要给所有的接受状态添加自由移动到初始状态的规则
+    #         FARule.new(accept_state, nil, pattern_nfa_design.start_state)}
+    #         # 从初始状态自由移动到开始状态，而开始状态就是接受状态。也就是说，在接收空字符串输入的情况下，也会是接受状态。即可以匹配重复零次
+    #         + [FARule.new(start_state, nil, pattern_nfa_design.start_state)]
+    #
+    #     rulebook = NFARulebook.new(rules + extra_rules)
+    #
+    #     NFADesign.new(start_state, accept_states, rulebook)
+    # end
+
+    def to_nfa_design
+        # 即将被重复零次或多次的 NFA
+        pattern_nfa_design = pattern.to_nfa_design
+
+        # 总的起始状态
+        start_state = Object.new
+
+        # 重复模式下：如果重复了零次，则接受状态就是初始状态；如果重复了若干次，则最终的接受状态其实就是不重复状态下的接受状态
+        accept_states = pattern_nfa_design.accept_states + [start_state]
+
+        rules = pattern_nfa_design.rulebook.rules
+        extra_rules =
+            # 每次进行重复，其实都是从接受状态自由移动到初始状态，然后进行下一轮的匹配
+            pattern_nfa_design.accept_states.map { |accept_state|
+                FARule.new(accept_state, nil, pattern_nfa_design.start_state)
+            } +
+            # 从初始状态自由移动到开始状态，而开始状态就是接受状态。也就是说，在接收空字符串输入的情况下，也会是接受状态。即可以匹配重复零次
+            [FARule.new(start_state, nil, pattern_nfa_design.start_state)]
+
+        rulebook = NFARulebook.new(rules + extra_rules)
+
+        NFADesign.new(start_state, accept_states, rulebook)
+    end
+
     # 该模式的优先级为 2，如果要重复 Choose 模式或 Concatenate 模式，就要给这两个模式加上括号
     def to_s
         pattern.bracket(precedence) + '*'
@@ -478,22 +685,23 @@ class Repeat < Struct.new(:pattern)
     end
 end
 
-# (ab|a)*
-pattern = Repeat.new(
-    # ab|a
-    Choose.new(
-        # ab
-        Concatenate.new(Literal.new('a'), Literal.new('b')),
-        # a
-        Literal.new('a')
-    )
-)
 
-puts pattern
+puts pattern = Repeat.new(
+    Concatenate.new(
+        Literal.new('a'),
+        Choose.new(Empty.new, Literal.new('b'))
+    )
+) # (a(|b))*
+puts pattern.matches?('') # true
+puts pattern.matches?('a') # true
+puts pattern.matches?('ab') # true
+puts pattern.matches?('aba') # true
+puts pattern.matches?('abab') # true
+puts pattern.matches?('abaab') # true
+puts pattern.matches?('abba') # false
 ```
 
-### 语义
-上面已经用 ruby 实现了正则表达式的抽象语法树，下面要把每种正则匹配的模式转换为 NFA，用来接受相应到的字符串
+### 解析
+不懂
 
-#### 接受空字符串的 NFA
-用来正则匹配空串
+### 等价性
