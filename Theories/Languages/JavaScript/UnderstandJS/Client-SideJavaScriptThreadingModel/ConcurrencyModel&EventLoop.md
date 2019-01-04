@@ -225,6 +225,7 @@ setTimeout(function(){
     * `setTimeout`
     * `setInterval`
     * `setImmediate`
+    * `MessageChannel`
     * `I/O`
     * `UI渲染`
 **microtasks 包括：**
@@ -233,7 +234,7 @@ setTimeout(function(){
     * `Object.observe`
     * `MutationObserver`
 
-TODO 不懂：一个异步操作依据什么被定义为 Macrotask 或 Microtask？  
+TODO 不懂：一个异步操作依据什么被定义为 Macrotask 或 Microtask？或者说，一个任务为什么被设计为 Macrotask 或者 Microtask。
 
 再分析上面的例子：`setTimeout` 的回调属于 Macrotask，相当于上面的 `Macrotask1`；而
 `promise` 的 `then` 回调属于 Microtask，相当于上面的 `主程序的Microtask`。  
