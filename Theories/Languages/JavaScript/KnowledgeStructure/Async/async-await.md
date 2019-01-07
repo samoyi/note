@@ -176,7 +176,7 @@ setTimeout(()=>{
     let foo = await fooPromise;
     let bar = await barPromise;
     ```
-3. 在循环中，`async`函数是并行的
+3. 在循环中，`async`函数是并行的，而不会让循环等待。但并行同时也意味着，结果不一定会按照数组中的顺序
     ```js
 
     function sleep(){
@@ -206,7 +206,7 @@ setTimeout(()=>{
     ```
     上面三种循环，都是同时在3秒之后打印结果
 
-    
+
 ## References
 * [Async/await](https://javascript.info/async-await)
 * [JavaScript ES 2017: Learn Async/Await by Example](https://codeburst.io/javascript-es-2017-learn-async-await-by-example-48acc58bad65)
