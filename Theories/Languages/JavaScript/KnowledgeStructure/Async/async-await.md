@@ -176,7 +176,37 @@ setTimeout(()=>{
     let foo = await fooPromise;
     let bar = await barPromise;
     ```
+3. 在循环中，`async`函数是并行的
+    ```js
 
+    function sleep(){
+        return new Promise(resolve=>{
+            setTimeout(()=>{
+                resolve();
+            }, 3000);
+        })
+    }
+
+    async function foo(s){
+        await sleep();
+        console.log(s);
+    }
+
+    [1, 2, 3].forEach(item=>{
+        foo(item);
+    });
+
+    for(let i=1; i<4; i++){
+        foo(i*i);
+    }
+
+    for(let val of [1, 2, 3]){
+        foo(val*val*val);
+    }
+    ```
+    上面三种循环，都是同时在3秒之后打印结果
+
+    
 ## References
 * [Async/await](https://javascript.info/async-await)
 * [JavaScript ES 2017: Learn Async/Await by Example](https://codeburst.io/javascript-es-2017-learn-async-await-by-example-48acc58bad65)
