@@ -47,7 +47,7 @@ key | value
 ## 无关内容
 ### Flow
 * 该文件顶部的注释`/* @flow */`告诉 Flow background process 该文件使用了 Flow 语法，如果不加的话，会被 Flow background process 忽略。参考[文档](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-
+* 注释`// $flow-disable-line`告诉 Flow 忽略下一行可能的错误。参考 Flow 的[配置规则](https://flow.org/en/docs/config/options/#toc-suppress-comment-regex)以及 Vue 中的[配置]((https://github.com/vuejs/vue/blob/dev/.flowconfig#L23))
 ### `/* istanbul ignore if */`
 istanbul 的内容，参考[官方文档](https://github.com/gotwarlost/istanbul)或者阮一峰的[这篇文章](代码覆盖率工具 Istanbul 入门教程)
 
