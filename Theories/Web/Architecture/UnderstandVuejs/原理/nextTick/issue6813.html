@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+    #app {
+    	width: 100%;
+    	line-height: 4em;
+    	background-color: blue;
+    	color: white;
+    }
+    ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+    @media (min-width: 500px){
+        li {
+            display: inline;
+        }
+    }
+    </style>
+</head>
+<body>
+	<div id="app">
+		<ul v-show="showList">
+			<li>
+				test1
+			</li>
+			<li>
+				test2
+			</li>
+			<li>
+				test3
+			</li>
+			<li>
+				test4
+			</li>
+			<li>
+				test5
+			</li>
+		</ul>
+	</div>
+</body>
+<script src="https://unpkg.com/vue@2.5.1/dist/vue.js"></script>
+<!-- <script src="https://unpkg.com/vue@2.5.21/dist/vue.js"></script> -->
+<script>
+
+new Vue({
+	el: "#app",
+	data: {
+		showList: true
+	},
+	mounted() {
+		window.addEventListener('resize', () => {
+            // setTimeout(()=>{
+                this.checkWidth();
+            // })
+		});
+	},
+	methods: {
+		checkWidth(){
+			if (window.innerWidth < 500){
+				this.showList = false;
+			}
+            else {
+				this.showList = true;
+			}
+		}
+	}
+});
+</script>
+</html>
