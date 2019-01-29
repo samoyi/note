@@ -6,6 +6,10 @@ key | value
 文件路径 | `src/core/util/next-tick.js`
 
 
+## 优先使用 microtask 的原因
+根据这个[回答](https://www.zhihu.com/question/55364497/answer/144215284)及其链接的[文档](https://html.spec.whatwg.org/multipage/webappapis.html#event-loop-processing-model)，可以看到在一个时间循环内，是先执行 microtask 然后再重渲染。所以使用 microtask 就可以在本次渲染的时候使用更新的数据，而不是下一次渲染才更新。
+
+
 ## 只用 microtask 实现`nextTick`的问题
 看看源码中的注释：
 > In < 2.4 we used microtasks everywhere, but there are some scenarios where microtasks have too high a priority and fire in between supposedly sequential events (e.g. #4521, #6690) or even between bubbling of the same event (#6566).
@@ -47,90 +51,7 @@ key | value
 ## 无关内容
 ### Flow
 * 该文件顶部的注释`/* @flow */`告诉 Flow background process 该文件使用了 Flow 语法，如果不加的话，会被 Flow background process 忽略。参考[文档](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-* 注释`// $flow-disable-line`告诉 Flow 忽略下一行可能的错误。参考 Flow 的[配置规则](https://flow.org/en/docs/config/options/#toc-suppress-comment-regex)以及 Vue 中的[配置]((https://github.com/vuejs/vue/blob/dev/.flowconfig#L23))
+* 注释`// $flow-disable-line`告诉 Flow 忽略下一行可能的错误。参考 Flow 的[配置规则](https://flow.org/en/docs/config/options/#toc-suppress-comment-regex)以及 Vue 中的[配置](https://github.com/vuejs/vue/blob/dev/.flowconfig#L23)
+
 ### `/* istanbul ignore if */`
 istanbul 的内容，参考[官方文档](https://github.com/gotwarlost/istanbul)或者阮一峰的[这篇文章](代码覆盖率工具 Istanbul 入门教程)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## 用途
-1. Babel 提供了很多小的 helper 来实现语法转换。默认情况下，当一个模块需要一个 helper 时，babel 就会将需要的 helper 加入到该模块。
-2. 这样的问题是重复注入。多个模块需要一个 helper 时，需要为每一个模块都注入该 helper。
-3. `@babel/plugin-transform-runtime`的作用是，使得所有 helper 都可以通过`@babel/runtime`模块直接访问到，而不需要注入到每一个编译后的输出里。
-4. 这个 runtime 会编译到你的项目构建里，然后在项目运行时就可以在这个 runtime 里面访问需要的 helper。
-
-
-## 沙箱环境
-1. 与`@babel/polyfill`不同，`@babel/plugin-transform-runtime`为你的代码创建了一个沙箱环境，它提供`Promise`、`Set`和`Map`等 API并不会污染全局环境。
-2. Instance methods such as `"foobar".includes("foo")` will not work.
-3. [具体原理](https://babeljs.io/docs/en/next/babel-plugin-transform-runtime.html#regenerator-aliasing)不懂
-
-
-## Usage
-### Via `.babelrc` (Recommended)
-1. Add the following line to your `.babelrc` file:
-    * Without options:
-        ```json
-        {
-            "plugins": ["@babel/plugin-transform-runtime"]
-        }
-        ```
-    * With options (and their defaults):
-        ```js
-        {
-            "plugins": [
-                [
-                    "@babel/plugin-transform-runtime",
-                    {
-                        "corejs": false,
-                        "helpers": true,
-                        "regenerator": true,
-                        "useESModules": false
-                    }
-                ]
-            ]
-        }
-        ```
-2. The plugin defaults to assuming that all polyfillable APIs will be provided by the user. Otherwise the `corejs` option needs to be specified.
-
-### Via CLI
-```sh
-babel --plugins @babel/plugin-transform-runtime script.js
-```
-
-### Via Node API
-```js
-require("@babel/core").transform("code", {
-    plugins: ["@babel/plugin-transform-runtime"],
-});
-```
-
-
-## Options
-直接看[文档](https://babeljs.io/docs/en/next/babel-plugin-transform-runtime.html#options)
-
-
-## References
-* [@babel/plugin-transform-runtime](https://babeljs.io/docs/en/next/babel-plugin-transform-runtime.html)
