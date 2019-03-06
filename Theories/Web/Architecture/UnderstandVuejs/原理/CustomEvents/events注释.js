@@ -72,6 +72,9 @@ export function eventsMixin (Vue: Class<Component>) {
             // optimize hook:event cost by using a boolean flag marked at registration
             // instead of a hash lookup
             // 如果是监听了组件生命周期的 emit 的事件，则在实例上标记，生命周期会根据其是否为 true 来决定是否 emit `hook:`事件
+            // 只要监听了任意一个 `hook:`事件，生命周期在调用每个钩子函数时都会 emit 对应的 `hook:`事件，但只有监听的才会接受。
+            // 这样做的好处就是上面英文中说到的，虽然会每个生命周期都 emit `hook:`事件，但不需要维护一个 hash 来查找具体监听了哪
+            // 些 `hook:`事件
             if (hookRE.test(event)) {
                 vm._hasHookEvent = true
             }
