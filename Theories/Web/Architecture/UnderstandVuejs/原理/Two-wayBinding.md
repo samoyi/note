@@ -1,6 +1,5 @@
 # Two-way binding
-Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过`Object.defineProperty()`来劫持各
-个属性的 setter、getter，在数据变动时发布消息给订阅者，触发相应的监听回调。
+Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过`Object.defineProperty()`来劫持各个属性的 setter、getter，在数据变动时发布消息给订阅者，触发相应的监听回调。
 
 **完整代码位置**: `../codes/easyTwoWayBinding`
 
@@ -153,22 +152,16 @@ node.addEventListener('input', function (ev) {
 
 
 ## 从 model 到 view 的绑定
-Observer 模块 、Publisher 模块和 Subscriber 模块
-
-现在改变 input 的值时，虽然 model 中的数据会发生改变，但文本节点中的值并不会发生改变，
-因为还没有实现从 model 到 view 的绑定。同样，直接改变 model 时，view 也无法动态更新。
+1. Observer 模块 、Publisher 模块和 Subscriber 模块
+2. 现在改变 input 的值时，虽然 model 中的数据会发生改变，但文本节点中的值并不会发生改变，因为还没有实现从 model 到 view 的绑定。同样，直接改变 model 时，view 也无法动态更新。
 
 ### 各模块功能
 1. 首先要能监听到 model 中某个数据的变化。使用 Observer 来实现。
-2. 确定哪些节点依赖该数据，在监听到变化后，更新依赖该数据的节点。使用
-Publisher & Subscriber 模式来实现
+2. 确定哪些节点依赖该数据，在监听到变化后，更新依赖该数据的节点。使用 Publisher & Subscriber 模式来实现
 
 ### Observer
-* Observer 的作用是将一个对象的所有属性转化为访问器属性，这样就可以监听其属性值的变化，
-然后再进行相应的 DOM 更新操作。（Vue 实际上是先更新虚拟 DOM ）
-* 从[vm.$data的文档说明](https://vuejs.org/v2/api/index.html#vm-data)也可以看出来
-Observer的作用：The data object that the Vue instance is observing. The Vue
-instance proxies access to the properties on its data object. 其实不光是 `data`，
+* Observer 的作用是将一个对象的所有属性转化为访问器属性，这样就可以监听其属性值的变化，然后再进行相应的 DOM 更新操作。（Vue 实际上是先更新虚拟 DOM ）
+* 从[vm.$data的文档说明](https://vuejs.org/v2/api/index.html#vm-data)也可以看出来 Observer的作用：The data object that the Vue instance is observing. The Vue instance proxies access to the properties on its data object. 其实不光是 `data`，
 `props`、`methods`等属性也都是通过 Observer 被 Vue 实例代理了。
 * Observer 由以下两个函数组成：
 
@@ -206,9 +199,7 @@ function defineReactive(data, key, val) {
 
 ### Publisher & Subscriber 模式
 1. 当监听到一个属性变化时，需要通知那些依赖该属性的节点。
-2. 首先要有若干个依赖该属性的 subscriber 提前订阅该属性，当该属性发生更新时，需要一个
-publisher 将更新通知给所有的 subscriber，然后每个 subscriber 执行相应的（虚拟）DOM
-更新。
+2. 首先要有若干个依赖该属性的 subscriber 提前订阅该属性，当该属性发生更新时，需要一个 publisher 将更新通知给所有的 subscriber，然后每个 subscriber 执行相应的（虚拟）DOM 更新。
 3. 一个 publisher 对应一个数据属性，一个 subscriber 对应依赖该数据的一个节点。
 
 #### Publisher 对象
@@ -239,8 +230,7 @@ Publisher.prototype = {
 
 #### Subscriber 对象
 * 在 Vuejs 中，这个对象叫做 Watcher
-* Subscriber 对象要有以下功能：在接收到 Publisher 发布的数据的更新通知后，根据自己对
-应的节点类型，进行更新
+* Subscriber 对象要有以下功能：在接收到 Publisher 发布的数据的更新通知后，根据自己对应的节点类型，进行更新
 
 ```js
 /*
@@ -271,10 +261,8 @@ Subscriber.prototype = {
 ```
 
 #### 使用 Publisher
-* 因为一个`publisher`对应一个数据属性，所以应该在`defineReactive`函数中实例化
-`Publisher`
-* 因为要在数据更新后通知 subscribers，所以应该在数据属性的`setter`里调用`Publisher`
-实例的通知方法`notify`。
+* 因为一个`publisher`对应一个数据属性，所以应该在`defineReactive`函数中实例化`Publisher`
+* 因为要在数据更新后通知 subscribers，所以应该在数据属性的`setter`里调用`Publisher`实例的通知方法`notify`。
 
 `defineReactive`函数添加代码后变成如下：
 ```js
@@ -299,8 +287,7 @@ function defineReactive(data, key, val) {
 ```
 
 #### 使用 Subscriber
-因为一个 subscriber 对应一个节点，所以应该在编译的时候给每个节点添加一个 `Subscriber`
-实例。即，在`compile`函数中实例化：
+因为一个 subscriber 对应一个节点，所以应该在编译的时候给每个节点添加一个 `Subscriber`实例。即，在`compile`函数中实例化：
 ```js
 function compile (node, vm) {
 
@@ -355,10 +342,8 @@ function compile (node, vm) {
     ```js
     publisher.addSubscriber(subscriber);
     ```
-2. 但是`Publisher`实例和`subscriber`不在相同的作用域，没办法直接添加。那就想办法把
-`Publisher`实例传到`subscriber`的作用域。
-3. 生成`Publisher`实例时，将该实例保存到一个公共属性中：`Publisher.curPub`。这样，在
-`subscriber`的作用域，即`compile`函数中也可以访问到当前的`Publisher`实例。
+2. 但是`Publisher`实例和`subscriber`不在相同的作用域，没办法直接添加。那就想办法把`Publisher`实例传到`subscriber`的作用域。
+3. 生成`Publisher`实例时，将该实例保存到一个公共属性中：`Publisher.curPub`。这样，在`subscriber`的作用域，即`compile`函数中也可以访问到当前的`Publisher`实例。
 4. `defineReactive`函数变成如下：
     ```js
     function defineReactive(data, key, val) {
