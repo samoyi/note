@@ -159,6 +159,9 @@ Subscriber.prototype = {
 
 // MVVM构造函数
 function MVVM (options) {
+    if (new.target !== MVVM) {
+        throw new Error('MVVM必须使用构造函数方式调用');
+    }
     this.data = options.data;
     observe(this.data);
     const node = document.querySelector(options.el);
