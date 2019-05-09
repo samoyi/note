@@ -175,6 +175,57 @@ switch (true) {
 * When using switch inside a function, however, you may use a return statement instead of a break
 * default项并不是必须的，甚至也并不一定要放在最后
 
+### `switch`比较讨厌的几个地方
+* 本质上和`if else`是一样的，都是按照顺序对每种情况进行比对。如果情况很多的话，比对的耗时就会线性增长。
+* 每个`case`可以不加`{}`，但不加的话就会共导致变量声明冲突，但又不是正常共享作用域的状态
+    ```js
+    let n = 2;
+    switch(n){
+      case 1:
+        let m = 11;
+        break;
+      case 2:
+        let m = 22; // SyntaxError: Identifier 'm' has already been declared
+        break;
+    }
+    ```
+    ```js
+    let n = 2;
+    switch(n){
+      case 1:
+        let m = 11;
+        break;
+      case 2:
+        console.log(m); // ReferenceError: m is not defined
+        break;
+    }
+    ```
+* 没有美感的逻辑    
+    ```js
+    function foo(n) {
+        switch(n){
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+                console.log('小于5');
+                break;
+            case 5:
+                console.log('等于5');
+            case 6:
+                console.log('等于6');
+            case 7:
+                console.log('等于7');
+        }
+    }
+
+    // case 合并
+    foo(1); // "小于5"
+    foo(4); // "小于5"
+    // 没有 break 就依次命中！
+    foo(5); // "等于5" "等于6" "等于7"
+    ```
+
 
 ## while语句
 
