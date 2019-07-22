@@ -33,11 +33,12 @@
 * 现象：输入框定位在底部，使用搜狗输入法时，输入框大部分都被键盘挡住
 * 原因：
 * 解决：键盘弹出后，执行`document.body.scrollTop = document.body.scrollHeight;`
+* 注意：但是在像教育培训那样的样式中，`document.body.scrollHeight`远远超过了窗口高度，这时滚动的话就会滚到太靠下。 而且，在这种状态下，第三方键盘并不会被遮挡。看起来像是以为内高度足够，所以就不会被遮挡。
 
 ### iOS12 键盘收起后页面无法点击
 * 现象：输入框定位在底部，使用搜狗输入法时，输入框大部分都被键盘挡住
 * 原因：根据[这篇](https://juejin.im/post/5c07442f51882528c4469769)，键盘弹出后 body 上移，键盘后期
-* 解决：键盘弹出后，执行`document.body.scrollTop = document.body.scrollHeight;`
+* 解决：键盘弹出后，执行`document.body.scrollTop = document.body.scrollTop;`
 
 ### 在输入框内滑动时，滑动后面的页面
 * 现象：如果在输入框里滑动到最顶部或最底部而继续滑动时，都会滑动后面的页面
