@@ -2,14 +2,44 @@
 
 
 ## Misc
-* ECMAScript 的变量是松散类型的，即可以用来保存任何形式的数据
-* 未经初始化的变量会保存一个特殊的值：`undefined`
-* 使用`var`重复声明变量不会改变之前变量的值
+* ### ECMAScript 的变量是松散类型的，即可以用来保存任何形式的数据
+
+* ### 未经初始化的变量会保存一个特殊的值：`undefined`
+
+* ### 使用`var`重复声明变量不会改变之前变量的值
     ```js
     var n = 3;
     var n;
     console.log(n);  //3
     ```
+
+* ### 在某些环境下，`let`要比`var`更快   
+    * Chrome 75.0.3770.142
+        * 使用`let`平均10ms
+            ```js
+            let LIMIT = 10000000;
+            let arr = new Array(LIMIT);
+            console.time("Array insertion time");
+            for (let i = 0; i < LIMIT; i++) {
+                arr[i] = i;
+            }
+            console.timeEnd("Array insertion time");
+            ```
+        * 使用`var`平均超过20ms
+            ```js
+            var LIMIT = 10000000;
+            var arr = new Array(LIMIT);
+            console.time("Array insertion time");
+            for (var i = 0; i < LIMIT; i++) {
+                arr[i] = i;
+            }
+            console.timeEnd("Array insertion time");
+            ```
+    * Node v10.13.0  
+        没差别，都是11ms左右
+    * Firefox 66.0.4  
+        没差别，都差不多快有180ms……
+
 
 ## 声明提前
 1. 由于使用`var`声明变量有声明提前的存在<变量在其作用域的整体内始终是可见的。也就是说变
