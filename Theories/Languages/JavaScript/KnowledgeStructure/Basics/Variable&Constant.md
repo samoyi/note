@@ -40,6 +40,63 @@
     * Firefox 66.0.4  
         没差别，都差不多快有180ms……
 
+### `for`循环中的`var`和`let
+* `var` + `var`
+    ```js
+    for (var i=0; i<3; i++){
+        var i = 3;
+        console.log(i);
+    }
+    ```
+    输出一个`3`。相当于：
+    ```js
+    var i;
+    for (i=0; i<3; i++){
+        i = 3;
+        console.log(i);
+    }
+    ```
+* `let` + `let`：小括号作用域是外部作用域的子作用域、大括号作用域是小括号作用域的子作用域
+    ```js
+    // 下面有三级作用域：全局的、小括号的和大括号的
+    let i = 5; // 全局 i
+    for (let i=0; i<3; i++){ // 重新定义了自己的 i
+        let i=3; // 重新定义了自己的 i，不影响循环
+        console.log(i); // 三个 3
+    }
+    for (let i=0; i<3; i++){ 
+        i=3; // 直接修改了父级的 i
+        console.log(i); // 一个 3
+    }
+    console.log(i); // 5 
+    for (; i<9; i++) {} // 直接修改了全局 i
+    console.log(i); // 9
+    ```
+* `var` + `let`
+    ```js
+    var i = 9;
+    for (var i=0; i<3; i++){ // 仍然是全局作用域，直接修改之前的 9
+        let i=999;  //  定义自己的局部作用域，不影响外部
+        console.log(i); // 三个 999
+    }
+    console.log(i); // 3
+    ```
+* `let` + `var`：大括号会使用小括号的作用域，但是大括号中的`var`不会重新声明变量
+    ```js
+    for (let i=0; i<3; i++){
+        var i; // 没有自己的作用域，使用父级作用域，所以是重复声明
+    }
+    // Uncaught SyntaxError: Identifier 'i' has already been declared
+    ```
+    ```js
+    var m = 22;
+    for (let i=0; i<3; i++){
+        var m = 33; // 并不会重新声明，所以这里设置的还是外部作用域的 m
+        let n = 666;
+    }
+    console.log(m); // 33
+    ```
+
 
 ## 声明提前
 1. 由于使用`var`声明变量有声明提前的存在<变量在其作用域的整体内始终是可见的。也就是说变
