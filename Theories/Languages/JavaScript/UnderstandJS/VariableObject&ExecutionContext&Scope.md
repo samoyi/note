@@ -204,9 +204,3 @@ let arr = [];
 arr[1](); // 3
 ```
 三个函数的父级作用域其实是同一个作用域，也只有一个`i`。在函数调用时，`i`已经是4了
-
-
-
-
-## References
-* [*High Performance JavaScript* Chapter 2](https://book.douban.com/subject/4183808/)
