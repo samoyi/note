@@ -47,7 +47,7 @@
     //        ^^^^^^^^^^
     ```
 2. You can think of any method call as two individual steps:
-```js
+    ```js
     const x = foo.getX();
 
     // is actually two steps:
