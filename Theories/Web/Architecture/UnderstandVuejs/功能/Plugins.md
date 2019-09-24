@@ -1,8 +1,7 @@
 # 插件
 
 
-1. Vue.js 的插件应该有一个公开方法`install`。这个方法的第一个参数是 Vue 构造器，第二个
-参数是一个可选的选项对象：
+1. Vue.js 的插件应该有一个公开方法`install`。这个方法的第一个参数是 Vue 构造器，第二个参数是一个可选的选项对象：
 ```js
 MyPlugin.install = function (Vue, options) {
     // 1. 添加全局方法或属性
@@ -33,12 +32,9 @@ MyPlugin.install = function (Vue, options) {
 }
 ```
 2. 通过全局方法`Vue.use()`使用插件，这需要在调用`new Vue()`启动应用之前完成。
-3. 在执行`Vue.use(MyPlugin)`是，就会调用`MyPlugin`的`install`方法，定义一些全局的东
-西。定义的这些东西就可以实现当前插件的功能。
-4. 可以传第二个可选参数，对应插件`install`方法的第二个参数。对该插件进行一些个性化的配
-置。
-5. Vue.js 官方提供的一些插件 (例如`vue-router`) 在检测到 Vue 是可访问的全局变量时会自
-动调用`Vue.use()`。然而在例如 CommonJS 的模块环境中，你应该始终显式地调用`Vue.use()`。
+3. 在执行`Vue.use(MyPlugin)`是，就会调用`MyPlugin`的`install`方法，定义一些全局的东西。定义的这些东西就可以实现当前插件的功能。
+4. 可以传第二个可选参数，对应插件`install`方法的第二个参数。对该插件进行一些个性化的配置。
+5. Vue.js 官方提供的一些插件 (例如`vue-router`) 在检测到 Vue 是可访问的全局变量时会自动调用`Vue.use()`。然而在例如 CommonJS 的模块环境中，你应该始终显式地调用`Vue.use()`。
 6. 根据上述模板做一个简单的插件，可以周期性的改变字体颜色
     ```js
     // FontColor.js
