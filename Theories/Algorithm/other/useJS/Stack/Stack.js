@@ -1,33 +1,39 @@
-function Stack(){
-	let items = [];
+const stackSize = (stack)=>{
+  return stack.items.length;
+};
 
-	this.push = function(el){
-		return items.push( el );
-	};
+class Stack {
+  constructor(){
+    this.items = [];
+  }
 
-	this.pop = function(){
-		return items.pop();
-	};
+  push (el) {
+    return this.items.push(el);
+  }
 
-	this.peek = function(){
-		return items[items.length - 1];
-	};
+  pop () {
+    return this.items.pop();
+  }
 
-	this.isEmpty = function(){
-	    return items.length === 0;
-	};
+  peek () {
+    return this.items[stackSize(this) - 1];
+  }
 
-	this.size = function(){
-	    return items.length;
-	};
+  isEmpty () {
+    return stackSize(this) === 0;
+  }
 
-	this.clear = function(){
-	    items = [];
-	};
+  size () {
+    return stackSize(this);
+  }
 
-	this.print = function(){
-	    console.log(items.toString());
-	};
+  clear () {
+    this.items = [];
+  }
+
+  print () {
+    console.log(this.items.toString());
+  }
 }
 
-module.exports = Stack;
+module.exports = Stack

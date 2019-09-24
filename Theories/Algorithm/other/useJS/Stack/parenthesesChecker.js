@@ -1,44 +1,41 @@
-'use strict';
-
 // 检查括号是否匹配
 
+'use strict';
 
 const Stack = require('./Stack');
 
+const OPENS = ['(', '[', '{'];
+const CLOSERS = [')', ']', '}'];
+
 function matches(open, close){
-    let opens = "([{",
-        closers = ")]}";
-    return opens.indexOf(open) === closers.indexOf(close);
+    let index1 = OPENS.indexOf(open);
+    let index2 = CLOSERS.indexOf(close);
+    return index1 === index2 && index1 !== -1;
 }
 
 function parenthesesChecker(symbols){
 
     // filter all parentheses in symbols, and record their index in symbols
-    let aParenthesisIndex = [],
-        bIsParenthesis = false;
+    let aParenthesisIndex = []; // 每个括号在检测字符串中的 index
+    let bIsParenthesis = false;
     let parentheses = [...symbols].filter((char, index)=>{
-        bIsParenthesis = '()[]{}'.includes(char);
+        bIsParenthesis = [...OPENS, ...CLOSERS].includes(char);
         if( bIsParenthesis ){
             aParenthesisIndex.push(index);
         }
         return bIsParenthesis;
     }).join('');
 
-
-    let stack = new Stack(),
-        balanced = true,
-        index = 0,
-        // nTopIndex是栈顶的括号在parentheses中的序号。如果所有括号都匹配，栈会被
-        // 清空。如果最终没有清空，则栈顶元素就是首个没有匹配的括号。
-        nTopIndex = -1,
-        symbol, top;
-
+    let stack = new Stack()
+    let balanced = true;
+    let index = 0;
+    let symbol = null;
+    let top = null;
     while (index < parentheses.length && balanced){
-        symbol = parentheses.charAt(index);
+        symbol = parentheses[index];
         // 正括号推栈，等待匹配的括号出现使其被弹出
-        if (symbol==='(' || symbol==='[' || symbol==='{'){
+        if (OPENS.includes(symbol)) {
             stack.push(symbol);
-            nTopIndex++;
         }
         else { // 反括号
             if (stack.isEmpty()){ // 第一个括号就是反括号
@@ -46,7 +43,6 @@ function parenthesesChecker(symbols){
             }
             else {
                 top = stack.pop();
-                nTopIndex--;
                 if (!matches(top, symbol)){
                     balanced = false;
                 }
@@ -57,9 +53,10 @@ function parenthesesChecker(symbols){
     if (balanced && stack.isEmpty()){
         return [true, -1, ''];
     }
-    return [false, aParenthesisIndex[nTopIndex], stack.peek()];
+    return [false, aParenthesisIndex[stack.size()-1], stack.peek()];
 }
 
+console.log(parenthesesChecker('4[(){}')); // [false, 1, "["]
 console.log(parenthesesChecker('gs{fs{([we][swe])}(addsf)}')); // [true, -1, ""]
 console.log(parenthesesChecker('4444[{(){}')); // [false, 5, "{"]
 console.log(parenthesesChecker('2121[343[((544')); // [false, 10, "("]
