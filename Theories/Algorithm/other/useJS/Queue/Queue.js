@@ -1,33 +1,35 @@
-function Queue(){
-	let items = [];
+class Queue {
+    constructor(){
+        this.items = [];
+    }
 
-	this.enqueue = function(el){
-		return items.push( el );
-	};
+    enqueue (el) {
+        return this.items.push(el);
+    }
 
-	this.dequeue = function(){
-		return items.shift();
-	};
+    dequeue () {
+        return this.items.shift();
+    }
 
-	this.front = function(){
-		return items[0];
-	};
+    front () {
+        return this.items[0];
+    }
 
-	this.isEmpty = function(){
-	    return items.length === 0;
-	};
+    isEmpty () {
+        return this.items.length === 0;
+    }
 
-	this.size = function(){
-	    return items.length;
-	};
+    size () {
+        return this.items.length;
+    }
 
-	this.clear = function(){
-	    items = [];
-	};
+    clear () {
+        this.items = [];
+    }
 
-	this.print = function(){
-	    console.log(items.toString());
-	};
+    print () {
+        console.log(this.items.toString());
+    }
 }
 
 module.exports = Queue;

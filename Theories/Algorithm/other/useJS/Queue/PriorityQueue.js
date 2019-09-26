@@ -1,61 +1,64 @@
 // 有优先级的队列（可以根据优先级插队）
 
 
-function PriorityQueue(){
-	let items = [];
+// 优先级元素构造函数，包括元素值和优先级
+class QueueElement {
+    constructor(element, priority) {
+        this.element = element;
+        this.priority = priority;
+    }
+}
 
-	// 优先级元素构造函数，包括元素值和优先级
-	function QueueElement (element, priority){
-		this.element = element;
-		this.priority = priority;
-	}
+class PriorityQueue {
+    constructor(){
+        this.items = [];
+    }
 
-	this.enqueue = function(element, priority){
-		let queueElement = new QueueElement(element, priority);
+    enqueue (element, priority) {
+        let queueElement = new QueueElement(element, priority);
 
-		if (this.isEmpty()){
-			return items.push(queueElement);
-		}
-		else{
-			let added = false;
-			for (let i=0; i<items.length; i++){
-				if (queueElement.priority > items[i].priority){
-					items.splice(i, 0, queueElement);
-					added = true;
-					return items.length + 1;
-				}
-			}
-			return items.push(queueElement);
-		}
-	};
+        if (this.isEmpty()) {
+            return this.items.push(queueElement);
+        } 
+        else {
+            // 优先级数字越大则优先级越高
+            for (let i = 0; i < this.items.length; i++) {
+                if (queueElement.priority > this.items[i].priority) {
+                    this.items.splice(i, 0, queueElement);
+                    return this.items.length + 1;
+                }
+            }
+            return this.items.push(queueElement);
+        }
+    }
 
-	this.dequeue = function(){
-		return items.shift();
-	};
+    dequeue () {
+        return this.items.shift();
+    }
 
-	this.front = function(){
-		return items[0];
-	};
+    front () {
+        return this.items[0];
+    }
 
-	this.isEmpty = function(){
-		return items.length === 0;
-	};
+    isEmpty () {
+        return this.items.length === 0;
+    }
 
-	this.size = function(){
-		return items.length;
-	};
+    size () {
+        return this.items.length;
+    }
 
-	this.clear = function(){
-		items = [];
-	};
+    clear () {
+        this.items = [];
+    }
 
-	this.priority = function(index){
-		return items[index].priority;
-	};
+    priority (index) {
+        return this.items[index].priority;
+    }
 
-	this.print = function(){
-		console.log( items.map(item=>item.element).toString() );
-	};
+    print () {
+        console.log(this.items.map(item => item.element).toString());
+    }
 }
 
 module.exports = PriorityQueue;
