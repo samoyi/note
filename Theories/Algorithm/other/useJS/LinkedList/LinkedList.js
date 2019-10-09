@@ -1,197 +1,127 @@
-function LinkedList() {
-
-    function Node(element){
+class Node {
+    constructor(element) {
         this.element = element;
         this.next = null;
-    };
+    }
+}
 
-    let length = 0;
-    // 指针，指向第一个节点。如果链表第一个节点改变了，则需要把 head 指向新的第一个节点
-    let head = null;
+class LinkedList {
+    constructor(){
+        this.length = 0;
+        this.head = null;
+    }
 
-
-    this.append = function(element){
+    append (element) {
         let node = new Node(element);
-        let current = null; // 遍历链表过程中的当前项
+        let current;
 
-        if (null === head){ // 该元素将是第一个元素
-            head = node;
-        }
+        if (this.head === null) { // 当前列表为空
+            this.head = node;
+        } 
         else {
-            current = head; // 从头开始遍历
-            while(current.next !== null){
+            current = this.head;
+
+            // 循环列表，直到找到最后一项
+            while (current.next) {
                 current = current.next;
             }
-            // 遍历结束，最后一个节点的 next 为 null
-            current.next = node; // 最后一个节点链上新加节点
+
+            // 找到最后一项，将其 next 赋为 node，建立链接
+            current.next = node;
         }
 
-        return ++length;
-    };
+        this.length++; // 更新列表的长度
+    }
 
+    insert (position, element) {
+        if (position < 0 || position > this.length) return false;
 
-    this.removeAt = function(position){
-        if (position > -1 && position < length){
-            let current = head;
+        let node = new Node(element);
+        let current = this.head;
+        let previous;
+        let index = 0;
 
-            if (position === 0){ // 要移除第一个节点
-                head = current.next; // 将 head 指向第二个节点
-                // 第一个节点因为失去了引用，之后会被回收
-            }
-            else {
-                let previous = null;
-                let index = 0;
-                // 通过不断移动 current 和 previous 的指向来遍历链表
-                while (index++ < position){ // 如果当前项不是要删除的项
-                    // 就把指针向后移动一部
-                    previous = current;
-                    current = current.next;
-                }
-                // 遍历结束，当前项就是要移除的项
-                // 把当前项的前一项链接上当前项的下一项，当前项失去引用
-                previous.next = current.next;
-            }
-
-            length--;
-            return current.element;
-        }
+        if (position === 0) { // 在第一个位置添加
+            node.next = current;
+            this.head = node;
+        } 
         else {
-            return null;
-        }
-    };
-
-
-    this.insert = function(position, element){
-        if (position > -1 && position <= length){
-
-            let node = new Node(element);
-            let current = head;
-
-            if (position){ // 插入到中间或末尾
-                let previous = null;
-                let index = 0;
-
-                while( index++ !== position ){ // 遍历链表
-                    previous = current;
-                    current = current.next;
-                    // 在判断时，index 如果是 0，此时 current 就是索引为 1 的节点。
-                    // 在判断时，index 如果是最后一个节点的索引，此时 current 就是
-                    // null，previous 就是最后一个节点；index 自增之后就是 length，
-                    // 循环停止。
-                }
-                // 遍历时，current 是对想要插入新元素的位置之后一个元素的引用，
-                // previous 是对想要插入新元素的位置之前一个元素的引用。
-                previous.next = node;
-                node.next = current; // 如果 node 是最后一个节点，则 current 就是 null
+            while (index++ < position) {
+                previous = current;
+                current = current.next;
             }
-            else { // 插入到最前面
-                node.next = current;
-                head = node;
+            previous.next = node;
+            node.next = current;
+        }
+
+        this.length++;
+        return true;
+    }
+
+    removeAt (position) {
+        if (position < 0 || position >= this.length) return null;
+
+        let current = this.head;
+        let previous;
+        let index = 0;
+
+        if (position === 0) { // 移除第一项
+            this.head = current.next;
+        } 
+        else {
+            while (index++ < position) {
+                previous = current;
+                current = current.next;
             }
-
-            length++;
-            return true;
+            //将 previous 与 current 的下一项链接起来：跳过 current，从而移除它
+            previous.next = current.next;
         }
-        else{
-            return false;
-        }
-    };
 
+        this.length--;
+        return current.element;
+    }
 
-    // 找到首个 element 的索引
-    this.indexOf = function(element){
-        let current = head;
-        let index = -1;
+    remove (element) {
+        let index = this.indexOf(element);
+        return this.removeAt(index);
+    }
 
-        while(current){
-            index++;
-            if (current.element === element){
+    indexOf (element) {
+        let current = this.head;
+        let index = 0;
+
+        while (current) {
+            if (element === current.element) {
                 return index;
             }
+            index++;
             current = current.next;
         }
         return -1;
-    };
+    }
 
+    isEmpty () {
+        return this.length === 0;
+    }
 
-    // 移除首个 element
-    this.remove = function(element){
-        return this.removeAt( this.indexOf(element) );
-    };
+    size () {
+        return this.length;
+    }
 
+    getHead () {
+        return this.head;
+    }
 
-    this.isEmpty = function() {
-        return length === 0;
-    };
-
-
-    this.size = function() {
-        return length;
-    };
-
-
-    this.getHead = function(){
-        return head;
-    };
-
-
-    this.reverse = function(){
-        if (length > 1){
-            // 第一种方法：从第二项开始遍历，把每一项的 next 都指向前一项
-            let previous = head;
-            let current = head.next;
-            let next = null;
-
-            previous.next = null; // 第一项变成最后一项
-
-            while (current){
-                next = current.next; // 将翻转前的下一项保存下来
-                current.next = previous; // 当前项指向前一项
-                // 以下两行使得遍历指针向前走一步
-                previous = current;
-                current = next;
-            }
-            // 遍历结束后，previous 是翻转前的最后一项，翻转后的第一项
-            head = previous;
-
-
-            // 第二种方法：next 指针不变，把元素的位置翻转
-            // let aEle = [];
-            // let current = head;
-            //
-            // while (current){
-            //     aEle.push(current.element);
-            //     current = current.next;
-            // }
-            //
-            // current = head;
-            // aEle.reverse();
-            //
-            // let index = 0;
-            // while (current){
-            //     current.element = aEle[index++];
-            //     current = current.next;
-            // }
-        }
-    };
-
-
-    this.toString = function(){
-        let current = head,
-            string = '';
+    toString () {
+        let current = this.head;
+        let string = '';
 
         while (current) {
-            string += "," + current.element;
+            string += ", " + current.element;
             current = current.next;
         }
-        return string.slice(1);
-    };
-
-
-    this.print = function(){
-        console.log( this.toString() );
-    };
+        return string.slice(2);
+    }
 }
-
 
 module.exports = LinkedList;
