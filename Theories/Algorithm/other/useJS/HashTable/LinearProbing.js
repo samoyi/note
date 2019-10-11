@@ -1,67 +1,61 @@
-function LinearProbing(){
-    let table = [];
+const geneDjb2HashFn = require('./djb2Hash');
 
-    function djb2HashCode (key){
-        let hash = 5381,
-            len = key.length;
-        for (let i=0; i<len; i++) {
-           hash = hash * 33 + key.charCodeAt(i);
-        }
-        return hash % 1013;
+const djb2HashCode = geneDjb2HashFn(1013);
+
+class ValuePair {
+    constructor(key, value) {
+        this.key = key; // 用来在链表中区分
+        this.value = value;
     }
 
+    toString() {
+        return '[' + this.key + ' - ' + this.value + ']';
+    }
+}
 
-    function ValuePair(key, value){
-        this.key = key;
-        this.value = value;
-        this.toString = function() {
-            return '[' + this.key + ' - ' + this.value + ']';
-        }
-    };
+class LinearProbing {
+    constructor(){
+        this.table = [];
+    }
 
-
-    this.put = function(key, value) {
-        let position = djb2HashCode( key );
-        while( table[position] !== undefined ){
+    put (key, value) {
+        let position = djb2HashCode(key);
+        while (this.table[position] !== undefined) {
             position++;
         }
-        table[position] = new ValuePair(key, value);;
-    };
+        this.table[position] = new ValuePair(key, value);;
+    }
 
+    get (key) {
+        let position = djb2HashCode(key);
 
-    this.get = function (key) {
-        let position = djb2HashCode( key );
-        if( table[position] !== undefined ){
-            while( table[position]!==undefined && table[position].key!==key ){
-                position++;
-            }
-            return table[position].value;
+        if (this.table[position] === undefined) return undefined;
+
+        while (this.table[position] === undefined || this.table[position].key !== key) {
+            position++;
         }
-        return undefined;
-    };
+        return this.table[position].value;
+    }
 
+    remove (key) {
+        let position = djb2HashCode(key);
 
-    this.remove = function(key) {
-        let position = djb2HashCode( key );
-        if( table[position] !== undefined ){
-            while( table[position]!==undefined && table[position].key!==key ){
-                position++;
-            }
-            table[position] = undefined;
-            return true;
+        if (this.table[position] === undefined) return false;
+
+        while (this.table[position] === undefined || this.table[position].key !== key) {
+            position++;
         }
-        return false;
-    };
+        this.table[position] = undefined;
+        return true;
+    }
 
-
-    this.print = function() {
-        table.forEach(function(item){
-            if( item !== undefined ){
+    print () {
+        this.table.forEach(function (item) {
+            if (item !== undefined) {
                 console.log(item.toString());
             }
         });
-    };
-
+    }
 }
 
 

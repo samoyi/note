@@ -1,93 +1,88 @@
 const LinkedList = require('../LinkedList/LinkedList');
+const geneDjb2HashFn = require('./djb2Hash');
 
-function SeparateChaining(){
-    let table = [];
+const djb2HashCode = geneDjb2HashFn(1013);
 
-    function djb2HashCode (key){
-        let hash = 5381,
-            len = key.length;
-        for (let i=0; i<len; i++) {
-           hash = hash * 33 + key.charCodeAt(i);
-        }
-        return hash % 1013;
+class ValuePair {
+    constructor(key, value) {
+        this.key = key; // 用来在链表中区分
+        this.value = value;
     }
 
+    toString () {
+        return '[' + this.key + ' - ' + this.value + ']';
+    }
+}
 
-    function ValuePair(key, value){
-        this.key = key;
-        this.value = value;
-        this.toString = function() {
-            return '[' + this.key + ' - ' + this.value + ']';
+class SeparateChaining {
+    constructor(){
+        this.table = [];
+    }
+    
+    put (key, value) {
+        let position = djb2HashCode(key);
+        if (this.table[position] == undefined) {
+            this.table[position] = new LinkedList();
         }
-    };
+        this.table[position].append(new ValuePair(key, value));
+    }
 
-
-    this.put = function(key, value) {
-        let position = djb2HashCode( key );
-        if (table[position] == undefined){
-            table[position] = new LinkedList();
-        }
-        table[position].append(new ValuePair(key, value));
-    };
-
-
-    this.get = function (key) {
+    get (key) {
         let position = djb2HashCode(key);
 
-        if (table[position] !== undefined){
-           let current = table[position].getHead();
+        if (this.table[position] !== undefined) {
+            let current = this.table[position].getHead();
 
-           while(current.next){
-               if (current.element.key === key){
-                   return current.element.value;
-               }
-               current = current.next;
-           }
+            while (current.next) {
+                if (current.element.key === key) {
+                    return current.element.value;
+                }
+                current = current.next;
+            }
 
-           if (current.element.key === key){
-               return current.element.value;
-           }
+            if (current.element.key === key) { // 元素是链表的最后一个节点（包括链表只有一个节点的情况）
+                return current.element.value;
+            }
         }
         return undefined;
-    };
+    }
 
-
-    this.remove = function(key) {
+    remove (key) {
         let position = djb2HashCode(key);
 
-        if (table[position] !== undefined){
-            let current = table[position].getHead();
+        if (this.table[position] !== undefined) {
+            let current = this.table[position].getHead();
 
-            while(current.next){
-                if (current.element.key === key){
-                    table[position].remove(current.element);
-                    if(table[position].isEmpty()){
-                        table[position] = undefined;
+            while (current.next) {
+                if (current.element.key === key) {
+                    this.table[position].remove(current.element);
+                    if (this.table[position].isEmpty()) {
+                        this.table[position] = undefined;
                     }
                     return true;
                 }
                 current = current.next;
             }
 
-            if (current.element.key === key){
-                table[position].remove(current.element);
-                if(table[position].isEmpty()){
-                    table[position] = undefined;
+            if (current.element.key === key) {
+                this.table[position].remove(current.element);
+                if (this.table[position].isEmpty()) {
+                    this.table[position] = undefined;
                 }
                 return true;
             }
         }
         return false;
-    };
+    }
 
 
-    this.print = function() {
-        table.forEach(function(item){
-            if( item !== undefined ){
+    print () {
+        this.table.forEach((item) => {
+            if (item !== undefined) {
                 console.log(item.toString());
             }
         });
-    };
+    }
 }
 
 module.exports = SeparateChaining;
