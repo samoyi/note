@@ -1,204 +1,229 @@
-function Graph() {
-    let vertices = [],
-        adjList = new Map(),
-        dfs_time = 0;
+const Queue = require('../Queue/Queue');
+const Dictionary = require('./Dictionary');
 
-    function initializeColor(){
-        let color = new Map(); // TODO 同样存在重复
-        vertices.forEach(vertex=>{
-            color.set(vertex, 'white');
-        });
-        return color;
-    };
+// 完全探索一个顶点要求我们查看该顶点的每一条边，对于每一条边所连接的没有被访问过的顶点，
+// 将其标注为被发现的，并将其加进待访问顶点列表中。
+// 为了保证算法的效率，务必访问每个顶点至多两次。连通图中每条边和顶点都会被访问到。
 
-    function dfs_traversal_visit(u, color, callback){
-        color.set(u, 'grey');
-        callback && callback(u);
-        let neighbors = adjList.get(u);
-        neighbors.forEach(vertex=>{
-            if (color.get(vertex) === 'white'){
-                dfs_traversal_visit(vertex, color, callback);
+// 当要标注已经访问过的顶点时，我们用三种颜色来反映它们的状态。
+// 白色：表示该顶点还没有被访问。
+// 灰色：表示该顶点被访问过，但并未被探索过。
+// 黑色：表示该顶点被访问过且被完全探索过。
+// 这就是之前提到的务必访问每个顶点最多两次的原因。
+function initializeColor (vertices) {
+    let color = [];
+    for (let i = 0; i < vertices.length; i++) {
+        color[vertices[i]] = 'white';
+    }
+    return color;
+}
+
+let dfsIndent = 0;
+function dfsVisit (u, adjList, colors, callback) {
+    colors[u] = 'grey';
+    callback && callback(u);
+
+    console.log(' '.repeat(dfsIndent) + 'Discovered ' + u);
+    dfsIndent += 4;
+
+    let neighbors = adjList.get(u);
+    for (let i = 0; i < neighbors.length; i++) {
+        let w = neighbors[i];
+        if (colors[w] === 'white') {
+            dfsVisit(w, adjList, colors, callback);
+        }
+    }
+    colors[u] = 'black';
+
+    dfsIndent -= 4;
+    console.log(' '.repeat(dfsIndent) + 'explored ' + u);
+}
+
+let DFSIndent = 0;
+let DFSTime = 0;
+function DFSVisit (u, adjList, colors, d, f, p) {
+    colors[u] = 'grey';
+    d[u] = ++DFSTime;
+
+    console.log(' '.repeat(DFSIndent) + 'Discovered ' + u);
+    DFSIndent += 4;
+
+    let neighbors = adjList.get(u);
+    for (let i = 0; i < neighbors.length; i++) {
+        let w = neighbors[i];
+        if (colors[w] === 'white') {
+            p[w] = u;
+            DFSVisit(w, adjList, colors, d, f, p);
+        }
+    }
+    colors[u] = 'black';
+    f[u] = ++DFSTime;
+    
+    DFSIndent -= 4;
+    console.log(' '.repeat(DFSIndent) + 'explored ' + u);
+};
+
+class Graph {
+    constructor(isDirected=false) {
+        this.vertices = [];
+        this.adjList = new Dictionary(); // 邻接表
+        this.isDirected = isDirected;
+    }
+
+
+    addVertex (v) {
+        this.vertices.push(v);
+        this.adjList.set(v, []); // initialize adjacency list with array as well;
+    }
+
+    addEdge (v, w) {
+        this.adjList.get(v).push(w);
+        if (!this.isDirected) {
+            this.adjList.get(w).push(v);
+        }
+    }
+
+    toString () {
+        let str = '';
+        for (let i = 0; i < this.vertices.length; i++) {
+            let v = this.vertices[i];
+            str += v + ' -> ';
+            let neighbors = this.adjList.get(v);
+            for (let j = 0; j < neighbors.length; j++) {
+                str += neighbors[j] + ' ';
             }
-        });
-        color.set(u, 'black');
-    };
+            str += '\n';
+        }
+        return str;
+    }
 
-    function dfs_info_visit(u, color, discoveredTime, exploredTime, pred){
-        console.log('discovered ' + u);
-        color.set(u, 'grey');
-        discoveredTime[u] = ++dfs_time;
-        let neighbors = adjList.get(u);
-        neighbors.forEach(vertex=>{
-            if (color.get(vertex) === 'white'){
-                pred[vertex] = u;
-                dfs_info_visit(vertex, color, discoveredTime, exploredTime, pred);
-            }
-        });
-
-        color.set(u, 'black');
-        exploredTime[u] = ++dfs_time;
-        console.log('explored ' + u);
-    };
-
-
-
-    // TODO 会重复添加顶点，没问题？
-    this.addVertex = function(v){
-       vertices.push(v);
-       adjList.set(v, []);
-    };
-
-
-    // TODO  没有检查顶点是否存在
-    this.addEdge = function(v, w, directed=false){
-       adjList.get(v).push(w);
-       if(!directed) adjList.get(w).push(v);
-    };
-
-
-    this.bfs_traversal = function(v, callback){
-       let color = initializeColor(),
-           queue = [];
-       queue.push(v);
-       while (queue.length){
-            let u = queue.shift(),
-                neighbors = adjList.get(u),
-                len = neighbors.length
-            color.set(u, 'grey');
-            neighbors.forEach(vertex=>{
-                if(color.get(vertex)==='white'){
-                    color.set(vertex, 'grey');
-                    queue.push(vertex);
+    
+    // Breadth-First Search
+    bfs (v, callback) {
+        let colors = initializeColor(this.vertices);
+        let queue = new Queue();
+        queue.enqueue(v); // 遍历起始顶点
+        // 遍历每一个顶点
+        while (!queue.isEmpty()) {
+            let u = queue.dequeue();
+            let neighbors = this.adjList.get(u);
+            colors[u] = 'grey'; // 该顶点现在已经访问
+            // 循环访问该顶点的相邻顶点
+            for (let i = 0; i < neighbors.length; i++) {
+                let n = neighbors[i];
+                if (colors[n] === 'white') {
+                    colors[n] = 'grey';
+                    // 被访问的节点加入队列，之后会被探索
+                    queue.enqueue(n);
                 }
-            });
-            color.set(u, 'black');
+            }
+            colors[u] = 'black'; // 该顶点的所有相邻节点都已经被访问，现在该节点就是被探索的状态
             if (callback) {
                 callback(u);
             }
         }
-    };
+    }
 
+    // 遍历获得每个顶点距离起始顶点的距离以及每个顶点的前溯顶点
+    BFS (v) {
+        let colors = initializeColor(this.vertices);
+        let queue = new Queue();
+        let distances = {}; // 每个顶点距离起始顶点的距离
+        let preVertex = {}; // 每个顶点的前溯顶点
+        queue.enqueue(v);
 
-    this.bfs_info = function(v){
-        let color = initializeColor(),
-            queue = [],
-            dis = new Map(),
-            pred = new Map();
-        queue.push(v);
+        // 初始化
+        for (let i = 0; i < this.vertices.length; i++) {
+            distances[this.vertices[i]] = 0;
+            preVertex[this.vertices[i]] = null;
+        }
 
-        vertices.forEach(vertex=>{
-            dis.set(vertex, 0);
-            pred.set(vertex, null);
-        });
-
-        while (queue.length){
-            let u = queue.shift(),
-                neighbors = adjList.get(u);
-            color.set(u, 'grey');
-            neighbors.forEach(vertex=>{
-                if (color.get(vertex) === 'white'){
-                    color.set(vertex, 'grey');
-                    dis.set(vertex, dis.get(u) + 1);
-                    pred.set(vertex, u);
-                    queue.push(vertex);
+        while (!queue.isEmpty()) {
+            let u = queue.dequeue();
+            let neighbors = this.adjList.get(u);
+            colors[u] = 'grey';
+            for (let i = 0; i < neighbors.length; i++) {
+                let n = neighbors[i];
+                if (colors[n] === 'white') {
+                    colors[n] = 'grey';
+                    distances[n] = distances[u] + 1;
+                    preVertex[n] = u;
+                    queue.enqueue(n);
                 }
-            });
-            color.set(u, 'black');
+            }
+            colors[u] = 'black';
         }
+
         return {
-            distances: dis,
-            predecessors: pred
+            distances: distances,
+            predecessors: preVertex
         };
-    };
+    }
 
-
-    this.bfs_getPath = function(v){
-        let predecessors = this.bfs_info(v).predecessors;
-        let oPath = new Map();
-        let pred = null;
-        predecessors.forEach((item, key)=>{
-            pred = predecessors.get(key);
-            oPath.set(key, []);
-            while(pred !== null){
-                oPath.get(key).unshift(pred);
-                pred = predecessors.get(pred);
-            }
-            oPath.get(key).push(key);
-        });
-        return oPath;
-    };
-
-
-    this.dfs_traversal = function(callback){
-        let color = initializeColor();
-        vertices.forEach(vertex=>{
-            if (color.get(vertex) === 'white'){
-                dfs_traversal_visit(vertex, color, callback);
-            }
-        });
-    };
-
-
-    this.dfs_info = function(){
-        let color = initializeColor(),
-            discoveredTime = [],
-            exploredTime = [],
-            pred = [];
-        dfs_time = 0;
-        vertices.forEach(vertex=>{
-            exploredTime[vertex] = 0;
-            discoveredTime[vertex] = 0;
-            pred[vertex] = null;
-        });
-        vertices.forEach(vertex=>{
-            if (color.get(vertex) === 'white'){
-                dfs_info_visit(vertex, color, discoveredTime, exploredTime, pred);
-            }
-        });
-        return {
-            discovery: discoveredTime,
-            finished: exploredTime,
-            predecessors: pred
-        };
-    };
-
-
-    // dfs实现拓扑排序
-    /*
-     * Why toposort is the reverse order of dfs?
-     *
-     * A vertex in toposort must meet one of the following 2 conditions:
-     *    1. This vertex has not previous vertex
-     *    2. All the previous vertices of this vertex have be sorted already
-     *
-     * 就书上拓扑排序的例子来说：
-     * 1. 如果试图以discovery的顺序进行排序，即排序结果为 A -> C -> F -> E -> D -> B。
-     *    前三步都是符合上述两点要求的：A没有前溯节点，C和F的前溯节点已经被排序了。但到了
-     *    E，它有两个前溯节点，有一个并没有被排序。所以这种排序不是合理的拓扑排序。
-     * 2. 如果试图以finish的顺序进行排序，即排序结果为 E -> F -> C -> D -> A -> B。显
-     *    然第一步就已经不符合上面两个条件中的任意一个了。
-     * 上述两种排序方式显然是最容易想到的，但都不符合。但是要怎么才能想到是finish的逆序？
-     * 对条件2进一步抽象：当一个节点发生某种状态改变时，它的所有前溯节点都处于同一种状态。
-     * 现在，对于finish顺序来说，当一个节点完成的时候，它的所有前溯节点都是未完成的状态。
-     * 再把finish顺序反推回条件2，当一个节点处于未完成状态时，它的所有前溯节点也已经是未
-     * 完成状态了。这样就符合了条件2。现在要注意，这里排序的，并不是节点的完成，而是节点的
-     * 未完成。即，节点的未完成顺序就是使用dfs时的拓扑排序。
-     */
-
-
-
-    this.toString = function(){
-        let s = '',
-            len = vertices.length;
-        for (let i=0; i<len; i++){
-            s += vertices[i] + ' -> ';
-            adjList.get(vertices[i]).forEach((vertex)=>{
-                s += vertex + ' ';
-            });
-            s += '\n';
+    // 使用 BFS 计算指定顶点 v 到其他所有顶点的最短路径
+    getShortestPaths (v) {
+      let {predecessors} = this.BFS(v);
+      let pathes = {};
+      for (let key in predecessors) {
+        let vertex = predecessors[key];
+        if (vertex === null) continue;
+        pathes[key] = key;
+        while (vertex) {
+          pathes[key] = vertex + '-' + pathes[key];
+          vertex = predecessors[vertex];
         }
-        return s;
-    };
+      }
+      return pathes;
+    }
+
+    // Depth-First Search
+    dfs (callback) {
+        let colors = initializeColor(this.vertices);
+        for (let i = 0; i < this.vertices.length; i++) {
+            if (colors[this.vertices[i]] === 'white') {
+                dfsVisit(this.vertices[i], this.adjList, colors, callback);
+            }
+        }
+    }
+    
+    // 计算 dfs 时每个顶点的发现时间和探索时间，以及其前溯节点
+    DFS () {
+        let colors = initializeColor(this.vertices);
+        let d = {};
+        let f = {};
+        let p = {};
+        DFSTime = 0;
+
+        for (let i = 0; i < this.vertices.length; i++) {
+            f[this.vertices[i]] = 0;
+            d[this.vertices[i]] = 0;
+            p[this.vertices[i]] = null;
+        }
+
+        for (let i = 0; i < this.vertices.length; i++) {
+            if (colors[this.vertices[i]] === 'white') {
+                DFSVisit(this.vertices[i], this.adjList, colors, d, f, p);
+            }
+        }
+
+        return {
+            discovery: d,
+            finished: f,
+            predecessors: p
+        };
+    }
+
+    // 根据 DFS 实现拓扑排序
+    toposort () {
+        let {finished} = this.DFS();
+        let entries = Object.entries(finished).sort((a, b) => {
+            return b[1] - a[1];
+        })
+        return entries.map(item=>item[0]);
+    }
+    // E 一定会在 B 和 F 之前完成，因为当探索到 B 或 F 时，就要再深度优先的探索和完成 E
+    // 所以在 DFS 遍历时 E 的完成时间一定排在 B 和 F 前面
+    // 因为 DFS 的的完成顺序应该和拓扑排序的完成顺序相反，所以“E 的完成时间一定排在 B 和 F 前面”就保证了拓扑排序时 E 的完成时间一定排在 B 和 F 后面
 }
 
 
