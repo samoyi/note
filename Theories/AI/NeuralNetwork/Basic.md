@@ -118,3 +118,105 @@ def relu(x):
     print(Y)  # [ 5 11 17]
     ```
 5. 使用 `np.dot`，可以一次性计算出 **Y** 的结果。这意味着，即便 **Y** 的元素个数为 100 或 1000，也可以通过一次运算就计算出结果。如果不使用 `np.dot`，就必须对输入和权重进行循环的相乘相加，非常麻烦。
+
+
+## 3 层神经网络的实现
+1. 实现如下的三层结构神经网络
+    <img src="./images/10.png" width="600" style="display: block;" />
+2. 最后一层的输出层所用的激活函数，要根据求解问题的性质决定。一般地，回归问题可以使用恒等函数，二元分类问题可以使用 sigmoid 函数，多元分类问题可以使用 softmax 函数。本例中输出层的激活函数使用恒等函数，恒等函数会将输入按原样输出，因此，这个例子中没有必要特意定义`identity_function()`，这里这样实现只是为了和之前的流程保持统一。
+3. 代码实现
+```py
+import numpy as np
+import matplotlib.pylab as plt
+
+
+# 恒等函数
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def identity_function(x):
+    return x
+
+# 设置权重和偏置，定义神经网络
+def init_network():
+    network = {}
+    # 三层的权重和偏置
+    network['W1'] = np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]])
+    network['b1'] = np.array([0.1, 0.2, 0.3])
+    network['W2'] = np.array([[0.1, 0.4], [0.2, 0.5], [0.3, 0.6]])
+    network['b2'] = np.array([0.1, 0.2])
+    network['W3'] = np.array([[0.1, 0.3], [0.2, 0.4]])
+    network['b3'] = np.array([0.1, 0.2])
+
+    return network
+
+# 将输入信号转换为输出信号
+def forward(network, x):
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
+    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+
+    # 每一层输入的加权和经过激活函数转换后，输出作为下一层的输入
+    a1 = np.dot(x, W1) + b1
+    z1 = sigmoid(a1)
+    a2 = np.dot(z1, W2) + b2
+    z2 = sigmoid(a2)
+    a3 = np.dot(z2, W3) + b3
+    y = identity_function(a3)
+
+    return y
+
+
+network = init_network()
+x = np.array([1.0, 0.5])
+y = forward(network, x)
+print(y)  # [ 0.31682708 0.69627909]
+```
+
+
+## 输出层的设计
+1. 神经网络可以用在分类问题和回归问题上，不过需要根据情况改变输出层的激活函数。一般而言，回归问题用恒等函数，分类问题用 softmax 函数。
+2. 机器学习的问题大致可以分为分类问题和回归问题。分类问题是数据属于哪一个类别的问题。比如，区分图像中的人是男性还是女性的问题就是分类问题。而回归问题是根据某个输入预测一个（连续的）数值的问题。比如，根据一个人的图像预测这个人的体重的问题就是回归问题。
+
+### 恒等函数和 softmax 函数
+1. 图示（输出层的激活函数用 `σ()` 表示）
+    <img src="./images/12.png" width="600" style="display: block;" />
+2. softmax 函数可以用下面的式（3.10）表示
+    <img src="./images/11.gif" width="300" style="display: block; background-color: white" />
+3. 假设输出层共有 n 个神经元，softmax 函数计算第 k 个神经元的输出。可以看到，每个神经元的输出值都要除以每个自然底数加权和次方的总和。代码如下
+    ```py
+
+    def softmax(a):
+        exp_a = np.exp(a)
+        sum_exp_a = np.sum(exp_a)
+        y = exp_a / sum_exp_a
+
+    return y
+
+
+    a = np.array([0.3, 2.9, 4.0])
+    print(softmax(a)) # [0.01821127 0.24519181 0.73659691]
+    ```
+
+### 防止 softmax 函数溢出
+1. 上面的 `softmax` 函数的实现虽然正确描述了式（3.10），但在计算机的运算上有一定的缺陷。这个缺陷就是溢出问题。softmax 函数的实现中要进行指数函数的运算，但是此时指数函数的值很容易变得非常大
+    ```py
+    a = np.array([1010, 1000, 990])
+    print(softmax(a))  # [nan nan nan]
+    ```
+2. softmax 函数的实现可以像式（3.11）这样进行改进
+    <img src="./images/13.gif" width="300" style="display: block; background-color: white" />
+3. 式（3.11）在分子和分母上都乘上 C 这个任意的常数。然后，把这个 C 移动到指数函数（exp）中，记为 log C（其实就是lnC，以e为底的对数）。最后，把 log C 替换为另一个符号 C'。
+4. 式（3.11）说明，在进行 softmax 的指数函数的运算时，加上（或者减去）某个常数并不会改变运算的结果。这里的 C' 可以使用任何值，但是为了防止溢出，一般会使用输入信号中的最大值
+    ```py
+    def softmax(a):
+        c = np.max(a)
+        exp_a = np.exp(a - c)
+        sum_exp_a = np.sum(exp_a)
+        y = exp_a / sum_exp_a
+
+        return y
+
+
+    a = np.array([1010, 1000, 990])
+    print(softmax(a))  # [9.99954600e-01 4.53978686e-05 2.06106005e-09]
+    ```
