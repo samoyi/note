@@ -76,8 +76,12 @@
 * 现象：Safari Mobile 的透明度会比电脑和安卓更低（更透明）
 * 原因：Safari Mobile 中设置了`disabled`的`input`的`oapcity`会被设置为`0.4`
 
-### 在触发键盘弹出时，页面会发生`scroll`
+### iOS10（及以下？）absolute 定位元素向右偏移
+* 现象：在只设置了`absolute`定位而没有设置具体位置时，会出现向右偏移，左边缘对齐父级的中间而非左边缘
+* 解决：再设置`left: 0; right: 0; margin: auto;`
 
+### 键盘收起后被顶起的页面不自动下落
+* 解决：`window.scroll(0,0)`
 
 
 ## 事件
@@ -100,3 +104,22 @@
     // 样式、数据等改为停止播放时的状态
   }
   ```
+
+## 样式
+### 多行溢出省略号 CSS 方案
+```scss
+// height: 0.36rem; 限制高度会导致第二行显示不全或显示一点点第三行
+// 设置 font-size 和 line-height 看起来也有可能出现这个问题。但可以把 font-size 设置在父级
+text-overflow: ellipsis;
+display: -webkit-box;
+// autoprefixer 插件在打包时会移除下面这个样式，这里通过如下两个注释在这一行样式的位置关闭该插件
+/*! autoprefixer: off */
+-webkit-box-orient: vertical;
+/*! autoprefixer: on */
+-webkit-line-clamp: 3;
+overflow: hidden;
+word-break: break-word;
+// 省略号有可能也被截断，这应该是浏览器的 bug。 Chrome 曾经有但已经修复
+// 通过以下方法可以解决   参考 https://stackoverflow.com/a/43859485
+padding-right: 4px;
+```
