@@ -6,5 +6,4 @@
     ```shell
     alias python='winpty python.exe'
     ```
-
-
+* **安装超时**：`socket.timeout: The read operation timed out`。使用下面的命令试了两次后安装成功：`python -m pip --default-timeout=100 install -U Pillow`
