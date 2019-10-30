@@ -10,9 +10,3 @@
 
 
 ## 路径
-* 拼路径的时候，至少在 windows 系统中，要使用绝对路径
-    ```py
-    # 为了导入父目录的文件而进行的设定
-    # sys.path.append(os.pardir)  # 书上的写法，不成功
-    sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir)) # 这样写可以
-    ```

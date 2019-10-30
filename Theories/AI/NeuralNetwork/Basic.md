@@ -130,10 +130,10 @@ import numpy as np
 import matplotlib.pylab as plt
 
 
-# 恒等函数
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
+# 恒等函数
 def identity_function(x):
     return x
 
@@ -299,3 +299,91 @@ img_show(img)
 1. Python 有 pickle 这个便利的功能。这个功能可以将程序运行中的对象保存为文件。
 2. 如果加载保存过的 pickle 文件，可以立刻复原之前程序运行中的对象。
 3. 用于读入 MNIST 数据集的 `load_mnist()` 函数内部也使用了 pickle 功能（在第 2 次及以后读入时）。利用 pickle 功能，可以高效地完成 MNIST 数据的准备工作。
+
+### 神经网络的推理处理
+1. 这个神经网络的输入层有 784 个神经元，输出层有 10 个神经元。输入层的 784 这个数字来源于图像大小的 28 × 28 = 784，输出层的 10 这个数字来源于 10 类别分类（数字 0 到 9，共 10 类别）。
+2. 此外，这个神经网络有 2 个隐藏层，第 1 个隐藏层有 50 个神经元，第 2 个隐藏层有 100 个神经元。这个 50 和 100 可以设置为任何值。
+
+#### 代码实现
+下面的代码来自`./mnist_demo/demo/mnist_show.py`
+```py
+# coding: utf-8
+import sys, os
+sys.path.append(os.pardir)  # 为了导入父目录的文件而进行的设定
+# 如果当前工作目录（命令行工具的当前目录）不是该文件所在目录，就应该使用下面的绝对路径
+# sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
+import numpy as np
+import pickle
+from dataset.mnist import load_mnist
+from common.functions import sigmoid, softmax
+
+
+# 读取数据集，返回测试用的图像和标签
+def get_data():
+    (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, flatten=True, one_hot_label=False)
+    return x_test, t_test
+
+
+# 读入保存在 pickle 文件 sample_weight.pkl 中的学习到的权重参数(假设学习已经完成，并将学习到的参数保存在# 这里)。这个文件中以字典变量的形式保存了权重和偏置参数。
+def init_network():
+    with open("sample_weight.pkl", 'rb') as f:
+        network = pickle.load(f)
+    return network
+
+
+# 输入之前神经网络循环的权重和偏置，并接受一个图像数据，演算并推测结果
+def predict(network, x):
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
+    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+
+    a1 = np.dot(x, W1) + b1
+    z1 = sigmoid(a1)
+    a2 = np.dot(z1, W2) + b2
+    z2 = sigmoid(a2)
+    a3 = np.dot(z2, W3) + b3
+    y = softmax(a3)
+
+    return y
+
+
+x, t = get_data()  # 获得 MNIST 数据集
+network = init_network()  # 生成神经网络，也就是之前循环得到的权重和偏置
+accuracy_cnt = 0
+# 遍历所有图像
+for i in range(len(x)):
+    # predict() 函数以 NumPy 数组的形式输出各个标签对应的概率。比如输出[0.1, 0.3, 0.2, ..., 0.04] 
+    # 的数组，该数组表示“0”的概率为 0.1，“1”的概率为 0.3，等等。
+    y = predict(network, x[i])
+    p = np.argmax(y) # 获取概率最高的元素的索引。也就是说，神经网络判断图像中的数字最有可能为 p
+    if p == t[i]:
+        # 对比标签，如果真的为 p ，则准确次数加一
+        accuracy_cnt += 1
+
+# 输出准确率
+print("Accuracy:" + str(float(accuracy_cnt) / len(x)))
+```
+
+
+## 预处理（pre-processing）
+1. 在这个例子中，我们把 `load_mnist` 函数的参数 `normalize` 设置成了 `True` 。将 `normalize` 设置成 `True` 后，函数内部会进行转换，将图像的各个像素值除以 255，使得数据的值在 0.0～1.0 的范围内。
+2. 像这样把数据限定到某个范围内的处理称为正规化（normalization）。此外，对神经网络的输入数据进行某种既定的转换称为预处理（pre-processing）。这里，作为对输入图像的一种预处理，我们进行了正规化。
+3. 预处理在神经网络（深度学习）中非常实用，其有效性已在提高识别性能和学习的效率等众多实验中得到证明。在刚才的例子中，作为一种预处理，我们将各个像素值除以 255，进行了简单的正规化。
+4. 实际上，很多预处理都会考虑到数据的整体分布。比如，利用数据整体的均值或标准差，移动数据，使数据整体以 0 为中心分布，或者进行正规化，把数据的延展控制在一定范围内。除此之外，还有将数据整体的分布形状均匀化的方法，即数据白化（whitening）等。
+
+
+## 批处理
+### 考虑形状
+1. 先看一下神经网络和输入数据的形状
+    ```py
+    x, _ = get_data()
+    network = init_network()
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
+
+    print(x.shape)     # (10000, 784) 
+    print(x[0].shape)  # (784,)
+    print(W1.shape)    # (784, 50)
+    print(W2.shape)    # (50, 100)
+    print(W3.shape)    # (100, 10)
+    ```
+2. 可以看出来，数据集中的图像有 10000 张，每张 784 像素。每张图片输入神经网络时，是作为 784 项的一维数组。
+第一次点积运算的结果（a1）是 50 项的一维数组，第二次点积运算的结果（a2）是 100 项的一维数组，，第三次点积运算的结果（a2）是 10 项的一维数组。最终再通过激活函数，输出结果为 10 项的一维数组。
