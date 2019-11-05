@@ -36,9 +36,9 @@
 * 注意：但是在像教育培训那样的样式中，`document.body.scrollHeight`远远超过了窗口高度，这时滚动的话就会滚到太靠下。 而且，在这种状态下，第三方键盘并不会被遮挡。看起来像是以为内高度足够，所以就不会被遮挡。
 
 ### iOS12 键盘收起后页面无法点击
-* 现象：输入框定位在底部，使用搜狗输入法时，输入框大部分都被键盘挡住
-* 原因：根据[这篇](https://juejin.im/post/5c07442f51882528c4469769)，键盘弹出后 body 上移，键盘后期
-* 解决：键盘弹出后，执行`document.body.scrollTop = document.body.scrollTop;`
+* 现象：输入框收起后页面无法点击
+* 原因：参考[这篇](https://juejin.im/post/5c07442f51882528c4469769)、[这篇](https://blog.csdn.net/u013558749/article/details/100991786)和[这篇](https://developers.weixin.qq.com/community/develop/doc/00040a43cd4290dedbc7e7f1851400?_at=1559089628289)
+* 解决：键盘收起后，执行`document.body.scrollTop = document.body.scrollTop;`。如果还不行，加上`window.scrollTo(0, 0)`。
 
 ### 在输入框内滑动时，滑动后面的页面
 * 现象：如果在输入框里滑动到最顶部或最底部而继续滑动时，都会滑动后面的页面
@@ -108,6 +108,7 @@
 ## 样式
 ### 多行溢出省略号 CSS 方案
 ```scss
+// white-space: nowrap;
 // height: 0.36rem; 限制高度会导致第二行显示不全或显示一点点第三行
 // 设置 font-size 和 line-height 看起来也有可能出现这个问题。但可以把 font-size 设置在父级
 text-overflow: ellipsis;
@@ -122,4 +123,8 @@ word-break: break-word;
 // 省略号有可能也被截断，这应该是浏览器的 bug。 Chrome 曾经有但已经修复
 // 通过以下方法可以解决   参考 https://stackoverflow.com/a/43859485
 padding-right: 4px;
+// 内容初始渲染时如果 visibility 是 hidden，则该样式效果不会生效。
+// 可以测试直接在浏览器里测试编辑一些文本或者样式，引发重渲染后样式就会生效
+// 不一定是显式的设置了 hidden，在使用 v-html 设置内容是似乎就会隐式的设置 hidden
+visibility: visible;
 ```
