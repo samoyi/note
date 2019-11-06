@@ -1,35 +1,34 @@
-function MinCoinChange(coins){
-    var coins = coins; //{1}
-    var cache = {};    //{2}
+class MinCoinChange {
+    constructor (coins=[]) {
+        this.coins = coins.sort((m, n) => m - n);
+        this.cache = {};
+    }
 
-    this.makeChange = function(amount) {
-        var me = this;
-        if (amount<1) { //{3}
+    makeChange (amount) {
+        if (this.cache[amount] !== undefined) {
+            return this.cache[amount];
+        }
+        if (amount < this.coins[0]) {
             return [];
         }
-        if (cache[amount]) { //{4}
-            return cache[amount];
+        if (this.coins.includes(amount)) {
+            return [amount];
         }
-        var min = [], newMin, newAmount;
-        for (var i=0; i<coins.length; i++){ //{5}
-            var coin = coins[i];
-            newAmount = amount - coin; //{6}
-            if (newAmount >= 0){
-                newMin = me.makeChange(newAmount); //{7}
-            }
-            if (
-                newAmount >= 0 && //{8}
-                (newMin.length < min.length-1 || !min.length)//{9}
-                && (newMin.length || !newAmount) //{10}
-                ){
-                min = [coin].concat(newMin); //{11}
-                console.log('new Min ' + min + ' for ' + amount);
+
+        let min = null;
+        for (let i = 0; i < this.coins.length; i++) {
+            let currCoin = this.coins[i];
+            if (currCoin > amount) break;
+            let arr = [currCoin].concat(this.makeChange(amount - currCoin));
+            if (!min || arr.length < min.length) {
+                min = arr;
             }
         }
-        return (cache[amount] = min); //{12}
-    };
+        if (this.cache[amount] === undefined) {
+            return this.cache[amount] = min;
+        }
+        return min;
+    }
 }
 
 
-var minCoinChange = new MinCoinChange([1, 5, 10, 25]);
-console.log(minCoinChange.makeChange(36));
