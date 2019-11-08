@@ -305,7 +305,7 @@ img_show(img)
 2. 此外，这个神经网络有 2 个隐藏层，第 1 个隐藏层有 50 个神经元，第 2 个隐藏层有 100 个神经元。这个 50 和 100 可以设置为任何值。
 
 #### 代码实现
-下面的代码来自`./mnist_demo/demo/mnist_show.py`
+下面的代码来自`./mnist_demo/demo/neuralnet_mnist.py`
 ```py
 # coding: utf-8
 import sys, os
@@ -387,3 +387,75 @@ print("Accuracy:" + str(float(accuracy_cnt) / len(x)))
     ```
 2. 可以看出来，数据集中的图像有 10000 张，每张 784 像素。每张图片输入神经网络时，是作为 784 项的一维数组。
 第一次点积运算的结果（a1）是 50 项的一维数组，第二次点积运算的结果（a2）是 100 项的一维数组，，第三次点积运算的结果（a2）是 10 项的一维数组。最终再通过激活函数，输出结果为 10 项的一维数组。
+3. 也就是说，每次输入一张图片时，也就是输入 784 项的一维数组，得到 10 项的一维数组。
+
+### 批处理
+1. 基于上面的说明，考虑每次输入 100 张图片的，输入的数据就变成了 100 * 784 的二维数组。
+2. 同样可以计算得出，通过三次点积运算，输出的结果会是 100 * 10 的二维数组。
+3. 这表示，输入的 100 张图像的结果被一次性输出了。这种打包式的输入数据称为批（batch）。
+4. 批处理对计算机的运算大有利处，可以大幅缩短每张图像的处理时间。那么为什么批处理可以缩短处理时间呢？
+5. 这是因为大多数处理数值计算的库都进行了能够高效处理大型数组运算的最优化。并且，在神经网络的运算中，当数据传送成为瓶颈时，批处理可以减轻数据总线的负荷（严格地讲，相对于数据读入，可以将更多的时间用在计算上）。
+6. 也就是说，批处理一次性计算大型数组要比分开逐步计算各个小型数组速度更快。
+
+### 代码实现
+下面的代码来自`./mnist_demo/demo/neuralnet_mnist_batch.py`
+```py
+# coding: utf-8
+import sys, os
+sys.path.append(os.pardir)
+import numpy as np
+import pickle
+from dataset.mnist import load_mnist
+from common.functions import sigmoid, softmax
+
+
+def get_data():
+    (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, flatten=True, one_hot_label=False)
+    return x_test, t_test
+
+
+def init_network():
+    with open("sample_weight.pkl", 'rb') as f:
+        network = pickle.load(f)
+    return network
+
+
+def predict(network, x):
+    w1, w2, w3 = network['W1'], network['W2'], network['W3']
+    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+
+    a1 = np.dot(x, w1) + b1
+    z1 = sigmoid(a1)
+    a2 = np.dot(z1, w2) + b2
+    z2 = sigmoid(a2)
+    a3 = np.dot(z2, w3) + b3
+    y = softmax(a3)
+
+    return y
+
+
+x, t = get_data()
+network = init_network()
+
+batch_size = 100 # 批数量
+accuracy_cnt = 0
+
+# range(start, end, step)
+# >>> list( range(0, 10) )
+# [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+# >>> list( range(0, 10, 3) )
+# [0, 3, 6, 9]
+for i in range(0, len(x), batch_size):
+    x_batch = x[i:i+batch_size] # 每个批次读取 batch_size 个图片数据
+    y_batch = predict(network, x_batch) # 批量计算结果
+    # 批量获取值最大的元素的索引
+    # 注意现在 y_batch 是二维数组，需要告诉 argmax 对哪个维度的元素进行最大筛选
+    # 第一个维度（ axis=0 ）的元素是数组，第二个维度（ axis=1 ）的元素是每个数组的数字数组项，
+    # 所以我们这里应该是对第二维的数字数组中挑选最大元素的索引
+    # 这样，没批输入 100 个图像数据，会得到 100 个预测结果索引
+    p = np.argmax(y_batch, axis=1)
+    # 再使用该批次的 100 个预测索引和标签中的对应的 100 个正确答案索引进行对比
+    accuracy_cnt += np.sum(p == t[i:i+batch_size])
+
+print("Accuracy:" + str(float(accuracy_cnt) / len(x)))
+```
