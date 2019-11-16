@@ -1,6 +1,7 @@
 # coding: utf-8
 import sys, os
-sys.path.append(os.pardir)  # 为了导入父目录的文件而进行的设定
+# sys.path.append(os.pardir)  # 为了导入父目录的文件而进行的设定
+sys.path.append('../../')
 # 如果当前工作目录（命令行工具的当前目录）不是该文件所在目录，就应该使用下面的绝对路径
 # sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
