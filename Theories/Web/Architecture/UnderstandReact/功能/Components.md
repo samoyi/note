@@ -1,9 +1,7 @@
 # Components
 
 ## Misc
-* 组件可以将 UI 切分成一些独立的、可复用的部件，这样你就只需专注于构建每一个单独的部件。
-* 组件从概念上看就像是函数，它可以接收任意的输入值（称之为“props”），并返回一个需要在页
-面上展示的 React 元素。
+* Conceptually, components are like JavaScript functions. They accept arbitrary inputs (called “props”) and return React elements describing what should appear on the screen.
 
 
 ## 组件定义
@@ -40,7 +38,7 @@
     function BlueDatePicker() {
         return <myComponents.datePicker color="blue" />;
     }
-```
+    ```
 
 ### 首字母大写    
 1. 当元素类型以小写字母开头时，它表示一个内置的组件，如`<div>`或`<span>`，并将字符串
