@@ -1,10 +1,17 @@
-# 三角函数的极限
+# 三角函数的导数
+
+
+## 思考
+### 为什么类似于简谐运动这样的运动是曲线波动而不是直线波动
+1. 想象如果是直线波动，也就是锯齿形的曲线。
+2. 那么就是说，在一段直线上，速度是不变的。而在两个直线的交界处，速度突然变为相反值。
+3. 这样的运动在现实中似乎是不存在。两个物体发生作用，总是或长或短都会有一个过程，纯粹理想的刚性碰撞式的作用并不存在。或者至少可以说，几乎不存在。
 
 
 ## 小数的情况
 ### 几个推导极限时用到的结论
-1. $\lim\limits_{x\rightarrow\\0}\frac{sin(x)}{x}=1$。这个可以想象出来，因为在0哪里正好是两条相反弧线的交界。
-2. 由第一条可以推导出：$\lim\limits_{x\rightarrow\\0}\frac{tan(x)}{x}=1$。从图像其实也可以看出来，同上。
+1. $\lim\limits_{x\rightarrow\\0}\frac{sin(x)}{x}=1$
+2. 由第一条可以推导出：$\lim\limits_{x\rightarrow\\0}\frac{tan(x)}{x}=1$
 3. $cos$的情况，$\lim\limits_{x\rightarrow\\0}\frac{cos(x)}{x}$，0两侧的极限分别是正无穷和负无穷，所以在0处极限不存在。
 4. $\lim\limits_{x\rightarrow\\0}\frac{1-cos(x)}{x}=0$
 
@@ -36,3 +43,11 @@
 
 ## $\lim\limits_{x\rightarrow\\0}\frac{sin(x)}{x}=1$ 的证明
 TODO
+
+
+## 三角函数的导数
+### 用前面提到的结论先证明正弦和余弦的极限
+<img src="../images/03.jpg" width="600" style="display: block;" />
+
+### 然后根据正弦和余弦的极限就可以证明其他三角函数的极限
+<img src="../images/04.jpg" width="600" style="display: block;" />
