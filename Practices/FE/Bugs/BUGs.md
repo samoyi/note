@@ -83,6 +83,10 @@
 ### 键盘收起后被顶起的页面不自动下落
 * 解决：`window.scroll(0,0)`
 
+### iOS 微信分享，使用自定义 link 时， invalid signature
+* 现象：history 模式路由的情况，分享时配置自定义 link 时会出现这种情况
+* 原因：[可能的原因](https://www.cnblogs.com/dengxiaolei/p/8143838.html)
+* 解决：项目中发现，从 A 页面 push 到 B 页面，再 push 到 C 页面，在 C 页面发起分享配置时，会出现这种情况；但如果从 A 到 B 是通过 `location.href`，从 B 到 C 依然通过 push，则在 C 页面可以正常分享。
 
 ## 事件
 ### `blur`和`click`事件同时存在时，`click`事件不响应或响应非预期
@@ -116,6 +120,7 @@ display: -webkit-box;
 // autoprefixer 插件在打包时会移除下面这个样式，这里通过如下两个注释在这一行样式的位置关闭该插件
 /*! autoprefixer: off */
 -webkit-box-orient: vertical;
+-moz-box-orient: vertical;
 /*! autoprefixer: on */
 -webkit-line-clamp: 3;
 overflow: hidden;
