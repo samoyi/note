@@ -1,26 +1,73 @@
 # Basic
 
+<!-- TOC -->
+
+- [Basic](#basic)
+    - [思想](#思想)
+    - [从感知机到神经网络](#从感知机到神经网络)
+        - [神经网络概念](#神经网络概念)
+        - [用函数来表示感知机](#用函数来表示感知机)
+        - [感知机用到的激活函数](#感知机用到的激活函数)
+    - [激活函数](#激活函数)
+        - [阶跃函数](#阶跃函数)
+        - [sigmoid 函数](#sigmoid-函数)
+        - [sigmoid 函数和阶跃函数的比较](#sigmoid-函数和阶跃函数的比较)
+        - [非线性函数](#非线性函数)
+        - [ReLU（Rectified Linear Unit）函数](#relurectified-linear-unit函数)
+    - [矩阵乘法与神经网络的内积运算](#矩阵乘法与神经网络的内积运算)
+    - [3 层神经网络的实现](#3-层神经网络的实现)
+    - [输出层的设计](#输出层的设计)
+        - [恒等函数和 softmax 函数](#恒等函数和-softmax-函数)
+        - [防止 softmax 函数溢出](#防止-softmax-函数溢出)
+        - [softmax 函数的特征](#softmax-函数的特征)
+            - [反映概率](#反映概率)
+            - [可以省略 softmax 函数](#可以省略-softmax-函数)
+        - [输出层的神经元数量](#输出层的神经元数量)
+    - [实例：手写数字识别](#实例手写数字识别)
+        - [MNIST 数据集](#mnist-数据集)
+        - [代码实现](#代码实现)
+        - [pickle 功能](#pickle-功能)
+        - [神经网络的推理处理](#神经网络的推理处理)
+            - [代码实现](#代码实现-1)
+    - [预处理（pre-processing）](#预处理pre-processing)
+    - [批处理](#批处理)
+        - [考虑形状](#考虑形状)
+        - [批处理](#批处理-1)
+        - [代码实现](#代码实现-2)
+
+<!-- /TOC -->
+
+
+## 思想
+
+
 
 ## 从感知机到神经网络
+1. 关于感知机，既有好消息，也有坏消息。好消息是，即便对于复杂的函数，感知机也隐含着能够表示它的可能性。，即便是计算机进行的复杂处理，感知机（理论上）也可以将其表示出来。
+2. 坏消息是，设定权重的工作，即确定合适的、能符合预期的输入与输出的权重，现在还是由人工进行的。
+3. 神经网络的出现就是为了解决刚才的坏消息。具体地讲，神经网络的一个重要性质是它可以自动地从数据中学习到合适的权重参数。
+
 ### 神经网络概念
 1. 用图来表示神经网络的话，如下图所示。
-    <img src="./images/01.png" width="600" style="display: block;" />
-2. 我们把最左边的一列称为输入层，最右边的一列称为输出层，中间的一列称为中间层。中间层有时也称为隐藏层。
+    <img src="./images/01.png" width="400" style="display: block;" />
+2. 我们把最左边的一列称为**输入层**，最右边的一列称为**输出层**，中间的一列称为**中间层**。中间层有时也称为**隐藏层**。
+3. 神经网络的形状类似上一章的感知机。实际上，就神经元的连接方式而言，与感知机并没有任何差异。
 
 ### 用函数来表示感知机
-1. 感知机可以使用如下函数`h`来表示
+1. 感知机可以使用如下函数 $h$ 来表示
     ```
     y = h(b + w1x1 + w2x2)
     ```
 2. 图示如下
-    <img src="./images/02.png" width="600" style="display: block;" />
-3. 输入值结合参数共同的计算结果，作为函数`h`的参数。函数`h`内部会计算参数的值：如果小于等于0，函数返回0；否则返回1
-    <img src="./images/03.png" width="600" style="display: block;" />
+    <img src="./images/02.png" width="400" style="display: block;" />
+3. 输入值结合参数共同的计算结果，作为函数 $h$ 的参数。函数 $h$ 内部会计算参数的值：如果小于等于0，函数返回0；否则返回1
+    <img src="./images/03.png" width="400" style="display: block;" />
+
 ### 感知机用到的激活函数
-1. 刚才登场的`h（x）`函数会将输入信号的总和转换为输出信号，这种函数一般称为激活函数（activation function）。激活函数的作用在于决定如何来激活输入信号的总和。
+1. 刚才登场的 $h(x)$ 函数会将输入信号的总和转换为输出信号，这种函数一般称为**激活函数**（activation function）。激活函数的作用在于决定如何来激活输入信号的总和。
 2. 下图明确的显示了激活函数的计算过程
-    <img src="./images/04.png" width="600" style="display: block;" />
-3. `b + w1x1 + w2x2`的计算结果得到神经元`a`，神经元`a`作为参数传给激活函数`h`，`h`计算并输入为神经元`y`。
+    <img src="./images/04.png" width="400" style="display: block;" />
+3. $b + w1x1 + w2x2$ 的计算结果得到神经元 $a$，神经元 $a$ 作为参数传给激活函数 $h$，$h$ 计算并输入为神经元 $y$。
 
 
 ## 激活函数
@@ -60,12 +107,13 @@
     plt.ylim(-0.1, 1.1)  # 指定y轴的范围
     plt.show()
     ```
-    <img src="./images/05.png" width="600" style="display: block;" />
+    <img src="./images/05.png" width="400" style="display: block;" />
 
 ### sigmoid 函数
-1. 如果将激活函数从阶跃函数换成其他函数，就可以进入神经网络的世界了。神经网络中经常使用的一个激活函数就是如下的 sigmoid 函数（sigmoid function）。
-        <img src="./images/sigmoind-function.svg" width="600" style="background: white";display: block; />
-2. 神经网络中用 sigmoid 函数作为激活函数，进行信号的转换，转换后的信号被传送给下一个神经元。实际上，上一章介绍的感知机和接下来要介绍的神经网络的主要区别就在于这个激活函数。其他方面，比如神经元的多层连接的构造、信号的传递方法等，基本上和感知机是一样的。
+1. 如果将激活函数从阶跃函数换成其他函数，就可以进入神经网络的世界了。神经网络中经常使用的一个激活函数就是如下的 **sigmoid 函数**（sigmoid function）。
+    <img src="./images/sigmoind-function.svg" width="400" style="background: white ;display: block;" />
+2. 神经网络中用 sigmoid 函数作为激活函数，进行信号的转换，转换后的信号被传送给下一个神经元。
+3. 实际上，感知机和接下来要介绍的神经网络的主要区别就在于这个激活函数。其他方面，比如神经元的多层连接的构造、信号的传递方法等，基本上和感知机是一样的。
 3. 用 Python 可以像下面这样写出 sigmoid 函数
     ```py
     def sigmoid(x):
@@ -85,18 +133,25 @@
     plt.ylim(-0.1, 1.1)  # 指定y轴的范围
     plt.show()
     ```
-    <img src="./images/06.png" width="600" style="display: block;" />
+    <img src="./images/06.png" width="400" style="display: block;" />
 
 ### sigmoid 函数和阶跃函数的比较
-<img src="./images/07.png" width="600" style="display: block;" />
+<img src="./images/07.png" width="400" style="display: block;" />
 
 1. 平滑性不同：输出是否随着输入发生连续性的变化。
 2. 输出值不同：相对于阶跃函数只能返回 0 或 1，sigmoid 函数可以返回 0.731 ...、0.880 ... 等实数。也就是说，感知机中神经元之间流动的是 0 或 1 的二元信号，而神经网络中流动的是连续的实数值信号。
 3. 两者的结构均是“输入小时，输出接近 0；随着输入增大，输出接近 1 ”。也就是说，当输入信号为重要信息时，阶跃函数和 sigmoid 函数都会输出较大的值；当输入信号为不重要的信息时，两者都输出较小的值。
 4. 还有一个共同点是，不管输入信号有多小，或者有多大，输出信号的值都在 0 到 1 之间。
 
-###　ReLU（Rectified Linear Unit）函数
- ReLU 函数在输入大于 0 时，直接输出该值；在输入小于等于 0 时，输出 0
+### 非线性函数
+1. 阶跃函数和 sigmoid 函数还有其他共同点，就是两者均为非线性函数。sigmoid 函数是一条曲线，阶跃函数是一条像阶梯一样的折线，两者都属于非线性的函数。
+2. 在介绍激活函数时，经常会看到“非线性函数”和“线性函数”等术语。函数本来是输入某个值后会返回一个值的转换器。向这个转换器输入某个值后，输出值是输入值的常数倍的函数称为线性函数（用数学式表示为 $h(x) = cx$。$c$ 为常数）。因此，线性函数是一条笔直的直线。而非线性函数，顾名思义，指的是不像线性函数那样呈现出一条直线的函数。
+3. 神经网络的激活函数必须使用非线性函数。线性函数的问题在于，不管如何加深层数，总是存在与之等效的“无隐藏层的神经网络”。
+4. 思考下面这个简单的例子。这里我们考虑把线性函数 $h(x) = cx$ 作为激活函数，把 $y(x) = h(h(h(x)))$ 的运算对应 3 层神经网络。这个运算会进行 $y(x) = c * c * c * x$ 的乘法运算，但是同样的处理可以由 $y(x) = ax$（$a={\rm c}^3$）这一次乘法运算（即没有隐藏层的神经网络）来表示。
+5. 如本例所示，使用线性函数时，无法发挥多层网络带来的优势。因此，为了发挥叠加层所带来的优势，激活函数必须使用非线性函数。
+
+### ReLU（Rectified Linear Unit）函数
+ReLU 函数在输入大于 0 时，直接输出该值；在输入小于等于 0 时，输出 0
 ```py
 def relu(x):
     return np.maximum(0, x)
@@ -104,8 +159,39 @@ def relu(x):
 
 
 ## 矩阵乘法与神经网络的内积运算
-1.  矩阵乘法 **A** x **B** 要求 **A** 的列数必须要等于 **B** 的行数。
-2. 一维数组和多维数组相乘是，看起来比较灵活：如果 **A** 是一维数组，则它会被当做单行；如果 **B** 是一维数组，则它会被当做单行。这样都可以和另一个数组进行矩阵乘法。
+1. 根据矩阵乘法的规则， **A** x **B** 要求 **A** 的列数必须要等于 **B** 的行数。而且结果矩阵矩阵的行数等于 **A** 的行数，而列数等于 **B** 的列数
+    <img src="./images/14.png" width="400" style="display: block;" />
+2. 一维数组和多维数组相乘时，并不能直接套用矩阵乘法的行列规则，不如直接记住
+    ```py
+    A = np.array(
+        [
+            [1, 2], 
+            [3, 4], 
+            [5, 6]
+        ]
+    )
+    print(A.shape) # (3, 2)
+    B = np.array([7, 8])
+    print(B.shape) # (2,)
+    C = np.dot(A, B)
+    print(C)  # [23 53 83]
+    print(C.shape) # (3,)
+
+
+    D = np.array([7, 8, 9])
+    print(D.shape) #(3, )
+    E =  np.array(
+        [
+            [1, 2],
+            [3, 4],
+            [5, 6]
+        ]
+    )
+    print(E.shape) #(3, 2)
+    F = np.dot(D, E)
+    print(F) # [76 100]
+    print(F.shape) #(2, )
+    ```
 2. 神经网络的内积计算，正好可以使用矩阵乘法
 <img src="./images/09.png" width="600" style="display: block;" />
     1. 在上面的神经网络中，输入为矩阵 **X** `[x1, x2]`，输出为`[x1*1+x2*2, x1*3+x2*4, x1*5+x2*6, ]`。
@@ -118,59 +204,60 @@ def relu(x):
     print(Y)  # [ 5 11 17]
     ```
 5. 使用 `np.dot`，可以一次性计算出 **Y** 的结果。这意味着，即便 **Y** 的元素个数为 100 或 1000，也可以通过一次运算就计算出结果。如果不使用 `np.dot`，就必须对输入和权重进行循环的相乘相加，非常麻烦。
+6. TODO 不懂神经网络为什么要进行内积运算
 
 
 ## 3 层神经网络的实现
 1. 实现如下的三层结构神经网络
-    <img src="./images/10.png" width="600" style="display: block;" />
+    <img src="./images/10.png" width="400" style="display: block;" />
 2. 最后一层的输出层所用的激活函数，要根据求解问题的性质决定。一般地，回归问题可以使用恒等函数，二元分类问题可以使用 sigmoid 函数，多元分类问题可以使用 softmax 函数。本例中输出层的激活函数使用恒等函数，恒等函数会将输入按原样输出，因此，这个例子中没有必要特意定义`identity_function()`，这里这样实现只是为了和之前的流程保持统一。
 3. 代码实现
-```py
-import numpy as np
-import matplotlib.pylab as plt
+    ```py
+    import numpy as np
+    import matplotlib.pylab as plt
 
 
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+    def sigmoid(x):
+        return 1 / (1 + np.exp(-x))
 
-# 恒等函数
-def identity_function(x):
-    return x
+    # 恒等函数
+    def identity_function(x):
+        return x
 
-# 设置权重和偏置，定义神经网络
-def init_network():
-    network = {}
-    # 三层的权重和偏置
-    network['W1'] = np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]])
-    network['b1'] = np.array([0.1, 0.2, 0.3])
-    network['W2'] = np.array([[0.1, 0.4], [0.2, 0.5], [0.3, 0.6]])
-    network['b2'] = np.array([0.1, 0.2])
-    network['W3'] = np.array([[0.1, 0.3], [0.2, 0.4]])
-    network['b3'] = np.array([0.1, 0.2])
+    # 设置权重和偏置，定义神经网络
+    def init_network():
+        network = {}
+        # 三层的权重和偏置
+        network['W1'] = np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]])
+        network['b1'] = np.array([0.1, 0.2, 0.3])
+        network['W2'] = np.array([[0.1, 0.4], [0.2, 0.5], [0.3, 0.6]])
+        network['b2'] = np.array([0.1, 0.2])
+        network['W3'] = np.array([[0.1, 0.3], [0.2, 0.4]])
+        network['b3'] = np.array([0.1, 0.2])
 
-    return network
+        return network
 
-# 将输入信号转换为输出信号
-def forward(network, x):
-    W1, W2, W3 = network['W1'], network['W2'], network['W3']
-    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+    # 将输入信号转换为输出信号
+    def forward(network, x):
+        W1, W2, W3 = network['W1'], network['W2'], network['W3']
+        b1, b2, b3 = network['b1'], network['b2'], network['b3']
 
-    # 每一层输入的加权和经过激活函数转换后，输出作为下一层的输入
-    a1 = np.dot(x, W1) + b1
-    z1 = sigmoid(a1)
-    a2 = np.dot(z1, W2) + b2
-    z2 = sigmoid(a2)
-    a3 = np.dot(z2, W3) + b3
-    y = identity_function(a3)
+        # 每一层输入的加权和经过激活函数转换后，输出作为下一层的输入
+        a1 = np.dot(x, W1) + b1
+        z1 = sigmoid(a1)
+        a2 = np.dot(z1, W2) + b2
+        z2 = sigmoid(a2)
+        a3 = np.dot(z2, W3) + b3
+        y = identity_function(a3)
 
-    return y
+        return y
 
 
-network = init_network()
-x = np.array([1.0, 0.5])
-y = forward(network, x)
-print(y)  # [ 0.31682708 0.69627909]
-```
+    network = init_network()
+    x = np.array([1.0, 0.5])
+    y = forward(network, x)
+    print(y)  # [ 0.31682708 0.69627909]
+    ```
 
 
 ## 输出层的设计
@@ -178,13 +265,13 @@ print(y)  # [ 0.31682708 0.69627909]
 2. 机器学习的问题大致可以分为分类问题和回归问题。分类问题是数据属于哪一个类别的问题。比如，区分图像中的人是男性还是女性的问题就是分类问题。而回归问题是根据某个输入预测一个（连续的）数值的问题。比如，根据一个人的图像预测这个人的体重的问题就是回归问题。
 
 ### 恒等函数和 softmax 函数
-1. 图示（输出层的激活函数用 `σ()` 表示）
-    <img src="./images/12.png" width="600" style="display: block;" />
+1. 图示（输出层的激活函数用 $σ()$ 表示）
+    <img src="./images/12.png" width="400" style="display: block;" />
 2. softmax 函数可以用下面的式（3.10）表示
-    <img src="./images/11.gif" width="300" style="display: block; background-color: white" />
-3. 假设输出层共有 n 个神经元，softmax 函数计算第 k 个神经元的输出。可以看到，每个神经元的输出值都要除以每个自然底数加权和次方的总和。代码如下
+    <img src="./images/11.gif" width="400" style="display: block; background-color: white" />
+3. 上式表示假设输出层共有 n 个神经元，softmax 函数计算第 k 个神经元的输出。
+4. softmax 函数的分子是输入信号 $a_k$ 的指数函数，分母是所有输入信号的指数函数的和。
     ```py
-
     def softmax(a):
         exp_a = np.exp(a)
         sum_exp_a = np.sum(exp_a)
@@ -204,9 +291,9 @@ print(y)  # [ 0.31682708 0.69627909]
     print(softmax(a))  # [nan nan nan]
     ```
 2. softmax 函数的实现可以像式（3.11）这样进行改进
-    <img src="./images/13.gif" width="300" style="display: block; background-color: white" />
-3. 式（3.11）在分子和分母上都乘上 C 这个任意的常数。然后，把这个 C 移动到指数函数（exp）中，记为 log C（其实就是lnC，以e为底的对数）。最后，把 log C 替换为另一个符号 C'。
-4. 式（3.11）说明，在进行 softmax 的指数函数的运算时，加上（或者减去）某个常数并不会改变运算的结果。这里的 C' 可以使用任何值，但是为了防止溢出，一般会使用输入信号中的最大值
+    <img src="./images/13.gif" width="400" style="display: block; background-color: white" />
+3. 式（3.11）在分子和分母上都乘上 $C$ 这个任意的常数。然后，把这个 $C$ 移动到指数函数（exp）中，记为 $log C$（其实就是$lnC$，以$e$为底的对数）。最后，把 $logC$ 替换为另一个符号 $C'$。
+4. 式（3.11）说明，在进行 softmax 的指数函数的运算时，加上（或者减去）某个常数并不会改变运算的结果。这里的 $C'$ 可以使用任何值，但是为了防止溢出，一般会使用输入信号中的最大值
     ```py
     def softmax(a):
         c = np.max(a)
@@ -246,6 +333,8 @@ print(y)  # [ 0.31682708 0.69627909]
 
 
 ## 实例：手写数字识别
+假设学习已经全部结束，我们使用学习到的参数，先实现神经网络的“推理处理”。这个推理处理也称为神经网络的**前向传播**（forward propagation）。
+
 ### MNIST 数据集
 1. MNIST 数据集是由 0 到 9 的数字图像构成的。训练图像有 6 万张，测试图像有 1 万张，这些图像可以用于学习和推理。
 2. MNIST 数据集的一般使用方法是，先用训练图像进行学习，再用学习到的模型度量能在多大程度上对测试图像进行正确的分类。
@@ -256,8 +345,7 @@ print(y)  # [ 0.31682708 0.69627909]
 ```py
 # coding: utf-8
 import sys, os
-# sys.path.append(os.pardir)  # 为了导入父目录的文件而进行的设定
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 
 import numpy as np
 
@@ -271,7 +359,8 @@ from PIL import Image
 
 # 用来显示图像
 def img_show(img):
-    # 因为下面读取的图像数据是 NumPy 数组的形式，在显示图像时，需要使用 `Image.fromarray` 函数将其转换为 # PIL 所用的数据对象
+    # 因为下面读取的图像数据是 NumPy 数组的形式，在显示图像时，需要使用 `Image.fromarray` 函数将其转换为
+    # PIL 所用的数据对象
     pil_img = Image.fromarray(np.uint8(img))
     pil_img.show()
 
@@ -279,9 +368,10 @@ def img_show(img):
 # 读取数据集。第一次时如果没有下载，会先下载，会下载到 dataset 目录中
 # 同样因为网络原因很可能下载不成功，直接上官网找连接迅雷下载：http://yann.lecun.com/exdb/mnist/
 # load_mnist 函数以“(训练图像, 训练标签)，(测试图像, 测试标签 )”的形式返回读入的 MNIST 数据
-# normalize 参数：是否将输入图像正规化为 0.0～1.0 的值。如果将该参数设置为 False，则输入图像的像素会保持原 #                 来的 0～255。
+# normalize 参数：是否将输入图像正规化为 0.0～1.0 的值。如果将该参数设置为 False，则输入图像的像素会保持原
+#   来的 0～255。
 # flatten 参数：是否展开输入图像（变成一维数组）。如果将该参数设置为 False，则输入图像为 1 × 28 × 28 的三维
-#               数组；若设置为 True，则输入图像会保存为由 784 个元素构成的一维数组。
+#   数组；若设置为 True，则输入图像会保存为由 784 个元素构成的一维数组。
 (x_train, t_train), (x_test, t_test) = load_mnist(flatten=True, normalize=False)
 
 img = x_train[0]
@@ -319,12 +409,16 @@ from common.functions import sigmoid, softmax
 
 
 # 读取数据集，返回测试用的图像和标签
+# 第 3 个参数 one_hot_label 设置是否将标签保存为 one-hot 表示（one-hot representation）。
+# one-hot 表示是仅正确解标签为 1，其余皆为 0 的数组，就像 [0,0,1,0,0,0,0,0,0,0] 这样。
+# 当 one_hot_label 为 False 时，只是像 7、2 这样简单保存正确解标签
 def get_data():
     (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, flatten=True, one_hot_label=False)
     return x_test, t_test
 
 
-# 读入保存在 pickle 文件 sample_weight.pkl 中的学习到的权重参数(假设学习已经完成，并将学习到的参数保存在# 这里)。这个文件中以字典变量的形式保存了权重和偏置参数。
+# 读入保存在 pickle 文件 sample_weight.pkl 中的学习到的权重参数
+# (假设学习已经完成，并将学习到的参数保存在这里)。这个文件中以字典变量的形式保存了权重和偏置参数。
 def init_network():
     with open("sample_weight.pkl", 'rb') as f:
         network = pickle.load(f)
@@ -351,8 +445,8 @@ network = init_network()  # 生成神经网络，也就是之前循环得到的�
 accuracy_cnt = 0
 # 遍历所有图像
 for i in range(len(x)):
-    # predict() 函数以 NumPy 数组的形式输出各个标签对应的概率。比如输出[0.1, 0.3, 0.2, ..., 0.04] 
-    # 的数组，该数组表示“0”的概率为 0.1，“1”的概率为 0.3，等等。
+    # predict() 函数以 NumPy 数组的形式输出各个标签对应的概率。
+    # 比如输出[0.1, 0.3, 0.2, ..., 0.04] 的数组，该数组表示“0”的概率为 0.1，“1”的概率为 0.3，等等。
     y = predict(network, x[i])
     p = np.argmax(y) # 获取概率最高的元素的索引。也就是说，神经网络判断图像中的数字最有可能为 p
     if p == t[i]:
@@ -366,9 +460,9 @@ print("Accuracy:" + str(float(accuracy_cnt) / len(x)))
 
 ## 预处理（pre-processing）
 1. 在这个例子中，我们把 `load_mnist` 函数的参数 `normalize` 设置成了 `True` 。将 `normalize` 设置成 `True` 后，函数内部会进行转换，将图像的各个像素值除以 255，使得数据的值在 0.0～1.0 的范围内。
-2. 像这样把数据限定到某个范围内的处理称为正规化（normalization）。此外，对神经网络的输入数据进行某种既定的转换称为预处理（pre-processing）。这里，作为对输入图像的一种预处理，我们进行了正规化。
+2. 像这样把数据限定到某个范围内的处理称为**正规化**（normalization）。此外，对神经网络的输入数据进行某种既定的转换称为**预处理**（pre-processing）。这里，作为对输入图像的一种预处理，我们进行了正规化。
 3. 预处理在神经网络（深度学习）中非常实用，其有效性已在提高识别性能和学习的效率等众多实验中得到证明。在刚才的例子中，作为一种预处理，我们将各个像素值除以 255，进行了简单的正规化。
-4. 实际上，很多预处理都会考虑到数据的整体分布。比如，利用数据整体的均值或标准差，移动数据，使数据整体以 0 为中心分布，或者进行正规化，把数据的延展控制在一定范围内。除此之外，还有将数据整体的分布形状均匀化的方法，即数据白化（whitening）等。
+4. 实际上，很多预处理都会考虑到数据的整体分布。比如，利用数据整体的均值或标准差，移动数据，使数据整体以 0 为中心分布，或者进行正规化，把数据的延展控制在一定范围内。除此之外，还有将数据整体的分布形状均匀化的方法，即数据**白化**（whitening）等。
 
 
 ## 批处理
@@ -392,7 +486,7 @@ print("Accuracy:" + str(float(accuracy_cnt) / len(x)))
 ### 批处理
 1. 基于上面的说明，考虑每次输入 100 张图片的，输入的数据就变成了 100 * 784 的二维数组。
 2. 同样可以计算得出，通过三次点积运算，输出的结果会是 100 * 10 的二维数组。
-3. 这表示，输入的 100 张图像的结果被一次性输出了。这种打包式的输入数据称为批（batch）。
+3. 这表示，输入的 100 张图像的结果被一次性输出了。这种打包式的输入数据称为**批**（batch）。
 4. 批处理对计算机的运算大有利处，可以大幅缩短每张图像的处理时间。那么为什么批处理可以缩短处理时间呢？
 5. 这是因为大多数处理数值计算的库都进行了能够高效处理大型数组运算的最优化。并且，在神经网络的运算中，当数据传送成为瓶颈时，批处理可以减轻数据总线的负荷（严格地讲，相对于数据读入，可以将更多的时间用在计算上）。
 6. 也就是说，批处理一次性计算大型数组要比分开逐步计算各个小型数组速度更快。
