@@ -30,6 +30,10 @@
             - [实例](#实例)
         - [神经网络的梯度](#神经网络的梯度)
             - [实例：实现一个简单的神经网络并求梯度](#实例实现一个简单的神经网络并求梯度)
+    - [学习算法的实现](#学习算法的实现)
+        - [实现 2 层神经网络（隐藏层为 1 层的网络）的类](#实现-2-层神经网络隐藏层为-1-层的网络的类)
+        - [mini-batch 的实现](#mini-batch-的实现)
+        - [基于测试数据的评价](#基于测试数据的评价)
 
 <!-- /TOC -->
 
@@ -540,3 +544,182 @@ def gradient_descent(f, init_x, lr=0.01, step_num=100):
 4. 简单来说，左边四个偏导是正右边两个偏导是否，说明如果在当前参数的位置，左边四个参数如果稍微减小，则损失函数的会减小，右边两个参数如果稍微增大，损失函数的值也会减小。
 5. 而且绝对值的大小也说明它们各自更新的作用有大有小。比如右下角稍微增大一点的贡献就要比左上角减小同样值起的作用要大。
 6. 求出神经网络的梯度后，接下来只需根据梯度法，更新权重参数即可。
+
+
+## 学习算法的实现
+1. 神经网络的学习步骤如下所示：
+    1. **mini-batch**：从训练数据中随机选出一部分数据，这部分数据称为 mini-batch。我们的目标是减小 mini-batch 的损失函数的值。
+    2. **计算梯度**：为了减小 mini-batch 的损失函数的值，需要求出各个权重参数的梯度。梯度表示损失函数的值减小最多的方向。
+    3. **更新参数**：将权重参数沿梯度方向进行微小更新。
+    4. **重复**：重复步骤 1、步骤 2、步骤 3。
+2. 神经网络的学习按照上面 4 个步骤进行。这个方法通过梯度下降法更新参数，不过因为这里使用的数据是随机选择的mini batch 数据，所以又称为**随机梯度下降法**（stochastic gradient descent）。“随机”指的是“随机选择的”的意思，因此，随机梯度下降法是“对随机选择的数据进行的梯度下降法”。
+3. 深度学习的很多框架中，随机梯度下降法一般由一个名为 **SGD** 的函数来实现。SGD 来源于随机梯度下降法的英文名称的首字母。
+
+### 实现 2 层神经网络（隐藏层为 1 层的网络）的类
+源码在 `./demo/two_layer_net.py`
+```py
+import numpy as np
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
+from common.gradient import numerical_gradient
+from common.functions import *
+
+
+class TwoLayerNet:
+    # input_size:  输入层的神经元数
+    # hidden_size: 隐藏层的神经元数
+    # output_size: 输出层的神经元数
+    def __init__(self, input_size, hidden_size, output_size,
+                 weight_init_std=0.01):
+        # 初始化权重
+        self.params = {}
+        self.params['W1'] = weight_init_std * \
+            np.random.randn(input_size, hidden_size)   # 第 1 层权重
+        self.params['b1'] = np.zeros(hidden_size)      # 第 1 层偏置
+        self.params['W2'] = weight_init_std * \
+            np.random.randn(hidden_size, output_size)  # 第 2 层权重
+        self.params['b2'] = np.zeros(output_size)      # 第 2 层偏置
+
+    def predict(self, x):
+        W1, W2 = self.params['W1'], self.params['W2']
+        b1, b2 = self.params['b1'], self.params['b2']
+
+        a1 = np.dot(x, W1) + b1
+        z1 = sigmoid(a1)
+        a2 = np.dot(z1, W2) + b2
+        y = softmax(a2)
+
+        return y
+
+    # x:输入数据, t:监督数据
+    def loss(self, x, t):
+        y = self.predict(x)
+
+        return cross_entropy_error(y, t)
+
+    def accuracy(self, x, t):
+        y = self.predict(x)
+        y = np.argmax(y, axis=1)
+        t = np.argmax(t, axis=1)
+
+        accuracy = np.sum(y == t) / float(x.shape[0])
+        return accuracy
+
+    # x:输入数据, t:监督数据
+    def numerical_gradient(self, x, t):
+        def loss_W(W): return self.loss(x, t)
+
+        grads = {}
+        grads['W1'] = numerical_gradient(loss_W, self.params['W1']) # 第 1 层权重的梯度
+        grads['b1'] = numerical_gradient(loss_W, self.params['b1']) # 第 1 层偏置的梯度
+        grads['W2'] = numerical_gradient(loss_W, self.params['W2']) # 第 2 层权重的梯度
+        grads['b2'] = numerical_gradient(loss_W, self.params['b2']) # 第 2 层偏置的梯度
+
+        return grads
+```
+
+### mini-batch 的实现
+1. 源码在 `./demo/train_neuralnet.py`
+    ```py
+    import numpy as np
+    import sys
+    import os
+    sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
+    from dataset.mnist import load_mnist
+    from two_layer_net import TwoLayerNet
+
+    (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, one_hot_label = True)
+
+    train_loss_list = []
+
+    # 超参数
+    iters_num = 10000  # 梯度法的更新次数
+    train_size = x_train.shape[0]
+    batch_size = 100
+    learning_rate = 0.1
+
+    network = TwoLayerNet(input_size=784, hidden_size=50, output_size=10)
+
+    for i in range(iters_num):
+        # 获取mini-batch
+        # 实际上，一般做法是事先将所有训练数据随机打乱，然后按指定的批次大小，按序生成 mini-batch。这样每个 
+        # mini-batch 均有一个索引号，比如此例可以是 0, 1, 2, ... , 99，然后用索引号可以遍历所有的
+        # mini-batch。遍历一次所有数据，就称为一个epoch。这里的 mini-batch 作为示例，每次都是随机选择的
+        batch_mask = np.random.choice(train_size, batch_size) # 每次从 60000 个训练数据中取出 100 个
+        x_batch = x_train[batch_mask]
+        t_batch = t_train[batch_mask]
+        # 计算梯度
+        grad = network.numerical_gradient(x_batch, t_batch)
+        # grad = network.gradient(x_batch, t_batch) # 使用用误差反向传播法计算梯度的告诉版
+
+        # 使用随机梯度下降法（SGD）更新参数
+        for key in ('W1', 'b1', 'W2', 'b2'):
+            network.params[key] -= learning_rate * grad[key]
+        # 记录学习过程
+        loss = network.loss(x_batch, t_batch)
+        train_loss_list.append(loss)
+    ```
+2. 用图像来表示这个损失函数的值的推移
+    <img src="./images/09.png" width="600" style="display: block;" />
+
+### 基于测试数据的评价
+1. 上面的训练中，训练数据的损失函数值减小，虽说是神经网络的学习正常进行的一个信号，但光看这个结果还不能说明该神经网络在其他数据集上也一定能有同等程度的表现。
+2. 神经网络的学习中，必须确认是否能够正确识别训练数据以外的其他数据，即确认是否会发生过拟合。过拟合是指，虽然训练数据中的数字图像能被正确辨别，但是不在训练数据中的数字图像却无法被识别的现象。
+3. 神经网络学习的最初目标是掌握泛化能力，因此，要评价神经网络的泛化能力，就必须使用不包含在训练数据中的数据。
+4. 下面的代码在进行学习的过程中，会定期地对训练数据和测试数据记录识别精度。这里，每经过一个 epoch，我们都会记录下训练数据和测试数据的识别精度。
+5. **epoch** 是一个单位。一个 epoch 表示学习中所有训练数据均被使用过一次时的更新次数。比如，对于 10000 笔训练数据，用大小为 100 笔数据的 mini-batch 进行学习时，重复随机梯度下降法 100 次，所有的训练数据就都被“看过”了。此时，100 次就是一个 epoch。
+6. 为了正确进行评价，我们来稍稍修改一下前面的代码
+    ```py
+    import numpy as np
+    import time
+    import sys
+    import os
+    sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
+    from dataset.mnist import load_mnist
+    from two_layer_net import TwoLayerNet
+
+    (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, one_hot_label = True)
+
+    train_loss_list = []
+    train_acc_list = []
+    test_acc_list = []
+    # 平均每个epoch的重复次数
+    iter_per_epoch = max(train_size / batch_size, 1)
+
+    # 超参数
+    iters_num = 100  # 梯度法的更新次数
+    train_size = x_train.shape[0]
+    batch_size = 100
+    learning_rate = 0.1
+
+    network = TwoLayerNet(input_size=784, hidden_size=50, output_size=10)
+
+    for i in range(iters_num):
+        print(str(i) + ': ' + time.strftime("%H:%M:%S", time.localtime(time.time())))
+        # 获取mini-batch
+        batch_mask = np.random.choice(train_size, batch_size) # 每次从 60000 个训练数据中随机取出 100 个
+        x_batch = x_train[batch_mask]
+        t_batch = t_train[batch_mask]
+        # 计算梯度
+        grad = network.numerical_gradient(x_batch, t_batch)
+        # grad = network.gradient(x_batch, t_batch) # 使用用误差反向传播法计算梯度的告诉版
+
+        # 使用随机梯度下降法（SGD）更新参数
+        for key in ('W1', 'b1', 'W2', 'b2'):
+            network.params[key] -= learning_rate * grad[key]
+        # 记录学习过程
+        loss = network.loss(x_batch, t_batch)
+        train_loss_list.append(loss)
+        # 计算每个epoch的识别精度
+        if i % iter_per_epoch == 0:
+            train_acc = network.accuracy(x_train, t_train)
+            test_acc = network.accuracy(x_test, t_test)
+            train_acc_list.append(train_acc)
+            test_acc_list.append(test_acc)
+            print("train acc, test acc | " + str(train_acc) + ", " + str(test_acc))
+    ```
+7. 这里，每经过一个 epoch，就对所有的训练数据和测试数据计算识别精度，并记录结果。之所以每一个 epoch 才计算一次识别精度，是因为如果在 `for` 语句的循环中一直计算识别精度，会花费太多时间。并且，也没有必要那么频繁地记录识别精度（只要从大方向上大致把握识别精度的推移就可以了）。因此，我们才会每经过一个 epoch 就记录一次训练数据的识别精度。
+8. 把从上面的代码中得到的结果用图表示
+    <img src="./images/10.png" width="600" style="display: block;" />
+9. 实线表示训练数据的识别精度，虚线表示测试数据的识别精度。如图所示，随着 epoch 的前进（学习的进行），我们发现使用训练数据和测试数据评价的识别精度都提高了，并且，这两个识别精度基本上没有差异（两条线基本重叠在一起）。因此，可以说这次的学习中没有发生过拟合的现象。
