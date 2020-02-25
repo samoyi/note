@@ -15,6 +15,9 @@
         - [2.2 加法节点的反向传播](#22-加法节点的反向传播)
         - [2.3 乘法节点的反向传播](#23-乘法节点的反向传播)
         - [2.4 苹果的例子](#24-苹果的例子)
+    - [3. 简单层的实现](#3-简单层的实现)
+        - [3.1 乘法层的实现](#31-乘法层的实现)
+        - [3.2 加法层的实现](#32-加法层的实现)
 
 <!-- /TOC -->
 
@@ -79,3 +82,103 @@
 3. 如前所述，乘法节点的反向传播会将输入信号翻转后传给下游。从上图的结果可知，苹果的价格的导数是 2.2，苹果的个数的导数是 110，消费税的导数是 200。
 4. 这可以解释为，如果消费税和苹果的价格增加相同的值，则消费税将对最终价格产生 200 倍大小的影响，苹果的价格将产生 2.2 倍大小的影响。
 5. 这里看起来似乎消费税对最终价格的影响特别大，这是因为这个例子中消费税和苹果的价格的量纲不同，所以才形成了这样的结果。消费税的 1 是 100%，苹果的价格的 1 是 1 日元。如果都只是在当前基础上增长1，价格其实只增长了 $1%$，而消费税却增长了 $100%$。
+
+
+## 3. 简单层的实现
+1. 本节将用 Python 实现前面的购买苹果的例子。这里，我们把要实现的计算图的乘法节点称为“乘法层”（MulLayer），加法节点称为“加法层”（AddLayer）。
+2. 这里所说的“层”是神经网络中功能的单位。比如，负责 sigmoid 函数的 Sigmoid、负责矩阵乘积的 Affine 等，都以层为单位进行实现。
+3. 层的实现中有两个共通的方法（接口）`forward()` 和` backward()`。`forward()` 对应正向传播，`backward()` 对应反向传播。
+
+### 3.1 乘法层的实现
+1. 代码实现
+    ```py
+    class MulLayer:
+        def __init__(self):
+            # x 和 y 用于保存正向传播时的输入值
+            self.x = None
+            self.y = None
+
+        # 接收 x 和 y 两个参数，将它们相乘后输出
+        def forward(self, x, y):
+            self.x = x
+            self.y = y
+            out = x * y
+
+            return out
+
+        # 将从上游传来的导数（dout）乘以正向传播的翻转值，然后传给下游
+        def backward(self, dout):
+            dx = dout * self.y  # 翻转x和y
+            dy = dout * self.x
+
+            return dx, dy
+    ```
+2. 现在我们使用 `MulLayer` 实现前面的购买苹果的例子（2 个苹果和消费税）
+    ```py
+    apple = 100
+    apple_num = 2
+    tax = 1.1
+
+    # layer
+    mul_apple_layer = MulLayer()
+    mul_tax_layer = MulLayer()
+
+    # forward
+    apple_price = mul_apple_layer.forward(apple, apple_num)
+    price = mul_tax_layer.forward(apple_price, tax)
+    print(price)  # 220
+
+    # backward
+    dprice = 1
+    dapple_price, dtax = mul_tax_layer.backward(dprice)
+    dapple, dapple_num = mul_apple_layer.backward(dapple_price)
+    print(dapple, dapple_num, dtax)  # 2.2 110 200
+    ```
+
+### 3.2 加法层的实现
+1. 实现加法层
+    ```py
+    class AddLayer:
+        def __init__(self):
+            pass # 什么也不运行
+
+        def forward(self, x, y):
+            out = x + y
+            return out
+
+        def backward(self, dout):
+            dx = dout * 1
+            dy = dout * 1
+            return dx, dy
+    ```
+2. 使用加法层和乘法层，实现下图所示的购买 2 个苹果和 3 个橘子的例子
+    <img src="./images/10.png" width="600" style="display: block;" />
+    ```py
+    apple = 100
+    apple_num = 2
+    orange = 150
+    orange_num = 3
+    tax = 1.1
+
+    # layer 
+    mul_apple_layer = MulLayer()
+    mul_orange_layer = MulLayer()
+    add_apple_orange_layer = AddLayer()
+    mul_tax_layer = MulLayer()
+
+    # forward
+    apple_price = mul_apple_layer.forward(apple, apple_num)
+    orange_price = mul_orange_layer.forward(orange, orange_num)
+    all_price = add_apple_orange_layer.forward(apple_price, orange_price)
+    price = mul_tax_layer.forward(all_price, tax)
+
+    # backward
+    dprice = 1
+    dall_price, dtax = mul_tax_layer.backward(dprice)
+    dapple_price, dorange_price = add_apple_orange_layer.backward(dall_price)
+    dorange, dorange_num = mul_orange_layer.backward(dorange_price)
+    dapple, dapple_num = mul_apple_layer.backward(dapple_price)
+
+    print(price)  # 715
+    print(dapple_num, dapple, dorange, dorange_num, dtax)  # 110 2.2 3.3 165 650
+    ```
