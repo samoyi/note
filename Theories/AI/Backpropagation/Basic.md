@@ -18,6 +18,17 @@
     - [3. 简单层的实现](#3-简单层的实现)
         - [3.1 乘法层的实现](#31-乘法层的实现)
         - [3.2 加法层的实现](#32-加法层的实现)
+    - [4. 激活函数层的实现](#4-激活函数层的实现)
+        - [4.1. ReLU层](#41-relu层)
+        - [4.2 Sigmoid 层](#42-sigmoid-层)
+            - [4.2.1 正向传播计算图](#421-正向传播计算图)
+            - [4.2.2 反向传播步骤](#422-反向传播步骤)
+                - [步骤1](#步骤1)
+                - [步骤2](#步骤2)
+                - [步骤3](#步骤3)
+                - [步骤4](#步骤4)
+            - [4.2.3 整理反向传播计算](#423-整理反向传播计算)
+            - [4.2.4 Python 实现 Sigmoid 层](#424-python-实现-sigmoid-层)
 
 <!-- /TOC -->
 
@@ -182,3 +193,100 @@
     print(price)  # 715
     print(dapple_num, dapple, dorange, dorange_num, dtax)  # 110 2.2 3.3 165 650
     ```
+
+
+## 4. 激活函数层的实现
+### 4.1. ReLU层
+1. 激活函数 ReLU（Rectified Linear Unit）在 $x > 0$ 导数为 1，在 $x <= 0$ 时倒数为 0。因此，如果正向传播时的输入 x 大于 0，则反向传播会将上游的值原封不动地传给下游。反过来，如果正向传播时的 x 小于等于 0，则反向传播中传给下游的信号将停在此处。
+2. 用计算图表示的话
+    <img src="./images/11.png" width="600" style="display: block;" />
+3. 现在我们来实现 ReLU 层。在神经网络的层的实现中，一般假定 `forward()` 和 `backward()` 的参数是 `NumPy` 数组。
+    ```py
+    class Relu:
+        def __init__(self):
+            self.mask = None
+
+        def forward(self, x):
+            self.mask = (x <= 0)
+            out = x.copy()
+            out[self.mask] = 0
+
+            return out
+
+        def backward(self, dout):
+            dout[self.mask] = 0
+            dx = dout
+
+            return dx
+    ```
+4. Relu 类有实例变量 `mask`。这个变量 `mask` 是由 `True`/`False` 构成的 `NumPy` 数组，它会把正向传播时的输入 `x` 的元素中小于等于 0 的地方保存为 `True`，其他地方（大于 0 的元素）保存为 `False`。如下例所示，
+    ```py
+    >>> x = np.array( [[1.0, -0.5], [-2.0, 3.0]] )
+    >>> print(x)
+    [[ 1.  -0.5]
+    [-2.   3. ]]
+    >>> mask = (x <= 0)
+    >>> print(mask)
+    [[False  True]
+    [ True False]]
+    ```
+5. 如果正向传播时的输入值小于等于 0，则反向传播的值为 0。因此，反向传播中会使用正向传播时保存的 `mask`，将从上游传来的 `dout` 的 `mask` 中的元素为 `True` 的地方设为 0。
+
+### 4.2 Sigmoid 层 
+#### 4.2.1 正向传播计算图
+    <img src="./images/12.png" width="600" style="display: block;" />
+
+#### 4.2.2 反向传播步骤
+##### 步骤1
+1.  “/”节点表示 $y=\frac{1}{x}$，它的导数可以解析性地表示为下式。
+
+    $\begin{aligned}\frac{\partial y}{\partial x}&=-\frac{1}{x^2}\\&=-y^2\end{aligned}$
+
+2. 反向传播时，会将上游的值乘以 $-y^2$ 后，再传给下游。计算图如下
+    <img src="./images/13.png" width="600" style="display: block;" />
+
+##### 步骤2
+1. “+”节点将上游的值原封不动地传给下游。计算图如下所示
+    <img src="./images/14.png" width="600" style="display: block;" />
+
+##### 步骤3
+1. “exp”节点表示 $y = exp(x)$，以 $e$ 为底的指数函数的导数还是它本身。它的导数由下式表示
+
+    $\frac{\partial y}{\partial x}=\exp(x)$
+
+2. 计算图如下
+    <img src="./images/15.png" width="600" style="display: block;" />
+
+##### 步骤4
+1. “×”节点将正向传播时的值翻转后做乘法运算。因此，这里要乘以 -1
+    <img src="./images/16.png" width="600" style="display: block;" />
+
+#### 4.2.3 整理反向传播计算
+1. 从上图的结果可知，反向传播的输出为 $\frac{\partial L}{\partial y}y^2\exp(-x)$，这个值会传播给下游的节点。
+2. 这里要注意，$\frac{\partial L}{\partial y}y^2\exp(-x)$ 这个值只根据正向传播时的输入 $x$ 和输出 $y$ 就可以算出来。因此，上面的计算图可以画成下图的集约化的“sigmoid”节点
+    <img src="./images/17.png" width="600" style="display: block;" />
+3. 简洁版的计算图可以省略反向传播中的计算过程，因此计算效率更高。此外，通过对节点进行集约化，可以不用在意 Sigmoid 层中琐碎的细节，而只需要专注它的输入和输出。
+4. 另外 $\frac{\partial L}{\partial y}y^2\exp(-x)$ 可以进一步整理如下。
+
+    $\begin{aligned}\frac{\partial L}{\partial y}y^2\exp(-x)&=\frac{\partial L}{\partial y}\frac{1}{(1+\exp(-x))^2}\exp(-x)\\&=\frac{\partial L}{\partial y}\frac{1}{1+\exp(-x)}\frac{\exp(-x)}{1+\exp(-x)}\\&=\frac{\partial L}{\partial y}y(1-y)\end{aligned}$
+
+5. 进一步更新计算图如下
+    <img src="./images/18.png" width="600" style="display: block;" />
+
+#### 4.2.4 Python 实现 Sigmoid 层
+```py
+class Sigmoid:
+    def __init__(self):
+        self.out = None
+
+    def forward(self, x):
+        out = 1 / (1 + np.exp(-x))
+        self.out = out
+
+        return out
+
+    def backward(self, dout):
+        dx = dout * (1.0 - self.out) * self.out
+
+        return dx
+```
