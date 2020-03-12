@@ -20,3 +20,8 @@
     * 该看counting sort了 http://www.jianshu.com/p/1b4068ccd505
     * 重新整理二叉树部分
 
+### 重构
+* 第二章只看了前三节
+* 没看第四章
+* 详细的例子没有看
+
