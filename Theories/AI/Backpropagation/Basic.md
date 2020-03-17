@@ -254,7 +254,7 @@
 
 ### 4.2 Sigmoid 层 
 #### 4.2.1 正向传播计算图
-    <img src="./images/12.png" width="600" style="display: block;" />
+<img src="./images/12.png" width="600" style="display: block;" />
 
 #### 4.2.2 反向传播步骤
 ##### 步骤1
@@ -292,6 +292,7 @@
 
 5. 进一步更新计算图如下
     <img src="./images/18.png" width="600" style="display: block;" />
+6. 顺便，根据导数商法则以及 $({\rm e}^{-x})'=-{\rm e}^{-x}$，可以直接求出 sigmoid 函数的导数 $\sigma'(x)=\sigma(x)(1-\sigma(x))$
 
 #### 4.2.4 Python 实现 Sigmoid 层
 ```py
