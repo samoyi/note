@@ -8,9 +8,16 @@
     - [导数](#导数)
         - [最小值](#最小值)
             - [根据增减表来确定最小值](#根据增减表来确定最小值)
+        - [多变量函数链式法则](#多变量函数链式法则)
     - [偏导](#偏导)
         - [多变量函数的最小值条件](#多变量函数的最小值条件)
         - [拉格朗日乘数法](#拉格朗日乘数法)
+    - [梯度下降法](#梯度下降法)
+        - [导数法求函数的近似公式](#导数法求函数的近似公式)
+            - [单变量函数的近似公式](#单变量函数的近似公式)
+            - [多变量函数的近似公式](#多变量函数的近似公式)
+            - [多变量函数近似公式的推广](#多变量函数近似公式的推广)
+            - [近似公式的向量表示](#近似公式的向量表示)
     - [References](#references)
 
 <!-- /TOC -->
@@ -37,6 +44,18 @@
 6. 从表中可以看出，$f(x)$ 在点 $x=2$ 处取得最小值 0。
 7. 如果已知增减表，就可以画出函数图像的大体形状。这里我们使用例题中的增减表，画出函数 $f(x)=3x^4-4x^3-12x^2+32$ 的图像
     <img src="./images/03.png" width="200" style="display: block;" />
+
+### 多变量函数链式法则
+1. 属于多变量微积分的内容，先记住规则
+2. 变量 $z$ 为 $u$、$v$ 的函数，如果 $u$、$v$ 分别为 $x$、$y$ 的函数，则 $z$ 为 $x$、$y$ 的函数，此时下式（多变量函数的链式法则）成立。
+
+    $\frac{\partial z}{\partial x}=\frac{\partial z}{\partial u}\frac{\partial u}{\partial x}+\frac{\partial z}{\partial v}\frac{\partial v}{\partial x}$
+
+    $\frac{\partial z}{\partial y}=\frac{\partial z}{\partial u}\frac{\partial u}{\partial y}+\frac{\partial z}{\partial v}\frac{\partial v}{\partial y}$
+
+3. 在三个以上的变量的情况下也同样成立。例如当 $C=u^2+v^2+w^2$，$u=a_1x+b_1y+c_1z$，$v=a_2x+b_2y+c_2z$，$w=a_3x+b_3y+c_3z$（$a_i$、$b_i$、$c_i$ 为常数，$i$=1,2,3）时，
+
+    $\begin{aligned}\frac{\partial C}{\partial x}&=\frac{\partial C}{\partial u}\frac{\partial u}{\partial x}+\frac{\partial C}{\partial v}\frac{\partial v}{\partial x}+\frac{\partial C}{\partial w}\frac{\partial w}{\partial x}\end{aligned}$
 
 
 ## 偏导
@@ -69,6 +88,112 @@
     $\frac{\partial L}{\partial \lambda}=x^2 + y^2 - 1 = 0$
 
 9. 解得 $x=y=\pm1/\sqrt{2}$。因而，当 $x=y=-1/\sqrt{2}$  时，$x+y$ 取得最小值 $-\sqrt{2}$。
+
+
+## 梯度下降法
+### 导数法求函数的近似公式
+#### 单变量函数的近似公式
+1. 根据导数定义，有
+
+    $f'(x)=\lim_{\Delta x\to0}\frac{f(x+\Delta x)-f(x)}{\Delta x}$
+
+2. 在这个定义式中，$\Delta x$ 为“无限小的值”，不过若将它替换为“微小的值”，也不会造成很大的误差。因而，下式近似成立。
+
+    $f'(x)\fallingdotseq\frac{f(x+\Delta x)-f(x)}{\Delta x}$
+
+3. 将上式变形，可以得到以下**单变量函数的近似公式**
+
+    $f(x+\Delta x)\fallingdotseq f(x)+f'(x)\Delta x$　（$\Delta x$ 为微小的数）
+
+4. 看一个例子。当 $f(x)={\rm e}^{x}$ 时，求 $x=0$ 附近的近似公式。
+5. 因为 $e^x$ 的导数还是它本身，以及上面的近似公式，可得
+
+    ${\rm e}^{x+\Delta x}\fallingdotseq{\rm e}^{x}+{\rm e}^{x}\Delta x$　（$\Delta x$ 为微小的数）
+
+6. 取 x=0，下式成立
+
+    ${\rm e}^{0+\Delta x}\fallingdotseq{\rm e}^{0}+{\rm e}^{0}\Delta x$
+
+7. 也就是说，对于 $f(x)={\rm e}^{x}$ ，当自变量取一个很接近 0 的值 $0+\Delta x$ 时，上式成立。 
+8. 上式的自变量实际上是 $0+\Delta x$。变形一下，
+
+    ${\rm e}^{0+\Delta x}\fallingdotseq{\rm e}^{0}+{\rm e}^{0}\Delta x+0e^0={\rm e}^{0}+(0+\Delta x)e^0$
+9. 重新用 $x$ 替换上式的自变量 $0+\Delta x$，得出 
+
+    ${\rm e}^{x}\fallingdotseq 1+x$
+
+10. 下面的图像是将 $y={\rm e}^{x}$ 与 $y=1+x$ 画在一张图上。在 $x=0$ 附近两个函数的图像重叠在一起，由此可以确认 $x=0$ 处的近似公式是正确的
+    <img src="./images/05.png" width="600" style="display: block;" />
+
+10. 再求一下 $x=2$ 附近的近似公式
+
+    ${\rm e}^{2+\Delta x}\fallingdotseq{\rm e}^{2}+{\rm e}^{2}\Delta x$
+
+11. 同样，变形为
+
+    ${\rm e}^{2+\Delta x}\fallingdotseq{\rm e}^{2}+{\rm e}^{2}\Delta x+2e^2-2e^2={\rm e}^{2}+(2+\Delta x)e^2-2e^2$
+
+12. 同样，上式的自变量实际上是 $2+\Delta x$，重新用 $x$ 替换，得出 
+    
+    ${\rm e}^{x}\fallingdotseq e^2x-e^2$
+
+13. 同样画图验证
+    <img src="./images/06.png" width="600" style="display: block;" />
+
+#### 多变量函数的近似公式
+1. 和上面原理相同，可以得出两个自变量的近似公式
+
+    ${\rm e}^{x+\Delta x+y+\Delta y}\fallingdotseq{\rm e}^{x+y}+{\rm e}^{x+y}\Delta x+{\rm e}^{x+y}\Delta y　（\Delta x、\Delta y 为微小的数）$
+
+2. 同样一例，对于函数 $z={\rm e}^{x+y}$ ，求 $x$、$y$ 分别在某个确定值附近的近似公式。
+3. 直接 $x=3, y=4$ 为例推导
+    <img src="./images/07.jpg" width="600" style="display: block;" />
+4. 验证一下
+    ```py
+    import numpy as np
+
+    def foo (x, y):
+        return np.exp(x + y)
+
+    def foo00 (x, y):
+        return 1 + x + y
+
+    def foo22(x, y):
+        return np.exp(4) * (x + y - 3)
+
+    def foo34 (x, y):
+        return np.exp(7) * (x + y - 6)
+
+
+    print( foo(0, 0) )         # 1.0
+    print( foo00(0, 0) )       # 1
+    print( foo(2, 2) )         # 54.598150033144236
+    print( foo22(2, 2) )       # 54.598150033144236
+    print( foo(3, 4) )         # 1096.6331584284585
+    print( foo34(3, 4) )       # 1096.6331584284585
+    print( foo(3, 4.0001) )    # 1096.7428272276497
+    print( foo34(3, 4.0001) )  # 1096.7428217443012
+    ```
+
+#### 多变量函数近似公式的推广
+1. 首先定义如下的 $\Delta z$。
+
+    $\Delta z=f(x+\Delta x,y+\Delta y)-f(x,y)$
+
+2. 所以上面的近似公式可以写成
+
+    $\Delta z\fallingdotseq\frac{\partial z}{\partial x}\Delta x+\frac{\partial z}{\partial y}\Delta y$
+
+3. 通过这样的表示方式，就很容易将近似公式进行推广。例如，变量 $z$ 为三个变量 $w$、$x$、$y$ 的函数时，近似公式如下所示。
+
+    $\Delta z\fallingdotseq\frac{\partial z}{\partial w}\Delta w+\frac{\partial z}{\partial x}\Delta x+\frac{\partial z}{\partial y}\Delta y$
+
+#### 近似公式的向量表示
+1. 根据上面多变量函数近似公式的推广，三个变量的函数的近似公式可以表示为如下两个向量的内积 $\nabla z\cdot\Delta x$
+
+    $\nabla z=\left(\frac{\partial z}{\partial w},\frac{\partial z}{\partial x},\frac{\partial z}{\partial y}\right),~\Delta x=(\Delta w,\Delta x,\Delta y)$
+
+2. 我们可以很容易地想象，对于一般的 n 变量函数，近似公式也可以像这样表示为内积的形式。这是梯度下降法会用到的的原理之一。
 
 
 ## References
