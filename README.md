@@ -7,7 +7,8 @@
 * 《深度学习入门：基于Python的理论与实现》看到第5章 之后要重看第5章
 
 ### 算法
-* 《Python数据结构与算法分析》看完了 第 5 章　搜索和排序
+* 《Python数据结构与算法分析》
+    * 没看 AVL 树
 * 《学习JavaScript数据结构与算法》
     * 实现任意层数的汉诺塔算法（例子中的三层算法似乎不对）
     * differences between map and hashtable ?
