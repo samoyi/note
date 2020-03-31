@@ -42,3 +42,5 @@
     $\frac{\partial C_{{\rm T}}}{\partial p}=0,~\frac{\partial C_{{\rm T}}}{\partial q}=0$
 
 <img src="./images/06.png" width="600" style="display: block;" />
+
+9. 可以看出来，这一过程的本质实际上就是神经网络确定最优参数和偏置的过程。
