@@ -11,7 +11,10 @@
 
 
 ## 思想
-TODO
+1. Open–closed principle：software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification。
+2. 一个设计良好的实体应该提供一个稳固的 API，用来应对外界的变化，这样外部的改变不会导致实体本身的变动。
+3. 稍差一点的，为了应对外部的变化，实体内部只需要修改某一处确切的位置，其他部分不需要改变仍然可以正常运转。这唯一的一处修改的地方，实际上要做到既响应了外部变化，又让内部依赖它的部分都无感知。
+3. 而最差的情况，就是这里所说的发散式修改：外部发生一个变动，实体内部需要修改好几个地方。
 
 
 ## References
