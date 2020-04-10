@@ -221,7 +221,104 @@ object, and not `undefined`, even in strict mode.
 2. `encodeURI`是用于编码转换完整的 URI，它的输出是直接可以用于浏览器等使用的，所以不会转码 URI 中本身的符号。如果你用`encodeURIComponent`转换`uri1`，它就会变成不合理的 URI 格式。
 3. `encodeURIComponent`是用于转码 URI 组件的，如上面例子中，是用来转码查询参数`url`的值的，这时如果还使用`encodeURI`转码，结果中就会保留 URI 中的符号，而这些符号并不是给浏览器用的。这样就和本身`http://www.b.com`中本身给浏览器用的符号发生了冲突。
 
-### `decodeURI()`和`decodeURIComponent()`
+### `encodeURIComponent()` 和 `decodeURIComponent()` 对非字符串值的处理
+#### `encodeURIComponent`
+```js
+console.log(encodeURIComponent(1))
+console.log(typeof encodeURIComponent(1))
+console.log(encodeURIComponent(0))
+console.log(typeof encodeURIComponent(0))
+console.log(encodeURIComponent(true))
+console.log(typeof encodeURIComponent(true))
+console.log(encodeURIComponent(false))
+console.log(typeof encodeURIComponent(false))
+console.log(encodeURIComponent(NaN))
+console.log(typeof encodeURIComponent(NaN))
+console.log(encodeURIComponent(null))
+console.log(typeof encodeURIComponent(null))
+console.log(encodeURIComponent(undefined))
+console.log(typeof encodeURIComponent(undefined))
+console.log(encodeURIComponent([]))
+console.log(typeof encodeURIComponent([]))
+console.log(encodeURIComponent([1]))
+console.log(typeof encodeURIComponent([1]))
+console.log(encodeURIComponent({}))
+console.log(typeof encodeURIComponent({}))
+console.log(encodeURIComponent({age: 22}))
+console.log(typeof encodeURIComponent({age: 22}))
+
+// 1
+// string
+// 0
+// string
+// true
+// string
+// false
+// string
+// NaN
+// string
+// null
+// string
+// undefined
+// string
+//
+// string
+// 1
+// string
+// %5Bobject%20Object%5D
+// string
+// %5Bobject%20Object%5D
+// string
+```
+
+#### `decodeURIComponent`
+```js
+console.log(decodeURIComponent(1))
+console.log(typeof decodeURIComponent(1))
+console.log(decodeURIComponent(0))
+console.log(typeof decodeURIComponent(0))
+console.log(decodeURIComponent(true))
+console.log(typeof decodeURIComponent(true))
+console.log(decodeURIComponent(false))
+console.log(typeof decodeURIComponent(false))
+console.log(decodeURIComponent(NaN))
+console.log(typeof decodeURIComponent(NaN))
+console.log(decodeURIComponent(null))
+console.log(typeof decodeURIComponent(null))
+console.log(decodeURIComponent(undefined))
+console.log(typeof decodeURIComponent(undefined))
+console.log(decodeURIComponent([]))
+console.log(typeof decodeURIComponent([]))
+console.log(decodeURIComponent({}))
+console.log(typeof decodeURIComponent({}))
+console.log(decodeURIComponent({}))
+console.log(typeof decodeURIComponent({}))
+console.log(decodeURIComponent({age: 22}))
+console.log(typeof decodeURIComponent({age: 22}))
+
+// 1
+// string
+// 0
+// string
+// true
+// string
+// false
+// string
+// NaN
+// string
+// null
+// string
+// undefined
+// string
+//
+// string
+// [object Object]
+// string
+// [object Object]
+// string
+// [object Object]
+// string
+```
 
 
 ## System Dialogs
