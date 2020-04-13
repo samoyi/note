@@ -17,7 +17,7 @@
 4. Strings are particularly common petri dishes for this kind of odor: A telephone number is more than just a collection of characters. 
 5. If nothing else, a proper type can often include consistent display logic for when it needs to be displayed in a user interface. 
 6. Representing such types as strings is such a common stench that people call them “stringly typed” variables.
-7. 对于自己系统中比较重要且常用的数据，为其创建专门的类型，来约束它们的行为，是很有必要的。
+7. 对于自己系统中比较重要且常用的数据，为其创建专门的类型，来约束它们的属性和行为，是很有必要的。
 
 
 ## References
