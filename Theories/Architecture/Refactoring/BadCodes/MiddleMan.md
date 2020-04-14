@@ -5,6 +5,7 @@
 
 - [Middle Man](#middle-man)
     - [思想](#思想)
+    - [重构方法参考](#重构方法参考)
     - [References](#references)
 
 <!-- /TOC -->
@@ -12,7 +13,6 @@
 
 ## 思想
 和 Message Chains 一个意思
-
 
 
 ## 重构方法参考

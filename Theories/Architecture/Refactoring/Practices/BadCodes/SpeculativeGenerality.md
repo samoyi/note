@@ -1,7 +1,6 @@
 # Speculative Generality
 
 
-
 ## 原则
 如果为了复用，一个实体内部的逻辑变得很复杂，那就别复用
 
@@ -10,7 +9,6 @@
 
 
 ## 过度优化
-
 
 
 ## References
