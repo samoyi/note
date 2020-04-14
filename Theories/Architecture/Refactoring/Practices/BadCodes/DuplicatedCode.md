@@ -70,8 +70,27 @@
 * Scss 该用变量就用变量，该用 mixin 就用 mixin
 
 
+## 过度优化
 
 
+## TODO
+### vue 组件内属性 key 
+1. 比如有一个对象里的一个 key 是 `'userName'`，为了访问和操作这个对象，在组件内的 HTML 和 JS 中有多个地方都会使用 `'userName'`。
+2. 但如果想更换一下这个 key 名，只能逐个修改。
+3. 尝试定义常量的问题是：如果定义在实例外面，则 HTML 无法访问该常量；如果定义在实例上，则 JS 调用该常量需要加上 `this.` 很麻烦。而且属性访问还要加上中括号。
+4. 另外，如果要定义到实例上，需要定义到 `data` 函数 return 外面，这样 return 的对象里才能访问到
+    ```js
+    data () {
+        this.USER_NAME_KEY  = 'userName';
+        this.USER_PHONE_KEY = 'userPhone';
+        return {
+            newAdmin: {
+                [this.USER_NAME_KEY]:  '',
+                [this.USER_PHONE_KEY]: '',
+            },
+        }
+    }
+    ```
 
 
 

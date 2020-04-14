@@ -1,14 +1,15 @@
-# 过长函数
+# Long Function and Long Module
 
 
 <!-- TOC -->
 
-- [过长函数](#过长函数)
+- [Long Function and Long Module](#long-function-and-long-module)
     - [思想](#思想)
         - [意图和实现分离](#意图和实现分离)
     - [过长的标准是什么？](#过长的标准是什么)
         - [过长是相对的，只要长度影响理解，就算是过长，而和实际的长度无关](#过长是相对的只要长度影响理解就算是过长而和实际的长度无关)
         - [例子](#例子)
+    - [重构方法参考](#重构方法参考)
     - [References](#references)
 
 <!-- /TOC -->
@@ -171,6 +172,11 @@
  1. Older languages carried an overhead in subroutine calls, which deterred people from small functions. Modern languages have pretty much eliminated that overhead for in­process calls. 
  2. There is still overhead for the reader of the code because you have to switch context to see what the function does. Development environments that allow you to quickly jump between a function call and its declaration, or to see both functions at once, help eliminate this step.
  3. But the real key to making it easy to understand small functions is good naming. If you have a good name for a function, you mostly don’t need to look at its body. 
+
+
+
+## 重构方法参考
+* Extract Function
 
 
 ## References

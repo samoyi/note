@@ -21,5 +21,11 @@
 3. Navigating this way means the client is coupled to the structure of the navigation. Any change to the intermediate relationships causes the client to have to change.
 
 
+
+
+## 重构方法参考
+* Extract Function：代理多层或复杂结构
+
+
 ## References
 * [《重构（第2版）》](https://book.douban.com/subject/33400354/)
