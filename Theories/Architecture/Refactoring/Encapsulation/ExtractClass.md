@@ -8,6 +8,8 @@ inverse of: Inline Class
 - [Extract Class](#extract-class)
     - [思想](#思想)
     - [Motivation](#motivation)
+        - [一个类开始的设计也许是 SRP，但随着修改也许就不是了](#一个类开始的设计也许是-srp但随着修改也许就不是了)
+        - [需要进行提取的迹象](#需要进行提取的迹象)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -20,12 +22,19 @@ inverse of: Inline Class
 
 
 ## Motivation
+### 一个类开始的设计也许是 SRP，但随着修改也许就不是了
 1. You’ve probably read guidelines that a class should be a crisp abstraction, only handle a few clear responsibilities, and so on. 
-2. In practice, classes grow. You add some operations here, a bit of data there. You add a responsibility to a class feeling that it’s not worth a separate class — but as that responsibility grows and breeds, the class becomes too complicated. 
-3. Imagine a class with many methods and quite a lot of data. A class that is too big to understand easily. You need to consider where it can be split — and split it. 
-4. A good sign is when a subset of the data and a subset of the methods seem to go together. Other good signs are subsets of data that usually change together or are particularly dependent on each other. 
-5. A useful test is to ask yourself what would happen if you remove a piece of data or a method. What other fields and methods would become nonsense? 
-6. One sign that often crops up later in development is the way the class is sub­typed. You may find that subtyping affects only a few features or that some features need to be subtyped one way and other features a different way.
+2. In practice, classes grow. You add some operations here, a bit of data there. 
+3. You add a responsibility to a class feeling that it’s not worth a separate class — but as that responsibility grows and breeds, the class becomes too complicated. 
+4. Imagine a class with many methods and quite a lot of data. 
+5. A class that is too big to understand easily. You need to consider where it can be split — and split it. 
+
+### 需要进行提取的迹象
+1. A good sign is when a subset of the data and a subset of the methods seem to go together. 
+2. Other good signs are subsets of data that usually change together or are particularly dependent on each other. 
+3. A useful test is to ask yourself what would happen if you remove a piece of data or a method. What other fields and methods would become nonsense? 
+4. One sign that often crops up later in development is the way the class is sub­typed. 
+5. You may find that subtyping affects only a few features or that some features need to be subtyped one way and other features a different way.
 
 
 ## Mechanics
