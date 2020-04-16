@@ -9,6 +9,9 @@ inverse of: Inline Function
         - [单纯的长度缩减](#单纯的长度缩减)
         - [复用](#复用)
         - [黑箱封装 —— Speration between intention and implementation](#黑箱封装--speration-between-intention-and-implementation)
+            - [意图和实现分离](#意图和实现分离)
+            - [性能担忧？](#性能担忧)
+            - [命名的重要性](#命名的重要性)
             - [例1](#例1)
             - [例2](#例2)
     - [Mechanics](#mechanics)
@@ -22,21 +25,30 @@ inverse of: Inline Function
 
 ## Motivations
 ### 单纯的长度缩减
-Functions should be no larger than fit on a screen. 
+1. Functions should be no larger than fit on a screen. 
+2. 其实我觉得 10 行就已经看起来比较累了。
 
 ### 复用
 Any code used more than once should be put in its own function, but code only used once should be left inline. 
 
 ### 黑箱封装 —— Speration between intention and implementation
-1. 意图和实现分离！当我们看代码的时候，很多时候是只关心一个部分做了什么，而不关心它是怎么实现的。
+#### 意图和实现分离
+1. 当我们看代码的时候，很多时候是只关心一个部分做了什么，而不关心它是怎么实现的。
 2. 那在我们看的时候，最好就是在这个部分只告诉我做了什么，而不要告诉我是怎么做的。
-3. If you have to spend effort looking at a fragment of code and figuring out what it’s doing, then you should extract it into a function and name the function after the “what.” 
+3. If you have to spend effort looking at a fragment of code and figuring out what it’s doing, then you should extract it into a function and name the function after the "what". 
 4. Then, when you read it again, the purpose of the function leaps right out at you, and most of the time you won’t need to care about how the function fulfills its purpose (which is the body of the function).
-5. Some people are concerned about short functions because they worry about the performance cost of a function call, but that’s very rare now. Optimizing compilers often work better with shorter functions which can be cached more easily. 
-6. Small functions like this only work if the names are good, so you need to pay good attention to naming. Often, I see fragments of code in a larger function that start with a comment to say what they do. The comment is often a good hint for the name of the function when I extract that fragment.
+
+#### 性能担忧？
+1. Some people are concerned about short functions because they worry about the performance cost of a function call, but that’s very rare now. 
+2. Optimizing compilers often work better with shorter functions which can be cached more easily. 
+3. 相比于极少的性能损失，可维护性提升的更多。
+
+#### 命名的重要性
+1. Small functions like this only work if the names are good, so you need to pay good attention to naming. 
+2. Often, I see fragments of code in a larger function that start with a comment to say what they do. The comment is often a good hint for the name of the function when I extract that fragment.
 
 #### 例1
-1. 这个`$watch`内部的逻辑看起来也不复杂，也是容易看懂的
+1. 这个 `$watch` 内部的逻辑看起来也不复杂，也是容易看懂的
     ```js
     mounted() {
         this.$watch('pwdType.value', (newVal) => {
@@ -55,7 +67,7 @@ Any code used more than once should be put in its own function, but code only us
         });
     },
     ```
-2. 但是你还是不能很方便的看出来`pwdType.value`不同的值会做什么事情，还是要看上几行代码才行。
+2. 但是你还是不能很方便的看出来 `pwdType.value` 不同的值会做什么事情，还是要看上几行代码才行。
 3. 很有可能，你看这个 watcher 的时候只是想知道值变化的时候程序会做什么，而并不想知道具体是怎么做的。但是在看的过程中，你还是要看完整的实现代码，还是要看懂这个事情是怎么做的。
 4. 但是如果修改为下面你的形式，你几乎一眼就能看出来要做什么事情。至于你如果想要知道这些事情怎么做的，那你就要去看具体的方法。
     ```js
@@ -88,7 +100,7 @@ Any code used more than once should be put in its own function, but code only us
     ```
 
 #### 例2
-1. 在一个51行的`handleScroll`方法中，有下面一段代码
+1. 在一个 51 行的 `handleScroll` 方法中，有下面一段代码
     ```js
     let height = $list.height();
     let viewScrollTop = $(window).height() + scrollTop - viewOffsetTop;
@@ -108,7 +120,7 @@ Any code used more than once should be put in its own function, but code only us
         this.curViewCount = this.allPhotoCount;
     }
     ```
-2. 这一段的逻辑很明确，就是要设置`this.curViewCount`，而且没有副作用，所以很应该作为独立的方法
+2. 这一段的逻辑很明确，就是要设 置`this.curViewCount`，而且没有副作用，所以很应该作为独立的方法
     ```js
     getCurViewCount(scrollTop, $list, viewOffsetTop){
       let curViewCount = 0;
@@ -131,12 +143,12 @@ Any code used more than once should be put in its own function, but code only us
       return curViewCount;
     },
     ```
-3. 这个方法接收参数并计算，不会直接设置`this.curViewCount`而是直接返回计算结果，没有副作用。
-4. 然后在`handleScroll`方法中调用这个新的方法
+3. 这个方法接收参数并计算，不会直接设置 `this.curViewCount` 而是直接返回计算结果，没有副作用。
+4. 然后在 `handleScroll` 方法中调用这个新的方法
     ```js
     this.curViewCount = this.getCurViewCount(scrollTop, $list, viewOffsetTop);
     ```
-5. 这样，当你浏览`handleScroll`方法时，你会一眼就知道这一步是设置`this.curViewCount`，如果你不关心怎么设置的，就可以完全不用操心。
+5. 这样，当你浏览 `handleScroll` 方法时，你会一眼就知道这一步是设置 `this.curViewCount`，如果你不关心怎么设置的，就可以完全不用操心。
 
 
 ## Mechanics
@@ -210,35 +222,6 @@ Any code used more than once should be put in its own function, but code only us
       // ...
     }
     ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ## References

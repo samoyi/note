@@ -177,6 +177,8 @@
 
 ## 重构方法参考
 * Extract Function
+* Split Phase
+* Replace Primitive with Object：使用数据的各个地方不用自己对数据进行各种处理了
 
 
 ## References

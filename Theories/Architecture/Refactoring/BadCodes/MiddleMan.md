@@ -17,6 +17,8 @@
 
 ## 重构方法参考
 * Extract Function：代理多层或复杂结构
+* Inline Function：取消层层传递
+* Remove Middle Man
 
 
 ## References

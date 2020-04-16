@@ -24,6 +24,7 @@
 
 ## 重构方法参考
 * Extract Function：代理多层或复杂结构
+* Hide Delegate：用代理封装耦合的消息链
 
 
 ## References

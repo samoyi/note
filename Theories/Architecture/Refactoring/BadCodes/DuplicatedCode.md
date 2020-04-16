@@ -5,6 +5,7 @@
 
 - [Duplicated Code](#duplicated-code)
     - [思想](#思想)
+    - [重构方法参考](#重构方法参考)
     - [References](#references)
 
 <!-- /TOC -->
@@ -18,6 +19,9 @@ difference. If you need to change the duplicated code, you have to find and catc
 
 ## 重构方法参考
 * Extract Function
+* Extract Variable
+* Encapsulate Collection：在对象里面封装好，读取集合的各个地方就不用自己拷贝副本了
+* Replace Primitive with Object：在对象里面封装好各种方法，读取数据的各个地方就不用自己检查和处理了
 
 
 ## References

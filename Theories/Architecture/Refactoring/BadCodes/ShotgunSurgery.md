@@ -5,6 +5,7 @@
 
 - [Shotgun Surgery](#shotgun-surgery)
     - [思想](#思想)
+    - [重构方法参考](#重构方法参考)
     - [References](#references)
 
 <!-- /TOC -->
@@ -17,6 +18,11 @@
 4. 而最差的情况，就是这里所说的 Shotgun Surgery：外部发生一个变动，实体内部需要修改好几个地方。
 5. 如果多个东西同时耦合于一个东西，当这个被耦合的对象逻辑发生修改时，就要去修改很多耦合于该对象的地方。
 6. 应该尽可能的避免耦合，尤其是这种多对一的耦合。
+
+
+## 重构方法参考
+* Combine Functions into Class：相关联的数据及其相关方法封装为类
+* Replace Primitive with Object：把数据约束为对象，这样就不用各处使用数据的各自对数据进行各种处理了。当数据逻辑改变的时候也只需要在数据对象中修改
 
 
 ## References

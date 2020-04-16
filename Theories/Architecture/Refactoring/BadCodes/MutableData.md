@@ -5,6 +5,7 @@
 
 - [Mutable Data](#mutable-data)
     - [思想](#思想)
+    - [重构方法参考](#重构方法参考)
     - [References](#references)
 
 <!-- /TOC -->
@@ -16,6 +17,7 @@
 
 ## 重构方法参考
 * Extract Function：可以用一个函数返回永远一样的值
+* Encapsulate Collection
 
 
 ## References

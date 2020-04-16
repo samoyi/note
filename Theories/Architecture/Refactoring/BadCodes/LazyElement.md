@@ -4,6 +4,7 @@
 
 - [Lazy Element](#lazy-element)
     - [思想](#思想)
+    - [重构方法参考](#重构方法参考)
     - [References](#references)
 
 <!-- /TOC -->
@@ -14,6 +15,11 @@
 2. But sometimes the structure isn’t needed. It may be a function that’s named the same as its body code reads, or a class that is essentially one simple function. 
 3. Sometimes, this reflects a function that was expected to grow and be popular later, but never realized its dreams. Sometimes, it’s a class that used to pay its way, but has been downsized with refactoring. 
 4. Either way, such program elements need to die with dignity.
+
+
+## 重构方法参考
+* Inline Function
+* Inline Class
 
 
 ## References

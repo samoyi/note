@@ -5,6 +5,7 @@
 
 - [Primitive Obsession](#primitive-obsession)
     - [现象](#现象)
+    - [重构方法参考](#重构方法参考)
     - [References](#references)
 
 <!-- /TOC -->
@@ -18,6 +19,11 @@
 5. If nothing else, a proper type can often include consistent display logic for when it needs to be displayed in a user interface. 
 6. Representing such types as strings is such a common stench that people call them “stringly typed” variables.
 7. 对于自己系统中比较重要且常用的数据，为其创建专门的类型，来约束它们的属性和行为，是很有必要的。
+
+
+## 重构方法参考
+* Introduce Parameter Object
+* Replace Primitive with Object
 
 
 ## References

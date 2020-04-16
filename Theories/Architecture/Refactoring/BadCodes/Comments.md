@@ -23,6 +23,9 @@ When you feel the need to write a comment, first try to refactor the code so tha
 
 ## 重构方法参考
 * Extract Function：将比较复杂需要注释的一段代码封装为一个函数，起一个好理解的名字
+* Extract Variable：给一行复杂的计算赋值一个名字有意义的函数，就不需要注释说明这一长串是计算什么了
+* Change Function Declaration：用有意义的名字代替注释
+* Rename Variable：起个一目了然的名字吧
 
 
 ## References
