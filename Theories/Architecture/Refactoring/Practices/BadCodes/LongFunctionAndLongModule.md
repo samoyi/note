@@ -52,7 +52,7 @@
 2. 但如果有些复杂，都写在方法里就显得乱了，不如提取出独立的函数。
 
 ### 分离全局导航守卫
-1. 经常会根据路由来做一些判断，因此可能会在 `afterEachGuard` 之类的导航守卫函数里写各种逻辑，稍微一多就乱了。
+1. 经常会根据路由来做一些判断，因此可能会在 `afterEach` 之类的导航守卫函数里写各种逻辑，稍微一多就乱了。
 2. 应该把所有的处理逻辑都提取到一个或多个（根据守卫类型 `afterEach`、`beforeEach` 等）模块中
     ```js
     // guards.js
@@ -80,12 +80,33 @@
     ```
 3. 然后在路由核心模块中引用并插入
     ```js
+    // router.js
     import {afterEachGuard} from './guards'
 
     router.afterEach((to, from, next) => {
         afterEachGuard(to, from);
-        next && next();
     });
+    ```
+4. 甚至你还可以吧 `router.afterEach` 之类的函数也移进 `guards.js` 中，然后只暴露一个安装的方法
+    ```js
+    // guards.js
+
+    // ...
+
+    export function installGuards () {
+        router.beforeEach((to, from, next) => {
+            beforeEachGuard(to, from);
+            next()
+        });
+        router.afterEach((to, from) => {
+            afterEachGuard(to, from);
+        })
+    }
+    ```
+5. 在路由核心模块中只需要执行安装方法就行了
+    ```js
+    import {installGuards} from './guards'
+    installGuards();
     ```
 
 
