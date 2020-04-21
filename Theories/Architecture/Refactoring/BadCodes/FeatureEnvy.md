@@ -35,6 +35,7 @@
 
 ## 重构方法参考
 * Inline Class
+* Move Function
 
 
 ## References

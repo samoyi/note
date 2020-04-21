@@ -179,6 +179,8 @@
 * Extract Function
 * Split Phase
 * Replace Primitive with Object：使用数据的各个地方不用自己对数据进行各种处理了
+* Replace Temp with Query：如果临时变量保存的计算逻辑比较复杂
+* Extract Class
 
 
 ## References

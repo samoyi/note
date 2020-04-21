@@ -24,6 +24,7 @@
 ## 重构方法参考
 * Introduce Parameter Object
 * Replace Primitive with Object
+* Extract Class
 
 
 ## References

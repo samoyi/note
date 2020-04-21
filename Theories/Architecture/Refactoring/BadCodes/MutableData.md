@@ -21,6 +21,7 @@
 * Extract Function：可以用一个函数返回永远一样的值
 * Encapsulate Collection
 * Combine Functions into Transform：只暴露源数据的副本
+* Encapsulate Record：通过监听读写来控制可变数据的变化
 
 
 ## References

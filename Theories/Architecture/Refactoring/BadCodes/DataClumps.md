@@ -5,6 +5,7 @@
 
 - [Data Clumps](#data-clumps)
     - [思想](#思想)
+    - [重构方法参考](#重构方法参考)
     - [References](#references)
 
 <!-- /TOC -->
@@ -16,7 +17,7 @@
 
 ## 重构方法参考
 * Introduce Parameter Object：好几个相关的参数组合为一个对象
-
+* Extract Class
 
 
 ## References

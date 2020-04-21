@@ -25,6 +25,8 @@ big progress by moving it from the client into the data class itself.
 
 ## 重构方法参考
 * Extract Function：也许一个简单的工厂函数就能替代
+* Encapsulate Record：也许一些对数据的读写操作可以放在该类里面
+* Move Function
 
 
 ## References
