@@ -24,6 +24,7 @@ difference. If you need to change the duplicated code, you have to find and catc
 * Replace Primitive with Object：在对象里面封装好各种方法，读取数据的各个地方就不用自己检查和处理了
 * Combine Functions into Transform：如果有好几个地方都对一组数据有相同的一组操作
 * Replace Temp with Query：如果好几个地方都进行了同样的计算
+* Move Statements into Function
 
 
 ## References

@@ -8,9 +8,11 @@ inverse of: Extract Class
 - [Move Field](#move-field)
     - [思想](#思想)
     - [Motivation](#motivation)
-        - [数据结构的重要性](#数据结构的重要性)
-        - [具体移动动机](#具体移动动机)
-        - [搬移时的可访问性考虑以及封装的优点](#搬移时的可访问性考虑以及封装的优点)
+        - [数据结构的重要性——模型越准确，使用越简单](#数据结构的重要性模型越准确使用越简单)
+        - [应该及时修正错误的模型，及时降低模型的理解和使用成本](#应该及时修正错误的模型及时降低模型的理解和使用成本)
+        - [具体移动动机——字段放错了地方，可能就会出现非正常耦合](#具体移动动机字段放错了地方可能就会出现非正常耦合)
+        - [搬移可能是其他重构的相关操作](#搬移可能是其他重构的相关操作)
+        - [封装良好的对象中的字段搬移起来更容易](#封装良好的对象中的字段搬移起来更容易)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -18,30 +20,39 @@ inverse of: Extract Class
 
 
 ## 思想
-1. 组织的混乱带来理解的混乱，就和命名带来的混乱一样。
-2. 而且，组织的混乱也会带来交流的错乱和低效。
+1. 首先，组织的混乱带来理解的混乱，就和命名带来的混乱一样。一个不应该出现在这里的东西出现了，就会增加理解负担。
+2. 更重要的是，你的组织结构和你要解决的问题不匹配。可能是少了一些功能，或者是多了一些副作用。结构的混乱也会带来交流的错乱和低效。
 
 
 ## Motivation
-### 数据结构的重要性
-1. Programming involves writing a lot of code that implements behavior — but the strength of a program is really founded on its data structures. 
-2. If I have a good set of data structures that match the problem, then my behavior code is simple and straightforward. 
-3. But poor data structures lead to lots of code whose job is merely dealing with the poor data. And it’s not just messier code that’s harder to understand; it also means the data structures obscure what the program is doing. 
-4. So, data structures are important — but like most aspects of programming they are hard to get right. In the process of programming, I learn more about the problem domain and my data structures. A design decision that is reasonable and correct one week can become wrong in another.
-5. As soon as I realize that a data structure isn’t right, it’s vital to change it. If I leave my data structures with their blemishes, those blemishes will confuse my thinking and complicate my code far into the future.
+### 数据结构的重要性——模型越准确，使用越简单
+1. 想想地心说的错误建模，就导致了各种本轮均轮，增加了各种补丁、增加了很多复杂度，才能反映现实的事物。
+2. 数据结构是现实事物的模型。模型越准确，就越可以方便准确的描述现实事物，对数据的操作也就可以更准确的对应现实事物的变化。
+3. 不准确的建模，就导致系统要花很多功夫来打补丁，弥合模型和现实的差距。
+4. 这样，系统复杂度增加，理解和修改都变得更难，到最后甚至会看不出来这个模型到底是干什么用的。
 
-### 具体移动动机
+### 应该及时修正错误的模型，及时降低模型的理解和使用成本
+1. So, data structures are important — but like most aspects of programming they are hard to get right. 
+2. In the process of programming, I learn more about the problem domain and my data structures. A design decision that is reasonable and correct one week can become wrong in another.
+3. As soon as I realize that a data structure isn’t right, it’s vital to change it. 
+4. If I leave my data structures with their blemishes, those blemishes will confuse my thinking and complicate my code far into the future.
+
+### 具体移动动机——字段放错了地方，可能就会出现非正常耦合
 1. I may seek to move data because I find I always need to pass a field from one record whenever I pass another record to a function. Pieces of data that are always passed to functions together are usually best put in a single record in order to clarify their relationship. 
 2. Change is also a factor： if a change in one record causes a field in another record to change too, that’s a sign of a field in the wrong place. 
 3. If I have to update the same field in multiple structures, that’s a sign that it should move to another place where it only needs to be updated once.
 
-### 搬移时的可访问性考虑以及封装的优点
+### 搬移可能是其他重构的相关操作
 1. I usually do Move Field in the context of a broader set of changes. 
 2. Once I’ve moved a field, I find that many of the users of the field are better off accessing that data through the target object rather than the original source. I then change these with later refactorings. 
 3. Similarly, I may find that I can’t do Move Field at the moment due to the way the data is used. I need to refactor some usage patterns first, then do the move.
-4. In my description so far, I’m saying “record,” but all this is true of classes and objects too. A class is a record type with attached functions — and these need to be kept healthy just as much as any other data. 
-5. The attached functions do make it easier to move data around, since the data is encapsulated behind accessor methods. I can move the data, change the accessors, and clients of the accessors will still work. So, this is a refactoring that’s easier to do if you have classes.
-6. If I’m using bare records that don’t support encapsulation, I can still make a change like this, but it is more tricky.
+
+### 封装良好的对象中的字段搬移起来更容易
+1. In my description so far, I’m saying “record,” but all this is true of classes and objects too. 
+2. A class is a record type with attached functions — and these need to be kept healthy just as much as any other data. 
+3. The attached functions do make it easier to move data around, since the data is encapsulated behind accessor methods. 
+4. I can move the data, change the accessors, and clients of the accessors will still work. So, this is a refactoring that’s easier to do if you have classes.
+5. If I’m using bare records that don’t support encapsulation, I can still make a change like this, but it is more tricky.
 
 
 ## Mechanics

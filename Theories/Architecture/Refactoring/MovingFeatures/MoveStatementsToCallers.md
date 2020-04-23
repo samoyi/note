@@ -25,10 +25,10 @@ inverse of: Move Statements into Function
 3. For functions, that means that what might once have been a cohesive, atomic unit of behavior becomes a mix of two or more different things. 
 4. One trigger for this is when common behavior used in several places needs to vary in some of its calls. 
 5. Now, we need to move the varying behavior out of the function to its callers. 
-6. In this case, I’ll use Slide Statements to get the varying behavior to the beginning or end of the function and then Move Statements to Callers. 
+6. In this case, I’ll use *Slide Statements* to get the varying behavior to the beginning or end of the function and then *Move Statements to Callers*. 
 7. Once the varying code is in the caller, I can change it when necessary. 
-8. Move Statements to Callers works well for small changes, but sometimes the boundaries between caller and callee need complete reworking. 
-9. In that case, my best move is to use Inline Function and then slide and extract new functions to form better boundaries
+8. *Move Statements to Callers* works well for small changes, but sometimes the boundaries between caller and callee need complete reworking. 
+9. In that case, my best move is to use *Inline Function* and then slide and extract new functions to form better boundaries
 
 
 ## Mechanics
