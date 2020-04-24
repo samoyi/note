@@ -17,6 +17,7 @@
 
 ## 重构方法参考
 * Remove Flag Argument
+* Split Loop
 
 
 ## References
