@@ -245,6 +245,7 @@ let baz = function(){}
     foo(undefined); // 2   
     foo(null); // null
     ```
+* 只有 `undefined` 会触发默认值。`null`、`NaN` 并不会。
 * 函数的`length`属性不包括带有默认值的参数以及之后的所有参数
     ```js
     function foo(a, b=0) {}
