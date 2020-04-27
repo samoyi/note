@@ -19,6 +19,7 @@
 ## 重构方法参考
 * Change Function Declaration
 * Rename Variable
+* Rename Field
 
 
 ## References

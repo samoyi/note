@@ -22,6 +22,8 @@
 * Encapsulate Collection
 * Combine Functions into Transform：只暴露源数据的副本
 * Encapsulate Record：通过监听读写来控制可变数据的变化
+* Replace Derived Variable with Query
+* Change Reference to Value
 
 
 ## References
