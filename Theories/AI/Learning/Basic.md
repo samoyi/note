@@ -655,9 +655,13 @@ class TwoLayerNet:
         return accuracy
 
     # x:输入数据, t:监督数据
+    # 因为要使用梯度下降法，所以实现求当前梯度的方法
     def numerical_gradient(self, x, t):
+        # 基于当前输入数据的数据，定义损失函数值关于权重和偏置的函数
+        # 该函数的自变量是权重和偏置，函数值是损失函数的输出值
         def loss_W(W): return self.loss(x, t)
 
+        # 计算关于当前权重和偏置的梯度，确定怎么调整权重和偏置
         grads = {}
         grads['W1'] = numerical_gradient(loss_W, self.params['W1']) # 第 1 层权重的梯度
         grads['b1'] = numerical_gradient(loss_W, self.params['b1']) # 第 1 层偏置的梯度
@@ -689,6 +693,7 @@ class TwoLayerNet:
 
     network = TwoLayerNet(input_size=784, hidden_size=50, output_size=10)
 
+    # 进行 iters_num 次梯度下降
     for i in range(iters_num):
         # 获取 mini-batch
         # 实际上，一般做法是事先将所有训练数据随机打乱，然后按指定的批次大小，按序生成 mini-batch。
@@ -698,7 +703,7 @@ class TwoLayerNet:
         x_batch = x_train[batch_mask]
         t_batch = t_train[batch_mask]
 
-        # 计算梯度
+        # 计算当前参数下的梯度
         grad = network.numerical_gradient(x_batch, t_batch)
         # grad = network.gradient(x_batch, t_batch) # 使用用误差反向传播法计算梯度的高速版
 
