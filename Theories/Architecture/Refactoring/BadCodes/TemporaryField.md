@@ -29,6 +29,8 @@
 
 ## 重构方法参考
 * Extract Class
+* Introduce Special Case
+* Introduce Assertion
 
 
 ## References

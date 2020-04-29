@@ -15,7 +15,24 @@
 
 
 ## Motivation —— Command-Query Separation
-1. If I see two functions that carry out very similar logic with different literal values, I can remove the duplication by using a single function with parameters for the different values. This increases the usefulness of the function, since I can apply it elsewhere with different values.
+1. If I see two functions that carry out very similar logic with different literal values, I can remove the duplication by using a single function with parameters for the different values. 
+2. This increases the usefulness of the function, since I can apply it elsewhere with different values.
+3. 好像没说个啥
+    ```js
+    // 从
+    function tenPercentRaise (aPerson) {
+        aPerson.salary = aPerson.salary.multiply(1.1);
+    }
+    function fivePercentRaise (aPerson) {
+        aPerson.salary = aPerson.salary.multiply(1.05);
+    }
+
+    // 到
+    function raise (aPerson, factor) {
+        aPerson.salary = aPerson.salary.multiply(1 + factor);
+    }
+    ```
+
 
 
 ## Mechanics

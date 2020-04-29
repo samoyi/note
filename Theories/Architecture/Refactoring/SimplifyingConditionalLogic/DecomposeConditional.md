@@ -30,8 +30,11 @@ inverse of: Change Value to Reference
 
 
 ## Mechanics
-1. This is really just a particular case of applying Extract Function to my code, but I like to highlight this case as one where I’ve often found a remarkably good value for the exercise.
-2. 如果条件判断比较复杂，就把条件判断封装为函数；如果判断后的执行很复杂，也封装为函数。
+1. As with any large block of code, I can make my intention clearer by decomposing it and replacing each chunk of code with a function call named after the intention of that chunk. 
+2. With conditions, I particularly like doing this for the conditional part and each of the alternatives. 
+3. This way, I highlight the condition and make it clear what I’m branching on. I also highlight the reason for the branching.
+4. This is really just a particular case of applying *Extract Function* to my code, but I like to highlight this case as one where I’ve often found a remarkably good value for the exercise.
+5. 如果条件判断比较复杂，就把条件判断封装为函数；如果判断后的执行很复杂，也封装为函数。
 
 
 ## References

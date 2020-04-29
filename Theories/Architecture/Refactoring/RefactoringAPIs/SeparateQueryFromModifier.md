@@ -6,6 +6,8 @@
     - [思想](#思想)
         - [Command-Query Separation](#command-query-separation)
     - [Motivation —— Command-Query Separation](#motivation--command-query-separation)
+        - [“纯函数” 的好处](#纯函数-的好处)
+        - [“可见的副作用”](#可见的副作用)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -20,11 +22,15 @@
 
 
 ## Motivation —— Command-Query Separation
+### “纯函数” 的好处
 1. When I have a function that gives me a value and has no observable side effects, I have a very valuable thing. 
-2. I can call this function as often as I like. I can move the call to other places in a calling function. It’s easier to test. In short, I have a lot less to worry about.
-3. It is a good idea to clearly signal the difference between functions with side effects and those without. A good rule to follow is that any function that returns a value should not have observable side effects — the **Command-Query Separation** [mf­cqs]. 
-4. If I come across a method that returns a value but also has side effects, I always try to separate the query from the modifier.
-5. Note that I use the phrase observable side effects. A common optimization is to cache the value of a query in a field so that repeated calls go quicker. Although this changes the state of the object with the cache, the change is not observable. Any sequence of queries will always return the same results for each query.
+2. I can call this function as often as I like. I can move the call to other places in a calling function. It’s easier to test. In short, I have a lot less to worry about. 
+3. It is a good idea to clearly signal the difference between functions with side effects and those without. 
+4. A good rule to follow is that any function that returns a value should not have observable side effects — the **Command-Query Separation** [mf­cqs].
+
+### “可见的副作用”
+1. If I come across a method that returns a value but also has side effects, I always try to separate the query from the modifier. 
+2. Note that I use the phrase observable side effects. A common optimization is to cache the value of a query in a field so that repeated calls go quicker. Although this changes the state of the object with the cache, the change is not observable. Any sequence of queries will always return the same results for each query.
 
 
 ## Mechanics

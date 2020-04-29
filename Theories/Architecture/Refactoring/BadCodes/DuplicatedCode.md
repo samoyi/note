@@ -26,6 +26,7 @@ difference. If you need to change the duplicated code, you have to find and catc
 * Replace Temp with Query：如果好几个地方都进行了同样的计算
 * Move Statements into Function
 * Change Value to Reference
+* Introduce Special Case
 
 
 ## References

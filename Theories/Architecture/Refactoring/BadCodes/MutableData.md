@@ -24,6 +24,7 @@
 * Encapsulate Record：通过监听读写来控制可变数据的变化
 * Replace Derived Variable with Query
 * Change Reference to Value
+* Separate Query from Modifier
 
 
 ## References

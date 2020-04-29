@@ -19,6 +19,7 @@
 * Remove Flag Argument
 * Split Loop
 * Split Variable
+* Separate Query from Modifier
 
 
 ## References
