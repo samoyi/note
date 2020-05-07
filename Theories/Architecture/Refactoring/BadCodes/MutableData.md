@@ -25,6 +25,7 @@
 * Replace Derived Variable with Query
 * Change Reference to Value
 * Separate Query from Modifier
+* Remove Setting Method
 
 
 ## References

@@ -18,6 +18,7 @@
 ## 重构方法参考
 * Introduce Parameter Object：好几个相关的参数组合为一个对象
 * Extract Class
+* Preserve Whole Objec
 
 
 ## References

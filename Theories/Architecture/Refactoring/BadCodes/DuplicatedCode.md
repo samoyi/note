@@ -27,6 +27,8 @@ difference. If you need to change the duplicated code, you have to find and catc
 * Move Statements into Function
 * Change Value to Reference
 * Introduce Special Case
+* Replace Parameter with Query：如果各个计算者都要计算同一个参数
+* Replace Query with Parameter：提取不同部分作为参数，就可以复用函数
 
 
 ## References

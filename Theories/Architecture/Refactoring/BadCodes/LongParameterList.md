@@ -17,6 +17,8 @@
 ## 重构方法参考
 * Introduce Parameter Object
 * Combine Functions into Class：共享作用域，不用传参
+* Preserve Whole Objec
+* Replace Parameter with Query
 
 
 ## References

@@ -185,6 +185,7 @@
 * Decompose Conditional
 * Replace Conditional with Polymorphism
 * Remove Flag Argument
+* Replace Function with Command
 
 
 ## References
