@@ -25,6 +25,7 @@
 * Introduce Parameter Object
 * Replace Primitive with Object
 * Extract Class
+* Replace Type Code with Subclasses
 
 
 ## References

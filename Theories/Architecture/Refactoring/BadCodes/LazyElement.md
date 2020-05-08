@@ -20,6 +20,7 @@
 ## 重构方法参考
 * Inline Function
 * Inline Class
+* Collapse Hierarchy
 
 
 ## References

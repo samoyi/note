@@ -186,6 +186,8 @@
 * Replace Conditional with Polymorphism
 * Remove Flag Argument
 * Replace Function with Command
+* Replace Type Code with Subclasses
+* Extract Superclass
 
 
 ## References

@@ -29,7 +29,9 @@ difference. If you need to change the duplicated code, you have to find and catc
 * Introduce Special Case
 * Replace Parameter with Query：如果各个计算者都要计算同一个参数
 * Replace Query with Parameter：提取不同部分作为参数，就可以复用函数
-
+* Pull Up Method
+* Pull Up Field
+* Pull Up Constructor Body
 
 ## References
 * [《重构（第2版）》](https://book.douban.com/subject/33400354/)

@@ -20,6 +20,8 @@
 * Split Loop
 * Split Variable
 * Separate Query from Modifier
+* Push Down Method
+* Push Down Field
 
 
 ## References
