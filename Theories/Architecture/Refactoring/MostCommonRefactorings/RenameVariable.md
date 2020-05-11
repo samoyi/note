@@ -6,6 +6,7 @@
 - [Rename Variable](#rename-variable)
     - [思想](#思想)
     - [Motivation](#motivation)
+        - [适用范围越广，命名就越重要](#适用范围越广命名就越重要)
     - [Mechanics](#mechanics)
     - [Example](#example)
         - [When a variable has a wider scope than just a single function.](#when-a-variable-has-a-wider-scope-than-just-a-single-function)
@@ -26,7 +27,11 @@
 ## Motivation
 1. Naming things well is the heart of clear programming. Variables can do a lot to explain what I’m up to—if I name them well. 
 2. But I frequently get my names wrong—sometimes because I’m not thinking carefully enough, sometimes because my understanding of the problem improves as I learn more, and sometimes because the program’s purpose changes as my users’ needs change.
-3. Even more than most program elements, the importance of a name depends on how widely it’s used. A variable used in a one­line lambda expression is usually easy to follow—I often use a single letter in that case since the variable’s purpose is clear from its context. Parameters for short functions can often be terse for the same reason, although in a dynamically typed language like JavaScript, I do like to put the type into the name (hence parameter names like aCustomer). 因为在这种情况下，你几乎一定会看到而且看明白命名所指代的事物本身，而不是只看命名。所以明明没那么重要。
+
+### 适用范围越广，命名就越重要
+1. Even more than most program elements, the importance of a name depends on how widely it’s used. 
+2. A variable used in a one­line lambda expression is usually easy to follow — I often use a single letter in that case since the variable’s purpose is clear from its context. 因为在这种情况下，你几乎一定会看到而且看明白命名所指代的事物本身，而不是只看命名。所以明明没那么重要。
+3. Parameters for short functions can often be terse for the same reason, although in a dynamically typed language like JavaScript, I do like to put the type into the name (hence parameter names like aCustomer). 
 4. Persistent fields that last beyond a single function invocation require more careful naming. This is where I’m likely to put most of my attention. 这种情况下，名称和它所指代的事物本身是有距离的，人们看到一个变量的时候不一定很方便的去看变量指代的事物本身，所以就会更依赖名称传达出的意义，就可能会产生误解。
 
 

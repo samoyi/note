@@ -87,7 +87,7 @@
 2. Now, any attempt to reassign the properties of the default owner will cause an error.
 
 
-## 如果支持修改的同事还想保存源数据，那可以在 setter 里面做拷贝
+## 如果支持修改的同时还想保存源数据，那可以在 setter 里面做拷贝
 1. So far I’ve talked about copying on getting data, but it may be worthwhile to make a copy in the setter too. 
 2. That will depend on where the data comes from and whether I need to maintain a link to reflect any changes in that original data. 
 3. If I don’t need such a link, a copy prevents accidents due to changes on that source data. 

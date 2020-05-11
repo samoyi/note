@@ -13,7 +13,7 @@
         - [函数参数设计的重要性——参数定义了函数与外部交流的方式](#函数参数设计的重要性参数定义了函数与外部交流的方式)
             - [增加函数的通用性](#增加函数的通用性)
             - [对实参的解耦](#对实参的解耦)
-            - [耦合也有好处](#耦合也有好处)
+            - [增加耦合也有好处——提高了封装](#增加耦合也有好处提高了封装)
             - [耦合度的动态取舍——函数声明要不断进化](#耦合度的动态取舍函数声明要不断进化)
     - [Mechanics](#mechanics)
     - [References](#references)
@@ -56,7 +56,7 @@
 2. Reducing how much modules need to know about each other helps reduce how much I need to put into my brain
 when I change something — and my brain isn’t as big as it used to be (that doesn’t say anything about the size of its container, though).
 
-#### 耦合也有好处
+#### 增加耦合也有好处——提高了封装
 1. Choosing the right parameters isn’t something that adheres to simple rules. 
 2. I may have a simple function for determining if a payment is overdue, by looking at if it’s older
 than 30 days. 

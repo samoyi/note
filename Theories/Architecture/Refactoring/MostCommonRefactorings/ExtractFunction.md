@@ -7,6 +7,7 @@ inverse of: Inline Function
 - [Extract Function](#extract-function)
     - [Motivations](#motivations)
         - [单纯的长度缩减](#单纯的长度缩减)
+        - [SRP](#srp)
         - [复用](#复用)
         - [黑箱封装 —— Speration between intention and implementation](#黑箱封装--speration-between-intention-and-implementation)
             - [意图和实现分离](#意图和实现分离)
@@ -27,6 +28,9 @@ inverse of: Inline Function
 ### 单纯的长度缩减
 1. Functions should be no larger than fit on a screen. 
 2. 其实我觉得 10 行就已经看起来比较累了。
+
+### SRP
+一个函数不要做两件事，这样会两个逻辑耦合
 
 ### 复用
 Any code used more than once should be put in its own function, but code only used once should be left inline. 

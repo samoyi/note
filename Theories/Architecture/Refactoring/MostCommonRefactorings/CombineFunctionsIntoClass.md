@@ -56,6 +56,7 @@ Which one to use depends more on the broader context of the program.
 #### *Combine Functions into Transform*
 1. Another way of organizing functions together is *Combine Functions into Transform*. 
 2. One significant advantage of using a class is that it allows clients to mutate the core data of the object, and the derivations remain consistent. Transform 会对源数据进行拷贝。
+3. 不过我觉得最重要的区别是，transform 并没有类型和对象的思想，它只是关于数据的转换，也并没有什么 “对象行为” 这种概念。
 
 #### Nested function
 1. As well as a class, functions like this can also be combined into a nested function. 

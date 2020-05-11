@@ -1,5 +1,18 @@
 # Extract Variable
 
+
+<!-- TOC -->
+
+- [Extract Variable](#extract-variable)
+    - [原则](#原则)
+    - [场景](#场景)
+        - [复杂的逻辑判断](#复杂的逻辑判断)
+        - [HTML 模板进行过多 JS 运算](#html-模板进行过多-js-运算)
+    - [过度优化](#过度优化)
+
+<!-- /TOC -->
+
+
 ## 原则
 意图和实现分离
 
@@ -27,6 +40,24 @@
         return true;
     }
     ```
+3. 即使没那么复杂，提取为一个命名良好的变量，也是有帮助的。
+4. 例如如下一段其实也不怎么复杂
+    ```js
+    if (!file && (historyId in state.historyCache)) {
+        // ...
+    }
+    ```
+5. 但你看起来还是不能一目了然：
+    * 有一个且的逻辑和括号，你需要看清楚来区分后一个表达式的边界
+    * 前一个表达式还取反了，你又要多一个逻辑转换
+6. 重构为如下
+    ```js
+    const shouldUseCached = !file && (historyId in state.historyCache);
+    if (shouldUseCached) {
+        // ...
+    }
+    ```
+7. 现在，只要你不是要了解这个判断的实现，你就不需要看那个稍复杂的判断，你就可以一目了然这个判断的意图。
 
 ### HTML 模板进行过多 JS 运算
 1. 例如模板里有 `<p class="title">{{data.activityResponse.title || ''}}</p>`。

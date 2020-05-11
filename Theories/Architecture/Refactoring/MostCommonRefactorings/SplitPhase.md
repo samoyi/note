@@ -17,7 +17,7 @@
 
 
 ## 思想
-1. 还是 SRP 思想
+还是 SRP 思想
 
 
 ## Motivation
