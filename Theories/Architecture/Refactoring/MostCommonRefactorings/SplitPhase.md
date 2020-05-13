@@ -28,11 +28,11 @@
 
 ### 这个 bad code 主要是强调一段代码做了两个阶段的事情
 1. One of the neatest ways to do a split like this is to divide the behavior into two sequential phases. 
-2. A good example of this is when you have some processing whose inputs don’t reflect the model you need to carry out the logic. 
-3. 比如经常可以看到一个发送请求的方法，里面会有两个阶段的逻辑：
+2. A good example of this is when you have some processing whose inputs don’t reflect the model you need to carry out the logic. Before you begin, you can massage the input into a convenient form for your main processing. 第一步先把数据处理成合适的格式，第二步才开始真正的操作数据。
+3. Or, you can take the logic you need to do and break it down into sequential steps, where each step is significantly different in what it does. 
+4. 还有一个常见的，比如一个发送请求的方法，里面会有两个阶段的逻辑：
     1. 组件参数并发起请求
     2. 处理请求数据和失败处理
-4. Before you begin, you can massage the input into a convenient form for your main processing. Or, you can take the logic you need to do and break it down into sequential steps, where each step is significantly different in what it does. 
 
 ### 编译器的例子
 1. The most obvious example of this is a compiler. 

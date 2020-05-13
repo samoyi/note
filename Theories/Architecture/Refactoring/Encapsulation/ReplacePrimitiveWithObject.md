@@ -5,18 +5,35 @@
 
 - [Replace Primitive with Object](#replace-primitive-with-object)
     - [思想](#思想)
+        - [基本类型和对象的区别](#基本类型和对象的区别)
+        - [封装的边界](#封装的边界)
     - [Motivation](#motivation)
+        - [基础类型的数据随着演进可能会变得越来越复杂，越来越适合封装为对象](#基础类型的数据随着演进可能会变得越来越复杂越来越适合封装为对象)
     - [References](#references)
 
 <!-- /TOC -->
 
 
 ## 思想
-对应 Bad Codes 中的 Primitive Obsession
+### 基本类型和对象的区别
+1. 任意数是基本类型还是对象？既然任意了，那就很基本了。即使你封装为对象也是毫无意义的。
+2. 人类年龄呢？年龄应该是非负整数，而且不能太大。这就有了两个属性了。虽然依然可以用基本类型保存年龄，但在某些地方就要根据这两个属性对年龄范围进行约束了。
+3. 手机号码？是一个整数字符串，但有长度属性，有前几位的约束，从前几位还能识别运营商，很多时候还会有获取后四位的需求，国际呼叫的时候还涉及国际区号。
+4. 可以看到，一个手机号本身只是一串整数字符，但是它有了其他很多属性，也就是有了很多其他的维度。每一个维度的值，都需要对基本数据进行或多或少的计算。
+5. 那么，这些计算应该由谁负责？如果这个数据本身不负责，那就是每个使用该数据的人负责，这样数据可以继续保持基本类型；如果数据本身来处理自己的每个维度，方便数据的使用者，那数据就是对象类型了。
+6. 在数据信息维度比较多的情况，由数据本身处理自己的维度，使用者就可以很方便的直接使用每个维度的数据，而不用自己了解数据的逻辑并计算。而且统一计算可以保证规则一致，不会出现不同的使用者不同的计算规则的情况。
+7. 除了输出不同纬度的数据，使用数据可能还会进行一些操作。这些操作的方法同样也是可以考虑和数据封装到一起的。避免数据使用者自己实现。
+8. 一个典型的例子就是，url 本身只是一个基础类型字符串。但基于需求，它有了 host、protocol 和 hash 之类的维度,所以在浏览器中它就被封装为 `location` 对象。而且还因为有一些通用操作是使用 url 数据的，例如跳转，所以可把这些方法统一封装进了 `location` 对象。
+
+### 封装的边界
+1. 上面的例子中，从任意数到手机号码，数据在最基本的情况下，属性维度逐渐增加。
+2. 当数据的维度越来越多，数据就越适合被封装为对象。不封装与封装的边界，是要具体问题具体分析的。
+3. 如果有好几个地方都要对数据做相同的处理，并且这里处理有些复杂，或者是业务性的（不是可以显而易见的明确为什么要这么处理），那么就可以考虑封装了。
 
 
 ## Motivation
-1. Often, in early stages of development you make decisions about representing simplefacts as simple data items, such as numbers or strings. 
+### 基础类型的数据随着演进可能会变得越来越复杂，越来越适合封装为对象
+1. Often, in early stages of development you make decisions about representing simple facts as simple data items, such as numbers or strings. 
 2. As development proceeds, those simple items aren’t so simple anymore. A telephone number may be represented as a
 string for a while, but later it will need special behavior for formatting, extracting the area code, and the like. 
 3. This kind of logic can quickly end up being duplicated around the code base, increasing the effort whenever it needs to be used.

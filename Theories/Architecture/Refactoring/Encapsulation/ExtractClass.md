@@ -9,7 +9,7 @@ inverse of: Inline Class
     - [思想](#思想)
     - [Motivation](#motivation)
         - [一个类开始的设计也许是 SRP，但随着修改也许就不是了](#一个类开始的设计也许是-srp但随着修改也许就不是了)
-        - [需要进行提取的迹象](#需要进行提取的迹象)
+        - [需要进行提取的迹象——需要提取出一类个的部分通常具有内聚性和耦合性](#需要进行提取的迹象需要提取出一类个的部分通常具有内聚性和耦合性)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -29,12 +29,12 @@ inverse of: Inline Class
 4. Imagine a class with many methods and quite a lot of data. 
 5. A class that is too big to understand easily. You need to consider where it can be split — and split it. 
 
-### 需要进行提取的迹象
+### 需要进行提取的迹象——需要提取出一类个的部分通常具有内聚性和耦合性
 1. A good sign is when a subset of the data and a subset of the methods seem to go together. 
 2. Other good signs are subsets of data that usually change together or are particularly dependent on each other. 
 3. A useful test is to ask yourself what would happen if you remove a piece of data or a method. What other fields and methods would become nonsense? 
 4. One sign that often crops up later in development is the way the class is sub­typed. 
-5. You may find that subtyping affects only a few features or that some features need to be subtyped one way and other features a different way.
+5. You may find that subtyping affects only a few features or that some features need to be subtyped one way and other features a different way. 当你想以这个类再定义子类型时，也许会发现你想定义的子类型只希望使用这个类一部分的东西。那么你这个类可能就是有了两部分东西，而不是一个独立完整的整体。
 
 
 ## Mechanics
