@@ -2,7 +2,7 @@
 
 
 ## 原则
-和 Message Chains 一样。直接整理在  Message Chains 里。
+和 Message Chains 相反
 
 
 ## 场景

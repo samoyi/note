@@ -7,6 +7,7 @@
 
 
 ## 场景
+### Vue 中的计算属性和 getter 就是 *Hide Delegate* 思想的应用
 
 
 ## 过度优化

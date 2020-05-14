@@ -12,12 +12,11 @@
 
 
 ## 思想
-和 Message Chains 一个意思
+和 Message Chains 相反，不适用中间代理，自己直接顺着消息链查询信息
 
 
 ## 重构方法参考
-* Extract Function：代理多层或复杂结构
-* Inline Function：取消层层传递
+* Inline Function
 * Remove Middle Man
 
 
