@@ -12,10 +12,10 @@
 * 原因：
 * 解决：动态判断并添加
 
-### 某些安卓手机，在离开项目后`localStorage`无法保存
-* 现象：相册`token`存入`localStorage`，跳转到管理端再跳转回来，读取不到`token`
+### 某些安卓手机，在离开项目后 `localStorage` 无法保存
+* 现象：相册 `token` 存入 `localStorage`，跳转到管理端再跳转回来，读取不到 `token`
 * 原因：微信运行网页只是相当于 webview 而非浏览器，不能保证数据存储的持久性。[参考1](https://www.cnblogs.com/flyfly/p/4739565.html)、[参考2](https://www.cnblogs.com/hjj2ldq/p/8639490.html)
-* 解决：目前在安卓环境中使用 cookie 保存需要的数据（通过`helper.AndroidStorageProxy`包装`storage`）
+* 解决：目前在安卓环境中使用 cookie 保存需要的数据（通过 `helper.AndroidStorageProxy` 包装 `storage`）
 
 ### 安卓微信分享设置在路由切换后失效
 * 现象：关闭分享或打开分享后，刚进入相册时分享设置生效，跳转到其他页面失效
@@ -29,21 +29,21 @@
 * 原因：
 * 解决：尝试用 `encodeURIComponent` 或 `encodeURI` 编码后保存，读取时再响应的解码，但是读不出来。最后只能使用 `localStorage`
 
-### `focus()`无法调用键盘 / `play()`无法播放音频
+### `focus()` 无法调用键盘 / `play()` 无法播放音频
 * 现象：使用 Vue 自定义指令设置输入框焦点时，安卓可以但 iOS 不行
 * 原因：发起该函数的调用栈的第一个函数必须是用户操作调用的，参考[这个回答](https://stackoverflow.com/a/7332160)。如果使用 Vue 自定义指令来设置焦点，就会发现这个问题。
-* 解决：直接引用节点并调用`focus()`方法
+* 解决：直接引用节点并调用 `focus()` 方法
 
 ### 第三方挡住底部输入框
 * 现象：输入框定位在底部，使用搜狗输入法时，输入框大部分都被键盘挡住
 * 原因：
-* 解决：键盘弹出后，执行`document.body.scrollTop = document.body.scrollHeight;`
-* 注意：但是在像教育培训那样的样式中，`document.body.scrollHeight`远远超过了窗口高度，这时滚动的话就会滚到太靠下。 而且，在这种状态下，第三方键盘并不会被遮挡。看起来像是以为内高度足够，所以就不会被遮挡。
+* 解决：键盘弹出后，执行 `document.body.scrollTop = document.body.scrollHeight;`
+* 注意：但是在像教育培训那样的样式中，`document.body.scrollHeight` 远远超过了窗口高度，这时滚动的话就会滚到太靠下。 而且，在这种状态下，第三方键盘并不会被遮挡。看起来像是以为内高度足够，所以就不会被遮挡。
 
 ### iOS12 键盘收起后页面无法点击
 * 现象：输入框收起后页面无法点击
 * 原因：参考[这篇](https://juejin.im/post/5c07442f51882528c4469769)、[这篇](https://blog.csdn.net/u013558749/article/details/100991786)和[这篇](https://developers.weixin.qq.com/community/develop/doc/00040a43cd4290dedbc7e7f1851400?_at=1559089628289)
-* 解决：键盘收起后，执行`document.body.scrollTop = document.body.scrollTop;`。如果还不行，加上`window.scrollTo(0, 0)`。
+* 解决：键盘收起后，执 行`document.body.scrollTop = document.body.scrollTop;`。如果还不行，加上 `window.scrollTo(0, 0)`。
 
 ### 在输入框内滑动时，滑动后面的页面
 * 现象：如果在输入框里滑动到最顶部或最底部而继续滑动时，都会滑动后面的页面
@@ -72,18 +72,18 @@
   },
   ```
 
-### `Date`对象实例方法返回`NaN`，以及有8小时时差
-* 现象：日期字符串经过`new Date`转换为`Date`实例后，调用其他方法返回`NaN`
+### `Date` 对象实例方法返回 `NaN`，以及有8小时时差
+* 现象：日期字符串经过 `new Date` 转换为 `Date` 实例后，调用其他方法返回 `NaN`
 * 原因：iOS 不支持非标准的日期字符串，如`2019-03-28 20:59:03`。[规范](https://ecma-international.org/ecma-262/5.1/#sec-15.9.1.15)
-* 解决：使用标准的时间格式`2019-03-28T20:59:03.000+08:00`（东八区）
+* 解决：使用标准的时间格式 `2019-03-28T20:59:03.000+08:00`（东八区）
 
 ### input 透明度降低
 * 现象：Safari Mobile 的透明度会比电脑和安卓更低（更透明）
-* 原因：Safari Mobile 中设置了`disabled`的`input`的`oapcity`会被设置为`0.4`
+* 原因：Safari Mobile 中设置了 `disabled` 的 `input` 的 `oapcity` 会被设置为 `0.4`
 
 ### iOS10（及以下？）absolute 定位元素向右偏移
-* 现象：在只设置了`absolute`定位而没有设置具体位置时，会出现向右偏移，左边缘对齐父级的中间而非左边缘
-* 解决：再设置`left: 0; right: 0; margin: auto;`
+* 现象：在只设置了 `absolute` 定位而没有设置具体位置时，会出现向右偏移，左边缘对齐父级的中间而非左边缘
+* 解决：再设置 `left: 0; right: 0; margin: auto;`
 
 ### 键盘收起后被顶起的页面不自动下落
 * 解决：`window.scroll(0,0)`
@@ -95,14 +95,17 @@
 
 ## 事件
 ### `blur`和`click`事件同时存在时，`click`事件不响应或响应非预期
-* 原因：`blur`事件会在`click`事件之前执行
-* 解决：使用`mousedown`替换`click`，或者延迟`blur`的事件处理
+* 原因：`blur` 事件会在 `click` 事件之前执行
+* 解决：使用 `mousedown` 替换 `click`，或者延迟 `blur` 的事件处理
+
+### 不能编程式的触发 `<input type="file" />` 的文件选择
+出于安全性的考虑，大部分浏览器都不允许在没有点击事件的情况下触发文件选择。[参考](https://github.com/blueimp/jQuery-File-Upload/wiki/Style-Guide#why-isnt-it-possible-to-programmatically-trigger-the-file-input-selection)
 
 
 ## 音视频
 ### Chrome 播放音频抛出错误
-* 现象：音频节点调用`.play()`方法，抛出错误`Uncaught (in promise) DOMException`
-* 原因：`.play()`方法返回 promise，如果不能播放，会被 rejected。Chrome 默认不会自动播放，因此会抛出错误。[参考](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/play)
+* 现象：音频节点调用 `.play()` 方法，抛出错误 `Uncaught (in promise) DOMException`
+* 原因：`.play()` 方法返回 promise，如果不能播放，会被 rejected。Chrome 默认不会自动播放，因此会抛出错误。[参考](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/play)
 * 解决：
   ```js
   try {
