@@ -1,6 +1,40 @@
 # BUGs
 
 
+<!-- TOC -->
+
+- [BUGs](#bugs)
+    - [Android 特有](#android-特有)
+        - [某些安卓手机，同一个链接无法多次跳转](#某些安卓手机同一个链接无法多次跳转)
+        - [短链接解析后缺少后面的路由 hash](#短链接解析后缺少后面的路由-hash)
+        - [某些安卓手机，在离开项目后 `localStorage` 无法保存](#某些安卓手机在离开项目后-localstorage-无法保存)
+        - [安卓微信分享设置在路由切换后失效](#安卓微信分享设置在路由切换后失效)
+    - [iOS 特有](#ios-特有)
+        - [iOS cookie 数据无法保存](#ios-cookie-数据无法保存)
+        - [`focus()` 无法调用键盘 / `play()` 无法播放音频](#focus-无法调用键盘--play-无法播放音频)
+        - [第三方挡住底部输入框](#第三方挡住底部输入框)
+        - [iOS12 键盘收起后页面无法点击](#ios12-键盘收起后页面无法点击)
+        - [在输入框内滑动时，滑动后面的页面](#在输入框内滑动时滑动后面的页面)
+        - [`Date` 对象实例方法返回 `NaN`，以及有8小时时差](#date-对象实例方法返回-nan以及有8小时时差)
+        - [input 透明度降低](#input-透明度降低)
+        - [iOS10（及以下？）absolute 定位元素向右偏移](#ios10及以下absolute-定位元素向右偏移)
+        - [键盘收起后被顶起的页面不自动下落](#键盘收起后被顶起的页面不自动下落)
+        - [iOS 微信分享，使用自定义 link 时， invalid signature](#ios-微信分享使用自定义-link-时-invalid-signature)
+    - [事件](#事件)
+        - [`blur`和`click`事件同时存在时，`click`事件不响应或响应非预期](#blur和click事件同时存在时click事件不响应或响应非预期)
+        - [不能编程式的触发 `<input type="file" />` 的文件选择](#不能编程式的触发-input-typefile--的文件选择)
+    - [音视频](#音视频)
+        - [Chrome 播放音频抛出错误](#chrome-播放音频抛出错误)
+    - [样式](#样式)
+        - [多行溢出省略号 CSS 方案](#多行溢出省略号-css-方案)
+    - [第三方插件](#第三方插件)
+        - [html2canvas 在 iOS13 上没作用](#html2canvas-在-ios13-上没作用)
+        - [html2canvas 在 iOS 上出现了 *Maximum call stack size exceeded* 的错误](#html2canvas-在-ios-上出现了-maximum-call-stack-size-exceeded-的错误)
+        - [html2canvas 生成 canvas 里面没有跨域图片](#html2canvas-生成-canvas-里面没有跨域图片)
+
+<!-- /TOC -->
+
+
 ## Android 特有
 ### 某些安卓手机，同一个链接无法多次跳转
 * 现象：6.0 集合页入口只有前两次点击可以进入集合页，即对同一个链接无法多次点击跳转
@@ -141,3 +175,28 @@ padding-right: 4px;
 // 不一定是显式的设置了 hidden，在使用 v-html 设置内容是似乎就会隐式的设置 hidden
 visibility: visible;
 ```
+
+
+## 第三方插件
+### html2canvas 在 iOS13 上没作用
+* 现象：iOS13 在调用 `html2canvas` 方法时没有报错也没有效果
+* 原因：html2canvas *1.0.0-rc.5* 版本的问题
+* 解决：如果当前的版本是 *1.0.0-rc.5*，退回到 *1.0.0-rc.4*
+
+### html2canvas 在 iOS 上出现了 *Maximum call stack size exceeded* 的错误
+* 现象：stack 信息大概如下
+    ```sh
+    column: 40
+    line:284
+    fromCodePoint
+    ```
+    指向了
+    ```js
+    if (String.fromCodePoint) {
+        return String.fromCodePoint.apply(String, codePoints);
+    }
+    ```
+* 原因：不确定具体原因，但是待生成区域里面的图是使用的 css `background-image`，换成 `<img>` 就好了。可能是 `background-image` 对 base64 的长度限制比 `<img>` 短？但是没有找到相关的说法
+
+### html2canvas 生成 canvas 里面没有跨域图片
+* 解决：显示跨域图片的 `<img>` 加属性 `crossorigin="anonymous"`，然后 `html2canvas` 方法中加参数 `{useCORS: true}`
