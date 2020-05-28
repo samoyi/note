@@ -31,6 +31,15 @@
             - [`TypedArray.prototype.set()`](#typedarrayprototypeset)
         - [ArrayBuffer 与字符串的互相转换](#arraybuffer-与字符串的互相转换)
         - [溢出](#溢出)
+        - [复合视图](#复合视图)
+    - [DataView 视图](#dataview-视图)
+        - [实例属性](#实例属性)
+        - [读取 buffer](#读取-buffer)
+            - [通过以下实例方法读取](#通过以下实例方法读取)
+            - [读取](#读取)
+        - [写入 buffer](#写入-buffer)
+            - [通过以下实例方法读取](#通过以下实例方法读取-1)
+            - [写入](#写入)
     - [References](#references)
 
 <!-- /TOC -->
@@ -374,6 +383,115 @@ ArrayBuffer 和字符串的相互转换，使用原生 `TextEncoder` 和 `TextDe
 
 ### 溢出
 TODO
+
+### 复合视图
+1. 由于视图的构造函数可以指定起始位置和长度，所以在同一段内存之中，可以依次存放不同类型的数据，这叫做 “复合视图”。
+    ```js
+    const buffer = new ArrayBuffer(24);
+
+    const idView = new Uint32Array(buffer, 0, 1);
+    const usernameView = new Uint8Array(buffer, 4, 16);
+    const amountDueView = new Float32Array(buffer, 20, 1);
+    ```
+2. 上面代码将一个 24 字节长度的 `ArrayBuffer` 对象，分成三个部分：
+    * 字节 0 到字节 3：1 个 32 位无符号整数
+    * 字节 4 到字节 19：16 个 8 位整数
+    * 字节 20 到字节 23：1 个 32 位浮点数
+3. 这种数据结构可以用如下的 C 语言描述：
+    ```c
+    struct someStruct {
+        unsigned long id;
+        char username[16];
+        float amountDue;
+    };
+    ```
+
+
+## DataView 视图
+1. 如果一段数据包括多种类型（比如服务器传来的 HTTP 数据），这时除了建立 `ArrayBuffer` 对象的复合视图以外，还可以通过 `DataView` 视图进行操作。
+2. `DataView` 视图提供更多操作选项，而且支持设定字节序。本来，在设计目的上，`ArrayBuffer` 对象的各种 TypedArray 视图，是用来向网卡、声卡之类的本机设备传送数据，所以使用本机的字节序就可以了。
+3. 而 `DataView` 视图的设计目的，是用来处理网络设备传来的数据，所以大端字节序或小端字节序是可以自行设定的。
+4. `DataView` 视图本身也是构造函数，接受一个 `ArrayBuffer` 对象作为参数，生成视图`。
+    ```js
+    new DataView(buffer [, byteOffset [, byteLength]])
+    ```
+
+### 实例属性
+* `buffer`
+* `byteLength`
+* `byteOffset`
+
+### 读取 buffer
+#### 通过以下实例方法读取
+* `getInt8`()：读取 1 个字节，返回一个 8 位整数。
+* `getUint8`()：读取 1 个字节，返回一个无符号的 8 位整数。
+* `getInt16`()：读取 2 个字节，返回一个 16 位整数。
+* `getUint16`()：读取 2 个字节，返回一个无符号的 16 位整数。
+* `getInt32`()：读取 4 个字节，返回一个 32 位整数。
+* `getUint32`()：读取 4 个字节，返回一个无符号的 32 位整数。
+* `getFloat32`()：读取 4 个字节，返回一个 32 位浮点数。
+* `getFloat64`()：读取 8 个字节，返回一个 64 位浮点数。
+
+#### 读取
+1. 下面的代码读取了 `ArrayBuffer` 对象的前 5 个字节，其中有一个八位整数和两个十六位整数。
+    ```js
+    const buffer = new ArrayBuffer(24);
+    const dv = new DataView(buffer);
+
+    // 从第1个字节读取一个8位无符号整数
+    const v1 = dv.getUint8(0);
+
+    // 从第2个字节读取一个16位无符号整数
+    const v2 = dv.getUint16(1);
+
+    // 从第4个字节读取一个16位无符号整数
+    const v3 = dv.getUint16(3);
+    ```
+2. 如果一次读取两个或两个以上字节，就必须明确数据的存储方式，到底是小端字节序还是大端字节序。
+3. 默认情况下，`DataView`的 get 方法使用大端字节序解读数据，如果需要使用小端字节序解读，必须在 get 方法的第二个参数指定 `true`
+    ```js
+    // 小端字节序
+    const v1 = dv.getUint16(1, true);
+
+    // 大端字节序
+    const v2 = dv.getUint16(3, false);
+
+    // 大端字节序
+    const v3 = dv.getUint16(3);
+    ```
+
+### 写入 buffer
+#### 通过以下实例方法读取
+* `setInt8`：写入 1 个字节的 8 位整数。
+* `setUint8`：写入 1 个字节的 8 位无符号整数。
+* `setInt16`：写入 2 个字节的 16 位整数。
+* `setUint16`：写入 2 个字节的 16 位无符号整数。
+* `setInt32`：写入 4 个字节的 32 位整数。
+* `setUint32`：写入 4 个字节的 32 位无符号整数。
+* `setFloat32`：写入 4 个字节的 32 位浮点数。
+* `setFloat64`：写入 8 个字节的 64 位浮点数。
+
+#### 写入
+1. 这一系列 set 方法，接受两个必选参数，第一个参数是字节序号，表示从哪个字节开始写入，第二个参数为写入的数据。
+2. 对于那些写入两个或两个以上字节的方法，需要指定第三个参数，`false` 或者 `undefined` 表示使用大端字节序写入，`true` 表示使用小端字节序写入。
+    ```js
+    // 在第1个字节，以大端字节序写入值为25的32位整数
+    dv.setInt32(0, 25, false);
+
+    // 在第5个字节，以大端字节序写入值为25的32位整数
+    dv.setInt32(4, 25);
+
+    // 在第9个字节，以小端字节序写入值为2.5的32位浮点数
+    dv.setFloat32(8, 2.5, true);
+    ```
+3. 如果不确定正在使用的计算机的字节序，可以采用下面的判断方式。
+    ```js
+    const littleEndian = (function() {
+    const buffer = new ArrayBuffer(2);
+    new DataView(buffer).setInt16(0, 256, true);
+    return new Int16Array(buffer)[0] === 256;
+    })();
+    ```
 
 
 ## References
