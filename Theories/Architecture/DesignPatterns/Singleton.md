@@ -1,5 +1,44 @@
 # Singleton
 
+
+<!-- TOC -->
+
+- [Singleton](#singleton)
+    - [思想](#思想)
+        - [为什么用单例？](#为什么用单例)
+        - [对使用者透明](#对使用者透明)
+        - [特殊情况使用代理——SRP](#特殊情况使用代理srp)
+        - [通用代理](#通用代理)
+    - [基本实现](#基本实现)
+    - [透明的单例模式](#透明的单例模式)
+        - [如果很明确的只作为单例，就不要用 `new`](#如果很明确的只作为单例就不要用-new)
+    - [用代理实现单例模式](#用代理实现单例模式)
+    - [JavaScript 中的单例模式](#javascript-中的单例模式)
+    - [惰性单例](#惰性单例)
+        - [通用的惰性单例代理](#通用的惰性单例代理)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
+
+## 思想
+### 为什么用单例？
+唯一的数据源，统一管理，统筹规划。就像 Vuex 的设计。
+
+### 对使用者透明
+1. 如果想对一个类实现单例化，那么之前以非单例模式使用该类的使用者，不应该受到影响。
+2. 使用非单例的使用者对本次修改没有感知，本次修改对旧的使用者保持透明。
+3. 不过如果一个对象就是很明确的只作为单例，比如 Vuex 的 store，那就不需要这样。
+
+### 特殊情况使用代理——SRP
+1. 单例模式相比于普通的类，算是一种特殊情况。
+2. 为了兼容一个特殊情况，我们不应该直接改造普通情况的逻辑，而是应该使用代理之类的方式，让处理特殊情况的逻辑更加独立，让整体更加灵活。
+
+### 通用代理
+如果一个特殊的代理模式可能出现在好几个地方，那么就可以考虑设计通用的代理。
+
+
 ## 基本实现
 ```js
 const Singleton = function( name ){
@@ -8,122 +47,160 @@ const Singleton = function( name ){
 };
 
 Singleton.prototype.getName = function(){
-    console.log( this.name );
+    return this.name;
 };
 
 Singleton.getInstance = function( name ){
-    if ( !this.instance ){
+    if (!this.instance){
         this.instance = new Singleton( name );
     }
     return this.instance;
 };
 
-var a = Singleton.getInstance( 'sven1' );
-var b = Singleton.getInstance( 'sven2' );
+let a = Singleton.getInstance( 'sven1' );
+let b = Singleton.getInstance( 'sven2' );
 
-console.log( a === b );  // true
-a.getName();  // "sven1"
-b.getName();  // "sven1"
+console.log( a === b );   // true
+console.log(a.getName()); // "sven1"
+console.log(b.getName()); // "sven1"
 ```
 
 
 ## 透明的单例模式
-1. 上面的方法，在创建单例的时候，必须要通过`getInstance`方法而不是`new`，因此必须要知道这个类是单例模式，不能直接`new`。
-2. 透明性的实现，就是让用户不需要知道该类是否是单例模式还是普通类，只要按照普通的`new`方法创建实例即可。
-3. 也就是说，使用`new`方法调用构造函数，但是每次调用都应该返回同一个实例
+1. 上面的方法，在创建单例的时候，必须要通过 `getInstance` 方法而不是 `new`，因此使用者必须要知道这个类是单例模式，不能直接 `new`。
+2. 透明性的实现，就是让用户不需要知道该类是否是单例模式还是普通类，只要按照普通的 `new` 方法创建实例即可。
+3. 也就是说，使用 `new` 方法调用构造函数，但是每次调用都应该返回同一个实例
+    ```js
+    // User.js
 
-```js
-let instance;
+    let singletonUser;
 
-function Singleton( name ){
-    if ( instance ){
-        return instance;
+    function User( name ){
+        if ( singletonUser ){
+            return singletonUser;
+        }
+        this.name = name;
+        return singletonUser = this;
     }
-    this.name = name;
-    return instance = this;
-}
 
-Singleton.prototype.getName = function () {
-    return this.name;
-};
+    User.prototype.getName = function () {
+        return this.name;
+    };
 
+    export {User};
+    ```
 
+    ```js
+    // main.js
 
-const a = new Singleton( 'sven1' );
-const b = new Singleton( 'sven2' );
+    import {User} from 'User.js'
 
-console.log(a === b);    // true
-console.log(a.name);     // "sven1"
-console.log(b.name);     // "sven1"
-```
+    const a = new User( 'sven1' );
+    const b = new User( 'sven2' );
+
+    console.log(a === b);    // true
+    console.log(a.name);     // "sven1"
+    console.log(b.name);     // "sven1"
+    ```
+
+### 如果很明确的只作为单例，就不要用 `new`
+1. 不过如果一个东西很明确的就 **只是** 单例的，那就不应该封装为 `new` 调用的方式。
+2. 这种情况下使用 `new` 反而会引起误会，因为很显然 `new` 的语义就是创建一个新的。
+3. 比如 Vuex 的 store，你用它你就很明确的知道它就是单例，所以此时就是提供了一个全局的属性 `$store`。
 
 
 ## 用代理实现单例模式
 1. 上面的逻辑中，构造函数的逻辑和单例管理的逻辑是混合在一起的，统一为一个单例构造函数。
-2. 这有些违背单一职责原则，其实可以把这两个逻辑拆解耦，变成一个普通的构造函数和一个单例代理，任何普通的构造函数只要通过单例代理的包装，就可以变成一个单例构造函数。
-3. **单一职责原则** 的 **代理模式** 提高了灵活性。
+2. 这有些违背单一职责原则，`User.js` 实际上做了两件事：定义一个 `User` 类，把这个类改造为单例模式。
+3. 其实可以把这两个逻辑拆解耦，变成一个普通的构造函数和一个单例代理。需要使用单例 User 的时候就加上代理，不需要就还可以继续使用原有的普通 `User` 类。
+4. **单一职责原则** 的 **代理模式** 提高了灵活性。
 
 ```js
-function Singleton( name ){
+// User.js
+
+function User( name ){
     this.name = name;
 }
 
-Singleton.prototype.getName = function () {
+User.prototype.getName = function () {
     return this.name;
 };
+```
 
+```js
+// SingletonUser.js
+
+import {User} from 'User.js'
 
 let instance;
-function ProxySingleton( name ){
+function SingletonUser( name ){
     if ( !instance ){
-        instance = new Singleton( name );
+        instance = new User( name );
     }
     return instance;
 }
 
+import {SingletonUser};
+```
 
-const a = new ProxySingleton( 'sven1' );
-const b = new ProxySingleton( 'sven2' );
+```js
+// main.js
+
+import {SingletonUser} from 'SingletonUser.js'
+import {User} from 'User.js'
+
+const a = new SingletonUser( 'sven1' );
+const b = new SingletonUser( 'sven2' );
+const c = new User( 'sven3' );
+const d = new User( 'sven4' );
 
 console.log(a === b);    // true
 console.log(a.name);     // "sven1"
 console.log(b.name);     // "sven1"
+console.log(c === d);    // false
+console.log(c.name);     // "sven3"
+console.log(d.name);     // "sven4"
 ```
 
 
 ## JavaScript 中的单例模式
-1. 因为 JavaScript 自身就可以实现不需要类实例，因此不需要使用构造函数的模式，可以直接创建一个单例实例。例如：
-    ```js
-    const Singleton = {
-        name: '',
-        setName(name){
-            this.name = name;
-        },
-        getName(){
-            return this.name;
-        },
-    };
+因为 JavaScript 自身就可以实现不需要类的实例，因此不需要使用构造函数的模式，可以直接创建一个单例实例
+```js
+// Singleton.js
+export const Singleton = {
+    name: '',
+    setName(name){
+        this.name = name;
+    },
+    getName(){
+        return this.name;
+    },
+};
+```
 
-    Singleton.setName('sven1');
-    console.log(Singleton.getName()); // "sven1"
-    Singleton.setName('sven2');
-    console.log(Singleton.getName()); // "sven2"
-    ```
-2. 如果直接使用全局变量，会造成全局变量污染。可以考虑命名空间、闭包等方式来定义可全局访问但非全局变量的单例实例。
+```js
+// main.js
+import {Singleton} from 'Singleton'
+
+Singleton.setName('sven1');
+console.log(Singleton.getName()); // "sven1"
+Singleton.setName('sven2');
+console.log(Singleton.getName()); // "sven2"
+```
 
 
 ## 惰性单例
 1. 惰性单例指的是在需要的时候才创建对象实例。
 2. 其实上面的例子中，都不是一开始就创建对象，所以都是惰性单例。
 
-### 通用的惰性单例
+### 通用的惰性单例代理
 上面已经实现了代理单例模式，这里将实现一个通用的具备惰性功能的单例代理，让它可以代理任何普通构造函数并实现相应的代理模式。
 ```js
 // 通用的惰性单例代理
-const getSingle = function( fn ){
-    let singleton;
-    return function(){
-        return singleton || ( singleton = fn.apply(this, arguments ) );
+const getSingleton = function ( fn ) {
+    let singleton = null;
+    return function (...args) {
+        return singleton || (singleton = fn.apply(this, args));
     }
 };
 
@@ -135,7 +212,6 @@ function King( name ){
             console.log(this.name);
         },
     };
-
 }
 function Queen( name ){
     return {
@@ -146,18 +222,25 @@ function Queen( name ){
     };
 }
 
-const CreateKing = getSingle(King);
-const CreateQueen = getSingle(Queen);
+const SingletonKing  = getSingleton(King);
+const SingletonQueen = getSingleton(Queen);
 
 
-const King1 = new CreateKing('David');
-const King2 = new CreateKing('Charles');
-const Queen1 = new CreateQueen('Athena');
-const Queen2 = new CreateQueen('Judith');
+const King1  = new SingletonKing('David');
+const King2  = new SingletonKing('Charles');
+const Queen1 = new SingletonQueen('Athena');
+const Queen2 = new SingletonQueen('Judith');
 
 
-console.log(King1 === King2);    // true
-console.log(Queen1 === Queen2);  // true
 King1.sayName();   // "David"
 Queen1.sayName();  // "Athena"
+King2.sayName();   // "David"
+Queen2.sayName();  // "Athena"
+console.log(King1 === King2);    // true
+console.log(Queen1 === Queen2);  // true
 ```
+
+
+## References
+* [JavaScript设计模式与开发实践](https://book.douban.com/subject/26382780/)
+* [Head First 设计模式（中文版）](https://book.douban.com/subject/2243615/)
