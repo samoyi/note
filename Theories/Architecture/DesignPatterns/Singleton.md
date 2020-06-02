@@ -5,15 +5,18 @@
 
 - [Singleton](#singleton)
     - [思想](#思想)
-        - [为什么用单例？](#为什么用单例)
         - [对使用者透明](#对使用者透明)
         - [特殊情况使用代理——SRP](#特殊情况使用代理srp)
         - [通用代理](#通用代理)
+    - [什么时候用单例模式](#什么时候用单例模式)
     - [基本实现](#基本实现)
     - [透明的单例模式](#透明的单例模式)
         - [如果很明确的只作为单例，就不要用 `new`](#如果很明确的只作为单例就不要用-new)
     - [用代理实现单例模式](#用代理实现单例模式)
     - [JavaScript 中的单例模式](#javascript-中的单例模式)
+        - [直接使用对象实例](#直接使用对象实例)
+        - [使用类](#使用类)
+        - [使用静态方法](#使用静态方法)
     - [惰性单例](#惰性单例)
         - [通用的惰性单例代理](#通用的惰性单例代理)
     - [References](#references)
@@ -23,9 +26,6 @@
 
 
 ## 思想
-### 为什么用单例？
-唯一的数据源，统一管理，统筹规划。就像 Vuex 的设计。
-
 ### 对使用者透明
 1. 如果想对一个类实现单例化，那么之前以非单例模式使用该类的使用者，不应该受到影响。
 2. 使用非单例的使用者对本次修改没有感知，本次修改对旧的使用者保持透明。
@@ -37,6 +37,10 @@
 
 ### 通用代理
 如果一个特殊的代理模式可能出现在好几个地方，那么就可以考虑设计通用的代理。
+
+
+## 什么时候用单例模式
+唯一的数据源，统一管理，统筹规划。就像 Vuex 的设计。
 
 
 ## 基本实现
@@ -164,6 +168,7 @@ console.log(d.name);     // "sven4"
 
 
 ## JavaScript 中的单例模式
+### 直接使用对象实例
 因为 JavaScript 自身就可以实现不需要类的实例，因此不需要使用构造函数的模式，可以直接创建一个单例实例
 ```js
 // Singleton.js
@@ -186,6 +191,81 @@ Singleton.setName('sven1');
 console.log(Singleton.getName()); // "sven1"
 Singleton.setName('sven2');
 console.log(Singleton.getName()); // "sven2"
+```
+
+### 使用类
+可以使用 `new` 操作符
+```js
+// Singleton.js
+let instance = null;
+
+export class Singleton {
+    constructor (name)　{
+        if (instance) {
+            instance.name = name;
+            return instance;
+        }
+        else {
+            this.name = name;
+            instance = this;
+            return instance;
+        }
+    }
+}
+```
+
+```js
+// main.js
+
+import {Singleton} from 'Singleton'
+let user1 = new Singleton('22');
+console.log(user1.name);      // 22
+let user2 = new Singleton('33');
+console.log(user2.name);      // 33
+console.log(user1.name);      // 33
+console.log(user1 === user2); // true
+```
+
+### 使用静态方法
+相比于可以使用 `new` 操作符这种语义不太明确的方法，使用构造函数的静态方法更有单例的感觉
+```js
+// Singleton.js
+
+let instance = null;
+
+export class Singleton {
+    constructor (name)　{
+        if (instance) {
+            return instance;
+        }
+        else {
+            this.name = name;
+            instance = this
+            return instance;
+        }
+    }
+
+    static getSingleton (name) {
+        if (instance) {
+            instance.name = name;
+            return instance;
+        }
+        else {
+            return new Singleton(name);
+        }
+    }
+}
+```
+```js
+// main.js
+
+import {Singleton} from 'Singleton'
+let user1 = Singleton.getSingleton('22');
+console.log(user1.name);      // 22
+let user2 = Singleton.getSingleton('33');
+console.log(user2.name);      // 33
+console.log(user1.name);      // 33
+console.log(user1 === user2); // true
 ```
 
 
