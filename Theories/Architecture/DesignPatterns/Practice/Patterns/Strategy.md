@@ -1,13 +1,136 @@
 # Strategy
 
-OCP(Open–closed principle)：software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification。
+
+<!-- TOC -->
+
+- [Strategy](#strategy)
+    - [适用场景](#适用场景)
+    - [要点](#要点)
+    - [使用场景](#使用场景)
+        - [微信分享配置](#微信分享配置)
+            - [需求](#需求)
+            - [重构前](#重构前)
+            - [重构后](#重构后)
+        - [表单校验](#表单校验)
+        - [底部菜单](#底部菜单)
+        - [图片列表操作器](#图片列表操作器)
+
+<!-- /TOC -->
+
+
+## 适用场景
+* 一个功能体要根据不同的情况采取不同的策略（或者算法）。
+* 一个功能体要做好几件事情，而具体是哪几件可能是会发生变化的。
+
 
 ## 要点
-1. 策略算法/数据和执行环境分离，建立独立的策略仓库。
-2. 策略仓库里包含所有可能的策略，但某个场景下，并不一定会用到所有的场景。所以并不一定每次都给环境传递完整的策略仓库，而是给环境传递一个策略列表，或者让环境有一个添加策略的方法。
+1. 策略（或者算法）的制定、选择和执行分成了三个独立的部分。
+2. 多种策略（或者算法）放在一起，作为一个策略（或者算法）仓库。
+3. 需要执行策略时，根据环境的不同，选择需要的策略（或者算法）传递给策略执行者。
 
 
 ## 使用场景
+### 微信分享配置
+#### 需求
+1. 相册微信分享出去的标题、描述、链接和图标根据情况会有各种情况：
+    * 默认
+    * 某些页面需要特殊的配置
+    * 从某些来源进入相册，也需要特殊的配置
+2. 为了使不同的页面有不同的分享配置，所以要在路由切换的地方进行配置。以及要在一个处理外部来源的模块里，根据来源设定不同的分享配置。
+
+#### 重构前
+1. 在路由切换的地方进行分享配置
+    ```js
+    // afterEachRout.js
+    function setShareConfig (to, from) {
+        let config = {};
+
+        // 根据本次路由到的页面决定
+        if (to.name === 'video') {
+            config.name = '视频';
+        }
+        else if (to.name === 'live') {
+            config.name = '直播';
+        }
+        else if (to.name === 'comment') {
+            config.name = '快来评论吧';
+        }
+
+        // 默认时传空对象，`configShare` 会使用默认配置
+        store.dispatch('weixin/configShare', config);
+    }
+    ```
+2. `setShareConfig` 做的工作是，在每次路由切换后，设定当前页面的分享配置。但它同时还负责了制定分享配置，也就是那一组条件分支。
+3. 但从逻辑上讲，分享配置的指定，应该是属于微信分享模块的工作，而不属于路由模块的工作。路由模块只应该负责根据当前的路由选择对应的分享配置。
+4. 而且在处理外部来源的模块里，也会根据需求自己制定分享配置。这样，各种分享配置的指定就散落在各处。但其实这些各种奇奇怪怪的分享配置应该整理到一起，统一管理。
+
+#### 重构后
+1. 把各种情况的分享配置都放到微信分享的模块里
+    ```js
+    // weixin.js
+    shareConfigs () {
+        return {
+            normal: {},
+            video: {
+                title: '视频',
+            },
+            live: {
+                title: '直播',
+            },
+            comment: {
+                title: '评论',
+                desc: '快来评论吧',
+            },
+            outer1: {
+                title: '外部来源1指定的分享标题',
+            },
+            outer2: {
+                title: '外部来源2指定的分享标题',
+            },
+        }
+    }
+    ```
+2. 在需要的地方根据情况引用对应的配置
+    ```js
+    // afterEachRout.js
+    function setShareConfig (to, from) {
+        const shareConfigs = store.getters['weixin/shareConfigs'];
+        let config = {};
+
+        if (to.name === 'video') {
+        config = shareConfigs.video;
+        }
+        else if (to.name === 'live') {
+            config = shareConfigs.live;
+        }
+        else if (to.name === 'comment') {
+            config = shareConfigs.comment;
+        }
+
+        store.dispatch('weixin/configShare', config);
+    }
+    ```
+3. 按照典型的策略模式，条件判断也应该移出 `setShareConfig`，在外面判断需要哪个配置，然后可以作为参数传给 `setShareConfig`。`setShareConfig` 只作为一个单纯的配置对象，传什么配置它就设置什么配置。例如
+    ```js
+    const shareConfigs = store.getters['weixin/shareConfigs'];
+    let config = {};
+    if (to.name === 'video') {
+    config = shareConfigs.video;
+    }
+    else if (to.name === 'live') {
+        config = shareConfigs.live;
+    }
+    else if (to.name === 'comment') {
+        config = shareConfigs.comment;
+    }
+
+    function setShareConfig (config) {
+        store.dispatch('weixin/configShare', config);
+    }
+    ```
+4. 但实际上我并没有一个公用的判断各种路由 `name` 的地方，现在判断 `name` 的逻辑，只是为配置分享服务的，所以没必要把它作为公用的路由判断。如果其他很多地方也需要判断路由 `name`，那就应该把这些判断作为公用的，然后在特定的路由分支下读取并设置响应的分享配置。
+
+
 ### 表单校验
 
 ### 底部菜单
