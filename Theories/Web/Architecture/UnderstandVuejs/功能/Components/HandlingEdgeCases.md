@@ -88,11 +88,9 @@ store.
 
 
 ### Accessing Child Component Instances & Child Elements
-1. 可以通过`ref`特性为一个子组件标签指定一个被应用的 ID，父组件通过`$refs`可以找到所有
-指定了`ref`特性的子组件。
-2. 不仅是组件，还可以给组件内的非自定义元素指定`ref`特性，也可以被实例的`$refs`引用。
-看看`vm.$refs`的说明：An object of DOM elements and component instances,
-registered with `ref` attributes。引用的不只是实例，还有 DOM。
+1. 可以通过 `ref` 特性为一个子组件标签指定一个被应用的 ID，父组件通过 `$refs` 可以找到所有指定了 `ref` 特性的子组件。
+2. 不仅是组件，还可以给组件内的非自定义元素指定 `ref` 特性，也可以被实例的 `$refs` 引用。
+3. 看看 `vm.$refs` 的说明：An object of DOM elements and component instances, registered with `ref` attributes
     ```html
     <div id="components-demo">
         <child-component ref="first"></child-component>
@@ -137,9 +135,77 @@ registered with `ref` attributes。引用的不只是实例，还有 DOM。
         },
     });
     ```
-3. `$refs`只会在组件渲染完成之后生效，并且它们不是响应式的。你应该避免在模板或计算属性
-中访问`$refs`。
-4. 当`ref`和`v-for`一起使用时，得到的引用是一个包含了循环出来的若干个实例的数组
+4. `$refs` 只会在组件渲染完成之后生效
+    ```js
+    beforeMount(){
+        console.log(this.$refs.test); // 仍然是 undefined
+        debugger;
+    },
+    mounted(){
+        console.log(this.$refs.test); // 引用到节点
+        debugger;
+    },
+    ```
+5. 并且它们不是响应式的，你应该避免在模板或计算属性中访问 `$refs`
+    ```html
+    <div id="components-demo">
+        <child-component ref="child"></child-component>
+        <br />
+        <br />
+        {{childNums}}
+    </div>
+    ```
+    ```js
+    new Vue({
+        el: '#components-demo',
+        components: {
+            'child-component': {
+                template: `<p>Child: {{num}} => {{numPlusOne}}</p>`,
+                data () {
+                    return {
+                        num: 0,
+                    };
+                },
+                computed: {
+                    numPlusOne () {
+                        return this.num + 1;
+                    },
+                },  
+                mounted () {
+                    setInterval(()=>{
+                        this.num = Math.random();
+                    }, 2222)
+                },
+            },
+        },
+
+        computed: {
+            childNums () {
+                // 挂载前该计算属性会调用一次，但因为还没渲染，所以是 undefined。
+                // 挂载后虽然 child 的数据会更新，但因为不是响应式的，所以这个计算属性永远不会再被调用
+                if (this.$refs.child === undefined) {
+                    return 'undefined'
+                }
+                return 'Parent:' + this.$refs.child.num + '=>' + this.$refs.child.numPlusOne;
+            },
+        },
+
+        methods: {
+            getChildNums () {
+                // 主动引用子组件并查询数据，可以查询到最新的
+                console.log(this.$refs.child.num);
+                console.log(this.$refs.child.numPlusOne);
+            }
+        },
+
+        mounted () {
+            setInterval(()=>{
+                this.getChildNums();
+            }, 2222);
+        },
+    });
+    ```
+6. 当 `ref` 和 `v-for` 一起使用时，得到的引用是一个包含了循环出来的若干个实例的数组
     ```html
     <div id="components-demo">
         <child-component v-for="n in 3" ref="children" :key="n"></child-component>
@@ -151,7 +217,7 @@ registered with `ref` attributes。引用的不只是实例，还有 DOM。
         components: {
             'child-component': {
                 template: `<p>{{num}}</p>`,
-                data: function(){
+                data () {
                     return {
                         num: 0,
                     };
@@ -160,6 +226,7 @@ registered with `ref` attributes。引用的不只是实例，还有 DOM。
         },
         mounted(){
             // this.$refs.children 是一个三项数组，包含三个循环出来的组件
+            console.log(this.$refs.children); // [VueComponent, VueComponent, VueComponent]
             setTimeout(()=>{
                 this.$refs.children.forEach((child, index)=>{
                     child.num = index + 1;
