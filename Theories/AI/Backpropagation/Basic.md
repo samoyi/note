@@ -505,7 +505,7 @@ class Affine:
 <img src="./images/31.png" width="600" style="display: block; margin: 5px 0 10px;" />
 
 1. 然后是最后一步 $exp$ 节点的反向传播。
-2. 因为自然对数的导数等于它本身，即 $\exp(a_1)$ 这样的。所以输入值 $a_1$ 对最终结果的导数就是 $\Bigl(\frac{1}{S}-\frac{t_1}{\exp(a_1)}\Bigr)\exp(a_1)$，整理之后为 $y_1-t_1$。
+2. 因为 $e^x$ 的导数还是它本身，即 $\exp(a_1)$ 这样的。所以输入值 $a_1$ 对最终结果的导数就是 $\Bigl(\frac{1}{S}-\frac{t_1}{\exp(a_1)}\Bigr)\exp(a_1)$，整理之后为 $y_1-t_1$。
 
 
 #### 6.3.3 对反向传播结果的分析
