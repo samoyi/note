@@ -15,10 +15,10 @@
     * 0：来自于历史记录
     * 1：来自于图片浏览页
     * 2： 来自于上传
-2. 最初我在 store 里用 `sourceFrom` 这个 state 字段来保存本地的这个状态，这个字段会被设置为 0 或 1 或 2，然后传给后端。
+2. 最初我在 store 里用 `sourceFrom` 这个 state 字段来保存本地的这个状态，这个字段会被设置为 `0` 或 `1` 或 `2`，然后传给后端。
 3. 然后我定义了一个 mutaion，用来设置这个字段
     ```js
-    setSourceFrom(state) {
+    setSourceFrom(state, n) {
         state.sourceFrom = n;
     },
     ```
