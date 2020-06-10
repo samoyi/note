@@ -41,6 +41,7 @@ Any code used more than once should be put in its own function, but code only us
 2. 那在我们看的时候，最好就是在这个部分只告诉我做了什么，而不要告诉我是怎么做的。
 3. If you have to spend effort looking at a fragment of code and figuring out what it’s doing, then you should extract it into a function and name the function after the "what". 
 4. Then, when you read it again, the purpose of the function leaps right out at you, and most of the time you won’t need to care about how the function fulfills its purpose (which is the body of the function).
+5. 一段代码既不封装为函数，又不写注释，真的要从头看到尾才能知道是在干什么……
 
 #### 性能担忧？
 1. Some people are concerned about short functions because they worry about the performance cost of a function call, but that’s very rare now. 

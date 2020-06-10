@@ -1,5 +1,18 @@
 # Global API
 
+
+<!-- TOC -->
+
+- [Global API](#global-api)
+    - [`Vue.extend( options )`](#vueextend-options-)
+    - [`Vue.nextTick( [callback, context] )`](#vuenexttick-callback-context-)
+    - [`Vue.delete( target, key )`](#vuedelete-target-key-)
+    - [`Vue.observable( object )`](#vueobservable-object-)
+    - [`Vue.version`](#vueversion)
+
+<!-- /TOC -->
+
+
 ## `Vue.extend( options )`
 1. 使用基础 Vue 构造器，创建一个“子类”，即一个组件原型。
 2. 参数是一个包含组件选项的对象。其中`data`属性必须是一个函数。
@@ -127,5 +140,35 @@ new Vue({
 ```
 
 
-## Vue.version
+## `Vue.observable( object )`
+1. Make an object reactive. 
+2. Internally, Vue uses this on the object returned by the data function.
+3. The returned object can be used directly inside **render functions** and **computed properties**, and will trigger appropriate updates when mutated. 
+4. It can also be used as a minimal, cross-component state store for simple scenarios:
+    ```html
+    <div>{{localState.count}}</div>
+    ```
+    ```js
+    import Vue from 'vue'
+    const state = Vue.observable({ count: 0 });
+    export default {
+        computed: {
+            //  返回的对象不能直接用在模板里，所以要定义在计算属性中再被模板使用
+            localState () {
+                return state;
+            },
+        },
+        methods: {
+            addCount () {
+                // 触发这个事件，就能让模板响应式渲染
+                state.count++;
+            },
+        },
+    }
+    ```
+5. In Vue 2.x, `Vue.observable` directly mutates the object passed to it, so that it is equivalent to the object returned. In Vue 3.x, a reactive proxy will be returned instead, leaving the original object non-reactive if mutated directly. Therefore, for future compatibility, we recommend always working with the object returned by `Vue.observable`, rather than the object originally passed to it.
+6. [这篇文章](https://michaelnthiessen.com/state-management-without-vuex/) 使用这个 API 实现了一个小型 store，在数据很简单的应用中可以替代复杂的 Vuex。
+
+
+## `Vue.version`
 Provides the installed version of Vue as a string.
