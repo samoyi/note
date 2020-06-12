@@ -127,6 +127,63 @@
 * 原因：[可能的原因](https://www.cnblogs.com/dengxiaolei/p/8143838.html)
 * 解决：项目中发现，从 A 页面 push 到 B 页面，再 push 到 C 页面，在 C 页面发起分享配置时，会出现这种情况；但如果从 A 到 B 是通过 `location.href`，从 B 到 C 依然通过 push，则在 C 页面可以正常分享。
 
+
+## 微信
+### 四个旧的分享接口的方法名保存在数组中会被变形
+* 现象：想把四个分享接口的方法名统一定义到数组里，然后遍历数组调用
+    ```js
+    const SHARE_API_LIST = [
+        'onMenuShareTimeline',
+        'onMenuShareAppMessage',
+        'onMenuShareQQ',
+        'onMenuShareWeibo',
+    ];
+
+    // ...
+
+    console.log(SHARE_API_LIST); 
+    // ["menu:share:timeline", "menu:share:appmessage", "menu:share:qq", "menu:share:weiboApp"]
+
+    SHARE_API_LIST.forEach((key) => {
+        console.log(key) // "menu:share:timeline"
+        window.wx[key]({
+            title, 
+            desc, 
+            imgUrl, 
+            link, 
+            success: function () {},
+            cancel: function () {}
+        })
+    })
+    ```
+    从 `console.log` 可以看出来，接口名居然被转成了那个样子，于是 `window.wx[key]` 就不是预期的效果了。
+* 原因：不知道什么原因，可能就是微信不开心。虽然文档说这四个旧的分享接口即将废弃，但也不至于这样吧。而且这种情况出现至少也有半年多了。
+* 解决：定义为对象，然后用 `Object.entries` 遍历
+    ```js
+    Object.entries({
+        onMenuShareTimeline: '朋友圈',
+        onMenuShareAppMessage: '微信好友',
+        onMenuShareQQ: 'QQ',
+        onMenuShareWeibo: '微博',
+    })
+    .forEach(([key]) => {
+        window.wx[key]({
+            title, 
+            desc, 
+            imgUrl, 
+            link, 
+            success: function () {},
+            cancel: function () {}
+        })
+    })
+    ```
+
+### 微信 1.6 SDK 分享按钮点击无效
+* 现象：debug 弹窗显示配置都是正常，但是点击 “发送给朋友” 或者 “分享到朋友圈” 都没反应。但有些手机是正常的。
+* 原因：微信日常的薛定谔的 bug。参考[这篇](https://segmentfault.com/q/1010000013704058)
+* 解决：别用 1.6
+
+
 ## 事件
 ### `blur`和`click`事件同时存在时，`click`事件不响应或响应非预期
 * 原因：`blur` 事件会在 `click` 事件之前执行
