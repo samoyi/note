@@ -17,6 +17,13 @@
             - [数学式](#数学式)
             - [Python 实现](#python-实现)
             - [如果函数的形状均向的](#如果函数的形状均向的)
+        - [AdaGrad](#adagrad)
+            - [动态调整学习率](#动态调整学习率)
+            - [数学式](#数学式-1)
+            - [Python 实现](#python-实现-1)
+            - [RMSProp 方法防治 $\boldsymbol{h}$ 减少到 0](#rmsprop-方法防治-\boldsymbolh-减少到-0)
+        - [Adam](#adam)
+        - [基于 MNIST 数据集的更新方法的比较](#基于-mnist-数据集的更新方法的比较)
     - [References](#references)
 
 <!-- /TOC -->
@@ -143,6 +150,224 @@ class Momentum:
 2. 虽然不是很确定，但是看起来，如果是均向的，那么就不会出现在某个轴向上明显的正负震荡的情况。
 3. 那么此时在大多数情况下，一个方向上的运动大多数时候要么都是在正方向逼近 0 要么就都是在负方向逼近 0。
 4. 因为没有方向变换，所以向量就是起到促进加速的作用的。
+
+### AdaGrad
+#### 动态调整学习率
+1. 在神经网络的学习中，学习率（$η$）的值很重要。学习率过小，会导致学习花费过多时间；反过来，学习率过大，则会导致学习发散而不能正确进行。
+2. 在关于学习率的有效技巧中，有一种被称为 **学习率衰减**（learning rate decay）的方法，即随着学习的进行，使学习率逐渐减小。实际上，一开始 “多” 学，然后逐渐 “少” 学的方法，在神经网络的学习中经常被使用。
+3. 逐渐减小学习率的想法，相当于将 “全体” 参数的学习率值一起降低。而 **AdaGrad** 进一步发展了这个想法，针对 “一个一个” 的参数，赋予其 “定制” 的值。
+4. AdaGrad 会为参数的每个元素适当地调整学习率，与此同时进行学习（AdaGrad 的 Ada 来自英文单词 Adaptive）。
+
+#### 数学式
+$$\boldsymbol{h}\leftarrow\boldsymbol{h}+\frac{\partial L}{\partial\boldsymbol{W}}\odot\frac{\partial L}{\partial\boldsymbol{W}}$$
+$$\boldsymbol{W}\leftarrow\boldsymbol{W}-\eta\frac{1}{\sqrt{\boldsymbol{h}}}\frac{\partial L}{\partial\boldsymbol{W}}$$
+
+1. 变量 $\boldsymbol{h}$ 保存了以前的所有梯度值的平方和（$\odot$ 表示对应矩阵元素的乘法）。
+2. 然后，在更新参数时，通过乘以 $\frac{1}{\sqrt{\boldsymbol{h}}}$，就可以调整学习的尺度。
+3. 随着学习的不断进行，$\boldsymbol{h}$ 会越来越大，实际的学习率就会越来越小。
+    <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px;" />
+4. 而且，之前学习率越大的参数，实际学习率减小的就越快。
+5. 比如说前面例子的 y 轴参数，开始的时候因为梯度绝对值很大，本来会按照 SGD 那样大幅下降。但因为此时它的 $\boldsymbol{h}$ 也很大，所以就明显削弱了下降效果。
+6. 另外还有一点就是，如果某个参数在某个位置时 $\boldsymbol{h}$ 小于 1，那么实际上 $\boldsymbol{h}$ 会增大下一次的学习率。
+7. 比如上图第一次下降时，本来 x 轴方向的梯度是小于 1 的，因此如果按照 SGD 只会向右移动一点。但因为此时它的 $\boldsymbol{h}$ 会变成一个明显大于 1 的数，所以向右移动的就比较明显了。
+
+#### Python 实现
+```py
+class AdaGrad:
+    def __init__(self, lr=0.01):
+        self.lr = lr
+        self.h = None
+
+    def update(self, params, grads):
+        if self.h is None:
+           self.h = {}
+           for key, val in params.items():
+               self.h[key] = np.zeros_like(val)
+
+        for key in params.keys():
+            self.h[key] += grads[key] * grads[key]
+            params[key] -= self.lr * grads[key] / (np.sqrt(self.h[key]) + 1e-7)
+```
+
+1. 这里需要注意的是，最后一行加上了微小值 `1e-7`。这是为了防止当 `self.h[key]` 中有 0 时，将 0 用作除数的情况。
+2. 在很多深度学习的框架中，这个微小值也可以设定为参数。
+
+#### RMSProp 方法防治 $\boldsymbol{h}$ 减少到 0
+1. AdaGrad 会记录过去所有梯度的平方和。因此，学习越深入，更新的幅度就越小。实际上，如果无止境地学习，更新量就会变为 0，完全不再更新。
+2. 为了改善这个问题，可以使用 RMSProp 方法。RMSProp 方法并不是将过去所有的梯度一视同仁地相加，而是逐渐地遗忘过去的梯度，在做加法运算时将新梯度的信息更多地反映出来。
+3. 这种操作从专业上讲，称为 “指数移动平均”，呈指数函数式地减小过去的梯度的尺度。
+
+### Adam
+
+### 基于 MNIST 数据集的更新方法的比较
+1. 这个实验以一个 5 层神经网络为对象，其中每层有 100 个神经元。激活函数使用的是 ReLU。
+2. 源码在 `./demos/optimizer_compare_mnist.py`。测试代码
+    ```py
+    # 0:读入MNIST数据==========
+    (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True)
+
+    train_size = x_train.shape[0]
+    batch_size = 128
+    max_iterations = 2000
+
+
+    # 1:进行实验的设置==========
+    optimizers = {}
+    optimizers['SGD'] = SGD()
+    optimizers['Momentum'] = Momentum()
+    optimizers['AdaGrad'] = AdaGrad()
+    optimizers['Adam'] = Adam()
+    #optimizers['RMSprop'] = RMSprop()
+
+    networks = {}
+    train_loss = {}
+    for key in optimizers.keys():
+        networks[key] = MultiLayerNet(
+            input_size=784, hidden_size_list=[100, 100, 100, 100],
+            output_size=10)
+        train_loss[key] = []    
+
+
+    # 2:开始训练==========
+    for i in range(max_iterations):
+        batch_mask = np.random.choice(train_size, batch_size)
+        x_batch = x_train[batch_mask]
+        t_batch = t_train[batch_mask]
+        
+        for key in optimizers.keys():
+            grads = networks[key].gradient(x_batch, t_batch)
+            optimizers[key].update(networks[key].params, grads)
+        
+            loss = networks[key].loss(x_batch, t_batch)
+            train_loss[key].append(loss)
+        
+        if i % 100 == 0:
+            print( "===========" + "iteration:" + str(i) + "===========")
+            for key in optimizers.keys():
+                loss = networks[key].loss(x_batch, t_batch)
+                print(key + ":" + str(loss))
+
+
+    # 3.绘制图形==========
+    markers = {"SGD": "o", "Momentum": "x", "AdaGrad": "s", "Adam": "D"}
+    x = np.arange(max_iterations)
+    for key in optimizers.keys():
+        plt.plot(x, smooth_curve(train_loss[key]), marker=markers[key], markevery=100, label=key)
+    plt.xlabel("iterations")
+    plt.ylabel("loss")
+    plt.ylim(0, 1)
+    plt.legend()
+    plt.show()
+    ```
+3. 输出
+    ```sh
+    ===========iteration:0===========
+    SGD:2.364396210789146
+    Momentum:2.4261217609322223
+    AdaGrad:2.16233190366153
+    Adam:2.1661379304797
+    ===========iteration:100===========
+    SGD:1.601901336213604
+    Momentum:0.33852454157953293
+    AdaGrad:0.15668511172030972
+    Adam:0.24641438197582696
+    ===========iteration:200===========
+    SGD:0.7393239598895716
+    Momentum:0.17921059986376953
+    AdaGrad:0.10122272612654373
+    Adam:0.17239291868891393
+    ===========iteration:300===========
+    SGD:0.5404846036953992
+    Momentum:0.16180479904047199
+    AdaGrad:0.056495541355878795
+    Adam:0.09364112561863941
+    ===========iteration:400===========
+    SGD:0.402306100952132
+    Momentum:0.1509189413549606
+    AdaGrad:0.07641001538530545
+    Adam:0.12163857898874754
+    ===========iteration:500===========
+    SGD:0.4880400590934778
+    Momentum:0.27585848041696853
+    AdaGrad:0.11990903582422144
+    Adam:0.18868752650931356
+    ===========iteration:600===========
+    SGD:0.24947051968119136
+    Momentum:0.07308552129379102
+    AdaGrad:0.03620177981793199
+    Adam:0.03714246759185307
+    ===========iteration:700===========
+    SGD:0.22857651628931547
+    Momentum:0.07979241338942146
+    AdaGrad:0.03937541573984139
+    Adam:0.039893350873912894
+    ===========iteration:800===========
+    SGD:0.2605554156718135
+    Momentum:0.13450934429900124
+    AdaGrad:0.051321940992241785
+    Adam:0.05911354829085156
+    ===========iteration:900===========
+    SGD:0.28081470144087645
+    Momentum:0.08644721475741925
+    AdaGrad:0.04290114330243809
+    Adam:0.0769565489434546
+    ===========iteration:1000===========
+    SGD:0.22098605072297728
+    Momentum:0.07739233872168308
+    AdaGrad:0.048948428590088744
+    Adam:0.0651119742118878
+    ===========iteration:1100===========
+    SGD:0.19547780230994916
+    Momentum:0.07105618859069646
+    AdaGrad:0.05777807847387521
+    Adam:0.06458094319080315
+    ===========iteration:1200===========
+    SGD:0.2076861046482508
+    Momentum:0.06838910309773819
+    AdaGrad:0.015910327664932965
+    Adam:0.05445698620367115
+    ===========iteration:1300===========
+    SGD:0.2968531021215531
+    Momentum:0.1209324520069992
+    AdaGrad:0.07006251602589637
+    Adam:0.07763953789008499
+    ===========iteration:1400===========
+    SGD:0.2501930116366662
+    Momentum:0.08023199786631298
+    AdaGrad:0.030748186319871106
+    Adam:0.022148843866858833
+    ===========iteration:1500===========
+    SGD:0.24713199194592703
+    Momentum:0.09090543059097704
+    AdaGrad:0.054440722050496895
+    Adam:0.061407984164772444
+    ===========iteration:1600===========
+    SGD:0.22097165571998878
+    Momentum:0.052704326085007136
+    AdaGrad:0.021394664280808284
+    Adam:0.043184760575209466
+    ===========iteration:1700===========
+    SGD:0.24074511157011802
+    Momentum:0.09980322090754362
+    AdaGrad:0.06024174907732138
+    Adam:0.04353083286248491
+    ===========iteration:1800===========
+    SGD:0.24732756833521186
+    Momentum:0.0811026151474386
+    AdaGrad:0.030369929181226964
+    Adam:0.036395466746393115
+    ===========iteration:1900===========
+    SGD:0.24498889914749805
+    Momentum:0.125026293687864
+    AdaGrad:0.03430576539406276
+    Adam:0.0635555903617698
+    ```
+4. 结果比较
+    <img src="./images/06.png" width="1000" style="display: block; margin: 5px 0 10px;" />
+5. 上图的结果中可知，与 SGD 相比，其他 3 种方法学习得更快，而且速度基本相同，仔细看的话，AdaGrad 的学习进行得稍微快一点。
+6. 这个实验需要注意的地方是，实验结果会随学习率等超参数、神经网络的结构（几层深等）的不同而发生变化。不过，一般而言，与 SGD 相比，其他 3 种方法可以学习得更快，有时最终的识别精度也更高。
+
+
 
 
 ## References
