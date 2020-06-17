@@ -1,17 +1,15 @@
 # Getter
 
+
+
 # 功能
-1. 基于应用的需求，某些`state`中的数据可能需要加工才能使用。
-2. 如果只有一两个组件需要用到某个加工数据，则加工的工作可以丢给组件去做。但如果有更多的
-组件都要用到相同的加工数据，那最好还是在 store 里加工好直接提供给组件。
+1. 基于应用的需求，某些 `state` 中的数据可能需要加工才能使用。
+2. 如果只有一两个组件需要用到某个加工数据，则加工的工作可以丢给组件去做。但如果有更多的组件都要用到相同的加工数据，那最好还是在 store 里加工好直接提供给组件。
 
 
 ## 定义
-1. Vuex 允许我们在 store 中定义“getter”。getter 是 store 的计算属性，基于`state`中
-的数据。
-2. getter 的返回值会根据它的依赖被缓存起来，且只有当它的依赖值发生了改变才会被重新计
-算。
-3. Getter 接受 state 作为其第一个参数，也可以接受 `getters` 作为第二个参数
+1. Vuex 允许我们在 store 中定义 “getter”。getter 是 store 的计算属性，基于 `state` 中的数据。
+2. Getter 接受 state 作为其第一个参数，也可以接受 `getters` 作为第二个参数
     ```js
     state: {
         name: '33',
@@ -26,6 +24,14 @@
             return `Hi, I'm ${state.name}, ${state.age} years old.
                     I like ${getters.friends}`;
         },
+    },
+    ```
+3. getter 的返回值会根据它的依赖被缓存起来，且只有当它的依赖值发生了改变才会被重新计算，即响应依赖变化时自动重新调用。
+4. 注意，这里所说的响应依赖，**依赖只是 state 和 getter**，而不包括其他内容。例如如果想根据路由来计算，则只会计算一次，之后路由变化并不会响应式的重新计算
+    ```js
+    isShowMenu (state, getters) {
+        // 路由切换时，router.currentRoute.path 会变化，但这个 getter 不会被重新调用，因此不能响应路由变化
+        pathsShouldShowMenu.includes(router.currentRoute.path);
     },
     ```
 
@@ -71,10 +77,8 @@ computed: {
 
 
 ## `mapGetters`
-1. 相比于`mapState`的对象字符串、对象函数和数组的三种形式，`mapGetters`只支持对象字符
-串和数组的形式。
-2. 不懂为什么不能和`mapState`一样设置为函数。要说是因为用处不大，但`mapState`中设为函
-数用处也没有比这里大吧
+1. 相比于 `mapState` 的对象字符串、对象函数和数组的三种形式，`mapGetters` 只支持对象字符串和数组的形式。
+2. 不懂为什么不能和 `mapState` 一样设置为函数。要说是因为用处不大，但 `mapState` 中设为函数用处也没有比这里大吧
 
 ```js
 ...mapGetters({
