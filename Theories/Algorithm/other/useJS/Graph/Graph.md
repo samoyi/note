@@ -26,23 +26,21 @@
             - [广度优先——强调先完成一层再处理下一层](#广度优先强调先完成一层再处理下一层)
             - [层次次序感——按层顺序向外扩散，强调距离起点的远近亲疏](#层次次序感按层顺序向外扩散强调距离起点的远近亲疏)
         - [设计思想和用途](#设计思想和用途)
-            - [逐层探索](#逐层探索)
+            - [逐层探索，剥洋葱](#逐层探索剥洋葱)
             - [获得层级距离关系](#获得层级距离关系)
         - [逻辑顺序](#逻辑顺序)
             - [关键点](#关键点)
         - [实现](#实现)
-    - [使用 BFS 寻找最短路径](#使用-bfs-寻找最短路径)
+        - [兼容有向图的 BFS](#兼容有向图的-bfs)
+        - [记录更多信息的广度遍历](#记录更多信息的广度遍历)
+    - [使用 BFSWidthMoreInfo 寻找最短路径](#使用-bfswidthmoreinfo-寻找最短路径)
     - [深度优先遍历](#深度优先遍历)
         - [原理和本质](#原理和本质-1)
-            - [先后顺序](#先后顺序)
-            - [不撞南墙不回头](#不撞南墙不回头)
+            - [依次尝试每一种可能性](#依次尝试每一种可能性)
+            - [点对点的因果（或层级）关系](#点对点的因果或层级关系)
         - [设计思想和用途](#设计思想和用途-1)
-            - [逐层探索](#逐层探索-1)
-            - [获得层级距离关系](#获得层级距离关系-1)
-        - [遍历思想](#遍历思想)
-        - [关键词](#关键词)
-            - [先递归到底](#先递归到底)
-            - [子节点优先完成](#子节点优先完成)
+            - [尝试树状逻辑结构的每一条路径](#尝试树状逻辑结构的每一条路径)
+            - [纵深型的逻辑结构](#纵深型的逻辑结构)
         - [实现](#实现-1)
         - [记录更多信息的深度遍历](#记录更多信息的深度遍历)
         - [拓扑排序](#拓扑排序)
@@ -206,8 +204,8 @@ TODO 为什么要三种颜色，两种行不行？
 2. 又因为这种从起点逐层向外扩展的遍历方式，所以也很方便确定起始点距离任何节点的层级距离。
 
 ### 设计思想和用途
-#### 逐层探索
-希望完全探索完一层再进入下一层
+#### 逐层探索，剥洋葱
+希望完全探索完一层再进入下一层，或者说是按批次执行任务。执行完第一批的所有任务，才能执行第二批的。
 
 #### 获得层级距离关系
 1. 根据层次的多少来获得两个对象的层级距离。
@@ -227,7 +225,7 @@ TODO 为什么要三种颜色，两种行不行？
 
 ### 实现
 ```js
-bfs (v, callback) {
+normalBFS (v, callback) {
     let colors = initializeColor(this.vertices);
     let queue = new Queue();
     queue.enqueue(v); // 遍历起始节点
@@ -255,55 +253,127 @@ bfs (v, callback) {
 }
 ```
 
-## 使用 BFS 寻找最短路径
-因为 BFS 是一层一层往外搜索，所以就可以确定任意一个节点相对于顶点来说是关系有几层，或者说要几步才能把顶点和某个节点连接起来。
+### 兼容有向图的 BFS
+参考深度优先搜索实现了兼容有向图的 BFS
+```js
+BFSCompatibleWithDirected (callback) {
+    let colorMapping = initializeColorMapping(this.vertices);
+
+    this.vertices.forEach((vertex)=>{
+        if (colorMapping[vertex] === 'white') {
+            let queue = new Queue();
+            queue.enqueue(vertex);
+
+            while (!queue.isEmpty()) {
+                let u = queue.dequeue();
+                let neighbors = this.adjacencyList.get(u);
+                colorMapping[u] = 'grey';
+
+                for (let i = 0; i < neighbors.length; i++) {
+                    let n = neighbors[i];
+                    if (colorMapping[n] === 'white') {
+                        colorMapping[n] = 'grey';
+                        queue.enqueue(n);
+                    }
+                }
+
+                colorMapping[u] = 'black';
+
+                if (callback) {
+                    callback(u);
+                }
+            }
+        }
+    });
+}
+```
+
+### 记录更多信息的广度遍历
+遍历获得每个节点距离起始节点的距离以及每个节点的前溯节点
+```js
+BFSWidthMoreInfo (v) {
+    let colorMapping = initializeColorMapping(this.vertices);
+    let queue = new Queue();
+    queue.enqueue(v);
+
+    let distances = {};   // 记录每个节点距离起始节点的距离
+    let predecessors = {}; // 记录每个节点的前溯节点
+
+    // 初始化每个节点距离起始节点的距离和前溯节点
+    this.vertices.forEach((vertex) => {
+        distances[vertex] = 0;
+        predecessors[vertex] = null;
+    });
+
+    while (!queue.isEmpty()) {
+        let u = queue.dequeue();
+        colorMapping[u] = 'grey';
+
+        this.adjacencyList.get(u).forEach((item) => {
+            if (colorMapping[item] === 'white') {
+                colorMapping[item] = 'grey';
+
+                // 因为节点 item 是 u 的相邻节点，所以距离起始节点的距离就比 u 大一
+                distances[item] = distances[u] + 1;
+                predecessors[item] = u;
+                queue.enqueue(item);
+            }
+        });
+
+        colorMapping[u] = 'black';
+    }
+
+    return {
+        distances,
+        predecessors,
+    };
+}
+```
+
+## 使用 BFSWidthMoreInfo 寻找最短路径
+1. 因为 BFS 是逐层往外搜索，并不会有跳跃的情况，所以就可以确定任意一个节点相对于顶点来说是关系最近的层数，或者说要几步才能把顶点和某个节点连接起来。
+2. 使用 BFSWidthMoreInfo 中记录的每个节点的前溯节点，来查找某个节点到顶点的最短路径
+    ```js
+    getShortestPaths (v) {
+        let {predecessors} = this.BFSWidthMoreInfo(v);
+        let pathes = {};
+        for (let key in predecessors) {
+            let predecessor = predecessors[key];
+            if (predecessor === null) continue;
+            pathes[key] = key;
+            while (predecessor) {
+                pathes[key] = predecessor + '-' + pathes[key];
+                predecessor = predecessors[predecessor];
+            }
+        }
+        return pathes;
+    }
+    ```
 
 
 ## 深度优先遍历
 <img src="./images/07.png" width="400" style="display: block; margin: 5px 0 10px;" />
 
-
-
-
-
-
-
 ### 原理和本质
-#### 先后顺序
-广度优先也是有顺序的，第一层不完成则不可能进到第二层，和深度优先的区别
-1. 每次探索一个节点，都要先找到它的所有相邻节点，才会再探索其中每一个相邻节点。
-2. 先优先探索完一个节点，再探索它的相邻节点。探索完它的所有相邻节点后，再探索这些相邻节点的相邻节点。
+#### 依次尝试每一种可能性
+1. 事物从一个起始状态开始发展，会经历很多个选择节点，每个选择节点都会导致不同的结果，这样会形成一个庞大的树状结构，最终形成很多个终点结果。
+2. 深度优先遍历会从起始状态开始，依次遍历从起点到终点的每一条路径。
+3. 先一根筋到底尝试一种可能性，不撞南墙不回头。
+4. 撞了南墙，走到了这条路的终点，再回退尝试其他的路径。
 
-#### 不撞南墙不回头
-1. 在一个关系网中，是可以用层次关系来表示的。例如：我的朋友——我的朋友的朋友——我的朋友的朋友的朋友，广度优先就是按照这种层次关系来遍历的，因此可以很好的反应出整个关系网中的每个节点和起始节点的层次关系。
-2. 又因为这种从起点逐层向外扩展的遍历方式，所以也很方便确定起始点距离任何节点的层级距离。
+#### 点对点的因果（或层级）关系
+1. 广度优先也是有层级关系有顺序的，第一层不完成则不可能进到第二层，因此使用广度优先也可以实现拓扑排序。
+2. 但广度优先的层级关系是以层为单位的，第一层和第二层之间，整层的层级关系。
+3. 而深度优先则是两个节点之间的层级关系。这种节点级别的层级关系，更适合用来描述因果关系。
+4. 深度优先适合用来描述 “做完这件事才能做那件事”，广度优先适合用来描述 “做完第一阶段的若干任务后，再做第二阶段的若干任务”。
+5. 也可以是单点对多点或者多点对单点。比如说 A 部门和 B 部门平级，A 部门的经理可以管 A 部门的员工，但 B 部门的经理就不能管 A 部门的员工。
 
 ### 设计思想和用途
-#### 逐层探索
-希望完全探索完一层再进入下一层
+#### 尝试树状逻辑结构的每一条路径
+比如说简单棋类游戏的穷举法，可以在每一步都穷举不同下法的最终结果。
 
-#### 获得层级距离关系
-根据层次的多少来获得两个对象的层级距离
-
-### 遍历思想
-1. 相比于广度优先是从内到外的一层一层完成探索，深度优先是访问到一个节点时先不完成探索，而是先访问它的 “子节点”。
-2. 只要有子节点，就优先递归访问子节点。最后再反向递归完成探索。
-3. 广度优先保证了层状结构，而深度优先保证了子节点先于它的所有父节点完成探索。因为遍历到它的任何父节点时，父节点都会优先访问子节点，而不会自己先完成探索。
-
-
-
-
-
-
-
-### 关键词
-#### 先递归到底
-先根据路线追查到底，再进行实际的工作
-
-#### 子节点优先完成
-1. 一个子节点完成探索前，它的父节点都不可能完成探索。
-2. 反过来也可以说，如果一个节点的父节点完成了探索，则它的所有子节点也肯定已经完成了。
-
+#### 纵深型的逻辑结构
+与广度优先剥洋葱的行为模式相对
 
 ### 实现
 <img src="./images/08.png" width="600" style="display: block; margin: 5px 0 10px;" />

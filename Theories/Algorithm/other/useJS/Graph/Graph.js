@@ -136,34 +136,68 @@ class Graph {
         }
     }
 
-    // 遍历获得每个节点距离起始顶点的距离以及每个节点的前溯节点
-    BFS (v) {
+    // 兼容有向图的广度优先搜索
+    bfsCompatibleWithDirected (callback) {
+        let colorMapping = initializeColorMapping(this.vertices);
+
+        this.vertices.forEach((vertex)=>{
+            if (colorMapping[vertex] === 'white') {
+                let queue = new Queue();
+                queue.enqueue(vertex);
+
+                while (!queue.isEmpty()) {
+                    let u = queue.dequeue();
+                    let neighbors = this.adjacencyList.get(u);
+                    colorMapping[u] = 'grey';
+
+                    for (let i = 0; i < neighbors.length; i++) {
+                        let n = neighbors[i];
+                        if (colorMapping[n] === 'white') {
+                            colorMapping[n] = 'grey';
+                            queue.enqueue(n);
+                        }
+                    }
+
+                    colorMapping[u] = 'black';
+
+                    if (callback) {
+                        callback(u);
+                    }
+                }
+            }
+        });
+    }
+
+    // 遍历获得每个节点距离起始节点的距离以及每个节点的前溯节点
+    BFSWidthMoreInfo (v) {
         let colorMapping = initializeColorMapping(this.vertices);
         let queue = new Queue();
-        let distances = {}; // 记录每个节点距离起始顶点的距离
-        let predecessors = {}; // 记录每个节点的前溯节点
         queue.enqueue(v);
 
-        // 初始化每个节点距离顶点的距离和前溯节点
-        for (let i = 0; i < this.vertices.length; i++) {
-            distances[this.vertices[i]] = 0;
-            predecessors[this.vertices[i]] = null;
-        }
+        let distances = {};   // 记录每个节点距离起始节点的距离
+        let predecessors = {}; // 记录每个节点的前溯节点
+
+        // 初始化每个节点距离起始节点的距离和前溯节点
+        this.vertices.forEach((vertex) => {
+            distances[vertex] = 0;
+            predecessors[vertex] = null;
+        });
 
         while (!queue.isEmpty()) {
             let u = queue.dequeue();
-            let neighbors = this.adjacencyList.get(u);
             colorMapping[u] = 'grey';
-            for (let i = 0; i < neighbors.length; i++) {
-                let n = neighbors[i];
-                if (colorMapping[n] === 'white') {
-                    colorMapping[n] = 'grey';
-                    // 因为节点 n 是 u 的相邻节点，所以距离顶点的距离就比 u 大一
-                    distances[n] = distances[u] + 1;
-                    predecessors[n] = u;
-                    queue.enqueue(n);
+
+            this.adjacencyList.get(u).forEach((item) => {
+                if (colorMapping[item] === 'white') {
+                    colorMapping[item] = 'grey';
+
+                    // 因为节点 item 是 u 的相邻节点，所以距离起始节点的距离就比 u 大一
+                    distances[item] = distances[u] + 1;
+                    predecessors[item] = u;
+                    queue.enqueue(item);
                 }
-            }
+            });
+
             colorMapping[u] = 'black';
         }
 
@@ -173,9 +207,9 @@ class Graph {
         };
     }
 
-    // 使用 BFS 计算指定顶点 v 到其他所有顶点的最短路径
+    // 使用 BFSWidthMoreInfo 计算指定顶点 v 到其他所有顶点的最短路径
     getShortestPaths (v) {
-        let {predecessors} = this.BFS(v); // 获得每个节点的前溯节点
+        let {predecessors} = this.BFSWidthMoreInfo(v); // 获得每个节点的前溯节点
         let pathes = {};
         for (let key in predecessors) { // 遍历记录每个节点距离顶点的最短路径
             let predecessor = predecessors[key];
