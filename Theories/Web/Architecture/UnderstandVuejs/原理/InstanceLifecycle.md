@@ -270,10 +270,82 @@ new Vue({
 5. 在服务端渲染中不会被触发。
 
 ### 第八阶段 销毁实例
-1. 实例的所有指令会被解绑，事件监听会被移除，子实例也会销毁。
-2. 销毁完毕后，会触发 `destroyed()`。
-3. `destroyed()` 用于销毁实例后的后续清理工作，或者通知远程服务器该本次销毁。
-4. 同样在服务端渲染中不会被触发。
+1. 实例的所有指令和 watcher 会被解绑，事件监听会被移除，子实例也会销毁。
+2. 上面官方的图中，这一阶段做的工作为 “Teardown watchers, child components and event listeners”。
+3. 我之前测试的时候，发现在 `destroyed` 钩子里面依然可以通过 `this._watchers` 访问到所有的 watcher，子组件啥的也都能访问到，看起来好像和 `beforeDestroy` 的没啥区别。
+4. 找到这一阶段的源码
+    ```js
+    Vue.prototype.$destroy = function () {
+        var vm = this;
+        if (vm._isBeingDestroyed) {
+            return
+        }
+        callHook(vm, 'beforeDestroy');
+
+        vm._isBeingDestroyed = true;
+        // remove self from parent
+        var parent = vm.$parent;
+        if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
+            remove(parent.$children, vm);
+        }
+        // teardown watchers
+        if (vm._watcher) {
+            vm._watcher.teardown();
+        }
+        var i = vm._watchers.length;
+        while (i--) {
+            vm._watchers[i].teardown();
+        }
+        // remove reference from data ob
+        // frozen object may not have observer.
+        if (vm._data.__ob__) {
+            vm._data.__ob__.vmCount--;
+        }
+        // call the last hook...
+        vm._isDestroyed = true;
+        // invoke destroy hooks on current rendered tree
+        vm.__patch__(vm._vnode, null);
+
+        // fire destroyed hook
+        callHook(vm, 'destroyed');
+        // turn off all instance listeners.
+        vm.$off();
+        // remove __vue__ reference
+        if (vm.$el) {
+            vm.$el.__vue__ = null;
+        }
+        // release circular reference (#6759)
+        if (vm.$vnode) {
+            vm.$vnode.parent = null;
+        }
+    };
+    ```
+5. 再看看 `teardown` 的代码
+    ```js
+    /**
+    * Remove self from all dependencies' subscriber list.
+    */
+    Watcher.prototype.teardown = function teardown () {
+        if (this.active) {
+            // remove self from vm's watcher list
+            // this is a somewhat expensive operation so we skip it
+            // if the vm is being destroyed.
+            if (!this.vm._isBeingDestroyed) {
+                remove(this.vm._watchers, this);
+            }
+            var i = this.deps.length;
+            while (i--) {
+                this.deps[i].removeSub(this);
+            }
+            this.active = false;
+        }
+    };
+    ```
+5. 可以看出来，并不是移除本身，而是移除了依赖关系，不再响应依赖的变化了。
+6. 可以在 `beforeDestroy` 和 `destroyed` 钩子里分别访问 `this._watchers[0]` 来看其中的 `active` 属性区别，一个是 `true`，一个是 `false`。（因为 `console.log` 本身的问题，不能直接 `console.log(this._watchers)`，打印出来的时候引用的是同一个 `_watchers` 列表，都是 `destroyed` 里面的）
+7. 销毁完毕后，会触发 `destroyed()`。
+8. `destroyed()` 用于销毁实例后的后续清理工作，或者通知远程服务器该本次销毁。
+9. 同样在服务端渲染中不会被触发。
 
 
 ## 父子组件生命周期顺序
