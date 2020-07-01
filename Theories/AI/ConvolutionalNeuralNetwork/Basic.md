@@ -19,6 +19,17 @@
             - [没有要学习的参数](#没有要学习的参数)
             - [通道数不发生变化](#通道数不发生变化)
             - [对微小的位置变化具有鲁棒性](#对微小的位置变化具有鲁棒性)
+    - [4. 卷积层和池化层的实现](#4-卷积层和池化层的实现)
+        - [4.1 四维数组](#41-四维数组)
+        - [4.2 基于 im2col 的展开](#42-基于-im2col-的展开)
+        - [4.3 卷积层的实现](#43-卷积层的实现)
+            - [4.3.1 `im2col` 函数](#431-im2col-函数)
+            - [4.3.2 实现卷积层](#432-实现卷积层)
+            - [4.3.3 池化层的实现](#433-池化层的实现)
+    - [5. CNN的实现](#5-cnn的实现)
+        - [5.1 初始化](#51-初始化)
+        - [5.2 `predict` 和 `loss`](#52-predict-和-loss)
+        - [5.3 `gradient`](#53-gradient)
     - [References](#references)
 
 <!-- /TOC -->
@@ -114,6 +125,238 @@
 #### 对微小的位置变化具有鲁棒性
 输入数据发生微小偏差时，池化仍会返回相同的结果。因此，池化对输入数据的微小偏差具有鲁棒性。比如，3 × 3 的池化的情况下，如下图所示，池化会吸收输入数据的偏差
 <img src="./images/16.png" width="600" style="display: block; margin: 5px 0 10px;" />
+
+
+## 4. 卷积层和池化层的实现
+### 4.1 四维数组
+1. 如前所述，CNN 中各层间传递的数据是 4 维数据。所谓 4 维数据，比如数据的形状是 (10, 1, 28, 28)，则它对应 10 个高为 28、长为 28、通道为 1 的数据。用 Python 来实现的话，如下所示。
+    ```py
+    >>> x = np.random.rand(10, 1, 28, 28) # 随机生成数据
+    >>> x.shape
+    (10, 1, 28, 28)
+    ```
+2. 这里，如果要访问第 1 个数据，只要写 `x[0]` 就可以了。同样地，用 `x[1]` 可以访问第 2 个数据。
+    ```py
+    >>> x[0].shape # (1, 28, 28)
+    >>> x[1].shape # (1, 28, 28)
+    ```
+3. 如果要访问第 1 个数据的第 1 个通道的空间数据，可以写成下面这样。
+    ```py
+    >>> x[0, 0] # 或者x[0][0]
+    ```
+4. 像这样，CNN 中处理的是 4 维数据，因此卷积运算的实现看上去会很复杂，但是通过使用下面要介绍的 `im2col` （image to column）这个技巧，问题就会变得很简单。
+
+### 4.2 基于 im2col 的展开
+1. 如果老老实实地实现卷积运算，估计要重复好几层的 `for` 语句。这样的实现有点麻烦，而且，NumPy 中存在使用 `for` 语句后处理变慢的缺点（NumPy 中，访问元素时最好不要用 `for` 语句）。
+2. 这里，我们不使用 `for` 语句，而是使用 `im2col` 这个便利的函数进行简单的实现。
+3. `im2col` 是一个函数，将输入数据展开以适合滤波器（权重）。如下图所示，对 3 维的输入数据应用 `im2col` 后，数据转换为 2 维矩阵（正确地讲，是把包含批数量的 4 维数据转换成了 2 维数据，参考下面的实现）。
+    <img src="./images/17.png" width="600" style="display: block; margin: 5px 0 10px;" />
+4. `im2col` 会把输入数据展开以适合滤波器（权重）。具体地说，对于输入数据，将应用滤波器的区域（3 维方块）横向展开为 1 行。`im2col` 会在所有应用滤波器的地方进行这个展开处理。如下图所示
+    <img src="./images/18.png" width="600" style="display: block; margin: 5px 0 10px;" />
+5. 在上图中，为了便于观察，将步幅设置得很大，以使滤波器的应用区域不重叠。而在实际的卷积运算中，滤波器的应用区域几乎都是重叠的。
+6. 在滤波器的应用区域重叠的情况下，使用 `im2col` 展开后，展开后的元素个数会多于原方块的元素个数。因此，使用 `im2col` 的实现存在比普通的实现消耗更多内存的缺点。
+7. 但是，汇总成一个大的矩阵进行计算，对计算机的计算颇有益处。比如，在矩阵计算的库（线性代数库等）中，矩阵计算的实现已被高度最优化，可以高速地进行大矩阵的乘法运算。因此，通过归结到矩阵计算上，可以有效地利用线性代数库。
+8. 使用 `im2col` 展开输入数据后，之后就只需将卷积层的滤波器（权重）纵向展开为 1 列，并计算 2 个矩阵的乘积即可。这和全连接层的 Affine层进行的处理基本相同。如下图所示
+    <img src="./images/19.png" width="600" style="display: block; margin: 5px 0 10px;" />
+9. 可以看到，基于 `im2col` 方式的输出结果是 2 维矩阵。因为 CNN 中数据会保存为 4 维数组，所以要将 2 维输出数据转换为合适的形状。
+10. 以上就是卷积层的实现流程。
+
+### 4.3 卷积层的实现
+#### 4.3.1 `im2col` 函数
+1. `Theories/AI/common/util.py` 中实现了 `im2col` 函数，`im2col` 这一便捷函数具有以下接口。
+    ```py
+    im2col (input_data, filter_h, filter_w, stride=1, pad=0)
+    ```
+    * `input_data`——由（数据量，通道，高，长）的 4 维数组构成的输入数据
+    * `filter_h`——滤波器的高
+    * `filter_w`——滤波器的长
+    * `stride`——步幅
+    * `pad`——填充
+2. `im2col` 会考虑滤波器大小、步幅、填充，将输入数据展开为 2 维数组。现在，我们来实际使用一下这个 `im2col`。
+    ```py
+    import sys, os
+    sys.path.append(os.pardir)
+    from common.util import im2col
+
+    x1 = np.random.rand(1, 3, 7, 7)
+    col1 = im2col(x1, 5, 5, stride=1, pad=0)
+    print(col1.shape) # (9, 75)
+
+    x2 = np.random.rand(10, 3, 7, 7) # 10个数据
+    col2 = im2col(x2, 5, 5, stride=1, pad=0)
+    print(col2.shape) # (90, 75)
+    ```
+3. 这里举了两个例子。第一个是批大小为 1、通道为 3 的 7 × 7 的数据，第二个的批大小为 10，数据形状和第一个相同。分别对其应用 `im2col` 函数，在这两种情形下，第 2 维的元素个数均为 75。这是滤波器（通道为 3、大小为 5 × 5）的元素个数的总和。批大小为 1 时，`im2col` 的结果是 (9, 75)。而第 2 个例子中批大小为 10，所以保存了 10 倍的数据，即 (90, 75)。
+
+#### 4.3.2 实现卷积层
+1. `Convolution` 类 
+    ```py
+    class Convolution:
+        def __init__(self, W, b, stride=1, pad=0):
+            self.W = W
+            self.b = b
+            self.stride = stride
+            self.pad = pad
+
+        def forward(self, x):
+            FN, C, FH, FW = self.W.shape
+            N, C, H, W = x.shape
+            out_h = int(1 + (H + 2*self.pad - FH) / self.stride)
+            out_w = int(1 + (W + 2*self.pad - FW) / self.stride)
+
+            col = im2col(x, FH, FW, self.stride, self.pad)
+            col_W = self.W.reshape(FN, -1).T # 滤波器的展开
+            out = np.dot(col, col_W) + self.b
+
+            out = out.reshape(N, out_h, out_w, -1).transpose(0, 3, 1, 2)
+
+            return out
+    ```
+2. 卷积层的初始化方法将滤波器（权重）、偏置、步幅、填充作为参数接收。滤波器是 `(FN, C, FH, FW)` 的 4 维形状。另外，`FN`、`C`、`FH`、`FW` 分别是 Filter Number（滤波器数量）、Channel、Filter Height、Filter Width 的缩写。
+3. 用 `im2col` 展开输入数据，并用 `reshape` 将滤波器展开为 2 维数组。然后，计算展开后的矩阵的乘积。
+3. 展开滤波器的部分，将各个滤波器的方块纵向展开为 1 列。
+4. 这里通过 `reshape(FN,-1)` 将参数指定为 -1，这是 `reshape` 的一个便利的功能。通过在 reshape 时指定为 -`1，reshape` 函数会自动计算 -1 维度上的元素个数，以使多维数组的元素个数前后一致。比如，`(10, 3, 5, 5)` 形状的数组的元素个数共有 750 个，指定 `reshape(10,-1)` 后，就会转换成 (10, 75) 形状的数组。
+5. forward 的实现中，最后会将输出大小转换为合适的形状。转换时使用了 NumPy 的 `transpose` `函数。transpose` 会更改多维数组的轴的顺序。通过指定索引序列，就可以更改轴的顺序。如下图所示
+    <img src="./images/20.png" width="600" style="display: block; margin: 5px 0 10px;" />
+6. `Theories/AI/common/layer.py` 中实现了卷积层的反向传播。
+
+#### 4.3.3 池化层的实现
+1. 池化层的实现和卷积层相同，都使用 `im2col` 展开输入数据。不过，池化的情况下，在通道方向上是独立的，这一点和卷积层不同。具体地讲，池化的应用区域按通道单独展开，如下图所示
+    <img src="./images/21.png" width="600" style="display: block; margin: 5px 0 10px;" />
+2. 像这样展开之后，只需对展开的矩阵求各行的最大值，并转换为合适的形状即可。如下图所示
+    <img src="./images/22.png" width="600" style="display: block; margin: 5px 0 10px;" />
+3. 实现
+    ```py
+    class Pooling:
+        def __init__(self, pool_h, pool_w, stride=1, pad=0):
+            self.pool_h = pool_h
+            self.pool_w = pool_w
+            self.stride = stride
+            self.pad = pad
+
+        def forward(self, x):
+            N, C, H, W = x.shape
+            out_h = int(1 + (H - self.pool_h) / self.stride)
+            out_w = int(1 + (W - self.pool_w) / self.stride)
+
+            col = im2col(x, self.pool_h, self.pool_w, self.stride, self.pad)
+            col = col.reshape(-1, self.pool_h*self.pool_w)
+
+            out = np.max(col, axis=1)
+            
+            out = out.reshape(N, out_h, out_w, C).transpose(0, 3, 1, 2)
+
+            return out
+    ```
+4. `Theories/AI/common/layer.py` 中实现了池化层的反向传播。
+
+
+## 5. CNN的实现
+我们已经实现了卷积层和池化层，现在来组合这些层，搭建进行手写数字识别的 CNN。这里要实现如下图所示的 CNN。
+    <img src="./images/23.png" width="600" style="display: block; margin: 5px 0 10px;" />
+
+### 5.1 初始化
+1. 我们将它实现为名为 `SimpleConvNet` 的类。首先来看一下 `SimpleConvNet` 的 `__init__`，取下面这些参数
+    * `input_dim`——输入数据的维度：（通道，高，长）
+    * `conv_param`——卷积层的超参数（字典）。字典的关键字如下：
+        * `filter_num`——滤波器的数量
+        * `filter_size`——滤波器的大小
+        * `stride`——步幅
+        * `pad`——填充
+    * `hidden_size`——隐藏层（全连接）的神经元数量
+    * `output_size`——输出层（全连接）的神经元数量
+    * `weitght_int_std`——初始化时权重的标准差
+2. 实现如下
+    ```py
+    def __init__(self, 
+                input_dim=(1, 28, 28),
+                conv_param={'filter_num':30, 'filter_size':5, 'pad':0, 'stride':1},
+                hidden_size=100, 
+                output_size=10, 
+                weight_init_std=0.01):
+        filter_num = conv_param['filter_num']
+        filter_size = conv_param['filter_size']
+        filter_pad = conv_param['pad']
+        filter_stride = conv_param['stride']
+        input_size = input_dim[1]
+        conv_output_size = (input_size - filter_size + 2*filter_pad) / filter_stride + 1
+        pool_output_size = int(filter_num * (conv_output_size/2) *(conv_output_size/2))
+    ```
+3. 接下来实现权重参数的初始化，学习所需的参数是第 1 层的卷积层和剩余两个全连接层的权重和偏置。
+    ```py
+    self.params = {}
+    self.params['W1'] = weight_init_std * np.random.randn(filter_num, input_dim[0],
+                                                            filter_size, filter_size)
+    self.params['b1'] = np.zeros(filter_num)
+    self.params['W2'] = weight_init_std * np.random.randn(pool_output_size,
+                                                            hidden_size)
+    self.params['b2'] = np.zeros(hidden_size)
+    self.params['W3'] = weight_init_std * np.random.randn(hidden_size, output_size)
+    self.params['b3'] = np.zeros(output_size)
+    ```
+4. 生成必要的层
+    ```py
+    self.layers = OrderedDict()
+    self.layers['Conv1'] = Convolution(self.params['W1'],
+                                        self.params['b1'],
+                                        conv_param['stride'],
+                                        conv_param['pad'])
+
+    self.layers['Relu1'] = Relu()
+    self.layers['Pool1'] = Pooling(pool_h=2, pool_w=2, stride=2)
+    self.layers['Affine1'] = Affine(self.params['W2'], self.params['b2'])
+
+    self.layers['Relu2'] = Relu()
+    self.layers['Affine2'] = Affine(self.params['W3'], self.params['b3'])
+    self.last_layer = SoftmaxWithLoss()
+    ```
+
+### 5.2 `predict` 和 `loss`
+1. 实现
+    ```py
+    def predict(self, x):
+        for layer in self.layers.values():
+            x = layer.forward(x)
+        return x
+
+    def loss(self, x, t):
+        y = self.predict(x)
+        return self.lastLayer.forward(y, t)
+    ```
+2. 这里，参数 `x` 是输入数据，`t` 是监督标签。
+3. 在求损失函数的 `loss` 方法中，除了使用 `predict` 方法进行的 `forward` 处理之外，还会继续进行 `forward` 处理，直到到达最后的 `SoftmaxWithLoss` 层。不懂，没看出来
+
+### 5.3 `gradient`
+1. 实现
+    ```py
+    def gradient(self, x, t):
+        # forward
+        self.loss(x, t)
+
+        # backward
+        dout = 1
+        dout = self.lastLayer.backward(dout)
+
+        layers = list(self.layers.values())
+        layers.reverse()
+        for layer in layers:
+            dout = layer.backward(dout)
+
+        # 设定
+        grads = {}
+        grads['W1'] = self.layers['Conv1'].dW
+        grads['b1'] = self.layers['Conv1'].db
+        grads['W2'] = self.layers['Affine1'].dW
+        grads['b2'] = self.layers['Affine1'].db
+        grads['W3'] = self.layers['Affine2'].dW
+        grads['b3'] = self.layers['Affine2'].db
+
+        return grads
+    ```
+2. 参数的梯度通过误差反向传播法求出，通过把正向传播和反向传播组装在一起来完成。
+3. 因为已经在各层正确实现了正向传播和反向传播的功能，所以这里只需要以合适的顺序调用即可。
+4. 最后，把各个权重参数的梯度保存到 `grads` 字典中。
+5. 这就是 `SimpleConvNet` 的实现，主文件代码在 `./demos/train_convnet.py`。
 
 
 ## References
