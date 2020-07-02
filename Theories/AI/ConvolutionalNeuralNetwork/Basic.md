@@ -30,6 +30,8 @@
         - [5.1 初始化](#51-初始化)
         - [5.2 `predict` 和 `loss`](#52-predict-和-loss)
         - [5.3 `gradient`](#53-gradient)
+    - [6. CNN 的可视化](#6-cnn-的可视化)
+    - [7. 具有代表性的 CNN](#7-具有代表性的-cnn)
     - [References](#references)
 
 <!-- /TOC -->
@@ -357,6 +359,14 @@
 3. 因为已经在各层正确实现了正向传播和反向传播的功能，所以这里只需要以合适的顺序调用即可。
 4. 最后，把各个权重参数的梯度保存到 `grads` 字典中。
 5. 这就是 `SimpleConvNet` 的实现，主文件代码在 `./demos/train_convnet.py`。
+
+
+## 6. CNN 的可视化
+TODO
+
+
+## 7. 具有代表性的 CNN
+TODO
 
 
 ## References

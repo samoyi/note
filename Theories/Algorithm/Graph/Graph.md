@@ -44,6 +44,7 @@
         - [实现](#实现-1)
         - [记录更多信息的深度遍历](#记录更多信息的深度遍历)
         - [拓扑排序](#拓扑排序)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -503,3 +504,10 @@ BFSWidthMoreInfo (v) {
     ```js
     let graph = new Graph(true);
     ```
+
+
+
+## References
+* [学习JavaScript数据结构与算法](https://book.douban.com/subject/26639401/)
+* [算法（第4版）](https://book.douban.com/subject/19952400/)
+* [Python数据结构与算法分析（第2版）](https://book.douban.com/subject/34785178/)
