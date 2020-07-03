@@ -50,11 +50,13 @@
 #### 增加函数的通用性
 1. If I have a function to format a person’s telephone number, and that function takes a person as its argument, then I can’t use it to format a company’s telephone number. 
 2. If I replace the person parameter with the telephone number itself, then the formatting code is more widely useful.
+3. 函数越纯越好。如果我只是格式化手机号的函数，那么虽然所有的手机号都是 `user` 对象的一个属性，也应该把参数设置为 `phone`，而不是 `user`。
 
 #### 对实参的解耦
 1. Apart from increasing a function’s range of applicability, I can also remove some coupling, changing what modules need to connect to others. Telephone formatting logic may sit in a module that has no knowledge about people. 
 2. Reducing how much modules need to know about each other helps reduce how much I need to put into my brain
 when I change something — and my brain isn’t as big as it used to be (that doesn’t say anything about the size of its container, though).
+3. 知道的越少，耦合就越少。
 
 #### 增加耦合也有好处——提高了封装
 1. Choosing the right parameters isn’t something that adheres to simple rules. 

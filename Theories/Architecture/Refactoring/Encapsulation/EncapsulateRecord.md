@@ -19,7 +19,8 @@ formerly: Replace Record with Data Class
 
 ## 思想
 * **意图与实现分离**：供使用者方便使用，但不需要他们知道功能的实现。
-* **黑箱封装**：黑箱内部可以对公开的功能做一些黑箱操作；而且里面怎么修改逻辑，使用者都是无感的。
+* **黑箱封装**：黑箱内部可以对公开的功能做一些黑箱操作。
+* **对使用者透明**：可以对外的表现不变化的前提下，在里面根据需求修改逻辑，使用者都是无感的。
 
 
 ## Motivation
@@ -62,7 +63,10 @@ class Organization {
 
 ### 提供数据读取逻辑
 1. 使用记录的情况下，数据是完全暴露，使用者可以随意的读取和修改。
-2. 但有时你希望对读取和修改加上一些控制，这时就需要把数据封装为对象。
+2. 但有时你希望对读取和修改加上一些控制，这时就需要把数据封装为对象，就可以做很多事情。参考了这个 [提问](https://stackoverflow.com/questions/1568091/why-use-getters-and-setters-accessors) 及 [翻译](https://www.zhihu.com/question/21401198/answer/18113707)
+    * 变量的内部逻辑和外部表现可以不一样，你可能是想隐藏内部实现，也可能是希望在内部实现改变时对使用者透明
+    * 实现对读写的 debug
+    * Getters and setters can allow different access levels - for example the get may be public, but the set could be protected.
 
 ### 方便修改
 1. 假设你的数据逻辑发生了变化，你使用对象的话，那 API 完全可以不变化，只在方法内部进行逻辑修改，对用户来说这样的变化就是无感的。

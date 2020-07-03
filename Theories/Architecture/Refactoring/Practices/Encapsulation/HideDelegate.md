@@ -1,7 +1,5 @@
 # Hide Delegate
 
-inverse of: Remove Middle Man
-
 
 <!-- TOC -->
 

@@ -2,7 +2,10 @@
 
 
 ## 思想
-封装与代理
+* **代理**：多个使用者依赖不同的路径访问 record，导致路径耦合。现在统一访问迁移成本更低的代理函数，由代理函数去访问原 record。
+* **意图与实现分离**：供使用者方便使用，但不需要他们知道功能的实现。
+* **黑箱封装**：黑箱内部可以对公开的功能做一些黑箱操作。
+* **对使用者透明**：可以对外的表现不变化的前提下，在里面根据需求修改逻辑，使用者都是无感的。
 
 
 ### Variable 的定义
@@ -28,10 +31,14 @@
 6. 本来，当数据迁移的时候，所有用到数据的用户都要分别重新建立和数据的关系，但现在有了代理，在数据迁移后，代理内部会处理迁移逻辑，迁移的过程对于所有用户都是透明的，所有用户还是按照之前的方法、层级来访问代理就行了。
 7. 尤其是对于像接口返回数据这样的系统外部数据，外部数据有可能发生非预期的变化，进而对系统产生非预期的影响。对于这种非预期的数据，就应该加装一层防御性代理。
 
-### 封装为函数后也方便监听操作
+### 封装为函数后也方便监听读写行为并进行需要的操作
 1. Encapsulating data is valuable for other things too. 
 2. It provides a clear point to monitor changes and use of the data; I can easily add validation or consequential logic on the updates. 
 3. 这里同样也是代理的思想，代理可以监听访问甚至修改访问。这是监控功能的代理。
+4. 可以监听，就可以做很多事情。参考了这个 [提问](https://stackoverflow.com/questions/1568091/why-use-getters-and-setters-accessors) 及 [翻译](https://www.zhihu.com/question/21401198/answer/18113707)
+    * 变量的内部逻辑和外部表现可以不一样，你可能是想隐藏内部实现，也可能是希望在内部实现改变时对使用者透明
+    * 实现对读写的 debug
+    * Getters and setters can allow different access levels - for example the get may be public, but the set could be protected.
 
 ### 可变的数据要及时封装
 1. It is my habit to make all mutable data encapsulated like this and only accessed through functions if its scope is greater than a single function. 
