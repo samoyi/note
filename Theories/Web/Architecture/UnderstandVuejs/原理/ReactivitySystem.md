@@ -1,24 +1,37 @@
 # Reactivity System
 
-**该篇内容是对响应式数据绑定的概述和使用注意事项，深入的原理分析在该目录下
-Two-wayBinding.md**
+**该篇内容是对响应式数据绑定的概述和使用注意事项，深入的原理分析在当前目录下的 `Two-wayBinding.md`**
+
+
+<!-- TOC -->
+
+- [Reactivity System](#reactivity-system)
+    - [How Changes Are Tracked](#how-changes-are-tracked)
+    - [Change Detection Caveats](#change-detection-caveats)
+        - [For Objects](#for-objects)
+        - [For Arrays](#for-arrays)
+    - [Declaring Reactive Properties](#declaring-reactive-properties)
+    - [Async Update Queue](#async-update-queue)
+        - [异步更新](#异步更新)
+        - [处理异步更新的问题](#处理异步更新的问题)
+    - [References](#references)
+
+<!-- /TOC -->
 
 
 ## How Changes Are Tracked
-1. 当你把一个普通的 JavaScript 对象传给 Vue 实例的`data`选项，Vue 将遍历此对象所有的
-属性，并使用`Object.defineProperty`把这些属性全部转为 getter/setter。Vue 实例将代理
-对这些属性的访问和设置。
-2. 这些 getter/setter 对用户来说是不可见的，但是在内部它们让 Vue 追踪依赖，在属性被访
-问和修改时通知变化。
-3. 每个组件实例都有相应的 watcher 实例对象，它会在组件渲染的过程中把属性记录为依赖，之
-后当依赖项的 setter 被调用时，会通知 watcher 重新计算，从而致使它关联的组件得以更新。
+1. When you pass a plain JavaScript object to a Vue instance as its `data` option, Vue will walk through all of its properties and convert them to getter/setters using `Object.defineProperty`. Vue 实例将代理对这些属性的访问和设置。
+2. The getter/setters are invisible to the user, but under the hood they enable Vue to perform dependency-tracking and change-notification when properties are accessed or modified.
+3. Every component instance has a corresponding **watcher** instance, which records any properties “touched” during the component’s render as dependencies. 
+4. 这里看起来，watcher 相当于管理订阅者的一个对象，每个订阅者希望监听某个或某几个 `data` 属性或计算属性的变化，watch 会负责把这个订阅者的变化监听回调函数注册到响应的 `data` 属性或计算属性名下。
+4. Later on when a dependency’s setter is triggered, it notifies the watcher, which in turn causes the component to re-render.
+5. 被依赖的 `data` 属性或者计算属性的 setter 被调用时，该属性之前名下订阅者注册的监听回调就会被调用。
 
-![Reactivity System](../images/ReactivitySystem.png)
+<img src="../images/ReactivitySystem.png" width="600" style="display: block;" />
 
 
 ## Change Detection Caveats
-1. 受现代 JavaScript 的限制 (而且`Object.observe`也已经被废弃)，Vue 不能检测到对象属
-性的添加或删除。因为只有属性的修改才能触发 setter，属性的删除以及子属性的变动都不会触发。
+1. 受现代 JavaScript 的限制 (而且 `Object.observe` 也已经被废弃)，Vue 不能检测到对象（包括数组）属性的添加或删除，只有属性的修改才能触发 setter，属性的删除以及子属性的变动都不会触发。
     ```js
     let data = {
         _info: {
@@ -59,86 +72,96 @@ Two-wayBinding.md**
     console.log(data.info.newProp); // "newProp"
     delete data.info;               // 不会有输出
     ```
-2. 由于 Vue 会在初始化实例时对属性执行 getter/setter 转化过程，所以属性必须在`data`对
-象上存在才能让 Vue 转换它，这样才能让它是响应的。
-3. Vue 不允许在已经创建的实例上动态添加新的根级响应式属性 (root-level reactive
-property)。然而它可以使用`Vue.set(object, key, value)`方法将响应属性添加到嵌套的对象
-上
-```js
-Vue.set(vm.someObject, 'b', 2)
-```
-也可以使用`vm.$set`实例方法，这也是全局`Vue.set`方法的别名：
-```js
-this.$set(this.someObject, 'b', 2)
-```
-4. 有时你想向一个已有对象添加多个属性，例如使用`Object.assign()`或`_.extend()`
-方法来添加属性。但是，这样添加到对象上的新属性不会触发更新。在这种情况下可以创建一个新的
-对象，让它包含原对象的属性和新的属性，之后再用它替换掉原来的属性：
-```js
-this.someObject = Object.assign({}, this.someObject, { a: 1, b: 2 });
-```
+2. 由于 Vue 会在初始化实例时对属性执行 getter/setter 转化过程，所以属性必须在 `data` 对象上存在才能让 Vue 转换它，这样才能让它是响应的。
+3. 但还是有办法解决这个问题，动态添加响应式的属性。
+
+### For Objects
+1. ，除了不能添加实例的跟级别响应式属性以外，还是可以解决这个问题。
+2. Vue does not allow dynamically adding new root-level reactive properties to an already created instance. However, it’s possible to add reactive properties to a nested object using the `Vue.set(object, propertyName, value)` method.
+3. Sometimes you may want to assign a number of properties to an existing object, for example using `Object.assign()` or `_.extend()`. However, new properties added to the object will not trigger changes. In such cases, create a fresh object with properties from both the original object and the mixin object:
+    ```js
+    // Object.assign(this.parent.child, { age: 22, sex: 'female' }); // 不行
+    // 下面的可以，因为直接修改了 child 而不是添加属性
+    this.parent.child = Object.assign({}, this.parent.child, { age: 22, sex: 'female' }); 
+    ```
+
+### For Arrays
+1. Vue cannot detect the following changes to an array:
+    1. When you directly set an item with the index, e.g. `vm.items[indexOfItem] = newValue`
+    2. When you modify the length of the array, e.g. `vm.items.length = newLength`
+2. To overcome caveat 1, both of the following will accomplish the same as `vm.items[indexOfItem] = newValue`, but will also trigger state updates in the reactivity system:
+    ```js
+    // Vue.set
+    Vue.set(vm.items, indexOfItem, newValue)
+    ```
+    ```js
+    // Array.prototype.splice
+    vm.items.splice(indexOfItem, 1, newValue)
+    ```
+3. To deal with caveat 2, you can use `splice`:
+    ```js
+    vm.items.splice(newLength)
+    ```
 
 
 ## Declaring Reactive Properties
-1. 由于 Vue 不允许动态添加根级响应式属性，所以你必须在初始化实例前声明根级响应式属性，
-哪怕先赋一个空值。
-2. 这样的限制在背后是有其技术原因的，它消除了在依赖项跟踪系统中的一类边界情况（不懂），
-也使 Vue 实例在类型检查系统的帮助下运行的更高效。而且在代码可维护性方面也有一点重要的考
-虑：`data`对象就像组件状态的概要，提前声明所有的响应式属性，可以让组件代码在以后重新阅读
-或其他开发人员阅读时更易于被理解。
+1. Since Vue doesn’t allow dynamically adding root-level reactive properties, you have to initialize Vue instances by declaring all root-level reactive data properties upfront, even with an empty value.
+2. If you don’t declare message in the `data` option, Vue will warn you that the render function is trying to access a property that doesn’t exist.
+3. There are technical reasons behind this restriction - it eliminates a class of edge cases in the dependency tracking system, and also makes Vue instances play nicer with type checking systems. 
+3. But there is also an important consideration in terms of code maintainability: the data object is like the schema for your component’s state. Declaring all reactive properties upfront makes the component code easier to understand when revisited later or read by another developer.
 
 
 ## Async Update Queue
-1. Vue 执行 DOM 更新的操作是异步的。
-2. 只要观察到数据变化，Vue 将开启一个队列，并缓冲在同一事件循环中发生的所有数据改变。如
-果同一个 watcher 被多次触发，只会被推入到队列中一次。这种在缓冲时去除重复数据对于避免不
-必要的计算和 DOM 操作上非常重要。
-3. 然后，在下一个的事件循环“tick”中，Vue 刷新队列并执行实际 (已去重的) 工作。
-4. Vue 在内部尝试对异步队列使用原生的`Promise.then`和`MessageChannel`，如果执行环境
-不支持，会采用`setTimeout(fn, 0)`代替。
+### 异步更新
+1. Vue performs DOM updates asynchronously. 
+2. Whenever a data change is observed, it will open a queue and buffer all the data changes that happen in the same event loop. 
+3. If the same watcher is triggered multiple times, it will be pushed into the queue only once. 
+4. This buffered de-duplication is important in avoiding unnecessary calculations and DOM manipulations. 
+5. Then, in the next event loop “tick”, Vue flushes the queue and performs the actual (already de-duped) work. 
+6. Internally Vue tries native `Promise.then`, `MutationObserver`, and `setImmediate` for the asynchronous queuing and falls back to `setTimeout(fn, 0)`.
+7. For example, when you set `vm.someData = 'new value'`, the component will not re-render immediately. It will update in the next “tick”, when the queue is flushed.
+
+
+### 处理异步更新的问题
+1. Most of the time we don’t need to care about this, but it can be tricky when you want to do something that depends on the post-update DOM state. 
+2. Although Vue.js generally encourages developers to think in a “data-driven” fashion and avoid touching the DOM directly, sometimes it might be necessary to get your hands dirty. 
+3. In order to wait until Vue.js has finished updating the DOM after a data change, you can use `Vue.nextTick(callback)` immediately after the data is changed. The callback will be called after the DOM has been updated
     ```html
     <div id="example">{{ message }}</div>
     ```
     ```js
-    var vm = new Vue({
-      el: '#example',
-      data: {
-        message: '123'
-      }
-    })
-    vm.message = 'new message' // change data
-    vm.$el.textContent === 'new message' // false
+    const vm = new Vue({
+        el: '#example',
+        data: {
+            message: '123'
+        },
+    });
+    vm.message = 'new message'; // change data
+    console.log(vm.$el.textContent === 'new message'); // false
     Vue.nextTick(function () {
-      vm.$el.textContent === 'new message' // true
-    })
+        console.log(vm.$el.textContent === 'new message'); // true
+    });
     ```
-5. 多数情况我们不需要关心这个过程，但是如果你想在确保 DOM 状态更新之后再执行某个操作，
-那么就必须要等到本次事件循环结束。这就可能会有些棘手。虽然 Vue.js 通常鼓励开发人员沿着
-“数据驱动”的方式思考，避免直接接触 DOM，但是有时我们确实要这么做。为了在数据变化之后等待
-Vue 完成更新 DOM ，可以在数据变化之后立即使用`Vue.nextTick(callback)`。这样回调函数在
-DOM 更新完成后就会调用。
-6. 如果在在组件内，那么使用实例方法`vm.$nextTick()`会更方便，因为它不需要全局 Vue ，并
-且回调函数中的`this`将自动绑定到当前的 Vue 实例上
+4. There is also the `vm.$nextTick()` instance method, which is especially handy inside components, because it doesn’t need global `Vue` and its callback’s `this` context will be automatically bound to the current Vue instance
+5. 如果不传参回调函数，`Vue.nextTick()` 或 `this.$nextTick()` 会返回一个 promise，resolve 的结果是 nextTick 时的实例。因此也可以使用 `async`/`await` 语法:
     ```js
-      Vue.component('example', {
-      template: '<span>{{ message }}</span>',
-      data: function () {
-        return {
-          message: 'not updated'
-        }
-      },
-      methods: {
-        updateMessage: function () {
-          this.message = 'updated'
-          console.log(this.$el.textContent) // => 'not updated'
-          this.$nextTick(function () {
+    methods: {
+        updateMessage: async function () {
+            this.message = 'updated'
+            console.log(this.$el.textContent) // => 'not updated'
+            await this.$nextTick()
             console.log(this.$el.textContent) // => 'updated'
-          })
         }
-      }
-    })
+    }
     ```
-
+6. 如果传了回调函数，就不会有返回值
+    ```js
+    let p1 = this.$nextTick();
+    console.log(p1); // Promise {<pending>}
+    let p2 = this.$nextTick(() => {});
+    console.log(p2); // undefined
+    ```
+    
 
 ## References
-* [Reactivity in Depth](https://vuejs.org/v2/guide/reactivity.html#How-Changes-Are-Tracked)
+* [Reactivity in Depth](https://vuejs.org/v2/guide/reactivity.html) 及 [译文](https://cn.vuejs.org/v2/guide/reactivity.html)
