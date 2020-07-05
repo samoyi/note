@@ -24,9 +24,11 @@ let uid = 0
 * This is used for both the $watch() api and directives.
 */
 /**
+ * 相当于 Publisher & Subscriber 模式的 Subscriber。
+ * watcher 将一个表达式变成一个 subscriber，让它订阅若干个依赖的 dep。
  * watcher 负责解析表达式然后收集表达式的依赖，构造函数中的 expOrFn 就是这个表达式。
- * 当这个表达式的依赖发生变化时，watcher 会收到通知。如果依赖的变化让表达式的值发生了变化，watcher 就会调用针对该表达式的变化回调
- * 函数，即构造函数中的 cb。
+ * 当这个表达式的依赖发生变化时，watcher 会收到通知。
+ * 如果依赖的变化让表达式的值发生了变化，watcher 就会调用针对该表达式的变化回调函数，即构造函数中的 cb。
  *
  * 如果是计算属性：expOrFn 就是这个计算属性函数，watcher 会收集函数内部依赖；cb 是空函数 ƒ noop (a, b, c) {}，因为计算属性变化
  *     完后没有直接要做的事情。
@@ -102,7 +104,6 @@ export default class Watcher {
         // TODO expression 的用处
         this.expression = process.env.NODE_ENV !== 'production' ? expOrFn.toString() : ''
 
-
         // parse expression for getter
         // 获取 watch 的表达式的求值函数
         // 如果 expOrFn 是计算属性函数，则 getter 当然就是该函数；如果 watch 的是一个侦听器属性，则通过 parsePath 函数返回一个
@@ -164,10 +165,12 @@ export default class Watcher {
     }
 
     // 接收参数 dep，让当前 watcher 订阅 dep
+    // 应该命名为 addToDep ?
     /**
     * Add a dependency to this directive.
     */
     addDep (dep: Dep) {
+        // TODO 除了最后一步 addSub，其他都是在干啥？
         const id = dep.id
         if (!this.newDepIds.has(id)) {
             this.newDepIds.add(id)
@@ -265,7 +268,7 @@ export default class Watcher {
     /**
     * Depend on all deps collected by this watcher.
     */
-    // 调用每个依赖的 dpend 方法，该方法又会调用该 watcher 的 addDep
+    // 调用每个依赖 publisher 的 depend 方法，该方法又会调用该 watcher 的 addDep
     depend () {
         let i = this.deps.length
         while (i--) {

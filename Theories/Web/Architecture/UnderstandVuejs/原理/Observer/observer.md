@@ -1,93 +1,238 @@
 # observer
 
-key | value
---|--
-源码版本 | 2.5.2
-文件路径 | `src/core/observer`
 
-<img src="./pattern.png" alt="ovserver pattern" />
-
-## Observer
-1. 位于`core/observer/index.js`中的`Observer`类。
-2. Observer class that is attached to each observed object. Once attached, the observer converts the target object's property keys into getter/setters that collect dependencies and dispatch updates.
-3. 简单来说，就是观察`data`对象。
+<img src="./pattern.png" style="display: block;" />
 
 
-## Watcher
-1. 位于`core/observer/watcher.js`
+<!-- TOC -->
+
+- [observer](#observer)
+    - [相关信息](#相关信息)
+    - [思想](#思想)
+    - [主要模块](#主要模块)
+        - [`Observer`](#observer)
+        - [`Dep`](#dep)
+        - [`Watcher`](#watcher)
+        - [从单词语义上看 `Watcher` 和 `Observer` 的命名](#从单词语义上看-watcher-和-observer-的命名)
+    - [响应式的实现](#响应式的实现)
+        - [第一步：使用 `Dep` 类把 data 属性改造为 publisher，设置 getter 和 setter](#第一步使用-dep-类把-data-属性改造为-publisher设置-getter-和-setter)
+        - [第二步：`Watcher` 求值，触发 data 属性的 getter](#第二步watcher-求值触发-data-属性的-getter)
+        - [第三步：data 属性的 getter 中，`Dep` 获取当前 `Watcher`，并传递自己](#第三步data-属性的-getter-中dep-获取当前-watcher并传递自己)
+        - [第四步： `Watch` 判断如果需要订阅，就调用 `Dep` 的 `addSub` 方法，让自己订阅 `Dep` 的更新](#第四步-watch-判断如果需要订阅就调用-dep-的-addsub-方法让自己订阅-dep-的更新)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
+## 相关信息
+* 源码版本：2.5.2
+* 文件路径：`src/core/observer`
+
+
+## 思想
+
+
+## 主要模块
+### `Observer`
+1. 位于 `core/observer/index.js` 中的 `Observer` 类。
+2. Observe 一个 vue 实例，也就是将它的 data 对象里面的属性转换为访问器属性。
+3. 通过使用 Dep 模块，将每一个属性设置为 publisher，从而实现在其值更新的时候通知依赖，也就是实现响应式。
+
+### `Dep`
+1. 位于 `core/observer/dep.js`
+2. 相当于 Publisher & Subscriber 模式的 Publisher。
+3. 每一个被依赖的属性都有一个对应的 `Dep` 实例，管理着订阅者们（`Watcher`）对该属性的订阅操作和属性值更新后通知订阅者。
+
+### `Watcher`
+1. 位于 `core/observer/watcher.js`
 2. 相当于 Publisher & Subscriber 模式的 Subscriber。
+3. 管理一个表达式，确定它依赖哪些 `Dep` 并结合相应的 `Dep` 进行订阅。
 
-### 作用
-1. A watcher parses an expression, collects dependencies, and fires callback when the expression value changes. This is used for both the `$watch()` api and directives.
-
-### Watch 的对象：Watcher 构造函数的`expOrFn`参数
-1. 一个 watcher 会 watch 一个计算属性表达式或者一个`watch`属性，同时还会 watch 一个统一的渲染表达式。不懂，watcher 并不会 watch 方法，但是方法内部依赖的数据更新时为什么方法也会被重新调用。
-    ```html
-    <div id="app">
-      {{m}}
-      {{n}}
-      {{sum}}
-    </div>
-    ```
-    ```js
-    new Vue({
-        el: '#app',
-        data(){
-          return {
-            m: 22,
-            n: 33,
-          }
-        },
-        computed: {
-            sum(){
-                return this.m + this.n;
-            },
-        },
-        watch: {
-            m(){
-                console.log('m has been changed');
-            },
-        },
-    });
-    ```
-    Watcher 构造函数会被调用三次，`expOrFn`参数分别如下：
-    ```js
-    ƒ sum(){
-        return this.m + this.n;
-    }
-    ```
-    ```js
-    m
-    ```
-    ```js
-    ƒ () {
-        vm._update(vm._render(), hydrating);
-    }
-    ```
-2. 所谓“统一的渲染表达式”，不管是上面例子中有三个渲染表达式，还是一个都没有，都会有且只有一个上面 watch 的函数。也就是说，只要有一个 vm 实例，就会有一个 watch 渲染表达式的 watcher。
-
-### Watch 到变化后的回调：Watcher 构造函数的`cb`参数
-1. 还是上面例子中的情况，`cb`参数分别为：
-    ```js
-    ƒ noop (a, b, c) {}
-    ```
-    ```js
-    ƒ m(){
-        console.log('m has been changed');
-    }
-    ```
-    ```js
-    ƒ noop (a, b, c) {}
-    ```
-    可以看到，观察到计算属性和渲染表达式的依赖更新后，并不会执行实际回调操作；只有 watch 的属性变化后才会执行设置的回调。
-
-
-### 从单词语义上看 Watcher 和 Observer 的区别
-1. 来自这个[视频](https://www.youtube.com/watch?v=X864N8H9OCg)的解释
+### 从单词语义上看 `Watcher` 和 `Observer` 的命名
+1. 来自这个 [视频](https://www.youtube.com/watch?v=X864N8H9OCg) 的解释：
     * Watch: To look at something or someone for a time, paying attention to what happens.
     * Observe: To watch something or someone carefully, especially to learn more about them.
-2. 所以 Watcher 只是一直盯着看有没有变化，而 Observer 除了观察以外，还要深入其中去给数据设置 getter 和 setter，显然做了更多。
+2. 所以 `Watcher` 只是一直盯着看有没有变化，而 `Observer` 除了观察以外，还要深入其中去给数据设置 getter 和 setter。
 
+
+## 响应式的实现
+1. 我们举例假设有一个计算属性内部依赖了两个 data 属性，来看看这个依赖关系是怎么绑定的。
+2. 计算属性是 subscriber，对应 `Watcher`；data 属性是 publisher，对应 `Dep`。
+
+### 第一步：使用 `Dep` 类把 data 属性改造为 publisher，设置 getter 和 setter
+1. Vue 响应式系统的 publisher 是通过 `Dep` 类实现的，因此在编译 `data` 时，会为每一个属性实例化一个 `Dep`。
+2. 将该 data 属性改造为访问器属性，getter 里负责绑定和 `Watcher` 的依赖关系，setter 负责在值变化时通知依赖该属性的 `Watcher`。
+3. 应该是只在一个 data 属性初始化的时候才会执行绑定，而不是每次访问该属性都绑定。不过目前还没看到这个判断逻辑。
+
+```js
+// observer/index.js
+
+export function defineReactive (
+    obj: Object,
+    key: string,
+    val: any,
+    customSetter?: ?Function,
+    shallow?: boolean)
+{
+    // 为每个数据属性创建一个 publisher，所有依赖该数据属性的 subscriber 都会订阅这个 publisher
+    const dep = new Dep()
+
+    const property = Object.getOwnPropertyDescriptor(obj, key)
+    if (property && property.configurable === false) {
+        return
+    }
+
+    const getter = property && property.get
+
+    if (!getter && arguments.length === 2) {
+        val = obj[key]
+    }
+
+    const setter = property && property.set
+
+    let childOb = !shallow && observe(val)
+
+    Object.defineProperty(obj, key, {
+        enumerable: true,
+        configurable: true,
+        get: function reactiveGetter () {
+            const value = getter ? getter.call(obj) : val
+            // Dep.target 如果有对象，就说明当前有一个 watcher 正在求值。应该是可以通过这个判断只在初始化时进行绑定
+            if (Dep.target) {
+                // 绑定和 watcher 的依赖关系
+                dep.depend()
+                if (childOb) {
+                    childOb.dep.depend()
+                    if (Array.isArray(value)) {
+                        dependArray(value)
+                    }
+                }
+            }
+            return value
+        },
+        set: function reactiveSetter (newVal) {
+            const value = getter ? getter.call(obj) : val
+            /* eslint-disable no-self-compare */
+            if (newVal === value || (newVal !== newVal && value !== value)) {
+                return
+            }
+            /* eslint-enable no-self-compare */
+            if (process.env.NODE_ENV !== 'production' && customSetter) {
+                customSetter()
+            }
+            if (setter) {
+                setter.call(obj, newVal)
+            }
+            else {
+                val = newVal
+            }
+            childOb = !shallow && observe(newVal)
+
+            // 值变化时通知依赖该属性的 watcher
+            dep.notify()
+        }
+    })
+}
+```
+
+### 第二步：`Watcher` 求值，触发 data 属性的 getter
+1. 对计算属性进行求值，也就是执行计算属性的函数，因此就会访问到里面的两个作为 `Dep` 的 data 属性，进而触发 data 属性的 getter。
+2. 看一下 `Watcher` 的求值函数
+    ```js
+    // watcher.js
+
+    get () {
+        pushTarget(this)
+        let value
+        const vm = this.vm
+        try {
+            value = this.getter.call(vm, vm)
+        }
+        catch (e) {
+            if (this.user) {
+                handleError(e, vm, `getter for watcher "${this.expression}"`)
+            }
+            else {
+                throw e
+            }
+        }
+        finally {
+            if (this.deep) {
+                traverse(value)
+            }
+            popTarget()
+            this.cleanupDeps()
+        }
+        return value
+    }
+    ```
+3. 注意第一步的 `pushTarget`，会把当前 `Watcher` 设为全局可以见的 `Dep.target`。那么前面 getter 里面你的 `if (Dep.target)` 就会判定为真。
+4. 同时，`Dep.target` 还会告诉它依赖的两个 `Dep`，当前是哪个 `Watcher` 在求值。这样，两个 `Dep` 就会知道要让哪个 `Watcher` 订阅自己。在下面的第三步可以看，`Dep` 会通过 `Dep.target` 获得当前是哪个 `Watcher` 在求值。
+5. 接下来，`this.getter.call(vm, vm)` 会对该 `Watcher` 的表达式求值，在这个过程中就会触发两个 `Dep` 的 getter。
+    ```js
+    // observer/index.js
+    Object.defineProperty(obj, key, {
+        enumerable: true,
+        configurable: true,
+        get: function reactiveGetter () {
+            const value = getter ? getter.call(obj) : val
+            // 此时 Dep.target 已经有值
+            if (Dep.target) {
+                dep.depend()
+                if (childOb) {
+                    childOb.dep.depend()
+                    if (Array.isArray(value)) {
+                        dependArray(value)
+                    }
+                }
+            }
+            return value
+        },
+        set: function reactiveSetter (newVal) {
+            // 省略
+        }
+    })
+    ```
+6. getter 里面关键操作，就是 `dep.depend()`。它会开始这时依赖绑定关系，进入第三步的行为。
+
+### 第三步：data 属性的 getter 中，`Dep` 获取当前 `Watcher`，并传递自己
+1. 作为 Publisher 的 `Dep` 对象调用 `depend` 方法。
+2. `depend` 方法通过 `Dep.target` 找到当前需要进行绑定 `Watcher` 对象。
+3. 调用该 `Watcher` 的 `addDep` 方法，并传递自己（`Dep` 对象）。
+
+```js
+// dep.js
+depend () {
+    if (Dep.target) {
+        Dep.target.addDep(this)
+    }
+}
+```
+
+### 第四步： `Watch` 判断如果需要订阅，就调用 `Dep` 的 `addSub` 方法，让自己订阅 `Dep` 的更新
+1. 上一步，`Dep` 通过 `Watcher` 的 `addDep` 方法把自己传递给了 `Watcher`。
+2. `Watcher` 在自己的 `addDep` 方法中获得了该 `Dep`，它再调用该 `Dep` 的 `addSub` 并传递自己，让 `Dep` 把自己加入到 subscriber 列表里。
+    ```js
+    // watcher.js
+    addDep (dep: Dep) {
+        const id = dep.id
+        if (!this.newDepIds.has(id)) {
+            this.newDepIds.add(id)
+            this.newDeps.push(dep)
+            if (!this.depIds.has(id)) {
+                dep.addSub(this)
+            }
+        }
+    }
+    ```
+3. 具体的订阅方法
+    ```js
+    // dep.js
+    addSub (sub: Watcher) {
+        this.subs.push(sub)
+    }
+    ```
+4. 注意到，其实第三步的时候，`Dep` 就已经获得了当前的 `Watcher`，但它并没有直接 `addSub`，而是先把自己传给 `Watcher`，再让 `Watcher` 调用自己的 `addSub` 方法。虽然还不知道具体的原理，但这样折腾一下，应该就是因为要进行 `addDep` 里面的两层判断。虽然获得了 `Watcher`，但也不能直接添加，还是要在 `Watcher` 里判断一下是否满足添加的条件。
 
 
 ## References

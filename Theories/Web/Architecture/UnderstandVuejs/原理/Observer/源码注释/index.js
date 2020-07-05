@@ -28,7 +28,9 @@ export function toggleObserving (value: boolean) {
     shouldObserve = value
 }
 
-// 为被观察实例的 data 对象构建一个观察者实例
+
+// Observe 一个 vue 实例，将它的 data 对象里面的属性转换为访问器属性。
+// 将每一个属性设置为 publisher，从而实现在其值更新的时候通知依赖，也就是实现响应式
 /**
 * Observer class that is attached to each observed
 * object. Once attached, the observer converts the target
@@ -43,9 +45,11 @@ export class Observer {
     // 参数为被观察实例的 data 对象
     constructor (value: any) {
         this.value = value
+        // 为整个 data 对象创建一个 publisher，之后还会遍历为每个子属性创建对应的 publisher 
         this.dep = new Dep()
         this.vmCount = 0
-        // def 函数出自 core/util/lang.js，为 data 对象添加名为 __ob__ 的属性，指向这里被构建的观察者实例
+        // def 函数出自 core/util/lang.js
+        // 为 data 对象添加名为 __ob__ 的属性，指向这里被构建的观察者实例，用来标志该 data 对象已经被观察了
         def(value, '__ob__', this)
         // TODO 这里什么时候会出现是数组的情况？
         if (Array.isArray(value)) {
@@ -55,8 +59,8 @@ export class Observer {
             augment(value, arrayMethods, arrayKeys)
             this.observeArray(value)
         }
-        // 遍历 data 对象的每个属性，将其定义为访问器属性
         else {
+            // 遍历 data 对象的每个属性，将其定义为访问器属性
             this.walk(value)
         }
     }
@@ -149,7 +153,7 @@ export function defineReactive (
     customSetter?: ?Function,
     shallow?: boolean)
 {
-    // 为每个数据属性创建一个依赖实例，类似于 publisher
+    // 为每个数据属性创建一个 publisher，所有依赖该数据属性的 subscriber 都会订阅这个 publisher
     const dep = new Dep()
 
     // 跳过不可配置的属性
@@ -159,23 +163,32 @@ export function defineReactive (
     }
 
     // cater for pre-defined getter/setters
+    // 如果该属性本来就定义了 getter，则以该 getter 为基础
     const getter = property && property.get
 
-    // 如果当前属性不是访问器属性，获取它的属性值，作为 getter 的返回值
+    // 如果当前属性不是访问器属性且是用户定义的属性，获取它的属性值，作为 getter 的返回值
+    // 如果是用户自定义的数据属性，arguments 就只有两个，但内置的会更多，
+    // 看到 Vue 对象上的 $listeners 的情况时，有 5 个参数
     if (!getter && arguments.length === 2) {
         val = obj[key]
     }
 
+    // 如果该属性本来就定义了 setter，则以该 setter 为基础
     const setter = property && property.set
 
+    // TODO
     let childOb = !shallow && observe(val)
+
     Object.defineProperty(obj, key, {
         enumerable: true,
         configurable: true,
         get: function reactiveGetter () {
             // 如果属性已经有 getter，则使用本身 getter 返回值
             const value = getter ? getter.call(obj) : val
+            // TODO target
+            // Dep.target 如果有对象，就说明当前有一个 watcher 正在求值
             if (Dep.target) {
+                // 绑定依赖
                 dep.depend()
                 if (childOb) {
                     childOb.dep.depend()
@@ -189,10 +202,12 @@ export function defineReactive (
         set: function reactiveSetter (newVal) {
             const value = getter ? getter.call(obj) : val
             /* eslint-disable no-self-compare */
+            // 试图设置相同的值时不更新。|| 前面不能排除 NaN，|| 后面排除掉 NaN = NaN 这样的赋值
             if (newVal === value || (newVal !== newVal && value !== value)) {
                 return
             }
             /* eslint-enable no-self-compare */
+            // 什么时候会传自定义性 setter
             if (process.env.NODE_ENV !== 'production' && customSetter) {
                 customSetter()
             }
@@ -202,7 +217,10 @@ export function defineReactive (
             else {
                 val = newVal
             }
+            // TODO
             childOb = !shallow && observe(newVal)
+
+            // 通知 subscriber
             dep.notify()
         }
     })
