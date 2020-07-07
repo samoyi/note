@@ -8,6 +8,7 @@
     - [要点](#要点)
     - [使用场景](#使用场景)
         - [实现的超简单双向绑定中的发布-订阅模式](#实现的超简单双向绑定中的发布-订阅模式)
+        - [Vue.js 中发布订阅模式的源码分析](#vuejs-中发布订阅模式的源码分析)
 
 <!-- /TOC -->
 
@@ -132,3 +133,6 @@ function compile(node, vm) {
     }
 }
 ```
+
+### Vue.js 中发布订阅模式的源码分析
+`Theories/Web/Architecture/UnderstandVuejs/原理/Observer/observer.md`
