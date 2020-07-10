@@ -10,6 +10,7 @@
     - [几何图解](#几何图解)
         - [使用线段](#使用线段)
         - [使用矩形](#使用矩形)
+    - [算法实现](#算法实现)
     - [References](#references)
 
 <!-- /TOC -->
@@ -65,6 +66,33 @@
 ### 使用矩形
 1. [这个视频](https://www.bilibili.com/video/BV1mJ411q7xw/)。
 2. 相比于线段图解，这个稍微有点绕。刚开始看的时候，对于 “填满” 的意义，容易错误的理解为面积的填满，实际上 “填满” 的意义是正好对齐边长。
+
+
+## 算法实现
+1. 按照上面证明的思路，可以这样实现
+    ```js
+    function EuclideanGCD (p, q) {
+        let r = p % q;
+
+        if (r === 0) {
+            return q;
+        }
+
+        return EuclideanGCD(q, r);
+    }
+    ```
+2. 不过似乎有说到一个数和 0 的公约数就是这个数本身，也就是说参数 `q` 是可以传 0 的。所以还是要改成书上的写法
+    ```js
+    function EuclideanGCD (p, q) {
+        if (q === 0) {
+            return p;
+        }
+
+        let r = p % q;
+
+        return EuclideanGCD(q, r);
+    }
+    ```
 
 
 ## References
