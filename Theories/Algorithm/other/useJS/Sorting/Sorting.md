@@ -1,6 +1,19 @@
 # Sorting
 
 
+<!-- TOC -->
+
+- [Sorting](#sorting)
+    - [具体排序方法思想](#具体排序方法思想)
+        - [Bubble sort](#bubble-sort)
+        - [Selection Sort](#selection-sort)
+        - [Insertion Sort](#insertion-sort)
+        - [Merge Sort](#merge-sort)
+            - [分治思想](#分治思想)
+
+<!-- /TOC -->
+
+
 ## 具体排序方法思想
 ### Bubble sort
 1. [动画](https://www.programming-algorithms.net/article/39344/Bubble-sort)
