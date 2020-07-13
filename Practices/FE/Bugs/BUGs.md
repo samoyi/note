@@ -20,6 +20,10 @@
         - [iOS10（及以下？）absolute 定位元素向右偏移](#ios10及以下absolute-定位元素向右偏移)
         - [键盘收起后被顶起的页面不自动下落](#键盘收起后被顶起的页面不自动下落)
         - [iOS 微信分享，使用自定义 link 时， invalid signature](#ios-微信分享使用自定义-link-时-invalid-signature)
+        - [iOS `window` 滚动到底的判断](#ios-window-滚动到底的判断)
+    - [微信](#微信)
+        - [四个旧的分享接口的方法名保存在数组中会被变形](#四个旧的分享接口的方法名保存在数组中会被变形)
+        - [微信 1.6 SDK 分享按钮点击无效](#微信-16-sdk-分享按钮点击无效)
     - [事件](#事件)
         - [`blur`和`click`事件同时存在时，`click`事件不响应或响应非预期](#blur和click事件同时存在时click事件不响应或响应非预期)
         - [不能编程式的触发 `<input type="file" />` 的文件选择](#不能编程式的触发-input-typefile--的文件选择)
@@ -126,6 +130,11 @@
 * 现象：history 模式路由的情况，分享时配置自定义 link 时会出现这种情况
 * 原因：[可能的原因](https://www.cnblogs.com/dengxiaolei/p/8143838.html)
 * 解决：项目中发现，从 A 页面 push 到 B 页面，再 push 到 C 页面，在 C 页面发起分享配置时，会出现这种情况；但如果从 A 到 B 是通过 `location.href`，从 B 到 C 依然通过 push，则在 C 页面可以正常分享。
+
+### iOS `window` 滚动到底的判断
+* 现象：`if ($(window).scrollTop() + $(window).height() === $(document).height())` 不会判断为真，安卓正常
+* 原因：应该是由于 iOS 滚动到底时弹性效果，导致出现 `$(window).scrollTop() + $(window).height()` 大于 `$(document).height()` 的情况
+* 解决：`if ($(window).scrollTop() + $(window).height() >= $(document).height())`
 
 
 ## 微信
