@@ -1,36 +1,111 @@
 # Composite
 
 
-## 原理
+<!-- TOC -->
+
+- [Composite](#composite)
+    - [设计思想](#设计思想)
+        - [黑箱封装——功能的具体实现和接口规则分离，实现功能和环境的解耦](#黑箱封装功能的具体实现和接口规则分离实现功能和环境的解耦)
+        - [OCP](#ocp)
+    - [本质](#本质)
+        - [单体行为对象和组合行为对象](#单体行为对象和组合行为对象)
+        - [可遍历的树状结构](#可遍历的树状结构)
+        - [随意组装和高效遍历的前提——单体行为对象和组合行为对象拥有同样的接口](#随意组装和高效遍历的前提单体行为对象和组合行为对象拥有同样的接口)
+    - [实现原理](#实现原理)
+        - [组合为树形结构](#组合为树形结构)
+        - [组合对象和单体对象实现相同的接口](#组合对象和单体对象实现相同的接口)
+    - [适用场景](#适用场景)
+        - [表示由若干对象组成的 “组合-单体” 树状结构](#表示由若干对象组成的-组合-单体-树状结构)
+        - [客户希望统一对待树中的所有对象](#客户希望统一对待树中的所有对象)
+    - [缺点](#缺点)
+    - [实现更强大的宏命令](#实现更强大的宏命令)
+    - [抽象类在组合模式中的作用](#抽象类在组合模式中的作用)
+    - [透明性带来的安全问题](#透明性带来的安全问题)
+    - [扫描文件夹的例子](#扫描文件夹的例子)
+    - [引用父对象](#引用父对象)
+    - [Relations with Other Patterns](#relations-with-other-patterns)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
+## 设计思想
+### 黑箱封装——功能的具体实现和接口规则分离，实现功能和环境的解耦
+1. 要模拟 “组合-单体” 树状结构，其实组合对象和单体对象不实现相同的接口，也是可以完成的。但这样就需要每次都判断一个对象是那种对象。
+2. 而组合模式的要点就是组合对象和单体对象实现相同的接口，从而实现了遍历树结构的效率。
+3. 任何功能的实现都可以进行封装并提供任意需要的接口，这种分离使得功能可以和环境解耦。
+4. 比如充电宝厂商生产的充电宝核心模块肯定是都是一样的，但可以根据不同的使用设备配备不同的接口。这就实现了充电宝的核心功能和使用环境的解耦。
+
+### OCP
+1. 对于这种树结构的遍历，我们期望，在遍历逻辑修改后，对于树的结构的改变并不需要遍历逻辑跟着修改。
+2. 但其实，假如说我们的遍历逻辑里加上了判断组合对象和单体对象的逻辑，树结构的变动也不需要改变遍历逻辑的。
+3. 但是现在，判断逻辑就要耦合组合对象和单体对象的某些属性，因为要根据这些属性来判断。比如说判断组合对象有个 `isComposite` 值为 `true`，或者判断组合对象有个 `reverseChildren` 方法之类的。
+4. 而且遍历逻辑还要根据判断结果调用对象的不同方法，比如如果判断为组合对象，就调用 `reverseChildren` 方法，否则就调用 `execute` 方法。
+5. 这样的耦合就很明显了。随着之后组合对象和单体对象的改变，OCP 可能就无法保证了。
+6. 所以还是应该实现一个统一的接口方法，这样不管对象怎么改变，只要保证有这个方法，就可以不用改变遍历逻辑。
+
+
+## 本质
+### 单体行为对象和组合行为对象
+1. 一个单体行为对象负责一个具体的行为，单体行为对象的调用会执行某个具体行为。
+2. 一个组合行为对象组合了若干个子级别的单体行为对象和（或）组合行为对象，组合行为对象的调用会调用内部的每个子级别的单体行为对象和组合行为对象。
+
+### 可遍历的树状结构
+1. 因为上述的组合关系，所以组合和单体行为对象可以组合成树状结构。
+2. 因为一个组合对象中可以添加新的单体行为对象和组合行为对象，所以若干组合和单体行为对象就可以组合成树状结构。
+3. 一个可爱的配图
+    <img src="./images/01.png" width="600" style="display: block; background-color: #fff;" />
+
+### 随意组装和高效遍历的前提——单体行为对象和组合行为对象拥有同样的接口
+1. 只要两者实现了同样的接口，客户在遍历树结构时，就可以使用同样的方法调用对象。
+2. 例如，单体行为对象和组合行为对象都定义 `execute` 方法。单体行为对象的该方法是执行具体的行为，而组合行为对象的该方法是调用其每个子级别对象的 `execute` 方法
+
+
+## 实现原理
 组合模式将对象组合成树形结构，通过对象的多态性表现，使得用户对单个对象和组合对象的使用具有一致性，下面分别说明。
 
-### 树形结构
-树形结构提供了一种遍历树形结构的方案，通过调用组合对象的执行方法，程序会递归调用组合对象下面的叶对象的执行方法，整个对象树只需要一次操作，便能递归执行所有叶对象。
+### 组合为树形结构
+1. 单体对象只有负责执行的接口，而组合对象还要有一个添加子对象的接口。
+2. 通过组合对象的添加子对象的接口，添加子级别的单体对象或其他的组合对象。
 
-### 多态性
-1. 利用对象多态性统一对待组合对象和单个对象，不管是组合对象还是单个对象，只要都拥有一个相同的执行方法，客户端就可以忽略两者的不同，直接执行即可。
-2. 在组合模式中，客户将统一地使用组合结构中的所有对象，而不需要关心它究竟是组合对象还是单个对象。往对象树里面添加一个命令的时候，并不关心这个命令是宏命令还是普通子命令，只需确定它是一个命令对象，并且这个命令拥有一个统一的可执行方法，那么这个命令就可以被添加进对象树。
+### 组合对象和单体对象实现相同的接口
+1. 利用对象多态性统一对待组合对象和单体对象，不管是组合对象还是单体对象，只要都拥有一个相同的执行方法，客户端就可以忽略两者的不同，直接执行即可。
+2. 组合对象的接口方法是遍历执行每个子对象的接口方法，单体对象的接口方法是执行具体的行为。
+    <img src="./images/02.png" width="400" style="display: block; background-color: #fff;" />
+
+
+## 适用场景
+### 表示由若干对象组成的 “组合-单体” 树状结构
+1. 组合模式可以方便地构造一棵树来表示若干对象组成的 “组合-单体” 结构。
+2. 特别是我们在开发期间不确定这棵树到底存在多少层次的时候，可以很方便的在树的任何位置添加和移除对象。
+
+### 客户希望统一对待树中的所有对象
+因为组合对象和单体对象实现了同样的接口，所以客户可以忽略组合对象和叶对象的区别，客户在面对这棵树的时候，不用关心当前正在处理的对象是组合对象还是单体对象。
+
+
+## 缺点
+It might be difficult to provide a common interface for classes whose functionality differs too much. In certain scenarios, you’d need to overgeneralize the component interface, making it harder to comprehend.
 
 
 ## 实现更强大的宏命令
 1. 基本对象可以被组合成更复杂的组合对象，组合对象又可以被组合，这样不断递归下去，这棵树的结构可以支持任意多的复杂度。
-2. 在树最终被构造完成之后，让整颗树最终运转起来只需要调用最上层对象的方法。每当对最上层的对象进行一次请求时，实际上是在对整个树进行深度优先的搜索。
-3. 而创建组合对象的程序员并不关心这些内在的细节，往这棵树里面添加一些新的节点对象是非常容易的事情，只要保证对象也拥有`execute`方法即可。
+2. 在树最终被构造完成之后，让整颗树最终运转起来只需要调用最上层对象的方法。每当对最上层的对象进行一次请求时，实际上是在对整个树进行深度优先的搜索。 
+3. 而创建组合对象的程序员并不关心这些内在的细节，往这棵树里面添加一些新的节点对象是非常容易的事情，只要保证对象也拥有 `execute` 方法即可。
 
 ```js
-const MacroCommand = function(){
+const MacroCommand = () => {
     return {
-        commandsList: [],
+        commandList: [],
         add (command) {
-            this.commandsList.push(command);
+            this.commandList.push(command);
             return this;
         },
         execute () {
-            for (let i = 0, command; command = this.commandsList[i++];){
+            this.commandList.forEach((command) => {
                 command.execute();
-            }
+            });
         }
-     }
+    }
 };
 
 
@@ -52,13 +127,15 @@ const openSoundCommand = {
         console.log('打开音响');
     },
 };
-let subMacroCommand1 = MacroCommand().add(openTvCommand).add(openSoundCommand);
+let subMacroCommand1 = MacroCommand()
+                        .add(openTvCommand)
+                        .add(openSoundCommand);
 
 
 // 关门、打开电脑和打登录QQ的命令
 const closeDoorCommand = {
     execute () {
-          console.log('关门');
+        console.log('关门');
     },
 };
 const openPcCommand = {
@@ -71,69 +148,30 @@ const openQQCommand = {
         console.log('登录QQ');
     },
 };
-let subMacroCommand2 = MacroCommand().add(closeDoorCommand).add(openPcCommand).add(openQQCommand);
+let subMacroCommand2 = MacroCommand()
+                        .add(closeDoorCommand)
+                        .add(openPcCommand)
+                        .add(openQQCommand);
 
 
 // 把所有的命令组合成一个宏命令
 let macroCommand = MacroCommand();
-macroCommand.add(openAcCommand).add(subMacroCommand1).add(subMacroCommand2);
-
-
-document.getElementById('button').onclick = function(){
-    macroCommand.execute();
-}
-```
-
-
-## 宏命令
-宏命令是一组命令的集合，通过执行宏命令的方式，可以一次执行一批命令
-```js
-const closeDoorCommand = {
-    execute () {
-        console.log( '关门' );
-    },
-};
-const openPcCommand = {
-    execute () {
-        console.log( '开电脑' );
-    },
-};
-const openQQCommand = {
-    execute () {
-        console.log( '登录QQ' );
-    },
-};
-
-const MacroCommand = function(){
-    return {
-        commandsList: [],
-        add (command) {
-            this.commandsList.push( command );
-            return this;
-        },
-        execute () {
-            for ( let i = 0, command; command = this.commandsList[i++]; ){
-               command.execute();
-            }
-        }
-    }
-};
-
-let macroCommand = MacroCommand();
-
 macroCommand
-.add(closeDoorCommand)
-.add(openPcCommand)
-.add(openQQCommand);
+.add(openAcCommand)
+.add(subMacroCommand1)
+.add(subMacroCommand2);
 
-macroCommand.execute();
+
+document.getElementById('button2').addEventListener('click', () => {
+    macroCommand.execute();
+});
 ```
 
 
 ## 抽象类在组合模式中的作用
-1. 前面说到，组合模式最大的优点在于可以一致地对待组合对象和基本对象。客户不需要知道当前处理的是宏命令还是普通命令，只要它是一个命令，并且有execute方法，这个命令就可以被添加到树中。
-2. 这种透明性带来的便利，在静态类型语言中体现得尤为明显。比如在 Java 中，实现组合模式的关键是`Composite`类和`Leaf`类都必须继承自一个`Compenent`抽象类。这个`Compenent`抽象类既代表组合对象，又代表叶对象，它也能够保证组合对象和叶对象拥有同样名字的方法，从而可以对同一消息都做出反馈。组合对象和叶对象的具体类型被隐藏在`Compenent`抽象类身后。
-3. 针对`Compenent`抽象类来编写程序，客户操作的始终是`Compenent`对象，而不用去区分到底是组合对象还是叶对象。所以我们往同一个对象里的`add`方法里，既可以添加组合对象，也可以添加叶对象。
+1. 前面说到，组合模式最大的优点在于可以一致地对待组合对象和基本对象。客户不需要知道当前处理的是宏命令还是普通命令，只要它是一个命令，并且有 `execute` 方法，这个命令就可以被添加到树中。
+2. 这种 透明性带来的便利，在静态类型语言中体现得尤为明显。比如在 Java 中，实现组合模式的关键是 `Composite` 类和 `Leaf` 类都必须继承自一个`Compenent` 抽象类。这个 `Compenent` 抽象类既代表组合对象，又代表叶对象，它也能够保证组合对象和叶对象拥有同样名字的方法，从而可以对同一消息都做出反馈。组合对象和叶对象的具体类型被隐藏在 `Compenent` 抽象类身后。
+3. 针对 `Compenent` 抽象类来编写程序，客户操作的始终是 `Compenent` 对象，而不用去区分到底是组合对象还是叶对象。所以我们往同一个对象里的 `add` 方法里，既可以添加组合对象，也可以添加叶对象。
     ```java
     public abstract class Component{
         // add方法，参数为Component类型
@@ -184,12 +222,9 @@ macroCommand.execute();
 
 
 ## 透明性带来的安全问题
-1. 组合模式的透明性使得发起请求的客户不用去顾忌树中组合对象和叶对象的区别，但它们在本质上有是区别的。组合对象可以拥有子节点，叶对象下面就没有子节点， 所以我们也许会发生一些误操作，比如试图往叶对象中添加子节点。例如在上面更强大的宏命令例子中：
-    ```js
-    console.log(typeof subMacroCommand1.add); // "function"
-    console.log(typeof openAcCommand.add);    // "undefined"
-    ```
-2. 解决方案通常是给叶对象也增加`add`方法，并且在调用这个方法时，抛出一个异常来及时提醒客户
+1. 组合模式的透明性使得发起请求的客户不用去顾忌树中组合对象和叶对象的区别，但它们在本质上有是区别的。
+2. 组合对象可以拥有子节点，叶对象下面就没有子节点，所以我们也许会发生一些误操作，比如试图往叶对象中添加子节点。
+2. 解决方案通常是给叶对象也增加 `add` 方法，并且在调用这个方法时，抛出一个异常来及时提醒客户
     ```js
     const openTvCommand = {
         execute () {
@@ -202,34 +237,189 @@ macroCommand.execute();
     ```
 
 
-## 引用父对象
-有时候我们需要在子节点上保持对父节点的引用，比如当我们删除某个文件的时候，实际上是从这个文件所在的上层文件夹中删除该文件的。
-```js
-var Folder = function( name ){
-    this.name = name;
-    this.parent = null;    // 增加this.parent属性
-    this.files = [];
-};
+## 扫描文件夹的例子
+1. 文件夹对应一个宏对象，文件对应一个普通对象。创建这两个类
+    ```js
+    class Folder {
+        constructor (name) {
+            this.name = name;
+            this.files = [];
+        }
 
-Folder.prototype.add = function( file ){
-    file.parent = this;    // 设置父对象
-    this.files.push( file );
-};
+        add (file) {
+            this.files.push(file);
+            return this;
+        }
 
-Folder.prototype.remove = function(){
-    if ( !this.parent ){    // 根节点或者树外的游离节点
-        return;
-    }
-    for ( var files = this.parent.files, l = files.length - 1; l >=0; l-- ){
-        var file = files[ l ];
-        if ( file === this ){
-            files.splice( l, 1 );
+        scan () {
+            console.log( '开始扫描文件夹: ' + this.name );
+            this.files.forEach((file) => {
+                file.scan();
+            });
         }
     }
-};
-```
 
+    class File {
+        constructor (name) {
+            this.name = name;
+        }
+
+        add (file) {
+            throw new Error( '文件下面不能再添加文件' );
+        }
+
+        scan () {
+            console.log( '开始扫描文件: ' + this.name );
+        }
+    }
+    ```
+2. 尝试添加并扫描
+    ```js
+    let folder = new Folder( '学习资料' );
+    let folder1 = new Folder( 'JavaScript' );
+    let folder2 = new Folder( 'jQuery' );
+
+    let file11 = new File( 'JavaScript设计模式与开发实践' );
+    let file21 = new File( '精通jQuery' );
+    let file3 = new File( '重构与模式' )
+
+    folder1.add( file11 );
+    folder2.add( file21 );
+
+    folder.add( folder1 ).add( folder2 ).add( file3 );
+
+    folder.scan();
+    // 开始扫描文件夹: 学习资料
+    // 开始扫描文件夹: JavaScript
+    // 开始扫描文件: JavaScript设计模式与开发实践
+    // 开始扫描文件夹: jQuery
+    // 开始扫描文件: 精通jQuery
+    // 开始扫描文件: 重构与模式
+    ```
+3. 创建一个新的文件夹和一个新的文件，并放进 `folder`
+    ```js
+    let folder3 = new Folder( 'Nodejs' );
+    let file31 = new File( '深入浅出Node.js' );
+    folder3.add( file31 );
+
+    let file5 = new File( '算法（第4版）' );
+
+    folder.add( folder3 ).add( file5 );
+    
+    folder.scan();
+    // 开始扫描文件夹: 学习资料
+    // 开始扫描文件夹: JavaScript
+    // 开始扫描文件: JavaScript设计模式与开发实践
+    // 开始扫描文件夹: jQuery
+    // 开始扫描文件: 精通jQuery
+    // 开始扫描文件: 重构与模式
+    // 开始扫描文件夹: Nodejs
+    // 开始扫描文件: 深入浅出Node.js
+    // 开始扫描文件: 算法（第4版）
+    ```
+
+
+## 引用父对象
+1. 有时候我们需要在子节点上保持对父节点的引用，比如在组合模式中使用职责链时，有可能需要让请求从子节点往父节点上冒泡传递；还有当我们删除某个文件的时候，实际上是从这个文件所在的上层文件夹中删除该文件的。
+2. 下面改写 `Folder` 类和 `File` 类，增加移除自身的功能
+    ```js
+    class Folder {
+        constructor (name) {
+            this.name = name;
+            this.parent = null; // 增加 parent 属性
+            this.files = [];
+        }
+
+        add (file) {
+            file.parent = this; // 设置父对象
+            this.files.push(file);
+        }
+
+        scan () {
+            console.log( '开始扫描文件夹: ' + this.name );
+            this.files.forEach((file) => {
+                file.scan();
+            });
+        }
+
+        // 增加移除方法，移除当前文件夹自身。
+        removeSelf () {
+            if ( !this.parent ) { // 根节点或者树外的游离节点
+                return;
+            }
+
+            let files = this.parent.files;
+            for (let index = files.length - 1; index >=0; index--) {
+                let file = files[index];
+                if ( file === this ){
+                    files.splice(index, 1);
+                }
+            }
+        }
+    }
+
+    class File {
+        constructor (name) {
+            this.name = name;
+            this.parent = null;
+        }
+
+        add (file) {
+            throw new Error( '文件下面不能再添加文件' );
+        }
+
+        scan () {
+            console.log( '开始扫描文件: ' + this.name );
+        }
+
+        removeSelf () {
+            if ( !this.parent ) {
+                return;
+            }
+            
+            let files = this.parent.files;
+            for (let index = files.length - 1; index >=0; index--) {
+                let file = files[index];
+                if ( file === this ){
+                    files.splice(index, 1);
+                }
+            }
+        }
+    }
+    ```
+3. 测试
+    ```js
+    let folder = new Folder( '学习资料' );
+    let file1 = new File ( '算法（第4版）' );
+    let file2 = new File ( '流畅的Python' );
+    let folder1 = new Folder( 'JavaScript' );
+    let file11 =  new File( 'JavaScript设计模式与开发实践' );
+    let file12 =  new File( 'JavaScript高级程序设计' );
+
+    folder1.add( file11 ).add( file12 );
+    folder.add( file1 ).add( file2 ).add( folder1 );
+
+    folder.scan();
+    // 开始扫描文件夹: 学习资料
+    // 开始扫描文件: 算法（第4版）
+    // 开始扫描文件: 流畅的Python
+    // 开始扫描文件夹: JavaScript
+    // 开始扫描文件: JavaScript设计模式与开发实践
+    // 开始扫描文件: JavaScript高级程序设计
+
+    file2.removeSelf();
+    folder1.removeSelf();
+
+    folder.scan();
+    // 开始扫描文件夹: 学习资料
+    // 开始扫描文件: 算法（第4版）
+    ```
+
+
+## Relations with Other Patterns
 
 
 ## References
 * [《JavaScript设计模式与开发实践》](https://book.douban.com/subject/26382780/)
+* [Refactoring.Guru](https://refactoring.guru/design-patterns/composite)
+* [Refactoring.Guru 中文](https://refactoringguru.cn/design-patterns/composite)
