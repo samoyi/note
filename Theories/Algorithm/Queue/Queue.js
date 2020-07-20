@@ -32,4 +32,4 @@ class Queue {
     }
 }
 
-module.exports = Queue;
+export {Queue};
