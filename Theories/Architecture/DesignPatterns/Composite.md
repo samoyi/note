@@ -54,7 +54,7 @@
 1. 因为上述的组合关系，所以组合和单体行为对象可以组合成树状结构。
 2. 因为一个组合对象中可以添加新的单体行为对象和组合行为对象，所以若干组合和单体行为对象就可以组合成树状结构。
 3. 一个可爱的配图
-    <img src="./images/01.png" width="600" style="display: block; background-color: #fff;" />
+    <img src="./images/01.png" width="600" style="display: block; background-color: #fff; margin: 5px 0 10px 0;" />
 
 ### 随意组装和高效遍历的前提——单体行为对象和组合行为对象拥有同样的接口
 1. 只要两者实现了同样的接口，客户在遍历树结构时，就可以使用同样的方法调用对象。
@@ -71,7 +71,7 @@
 ### 组合对象和单体对象实现相同的接口
 1. 利用对象多态性统一对待组合对象和单体对象，不管是组合对象还是单体对象，只要都拥有一个相同的执行方法，客户端就可以忽略两者的不同，直接执行即可。
 2. 组合对象的接口方法是遍历执行每个子对象的接口方法，单体对象的接口方法是执行具体的行为。
-    <img src="./images/02.png" width="400" style="display: block; background-color: #fff;" />
+    <img src="./images/02.png" width="400" style="display: block; background-color: #fff; margin: 5px 0 10px 0;" />
 
 
 ## 适用场景
