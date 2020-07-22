@@ -1,11 +1,33 @@
 # Dijkstra 的双栈算术表达式求值算法
 
 
+<!-- TOC -->
+
+- [Dijkstra 的双栈算术表达式求值算法](#dijkstra-的双栈算术表达式求值算法)
+    - [设计思想](#设计思想)
+    - [本质](#本质)
+        - [计算即合并](#计算即合并)
+        - [栈的数据结构保证了正确的合并](#栈的数据结构保证了正确的合并)
+    - [算法](#算法)
+    - [实现](#实现)
+    - [单栈实现](#单栈实现)
+
+<!-- /TOC -->
+
 
 ## 设计思想
-1. 一个数学表达式计算的过程，实际上就是不断合并的过程
-2. 而在具有完全括号的表达式中，每一个反括号，就代表要进行一次合并。
 
+
+## 本质
+### 计算即合并
+1. 一个数学表达式计算的过程，实际上就是不断合并的过程。或者说是若干个函数自变量和函数计算规则合起来映射到函数值的过程。
+2. 可以是两个数和一个操作符的合并，也可以是一个数和一个操作符的合并。
+3. 而在具有完全括号的表达式中，每一个反括号，就代表要进行一次合并。
+4. 因为是完全括号的表达式，所以每一个运算都有一个对应的反括号，看见反括号就合并就行了，最后肯定会完成所有的运算。
+
+### 栈的数据结构保证了正确的合并
+1. 当一个反括号被发现，要进行一次合并的时候，显然是要对反括号左边的一个或两个最近的元素进行合并。
+2. 而栈的规则正好会优先执行最近发现的元素，栈顶肯定是反括号左边的操作数，再下一层肯定是要对该操作数进行操作的操作符。根据操作符的类型，可能还有再下面一层是另一个参与运算的操作数。
 
 
 ## 算法
@@ -78,4 +100,58 @@ function Evaluate (str) {
 
 console.log( Evaluate('( 1 + ( ( 2 + 3 ) * ( 4 * 5 ) ) )') ); // 101
 console.log( Evaluate('( ( 1 + sqrt ( 5.0 ) ) / 2.0 )') ); // 1.618033988749895
+```
+
+
+## 单栈实现
+双栈把数字和操作符分开，看起来更好理解一些，不过和单栈并没有什么区别
+```js
+function Evaluate (str) {
+    let charList = str.split(' ');
+
+    let stack = [];
+
+    const operators_double = ['+', '-', '*', '/'];
+    const operators_single = ['sqrt'];
+    const operators = [...operators_double, ...operators_single]
+
+    const calcFnMap = {
+        '+': (m, n) => m + n,
+        '-': (m, n) => m - n,
+        '*': (m, n) => m * n,
+        '/': (m, n) => m / n,
+        'sqrt': (n) => Math.sqrt(n),
+    }
+
+
+    charList.forEach((char) => {
+        if (char === '(') {
+            return;
+        }
+        else if (char === ')') {
+            let n = stack.pop();
+            let operator = stack.pop();
+
+            let result;
+
+            if ( operators_double.includes(operator) ) {
+                let m = stack.pop();
+                result = calcFnMap[operator](m, n);
+            }
+            else {
+                result = calcFnMap[operator](n);
+            }
+
+            stack.push(result);
+        }
+        else if (operators.includes(char)) {
+            stack.push(char);
+        }
+        else if ( isNumberString(char) ) {
+            stack.push( Number.parseFloat(char) );
+        }
+    });
+
+    return stack[0];
+}
 ```
