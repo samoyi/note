@@ -50,6 +50,7 @@ class LinkedList {
         let index = 0;
 
         if (position === 0) { // 在第一个位置添加
+            // 兼容了链表为空的情况
             node.next = current;
             head = node;
         } 
