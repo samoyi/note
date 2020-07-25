@@ -114,6 +114,41 @@ class LinkedList {
         return -1;
     }
 
+    // 使用迭代的方法反转链表
+    reverse_iteration () {
+        let prev = null;
+        let next = null;
+        let current = head;
+        
+        // 不断迭代改变 next 指向
+        while ( current ) {
+            next = current.next
+            current.next = prev;
+            prev = current;
+            current = next;
+        }
+
+        head = prev;
+    }
+
+    // 使用递归的方式反转链表
+    // 这里的递归思路是，把当前第一个（currHead）之后的链表递归的进行反转，然后把 currHead 接到后面
+    reverse_recursion ( currHead ) {
+        let next = currHead.next;
+
+        if ( next ) {
+            // 从 currHead 之后的 next 开始递归反转后面的
+            this.reverse_recursion( next );
+            // 反转后的链表的最后一个节点就是 next，把 currHead 连上
+            next.next = currHead;
+            currHead.next = null;
+        }
+        else {
+            // 不存在 next 就说明当前 currHead 是原链表的最后一个，也就是反转后的第一个
+            head = currHead;
+        }
+    }
+
     isEmpty () {
         return length === 0;
     }
