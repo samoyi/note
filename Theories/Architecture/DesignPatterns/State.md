@@ -1,17 +1,19 @@
 # State
 
 
-State is a behavioral design pattern that lets an object alter its behavior when its internal state changes. It appears as if the object changed its class.
-
-
 <!-- TOC -->
 
 - [State](#state)
     - [1. 设计思想](#1-设计思想)
-        - [本质功能仍然是状态改变引发行为改变](#本质功能仍然是状态改变引发行为改变)
+        - [去中心化及其优劣](#去中心化及其优劣)
+            - [去中心化](#去中心化)
+            - [优劣](#优劣)
         - [状态模式的特别性：封装状态——在封装行为之上进一步的剥离，将复杂的状态逻辑打碎分散](#状态模式的特别性封装状态在封装行为之上进一步的剥离将复杂的状态逻辑打碎分散)
-        - [类似于策略模式？状态变成一种策略？或者命令模式？](#类似于策略模式状态变成一种策略或者命令模式)
+        - [OCP 隔离变化](#ocp-隔离变化)
+        - [数据和环境分离](#数据和环境分离)
     - [2. 抽象本质](#2-抽象本质)
+        - [本质上和策略模式一样](#本质上和策略模式一样)
+        - [数据和环境解耦——从耦合到引用](#数据和环境解耦从耦合到引用)
         - [取消显式的条件判断——移除映射，直接引用](#取消显式的条件判断移除映射直接引用)
     - [3. 实现原理](#3-实现原理)
     - [4. 适用场景](#4-适用场景)
@@ -37,6 +39,7 @@ State is a behavioral design pattern that lets an object alter its behavior when
         - [是否动态创建并销毁状态对象](#是否动态创建并销毁状态对象)
         - [多个 context 共享状态对象](#多个-context-共享状态对象)
     - [JavaScript 版本的状态机](#javascript-版本的状态机)
+        - [可以使用一个委托函数来明确的和状态对象建立委托关系](#可以使用一个委托函数来明确的和状态对象建立委托关系)
     - [和其他模式的关系](#和其他模式的关系)
         - [策略模式](#策略模式)
     - [References](#references)
@@ -45,11 +48,17 @@ State is a behavioral design pattern that lets an object alter its behavior when
 
 
 ## 1. 设计思想
-### 本质功能仍然是状态改变引发行为改变
-1. 允许一个对象在其内部状态改变时改变它的行为，对象看起来似乎修改了它的类。
-2. This pattern is close to the concept of finite-state machines. The state pattern can be interpreted as a strategy pattern, which is able to switch a strategy through invocations of methods defined in the pattern's interface.
-3. This can be a cleaner way for an object to change its behavior at runtime without resorting to conditional statements and thus improve maintainability.
-4. 可以看到，这一本质是对象的基本功能，状态变化影响行为是最基本的功能了。
+### 去中心化及其优劣
+#### 去中心化
+1. 在使用状态模式对状态机的重构中，有一个明显去中心化过程。
+2. 本来，状态的转换都是在环境中进行了，环境就是中心。使用状态模式后，状态的转换交给了一个个具体的状态。
+3. 环境现在甚至不需要知道有哪些状态，更不会知道有哪些状态转换规则。
+4. 环境现在只需要保证符合转换规则的切换流程可以正常执行。
+
+#### 优劣
+1. 集权和自治的对立是广泛且持久存在的，并没有固定的好坏标准，都需要根据具体的情况具体分析。
+2. 集权对于中心的成本更高，而且会丧失灵活性。但可以对各部分有更好的掌控。
+3. 自治会更灵活，但仍然需要一个中心，或者说是一套公共的规则。这个规则必须明确且严格，保证自治不会变成乱来。比如作为状态类的接口或者超类，就要保证具体的对象类实现了要求的方法。
 
 ### 状态模式的特别性：封装状态——在封装行为之上进一步的剥离，将复杂的状态逻辑打碎分散
 1. 封装行为其实类似于，电灯开关例子中第一种情况中，把条件语句的具体执行的逻辑进行封装，而状态的关系还保留在 context 中。
@@ -58,23 +67,22 @@ State is a behavioral design pattern that lets an object alter its behavior when
 4. 而如果使用状态模式，则完全不需要维护策略路径网。因为某个状态都有自己明确的行为，策略网上的每一步都被封装在某个具体的状态内部了，切换状态的行为也交给了某种具体的状态，因为切换状态也属于某种状态的行为。
 5. Context 现在只需要维持一个引用，该引用指向当前的状态对象。需要发生行为时，直接使用该状态对象即可，不需要做任何判断。
 
+### OCP 隔离变化
+状态机的执行规则不常变动，但状态常常变动，所以将状态分离出去，作为参数传入。
 
-### 类似于策略模式？状态变成一种策略？或者命令模式？
-多分支的逻辑从环境逻辑中提取出来
-还有点像职责链？
-
-
-数据和逻辑分离，所有状态配置到一个单独的地方，不写死在逻辑流程里。
-
-构造函数耦合状态违反 OCP，解耦是策略模式？命令模式？
-
-
-委托 等的具体处理逻辑委托给具体的状态类
-
-格力变化 OCP
+### 数据和环境分离
+状态机本身是执行环境，不同的状态是状态机的输入数据。
 
 
 ## 2. 抽象本质
+### 本质上和策略模式一样
+都是把对象在不同状态下执行的不同行为分理出单独的策略，然后根据不同的状态使用不同的策略。
+
+### 数据和环境解耦——从耦合到引用
+1. 对于一个状态机来说，它可以处理不同的状态。所以状态就属于状态机的数据，属于外部输入的东西。而状态机本身就是数据的执行环境。
+2. 在没有使用状态模式之前，数据和环境是耦合在一起的。使用状态模式之后，状态就成了状态机的输入。
+3. 现在，状态和环境就从之前耦合的关系变成了引用的关系。
+
 ### 取消显式的条件判断——移除映射，直接引用
 1. 下面用状态模式实现状态机之后，就不存在状态判断了。但是想想，状态机要执行行为，确实还是要知道当前状态的。
 2. 那么，在状态模式下，为什么不需要显式的判断了？实际上的判断是在哪里进行的？
@@ -512,9 +520,9 @@ light.init();
 
 
 ## JavaScript 版本的状态机
-1. 状态模式是状态机的实现之一，但在 JavaScript 这种“无类”语言中，没有规定让状态对象一定要从类中创建而来。
-2. 另外一点，JavaScript 可以非常方便地使用委托技术，并不需要事先让一个对象持有另一个对象。
-3. 下面的状态机选择了通过`Function.prototype.call`方法直接把请求委托给某个字面量对象来执行
+1. 状态模式是状态机的实现之一，但在 JavaScript 这种 “无类” 语言中，没有规定让状态对象一定要从类中创建而来。
+2. 另外一点，JavaScript 可以非常方便地使用委托技术，并不需要事先让一个对象持有另一个对象，直接引用被委托对象的方法，执行的时候设置 `this` 就行了。
+3. 下面的状态机选择了通过 `Function.prototype.call` 方法直接把请求委托给某个字面量对象来执行
     ```js
     const FSM = {
         off: {
@@ -554,14 +562,65 @@ light.init();
     let light = new Light();
     light.init();
     ```
+    
+### 可以使用一个委托函数来明确的和状态对象建立委托关系
+```js
+const delegateState = function ( client, delegation ) {
+    return {
+        buttonWasPressed ( ...args ) {    // 将客户的操作委托给 delegation 对象
+            return delegation.buttonWasPressed.apply( client, args );
+        }
+    }
+};
 
+const FSM = {
+    off: {
+        buttonWasPressed () {
+            console.log( '开灯' );
+            this.button.innerHTML = '下一次按我是关灯';
+            this.currState = this.onState;
+        }
+    },
+    on: {
+        buttonWasPressed () {
+            console.log( '关灯' );
+            this.button.innerHTML = '下一次按我是开灯';
+            this.currState = this.offState;
+        }
+    }
+};
+
+class Light {
+    constructor () {
+        this.offState = delegateState( this, FSM.off );
+        this.onState = delegateState( this, FSM.on );
+        this.currState = this.offState;    // 设置初始状态为关闭状态
+        this.button = null;
+    }
+
+    init () {
+        var button = document.createElement( 'button' ),
+        self = this;
+        button.innerHTML = '下一次按我是开灯';
+        this.button = document.body.appendChild( button );
+        this.button.onclick = function(){
+            self.currState.buttonWasPressed();
+        }
+    }
+};
+
+
+let light = new Light();
+light.init();
+```
 
 
 ## 和其他模式的关系
 ### 策略模式
 1. 状态模式和策略模式像一对双胞胎，它们都封装了一系列的算法或者行为，它们的类图看起来几乎一模一样，但在意图上有很大不同，因此它们是两种迥然不同的模式。
 2. 策略模式和状态模式的相同点是，它们都有一个上下文、一些策略或者状态类，上下文把请求委托给这些类来执行。
-3. 它们之间的区别是策略模式中的各个策略类之间是平等又平行的，它们之间没有任何联系，所以客户必须熟知这些策略类的作用，以便客户可以随时主动切换算法；而在状态模式中，状态和状态对应的行为是早已被封装好的，状态之间的切换也早被规定完成，“改变行为”这件事情发生在状态模式内部。对客户来说，并不需要了解这些细节。这正是状态模式的作用所在。
+3. 它们之间的区别是策略模式中的各个策略类之间是平等又平行的，它们之间没有任何联系，所以客户必须熟知这些策略类的作用，以便客户可以随时主动切换算法；
+4. 而在状态模式中，状态和状态对应的行为是早已被封装好的，状态之间的切换也早被规定完成，“改变行为” 这件事情发生在状态模式内部。对客户来说，并不需要了解这些细节。这正是状态模式的作用所在。
 
 
 ## References

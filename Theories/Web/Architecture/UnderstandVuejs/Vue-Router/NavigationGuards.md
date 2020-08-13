@@ -1,6 +1,6 @@
 # Navigation Guards
 
-1. `vue-router`提供的导航守卫主要用来通过跳转或取消的方式守卫导航。与其说是 guarding，倒不如说是 controlling。
+1. `vue-router` 提供的导航守卫主要用来通过跳转或取消的方式守卫导航。与其说是 guarding，倒不如说是 controlling。
 2. 有多种机会植入路由导航过程中：全局(路由器级别)的, 单个路由独享的, 或者组件内的。
 3. 参数或查询的改变并不会触发进入/离开的导航守卫。你可以通过 watch `$route`对象来应对这些变化，或使用`beforeRouteUpdate`的组件内守卫。
 
@@ -239,6 +239,7 @@ router.afterEach((to, from)=>{
         })
     }
     ```
+5. 在生命周期上，因为实在 enter 之前，所以 `beforeRouteEnter` 函数本身会在 `beforeCreate` 钩子函数之前被调用；而 `next` 回调会在 `mounted` 之后被调用。
 
 ### `beforeRouteUpdate`
 1. 在当前路由改变，但是该组件被复用时调用。因为这是 In-Component Guard，所以这里的`beforeRouteUpdate`肯定是组件内的更新而不是跨组件的更新，而组件内的路由更新也就是类似于路由参数变动这样不会切换组件的更新。

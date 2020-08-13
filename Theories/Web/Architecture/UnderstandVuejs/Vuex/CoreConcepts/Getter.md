@@ -76,10 +76,11 @@ computed: {
 3. getter 在通过方法访问时，每次都会去进行调用，而不会缓存结果。
 
 
-## 缓存策略
+## 存在非依赖值时的缓存规则比较奇怪
 1. 以下 store 代码进行测试
     ```js
     let outerCount = 1;
+    // let outerCount = 0;
 
     const store = new Vuex.Store({
         state: {
@@ -101,7 +102,8 @@ computed: {
 2. getter `count` 内部会根据一个外部变量 `outerCount` 和 state 属性 `count` 来求值。
 3. 但 `outerCount` 因为不是 state 属性或者 getter，因此不作为依赖。也就是说，它的变化并不会触发 `count` 更新缓存。
 
-### 存在非依赖值时的缓存规则比较奇怪
+### 测试
+#### 测试一
 1. 执行如下
     ```js
     console.log(store.getters.count) // 1    初次读取，触发一次求值
@@ -112,7 +114,9 @@ computed: {
     console.log(store.state.count) // 10
     ```
 2. 打印的结果没什么问题。但是，`outer` 只进行了一次求值。`state.count` 变化的时候，读取 `getters.count` 并没有触发重新求值。
-3. 但是如果我把 `outerCount` 初始值设为 0，即 `let outerCount = 0;`，执行结果就不同了
+
+#### 测试二
+1. 但是如果我把 `outerCount` 初始值设为 0，即 `let outerCount = 0;`，执行结果就不同了
     ```js
     console.log(store.getters.count) // 9    初次读取，触发一次求值
 
@@ -121,18 +125,19 @@ computed: {
     console.log(store.getters.count) // 10   outerCount 是 0，所以会读取到 state.count
     console.log(store.state.count) // 10
     ```
-4. 但是这次 `outer` 只进行了一次求值。
-5. 看起来就像，第一次的时候 Vuex 知道 `outerCount` 是一个真值，所以 `state.count` 变了也没有用，所以不会触发第二次求值；而第二次的时候 Vuex 知道了 `outerCount` 是一个假值，所以 `state.count` 变化会生效，所以会触发第二次求值。
-6. 还没有看源码，但 Vuex 是怎么实现这样的逻辑的？再此基础上，后面再加上以下四行代码验证一下
+2. 这次 `outer` 进行了两次求值。
+3. 看起来就像，测试一的时候 Vuex 知道 `outerCount` 是一个真值，`state.count` 变了也没有用，所以不会触发第二次求值；而第二次的时候 Vuex 知道了 `outerCount` 是一个假值，函数返回值需要读取 `state.count`，所以会触发第二次求值。
+4. 还没有看源码，但 Vuex 是怎么实现这样的逻辑的？再此基础上，后面再加上以下四行代码验证一下
     ```js
     outerCount = 1;
     store.commit('increment')
     console.log(store.getters.count) // 1
     console.log(store.state.count) // 11
     ```
-7. 现在，既然 `outerCount` 又变成了真值，那 Vuex 就知道 `state.count` 变化会生效，因此会触发第三次求值。事实上也确实触发了。
-8. 发现这个问题是因为在实践项目中 getter 中出现了类似这样的情况，只不过不是使用的变量而是使用的 localStorage。
-9. 总之尽量不要在 getter 中使用非依赖的数据。如果使用，就应该使用上面的方法访问，每次都进行函数调用进行求值，而不是使用缓存。
+5. 现在，既然 `outerCount` 又变成了真值，那 Vuex 按理说会知道 `state.count` 变化也不会影响返回值，应该会和测试一的情况一样。
+6. 但是实际上却触发了第三次求值。而且这第三次求值也绝不是因为 `outerCount` 的改变触发的，可以尝试删掉 `store.commit('increment')` 就不会触发第三次求值了。
+7. 发现这个问题是因为在实践项目中 getter 中出现了类似这样的情况，只不过不是使用的变量而是使用的 localStorage。
+8. 总之尽量不要在 getter 中使用非依赖的数据。如果使用，就应该使用上面的方法访问，每次都进行函数调用进行求值，而不是使用缓存。
 
 
 ## `mapGetters`
