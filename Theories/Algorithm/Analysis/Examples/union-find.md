@@ -5,6 +5,7 @@
 
 - [union-find](#union-find)
     - [设计思想](#设计思想)
+        - [考虑改变数据结构——quick-union](#考虑改变数据结构quick-union)
         - [链接分组法](#链接分组法)
     - [抽象本质](#抽象本质)
     - [动态连通性](#动态连通性)
@@ -25,6 +26,14 @@
                 - [`find`](#find)
                 - [`union` 中的对两个触点的一次归并操作](#union-中的对两个触点的一次归并操作)
             - [考虑对 N 个触点的操作](#考虑对-n-个触点的操作)
+        - [quick-union 算法](#quick-union-算法)
+            - [JavaScript 实现](#javascript-实现-1)
+            - [quick-union 算法的分析](#quick-union-算法的分析)
+        - [加权 quick-union 算法](#加权-quick-union-算法)
+            - [JavaScript 实现](#javascript-实现-2)
+            - [加权 quick-union 算法的分析](#加权-quick-union-算法的分析)
+        - [最优算法](#最优算法)
+        - [均摊成本的图像](#均摊成本的图像)
     - [References](#references)
 
 <!-- /TOC -->
@@ -36,6 +45,8 @@
 理解某个实现的性能特点是一项有趣而令人满足的挑战；
 在解决同一个问题的多种算法之间进行选择时，科学方法是一种重要的工具；
 迭代式改进能够让算法的效率越来越高。
+
+### 考虑改变数据结构——quick-union
 
 ### 链接分组法
 
@@ -208,6 +219,200 @@ setTimeout(() => {
 1. 假设我们对 N 个触点的数据使用 quick-find 算法来解决动态连通性问题并且最后只得到了一个连通分量，这至少需要调用 N-1 次 `union()`。
 2. 例如 100 个触点的时，调用 `union` 的传参依次是 `0 1`，`1 2`，`2 3` … `97 98`，`98 99`。
 3. 因此至少要进行 $(N+3)(N-1)\sim N^2$ 次数组访问，即平方级别。
+
+### quick-union 算法
+1. 现在，我们将使用一种新的连通分量逻辑结构来提高 `union` 操作的效率。
+2. quick-find 算法的 `union` 操作效率比较低下的原因是，需要把一个分量中的每一个触点都 **独立的** 变为另一个分享的，所以需要遍历数组来一个一个的改变。
+3. 但想想，既然这些要改变的触点都是同一个分量，而且也是要统一改变为同一个分量，那为什么不能统一改变呢？
+4. 想要统一改变，就要把一个分量里面的处理编为一组，这样才能整体改变。
+5. quick-union 算法就是进行了这样的编组，结构类似于散列表的分离链接。
+6. 确切地说，每个触点所对应的 `id[]` 元素都是同一个分量中的另一个触点的名称（也可能是它自己）——我们将这种联系称为 **链接**。
+7. 在实现 `find()` 方法时，我们从给定的触点开始，由它的链接得到另一个触点，再由这个触点的链接到达第三个触点，如此继续跟随着链接直到到达一个 **根触点**，即链接指向自己的触点。
+8. 当且仅当分别由两个触点开始的这个过程到达了同一个根触点时它们存在于同一个连通分量之中。
+9. 进行 `union(p, q)` 操作时，我们由 `p` 和 `q` 的链接分别找到它们的根触点，然后只需将一个根触点链接到另一个即可将一个分量重命名为另一个分量，因此这个算法叫做 quick-union。
+    <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px;" />
+10. `find()` 和 `union()` 的实现如下
+    ```java
+    private int find(int p)
+    {  // 找出分量的名称
+        while (p != id[p]) p = id[p];
+        return p;
+    }
+
+    public void union(int p, int q)
+    {  // 将p和q的根节点统一
+        int pRoot = find(p);
+        int qRoot = find(q);
+        if (pRoot == qRoot) return;
+
+        id[pRoot] = qRoot;
+
+        count--;
+    }
+    ```
+11. 下图展示了 quick-union 算法的轨迹
+    <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px;" />
+
+#### JavaScript 实现
+```js
+class UF {
+    constructor ( N ) {
+        this.ids = Array.from( {length: N}, (v, i) => i);
+        this.count = N;
+    }
+
+    find ( int ) {
+        while ( int !== this.ids[int] ) {
+            int = this.ids[int];
+        }
+        return int;
+    }
+
+    connected ( p, q ) {
+        return this.find( p ) === this.find( q );
+    }
+
+    union ( p, q ) {
+        let pRoot = this.find( p );
+        let qRoot = this.find( q );
+
+        if ( pRoot === qRoot ) {
+            return;
+        }
+
+        this.ids[pRoot] = qRoot;
+
+        this.count--;
+    }
+}
+
+let uf = new UF( 10 );
+
+uf.union( 4, 3 );
+uf.union( 3, 8 );
+uf.union( 6, 5 );
+uf.union( 9, 4 );
+uf.union( 2, 1 );
+
+
+console.log ( uf )
+// count: 5
+// ids: (10) [0, 1, 1, 8, 3, 5, 5, 7, 8, 8]
+
+setTimeout(() => {
+    uf.union( 8, 9 );
+    uf.union( 5, 0 );
+    uf.union( 7, 2 );
+    uf.union( 6, 1 );
+    uf.union( 1, 0 );
+    uf.union( 6, 7 );
+    
+    console.log ( uf )
+    // count: 2
+    // ids: (10) [1, 1, 1, 8, 3, 0, 5, 1, 8, 8]
+}, 3333)
+```
+下图是上面两部分输出时的链接
+<img src="./images/04.jpg" width="400" style="display: block; margin: 5px 0 10px;" />
+
+#### quick-union 算法的分析
+1. 如果查找的是根触点，那么只需要一次数组访问就会找到。
+2. 如果不是根触点，那就要遍历连通分量找到根触点。假如该触点和根触点的距离为 $D$，那么就需要访问数组 $2D + 1$ 次。
+3. 也就是说，如果我们的 `union` 操作的参数节点尽可能是根触点或者靠近根触点，那效率就高；反之则会低。
+4. 下图展示了最坏的情况
+    <img src="./images/06.png" width="400" style="display: block; margin: 5px 0 10px;" />
+5. 对于 N 个触点的情况，如果按照上图这样的方式进行 `union`，每次 `union` 访问数组的次数如下:
+    * `0 1`：$1 + 1 + 1 = 3$，最后一个 1 是连接根触点时的数组访问
+    * `0 2`：$3 + 1 + 1 = 5$
+    * `0 3`：$5 + 1 + 1 = 7$
+    * `0 N-1`：$((N-2)*2 + 1) + 1 + 1 = 2N - 1$
+6. 总的数组访问次数为 $n^2 - 2N + 1 \sim N^2$。
+
+### 加权 quick-union 算法
+1. 我们只需简单地修改 quick-union 算法就能保证像上面的糟糕情况不再出现。
+2. 与其在 `union()` 中随意将一棵树连接到另一棵树，我们现在会记录每一棵树的大小并总是将较小的树连接到较大的树上。
+3. 这项改动需要添加一个数组和一些代码来记录树中的节点数
+
+#### JavaScript 实现
+```js
+class UF {
+    constructor ( N ) {
+        this.ids = Array.from( {length: N}, (v, i) => i);
+        this.sizes = Array.from( {length: N}, () => 1); // 每个分量的触点数
+        this.count = N;
+    }
+
+    find ( int ) {
+        while ( int !== this.ids[int] ) {
+            int = this.ids[int];
+        }
+        return int;
+    }
+
+    connected ( p, q ) {
+        return this.find( p ) === this.find( q );
+    }
+
+    union ( p, q ) {
+        let pRoot = this.find( p );
+        let qRoot = this.find( q );
+
+        if ( pRoot === qRoot ) {
+            return;
+        }
+
+        // 小分量合并到大分量上
+        if ( this.sizes[pRoot] < this.sizes[qRoot] ) {
+            this.ids[pRoot] = qRoot;
+            this.sizes[qRoot] += this.sizes[pRoot];
+        }
+        else {
+            this.ids[qRoot] = pRoot;
+            this.sizes[pRoot] += this.sizes[qRoot];
+        }
+
+        this.count--;
+    }
+}
+
+let uf = new UF( 10 );
+
+uf.union( 4, 3 );
+uf.union( 3, 8 );
+uf.union( 6, 5 );
+uf.union( 9, 4 );
+uf.union( 2, 1 );
+
+
+console.log ( uf )
+// count: 5
+// ids: (10) [0, 2, 2, 4, 4, 6, 6, 7, 4, 4]
+// sizes: (10) [1, 1, 2, 1, 4, 1, 2, 1, 1, 1]
+
+setTimeout(() => {
+    uf.union( 8, 9 );
+    uf.union( 5, 0 );
+    uf.union( 7, 2 );
+    uf.union( 6, 1 );
+    uf.union( 1, 0 );
+    uf.union( 6, 7 );
+    
+    console.log ( uf )
+    // count: 2
+    // ids: (10) [6, 2, 6, 4, 4, 6, 6, 2, 4, 4]
+    // sizes: (10) [1, 1, 3, 1, 4, 1, 6, 1, 1, 1]
+}, 3333)
+```
+
+#### 加权 quick-union 算法的分析
+TODO 不懂
+
+### 最优算法
+TODO
+
+### 均摊成本的图像
+TODO
+
 
 
 ## References
