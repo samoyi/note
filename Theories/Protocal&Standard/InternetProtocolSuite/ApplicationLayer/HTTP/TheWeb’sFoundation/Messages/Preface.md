@@ -26,6 +26,7 @@
 ## 章节顺序
 1. Flow of Messages
 2. Parts Of A Message
+3. Methods
 
 
 ## References
