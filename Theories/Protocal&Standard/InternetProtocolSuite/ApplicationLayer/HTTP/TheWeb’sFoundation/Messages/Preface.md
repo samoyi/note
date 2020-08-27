@@ -27,6 +27,7 @@
 1. Flow of Messages
 2. Parts Of A Message
 3. Methods
+4. Status Codes
 
 
 ## References
