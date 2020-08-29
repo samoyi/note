@@ -1,9 +1,9 @@
-# Sorting
+# ElementarySorts
 
 
 <!-- TOC -->
 
-- [Sorting](#sorting)
+- [ElementarySorts](#elementarysorts)
     - [Bubble sort](#bubble-sort)
     - [Selection Sort](#selection-sort)
         - [原理](#原理)
@@ -168,3 +168,5 @@ function cost(len) {
 9. 总的来说，插入排序对于部分有序的数组十分高效，也很适合小规模数组。这很重要，因为这些类型的数组在实际应用中经常出现，而且它们也是高级排序算法的中间过程。
 
 
+* [算法（第4版）](https://book.douban.com/subject/19952400/)
+* [学习JavaScript数据结构与算法](https://book.douban.com/subject/26639401/)
