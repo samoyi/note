@@ -39,7 +39,7 @@
     ```
     Connection: 不再转发的首部字段名
     ```
-    <img src="./images/GeneralHeaders/Connection1.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    <img src="./images/Connection1.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 
 ### 管理持久连接
@@ -51,7 +51,7 @@
     ```
     Connection: Keep-Alive
     ```
-<img src="./images/GeneralHeaders/Connection2.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+<img src="./images/Connection2.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 
 
@@ -76,7 +76,7 @@ Date: Tue, 03 Jul 2012 04:40:59 GMT
 ## Upgrade
 1. The `Upgrade` general-header allows the client to specify what additional communication protocols it supports and would like to use if the server finds it appropriate to switch protocols.
 2. The server MUST use the `Upgrade` header field within a `101` (Switching Protocols) response to indicate which protocol(s) are being switched.
-    <img src="./images/GeneralHeaders/Upgrade1.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    <img src="./images/Upgrade1.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 3. The `Upgrade` header field is intended to provide a simple mechanism for transition from HTTP/1.1 to some other, incompatible protocol. 
 4. It does so by allowing the client to advertise its desire to use another protocol, such as a later version of HTTP with a higher major version number, even though the current request has been made using HTTP/1.1.
 5. This eases the difficult transition between incompatible protocols by allowing the client to initiate a request in the more commonly supported protocol while indicating to the server that it would like to use a "better" protocol if available (where "better" is determined by the server, possibly according to the nature of the method and/or resource being requested).
@@ -90,7 +90,7 @@ Date: Tue, 03 Jul 2012 04:40:59 GMT
 1. 使用首部字段 `Via` 是为了追踪客户端与服务器之间的请求和响应报文的传输路径。
 2. 报文经过代理或网关时，会先在首部字段 `Via` 中附加该服务器的信息，然后再进行转发。这个做法和 traceroute 及电子邮件的 Received 首部的工作机制很类似。
 3. 首部字段 `Via` 不仅用于追踪报文的转发，还可避免请求回环的发生。所以必须在经过代理时附加该首部字段内容。
-    <img src="./images/GeneralHeaders/Via1.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    <img src="./images/Via1.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 4. 上图用例中，在经过代理服务器 A 时，`Via` 首部附加了 `1.0 gw.hackr.jp (Squid/3.1)` 这样的字符串值。行头的 `1.0` 是指接收请求的服务器上应用的 HTTP 协议版本。接下来经过代理服务器 B 时亦是如此，在`Via`首部附加服务器信息，也可增加 1 个新的 `Via` 首部写入服务器信息。
 5. `Via` 首部是为了追踪传输路径，所以经常会和 `TRACE` 方法一起使用。比如，代理服务器接收到由 `TRACE` 方法发送过来的请求（其中 ` Max-Forwards: 0`）时，代理服务器就不能再转发该请求了。这种情况下，代理服务器会将自身的信息附加到 `Via` 首部后，返回该请求的响应。
 

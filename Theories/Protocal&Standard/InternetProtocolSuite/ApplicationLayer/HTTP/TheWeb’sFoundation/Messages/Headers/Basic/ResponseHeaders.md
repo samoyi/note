@@ -1,17 +1,57 @@
 # Response headers
-Response messages have their own set of headers that provide information to the
-client (e.g., what type of server the client is talking to). For example, the
-following `Server` header tells the client that it is talking to a Version 1.0
-Tiki-Hut server:
-```
-Server: Tiki-Hut/1.0
-```
+
+1. Response headers provide clients with extra information, such as who is sending the response, the capabilities of the responder, or even special instructions regarding the response. 
+2. These headers help the client deal with the response and make better requests in the future.
 
 
-## Accept-Ranges
-1. 首部字段`Accept-Ranges`是用来告知客户端服务器是否能处理范围请求，以指定获取服务器端
-某个部分的资源。
-2. 可指定的字段值有两种，可处理范围请求时指定其为`bytes`，反之则指定其为`none`。
+<!-- TOC -->
+
+- [Response headers](#response-headers)
+    - [Negotiation headers](#negotiation-headers)
+        - [Accept-Ranges](#accept-ranges)
+        - [Vary](#vary)
+    - [Response security headers](#response-security-headers)
+        - [Proxy-Authenticate](#proxy-authenticate)
+        - [Set-Cookie](#set-cookie)
+        - [WWW-Authenticate](#www-authenticate)
+    - [Age](#age)
+    - [Location](#location)
+    - [Retry-After](#retry-after)
+    - [Server](#server)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
+## Negotiation headers
+HTTP/1.1 provides servers and clients with the ability to negotiate for a resource if multiple representations are available—for instance, when there are both French and German translations of an HTML document on a server. 
+
+### Accept-Ranges
+1. 首部字段 `Accept-Ranges` 是用来告知客户端服务器是否能处理范围请求，以指定获取服务器端某个部分的资源。
+2. 可指定的字段值有两种，可处理范围请求时指定其为 `bytes`，反之则指定其为 `none`。
+
+### Vary 
+TODO 不懂
+
+
+## Response security headers
+### Proxy-Authenticate
+1. Defines the authentication method that should be used to gain access to a resource behind a proxy server. 
+2. It authenticates the request to the proxy server, allowing it to transmit the request further.
+3. The `Proxy-Authenticate` header is sent along with a `407 Proxy Authentication Required`.
+4. Examples
+    ```
+    Proxy-Authenticate: Basic
+
+    Proxy-Authenticate: Basic realm="Access to the internal site"
+    ```
+
+### Set-Cookie 
+Not a true security header, but it has security implications; used to set a token on the client side that the server can use to identify the client.
+
+### WWW-Authenticate
+1. Defines the authentication method that should be used to gain access to a resource.
+2. The `WWW-Authenticate` header is sent along with a `401 Unauthorized` response.
 
 
 ## Age
@@ -19,15 +59,14 @@ Server: Tiki-Hut/1.0
 Age: 600
 ```
 1. 告知客户端，源服务器在多久前创建了响应。字段值的单位为秒。
-2. A cached response is "fresh" if its age does not exceed its freshness
-lifetime.
+2. A cached response is "fresh" if its age does not exceed its freshness lifetime.
 
 
 ## Location
 ```
 Location: http://www.usagidesign.jp/sample.html
 ```
-1. 使用首部字段`Location`可以将响应接收方引导至某个与请求 URI 位置不同的资源。
+1. 使用首部字段 `Location` 可以将响应接收方引导至某个与请求 URI 位置不同的资源。
 2. 基本上，该字段会配合`3xx ：Redirection`的响应，提供重定向的 URI。
 3. 几乎所有的浏览器在接收到包含首部字段`Location`的响应后，都会强制性地尝试对已提示的重
 定向资源的访问。
@@ -43,40 +82,36 @@ Location: http://www.usagidesign.jp/sample.html
     }).listen(3000);
     ```
 
-![Location](./images/ResponseHeaders/Location.png)
+<img src="./images/Location.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 
 ## Retry-After
 ```
 Retry-After: 120
 ```
-1. 告知客户端应该在多久之后再次发送请求。主要配合状态码`503 Service Unavailable`响应，
-或`3xx Redirect`响应一起使用。
-2. 字段值可以指定为具体的日期时间（Wed, 04 Jul 2012 06：34：24 GMT 等格式），也可以是
-创建响应后的秒数。至少对于浏览器来说，并不会在指定的时间到达后重新访问。
-
-```js
-require('http').createServer((req, res)=>{
-    if (req.url !== '/favicon.ico'){
-        res.writeHead(503, 'Service Unavailable', {
-            'Retry-After': 3600,
-            'Content-Type': 'text/plain; charset=utf-8',
-        });
-    }
-    res.end('服务器暂时无法访问，请一小时后再试');
-}).listen(3000);
-```
+1. 告知客户端应该在多久之后再次发送请求。主要配合状态码 `503 Service Unavailable` 响应，或 `3xx Redirect` 响应一起使用。
+    ```js
+    require('http').createServer((req, res)=>{
+        if (req.url !== '/favicon.ico'){
+            res.writeHead(503, 'Service Unavailable', {
+                'Retry-After': 3600,
+                'Content-Type': 'text/plain; charset=utf-8',
+            });
+        }
+        res.end('服务器暂时无法访问，请一小时后再试');
+    }).listen(3000);
+    ```
+2. 字段值可以指定为具体的日期时间（Wed, 04 Jul 2012 06：34：24 GMT 等格式），也可以是创建响应后的秒数。至少对于浏览器来说，并不会在指定的时间到达后重新访问。
 
 
 ## Server
 ```
 Server: Apache/2.2.6 (Unix) PHP/5.2.5
 ```
-1. 首部字段`Server`告知客户端当前服务器上安装的 HTTP 服务器应用程序的信息。
+1. 首部字段 `Server` 告知客户端当前服务器上安装的 HTTP 服务器应用程序的信息。
 2. 不单单会标出服务器上的软件应用名称，还有可能包括版本号和安装时启用的可选项。
-
-
 
 
 ## References
 * [HTTP: The Definitive Guide](https://book.douban.com/subject/1440226/)
+* [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers)

@@ -90,7 +90,7 @@ Content-Range: bytes 5001-10000/10000
 体的哪个部分符合范围请求。
 2. 字段值以字节为单位，表示当前发送部分及整个实体大小。
 
-![ContentRange](./images/EntityHeaders/ContentRange.png)
+<img src="./images/ContentRange.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 
 ## Content-Type
@@ -104,3 +104,4 @@ Content-Type: text/html; charset=UTF-8
 
 ## References
 * [HTTP: The Definitive Guide](https://book.douban.com/subject/1440226/)
+* [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers)
