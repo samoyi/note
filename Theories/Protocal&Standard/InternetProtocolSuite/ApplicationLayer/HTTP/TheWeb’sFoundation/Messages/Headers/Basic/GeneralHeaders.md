@@ -25,7 +25,7 @@
 
 
 ## Cache-Control
-详见 `Theories\Protocal&Standard\InternetProtocolSuite\ApplicationLayer\HTTP\Cache\Cache.md`
+详见 `Theories\Protocal&Standard\InternetProtocolSuite\ApplicationLayer\HTTP\Cache\`
 
 
 ## Connection
