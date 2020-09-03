@@ -17,6 +17,9 @@
 ## 章节顺序
 1. TCP Connections
 2. TCP Performance Considerations
+3. HTTP Connection Handling
+4. Parallel Connections
+4. Persistent Connections
 
 
 
