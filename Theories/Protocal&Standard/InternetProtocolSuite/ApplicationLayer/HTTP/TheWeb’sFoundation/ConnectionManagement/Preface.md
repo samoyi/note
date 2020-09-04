@@ -19,7 +19,9 @@
 2. TCP Performance Considerations
 3. HTTP Connection Handling
 4. Parallel Connections
-4. Persistent Connections
+5. Persistent Connections
+6. Pipelined Connections
+7. Connection Close
 
 
 
