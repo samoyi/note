@@ -21,6 +21,7 @@
         - [递增序列的确定及即 h 的递减](#递增序列的确定及即-h-的递减)
         - [实现](#实现-2)
         - [分析](#分析-2)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -51,6 +52,12 @@
 
 ### 实现
 ```js
+function swap(arr, index1, index2) {
+    let aux = arr[index1];
+    arr[index1] = arr[index2];
+    arr[index2] = aux;
+}
+
 function selectionSort( arr ) {
     let len = arr.length;
 
@@ -66,7 +73,6 @@ function selectionSort( arr ) {
             swap(arr, i, minIndex);
         }
     }
-    return arr;
 }
 ```
 
@@ -107,28 +113,22 @@ function cost(len) {
             let prev = i-1; // 记录中间要移动的元素
 
             // 通过不断地向左比较，找到 currItem 合适的位置
-            count_compare++; // 记录比较次数
             while ( j > 0 && currItem < arr[j-1] ) {
-                count_compare++;  // 记录比较次数
                 j--;
             }
 
             // 所有比 currItem 大的，依次右移一个位置
             while ( prev >= j ) {
-                count_swap++;  // 记录交换次数
                 arr[prev+1] = arr[prev];
                 prev--;
             }
 
             // 这里本来是想通过判断，在值相同的情况下不用进行赋值操作
-            // 但判断本身就是依次访问操作，里面还要再进行一次赋值操作，不如直接只进行一次赋值操作
+            // 但判断本身就是一次访问操作，里面还要再进行一次赋值操作，不如直接只进行一次赋值操作
             // if ( arr[j] !== currItem ) {
-                count_swap++;  // 记录交换次数
                 arr[j] = currItem;
             // }
         }
-        
-        return arr;
     }
     ```
 2. 这个实现本身已经没什么问题了，不过如果愿意的话可以把两个 `while` 合并为一个，一边比较一边移动，而不是比较完之后再统一移动。两个方法在性能上是一样的，只是减少一点代码量然后省掉了变量 `prev` 而已
@@ -153,10 +153,9 @@ function cost(len) {
             count_swap++;
             arr[j] = currItem;
         }
-
-        return arr;
     }
     ```
+
 
 ### 分析
 1. 相比于选择排序每次都要遍历剩下的所有项来选择最小的方式，插入排序在每次和左边已经排好的项比较时，并不需要和每一项比较，只需要找到一个比自己大的就可以停下来插入了。
@@ -232,7 +231,6 @@ function cost(len) {
                 arr[j] = currItem;
             }
         }
-        return arr;
     }
     ```
 3. 需要注意的是，这里比如当 h 为 2 时，整体数组分成两个 5 项子数组后进行插入排序时，并不是排完了第一个子数组再排第二个子数组，而是两个子数组一个排一步。步骤如下：
@@ -253,7 +251,7 @@ function cost(len) {
 9. 有经验的程序员有时会选择希尔排序，因为对于中等大小的数组它的运行时间是可以接受的。它的代码量很小，且不需要使用额外的内存空间。在下面的几节中我们会看到更加高效的算法，但除了对于很大的 N，它们可能只会比希尔排序快两倍（可能还达不到），而且更复杂。如果你需要解决一个排序问题而又没有系统排序函数可用（例如直接接触硬件或是运行于嵌入式系统中的代码），可以先用希尔排序，然后再考虑是否值得将它替换为更加复杂的排序算法。
 
 
-
+## References
 * [算法（第4版）](https://book.douban.com/subject/19952400/)
 * [学习JavaScript数据结构与算法](https://book.douban.com/subject/26639401/)
 * [图解排序算法(二)之希尔排序](https://www.cnblogs.com/chengxiao/p/6104371.html)

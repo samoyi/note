@@ -27,6 +27,12 @@
         - [命题：没有任何基于比较的算法能够保证使用少于 $\lg(N!)\sim N\lg N$ 次比较将长度为 N 的数组排序](#命题没有任何基于比较的算法能够保证使用少于-\lgn\sim-n\lg-n-次比较将长度为-n-的数组排序)
         - [归并排序是一种渐进最优的基于比较排序的算法](#归并排序是一种渐进最优的基于比较排序的算法)
         - [和希尔排序的比较](#和希尔排序的比较)
+    - [练习](#练习)
+        - [2.2.4](#224)
+        - [2.2.6](#226)
+        - [2.2.7](#227)
+        - [2.2.8](#228)
+    - [TODO](#todo)
     - [References](#references)
 
 <!-- /TOC -->
@@ -196,14 +202,69 @@ function mergeSort ( arr, low, high ) {
 ### 改进
 #### 对小规模子数组使用插入排序
 1. 用不同的方法处理小规模问题能改进大多数递归算法的性能，因为递归会使小规模问题中方法的调用过于频繁，所以改进对它们的处理方法就能改进整个算法。
-2. 对排序来说，我们已经知道插入排序（或者选择排序）非常简单，因此很可能在小数组上比归并排序更快。使用插入排序处理小规模的子数组（比如长度小于 15）一般可以将归并排序的运行时间缩短 10% ～ 15%
+2. 对排序来说，我们已经知道插入排序（或者选择排序）非常简单，因此很可能在小数组上比归并排序更快。使用插入排序处理小规模的子数组（比如长度小于 15）一般可以将归并排序的运行时间缩短 10% ～ 15%。
+3. 需要先改造一下插入排序，让它支持指定的起始位置，来配合归并排序的方式
+    ```js
+    function insertionSortForMergeSort ( arr, low, high ) {
+        for ( let i=low + 1; i<=high; i++ ) {
+            let curr = arr[i]; 
+            let j = i - 1; 
+            while ( j >= low && curr < arr[j] ) {
+                arr[j+1] = arr[j];
+                j--;
+            }
+            if ( j < i-1 ) {
+                arr[j+1] = curr;
+            }
+        }
+    }
+    ```
+4. 然后应用到归并排序里
+    ```js
+    function mergeSort ( arr, low, high ) {
+        if ( high - low < 14 ) {
+            insertionSortForMergeSort( arr, low, high );
+            return;
+        }
+
+        if ( low >= high ) { 
+            return;
+        }
+
+        let mid = Math.floor( low + (high-low) / 2 );
+
+        mergeSort( arr, low, mid );
+        mergeSort( arr, mid+1, high );
+        merge ( arr, low, mid, high );
+    }
+    ```
 
 #### 测试数组是否已经有序
-1. 我们可以添加一个判断条件，如果 `a[mid]` 小于等于 `a[mid+1]`，我们就认为数组已经是有序的并跳过 `merge()` 方法。
-2. 这个改动不影响排序的递归调用，但是任意有序的子数组算法的运行时间就变为线性的了
+1. 我们可以添加一个判断条件，如果 `a[mid]` 小于等于 `a[mid+1]`，我们就认为数组已经是有序的并跳过 `merge()` 方法
+    ```js
+    function mergeSort ( arr, low, high ) {
+        if ( high - low < 14 ) {
+            insertionSortForMergeSort( arr, low, high );
+            return;
+        }
+
+        if ( low >= high ) { 
+            return;
+        }
+
+        let mid = Math.floor( low + (high-low) / 2 );
+
+        mergeSort( arr, low, mid );
+        mergeSort( arr, mid+1, high );
+        if ( arr[mid] > arr[mid+1] ) {
+            merge ( arr, low, mid, high );
+        }
+    }
+    ```
+2. 这个改动不影响排序的递归调用，但是任意有序的子数组算法的运行时间就变为线性的了。
 
 #### 不将元素复制到辅助数组
-
+TODO
 
 
 ## 自底向上的归并排序
@@ -275,6 +336,114 @@ function mergeSort ( arr, low, high ) {
 1. 在实际应用中，它们的运行时间之间的差距在常数级别之内，因此相对性能取决于具体的实现。
 2. 理论上来说，还没有人能够证明希尔排序对于随机数据的运行时间是线性对数级别的，因此存在平均情况下希尔排序的性能的渐进增长率（即运行时间的近似函数）更高的可能性。在最坏情况下，这种差距的存在已经被证实了，但这对实际应用没有影响。
 3. TODO 深入分析。以及，在数据不是很大并且比较有序的情况下，希尔排序应该会更好吧？
+
+
+## 练习
+### 2.2.4
+1. 是否当且仅当两个输入的子数组都有序时原地归并的抽象方法才能得到正确的结果？证明你的结论，或者给出一个反例。
+3. 因为归并的算法只是和另一个数组里的元素比较大小，而不比较本数组内部的元素大小顺序，所以要想正确归并就要先保证子数组已经是有序的。比如 `[5, 2]` 和 `[3, 8]` 会被归并为 `[3, 5, 2, 8]`。
+
+### 2.2.6
+1. 编写一个程序来计算自顶向下和自底向上的归并排序访问数组的准确次数。使用这个程序将 N=1 至 512 的结果绘成曲线图，并将其和上限 $6N\log_2 N$ 比较。
+2. 代码
+    ```js
+    let count_accesses = 0;
+
+    function merge ( arr, low, mid, high ) {
+        let i = low;
+        let j = mid+1;
+        let aux = [];
+
+
+        for ( let k=low; k<=high; k++ ) {
+            aux[k] = arr[k];
+            count_accesses += 2;
+        }
+
+        for ( let k=low; k<=high; k++ ) {
+            if ( i > mid ) {
+                arr[k] = aux[j];
+                count_accesses += 2;
+                j++;
+            }
+            else if ( j > high ) {
+                arr[k] = aux[i];
+                i++;
+                count_accesses += 2;
+            }
+            else if ( aux[i] < aux[j] ) {
+                arr[k] = aux[i];
+                i++;
+                count_accesses += 4;
+            }
+            else {
+                arr[k] = aux[j];
+                j++;
+                count_accesses += 2;
+            }
+        }
+    }
+
+    function count (n) {
+        count_accesses = 0;
+
+        let arr = Array.from({length: n}, ()=>{
+            return Math.floor( Math.random() * n* 10 );
+        });
+
+        mergeSort( arr, 0, n-1 )
+        // MergeBU(arr)
+
+        console.log(count_accesses);
+        let worst = Math.ceil( 6 * n * Math.log2(n) );
+        console.log( worst );
+        console.log( (count_accesses / worst).toFixed(2) );
+
+    }
+
+    for (let i=2; i<=512; i++) {
+        console.log( i + '-------------------------');
+        count(i)
+        console.log('')
+    }
+    ```
+3. 两种归并实现的比较次数和上限 $6N\log_2 N$ 的比值在 0.8-0.85 之间浮动。
+
+### 2.2.7
+1. 证明归并排序的比较次数是单调递增的（即对于 N>0，C(N+1)>C(N)）。
+2. 看看比较部分的代码
+    ```js
+    for ( let k=low; k<=high; k++ ) {
+        // count_compare++; // 第一种计算比较的位置
+        if ( i > mid ) {
+            arr[k] = aux[j];
+            j++;
+        }
+        else if ( j > high ) {
+            arr[k] = aux[i];
+            i++;
+        }
+        else if ( aux[i] < aux[j] ) {
+            arr[k] = aux[i];
+            i++;
+            // count_compare++; // 第二种计算比较的位置，要结合下面的一次
+        }
+        else {
+            arr[k] = aux[j];
+            j++;
+            // count_compare++; // 第二种计算比较的位置，要结合上面的一次
+        }
+    }
+    ```
+3. 如果使用第一种计算比较次数的方法，那么多一个元素，递归拆分到最后就会多一个子数组，多一次 merge，就会至少多一次比较。
+4. 如果使用第一种计算比较次数的方法，也就是不计算一个数组提前排完的情况，那么还会受到数据本身顺序的影响。也就是说元素多了一个的数组，虽然会多一次 merge，但有可能 merge 时有更多的数组提前排完的情况，比较次数反而会少一点。
+
+### 2.2.8
+1. 假设将自顶向下的归并排序算法修改为：只要 `a[mid] <= a[mid+1]` 就不调用 `merge()` 方法，请证明用归并排序处理一个已经有序的数组所需的比较次数是线性级别的。
+2. 如果是这样的话，显然完全不会调用 `merge`。不过答案说的那个不懂
+
+## TODO 
+2.2.10 及以后的练习
 
 
 ## References
