@@ -18,6 +18,9 @@
 1. Benefits
 2. Hits and Misses
 3. Cache Topologies
+4. Cache Processing Steps
+5. Keeping Copies Fresh
+6. Controlling Cachability
 
 
 ## References
