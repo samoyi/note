@@ -22,7 +22,7 @@
 3. Client IP Address
 4. User Login
 5. Fat URLs
-6. 
+6. Cookies
 
 
 ## References
