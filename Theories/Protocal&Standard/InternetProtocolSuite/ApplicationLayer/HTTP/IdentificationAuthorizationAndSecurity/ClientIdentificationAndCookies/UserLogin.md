@@ -33,7 +33,7 @@
 3. Here’s what’s happening in this figure:
     1. In (a), a browser makes a request from the `www.joes-hardware.com` site.
     2. The site doesn’t know the identity of the user, so in (b), the server requests a login by returning the `401 Login Required` HTTP response code and adds the `WWW-Authenticate` header. This causes the browser to pop up a login dialog box.
-    3. Once the user enters a username and a password (to sanity check his identity), the browser repeats the original request. This time it adds an `Authorization` header, specifying the username and password. The username and password are scrambled, to hide them from casual or accidental network observers.
+    3. Once the user enters a username and a password (to sanity check his identity), the browser repeats the original request. This time it adds an `Authorization` header, specifying the username and password. The username and password are scrambled, to hide them from casual or accidental network observers. The exchange must happen over an HTTPS (TLS) connection to be secure.
     4. Now, the server is aware of the user’s identity.
     5. For future requests, the browser will automatically issue the stored username and password when asked and will often even send it to the site when not asked. This makes it possible to log in once to a site and have your identity maintained through the session, by having the browser send the `Authorization` header as a token of your identity on each request to the server.
 
