@@ -6,6 +6,7 @@
 - [Secure HTTP](#secure-http)
     - [Preface](#preface)
     - [章节顺序](#章节顺序)
+    - [没看](#没看)
     - [References](#references)
 
 <!-- /TOC -->
@@ -23,6 +24,11 @@
 5. Digital Signatures
 6. Digital Certificates
 7. HTTPS
+
+
+## 没看
+* A Real HTTPS Client
+* Tunneling Secure Traffic Through Proxies
 
 
 ## References
