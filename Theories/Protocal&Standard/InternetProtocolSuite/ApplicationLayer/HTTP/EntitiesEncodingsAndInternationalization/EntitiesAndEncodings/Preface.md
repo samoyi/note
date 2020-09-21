@@ -31,6 +31,8 @@
 4. Content Encoding
 5. Transfer Encoding and Chunked Encoding
 6. Validators and Freshness
+7. Range Requests
+8. Delta Encoding
 
 
 ## References
