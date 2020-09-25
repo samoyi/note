@@ -23,9 +23,7 @@
 2. Client-Driven Negotiation
 3. Server-Driven Negotiation
 4. Transparent Negotiation
-5. 
-6. 
-
+5. Transcoding
 
 
 ## References
