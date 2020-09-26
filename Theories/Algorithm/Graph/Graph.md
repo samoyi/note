@@ -4,9 +4,9 @@
 <!-- TOC -->
 
 - [Graph](#graph)
-    - [思想](#思想)
-        - [本质——基于现实关系的抽象](#本质基于现实关系的抽象)
-        - [图的用途](#图的用途)
+    - [设计思想](#设计思想)
+    - [本质——基于现实关系的抽象](#本质基于现实关系的抽象)
+    - [用途](#用途)
             - [广度优先遍历](#广度优先遍历)
     - [概念](#概念)
         - [路径和环](#路径和环)
@@ -33,7 +33,7 @@
         - [实现](#实现)
         - [兼容有向图的 BFS](#兼容有向图的-bfs)
         - [记录更多信息的广度遍历](#记录更多信息的广度遍历)
-    - [使用 BFSWidthMoreInfo 寻找最短路径](#使用-bfswidthmoreinfo-寻找最短路径)
+    - [使用 `BFSWidthMoreInfo` 寻找最短路径](#使用-bfswidthmoreinfo-寻找最短路径)
     - [深度优先遍历](#深度优先遍历)
         - [原理和本质](#原理和本质-1)
             - [依次尝试每一种可能性](#依次尝试每一种可能性)
@@ -49,14 +49,16 @@
 <!-- /TOC -->
 
 
-## 思想
-### 本质——基于现实关系的抽象
+## 设计思想
+
+
+## 本质——基于现实关系的抽象
 1. 多个对象之间的关系。
 2. 任何表示若干对象关系的逻辑都可以抽象成图的数据结构。
 3. 或者说，任何现实事物都可以抽象成任何数据结构模型，就看合适程度。
 
 
-### 图的用途
+## 用途
 1. 首先，图就是对现实世界抽象的一种数据结构，它本身只是现实世界的模型。
 2. 可以说图本身是并没有什么用的，就看你要用这个数据结构来做什么。甚至更进一步说，对图的遍历操作，也仅仅是一种没有实际意义的操作，但它却是对实际的用途提供了一种重要的方法。
 
@@ -126,7 +128,7 @@
     addEdge (v, w) {
         this.adjacencyList.get(v).push(w); // 给节点 v 添加一个与它相邻的节点 w
         // 如果是有向图，那只是从 v 到 w 单方向的边；如果不是，就要双向添加
-        if (!this.isDirected) {
+        if ( !this.isDirected ) {
             this.adjacencyList.get(w).push(v);
         }
     }
@@ -216,7 +218,7 @@ TODO 为什么要三种颜色，两种行不行？
 1. 选中图中的一个节点作为遍历的起点，记为 V。
 2. 访问并记录 V 的所有相邻点。完成了从起点开始向外辐射的第一层节点遍历。
 3. 之所以在访问的同时还要记录，是因为下一步还要访问与这些节点相邻的新的节点。
-4. 再从第一层的节点开始，访问并记录每一个节点的相邻节点。注意这一次寻找相邻节点时，要排除 V。虽然第一层的节点都和 V 相连，但 V 已经访问过了。
+4. 再从第一层的节点开始，访问并记录每一个节点的相邻节点。注意这一次寻找相邻节点时，要排除 V 以及相邻的其他已发现第一层节点。虽然第一层的节点都和 V 相连，但 V 已经访问过了。
 5. 经过上一步的遍历记录，我们获得了第二层的节点。下一步就是访问并记录第二层中每一个节点的相邻节点。同样，这一波在访问相邻节点时，要排除已经访问过的第一层节点。
 6. 以此类推，直到我们记录的节点都已经访问过了。
 
@@ -232,22 +234,22 @@ normalBFS (v, callback) {
     queue.enqueue(v); // 遍历起始节点
     
     // 遍历每一个节点
-    while (!queue.isEmpty()) {
+    while ( !queue.isEmpty() ) {
         let u = queue.dequeue();
         let neighbors = this.adjacencyList.get(u);
         colors[u] = 'grey'; // 该节点现在已经访问
         // 访问该节点的相邻节点
-        for (let i = 0; i < neighbors.length; i++) {
+        for ( let i = 0; i < neighbors.length; i++ ) {
             let n = neighbors[i];
             // 过滤掉已经访问过的相邻节点
-            if (colors[n] === 'white') {
+            if ( colors[n] === 'white' ) {
                 colors[n] = 'grey';
                 // 被访问的节点加入队列，之后会被探索
                 queue.enqueue(n);
             }
         }
         colors[u] = 'black'; // 该节点的所有相邻节点都已经被访问，现在该节点就是被完全探索的状态
-        if (callback) {
+        if ( callback ) {
             callback(u);
         }
     }
@@ -261,16 +263,16 @@ BFSCompatibleWithDirected (callback) {
     let colorMapping = initializeColorMapping(this.vertices);
 
     this.vertices.forEach((vertex)=>{
-        if (colorMapping[vertex] === 'white') {
+        if ( colorMapping[vertex] === 'white' ) {
             let queue = new Queue();
             queue.enqueue(vertex);
 
-            while (!queue.isEmpty()) {
+            while ( !queue.isEmpty() ) {
                 let u = queue.dequeue();
                 let neighbors = this.adjacencyList.get(u);
                 colorMapping[u] = 'grey';
 
-                for (let i = 0; i < neighbors.length; i++) {
+                for ( let i = 0; i < neighbors.length; i++ ) {
                     let n = neighbors[i];
                     if (colorMapping[n] === 'white') {
                         colorMapping[n] = 'grey';
@@ -280,7 +282,7 @@ BFSCompatibleWithDirected (callback) {
 
                 colorMapping[u] = 'black';
 
-                if (callback) {
+                if ( callback ) {
                     callback(u);
                 }
             }
@@ -306,12 +308,12 @@ BFSWidthMoreInfo (v) {
         predecessors[vertex] = null;
     });
 
-    while (!queue.isEmpty()) {
+    while ( !queue.isEmpty() ) {
         let u = queue.dequeue();
         colorMapping[u] = 'grey';
 
         this.adjacencyList.get(u).forEach((item) => {
-            if (colorMapping[item] === 'white') {
+            if ( colorMapping[item] === 'white' ) {
                 colorMapping[item] = 'grey';
 
                 // 因为节点 item 是 u 的相邻节点，所以距离起始节点的距离就比 u 大一
@@ -331,18 +333,20 @@ BFSWidthMoreInfo (v) {
 }
 ```
 
-## 使用 BFSWidthMoreInfo 寻找最短路径
+## 使用 `BFSWidthMoreInfo` 寻找最短路径
 1. 因为 BFS 是逐层往外搜索，并不会有跳跃的情况，所以就可以确定任意一个节点相对于顶点来说是关系最近的层数，或者说要几步才能把顶点和某个节点连接起来。
-2. 使用 BFSWidthMoreInfo 中记录的每个节点的前溯节点，来查找某个节点到顶点的最短路径
+2. 使用 `BFSWidthMoreInfo` 中记录的每个节点的前溯节点，来查找某个节点到顶点的最短路径
     ```js
     getShortestPaths (v) {
         let {predecessors} = this.BFSWidthMoreInfo(v);
         let pathes = {};
-        for (let key in predecessors) {
+        for ( let key in predecessors ) {
             let predecessor = predecessors[key];
-            if (predecessor === null) continue;
+            if ( predecessor === null ) {
+                continue;
+            }
             pathes[key] = key;
-            while (predecessor) {
+            while ( predecessor ) {
                 pathes[key] = predecessor + '-' + pathes[key];
                 predecessor = predecessors[predecessor];
             }
@@ -407,8 +411,8 @@ BFSWidthMoreInfo (v) {
 
         let neighborList = adjacencyList.get(vertex);
         neighborList.forEach((neighbor) => {
-            if (colorMapping[neighbor] === 'white') {
-                exploreForNormalDFS(neighbor, adjacencyList, colorMapping, callback);
+            if ( colorMapping[neighbor] === 'white' ) {
+                exploreForNormalDFS( neighbor, adjacencyList, colorMapping, callback );
             }
         });
         colorMapping[vertex] = 'black';
@@ -461,7 +465,7 @@ BFSWidthMoreInfo (v) {
 
         let neighborList = adjacencyList.get(vertex);
         neighborList.forEach((neighbor) => {
-            if (colorMapping[neighbor] === 'white') {
+            if ( colorMapping[neighbor] === 'white' ) {
                 // 记录 vertex 为其相邻节点的前溯节点
                 info.predecessors[neighbor] = vertex; 
                 // 递归
