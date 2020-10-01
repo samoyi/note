@@ -52,7 +52,7 @@ new Vue({
 	data: {
 		showList: true
 	},
-	mounted() {
+	mounted () {
 		window.addEventListener('resize', () => {
             // setTimeout(()=>{
                 this.checkWidth();
@@ -60,8 +60,8 @@ new Vue({
 		});
 	},
 	methods: {
-		checkWidth(){
-			if (window.innerWidth < 500){
+		checkWidth () {
+			if ( window.innerWidth < 500 ) {
 				this.showList = false;
 			}
             else {
