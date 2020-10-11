@@ -12,6 +12,7 @@
     - [从斐波那契数列来看](#从斐波那契数列来看)
         - [最直白的递归求解](#最直白的递归求解)
         - [使用缓存来解决重复接计算的问题](#使用缓存来解决重复接计算的问题)
+        - [使用动态规划来避免调用栈堆积的问题](#使用动态规划来避免调用栈堆积的问题)
     - [最少硬币找零问题](#最少硬币找零问题)
         - [思路](#思路-1)
         - [不严格的动态规划实现](#不严格的动态规划实现)
@@ -70,6 +71,57 @@
 2. 性能问题解决了。而且其实就是个很好的方案。但是在极端的情况下，因为还是使用递归，所以会出现栈溢出
     ```js
     fibonacci(20000); // Uncaught RangeError: Maximum call stack size exceeded
+    ```
+
+### 使用动态规划来避免调用栈堆积的问题
+1. 递归的思路是，想知道一个结果，就要一层层的反推原因，就是递归的求解原因的原因。
+2. 要知道一个结果，就要知道它之前嵌套的所有原因。也就是说，必须等待要一直逆推到最初的原因，才能知道并返回最终的结果。这就是调用栈的堆积。
+3. 可以看到，递归的逻辑是：要知道 C，就要 **先** 求 B；要知道 B，就要 **先** 求 A。
+4. 而动态规划则是相反，它不从问题出发，它其实并不在乎问题是什么，而是直接按照因果关系去推导整个因果链，只是在问题的那个环节停止推导而已。
+5. 比如不管是求 `fibonacci(20000)` 还是 `fibonacci(20)`，动态规划都是按照 `fibonacci(2)`、`fibonacci(3)`、`fibonacci(4)`、`fibonacci(5)` 这样的顺序推导完整的斐波那契数列，只是最后停止在问题的那个数。
+6. 实现
+    ```js
+    function fibonacci_DP( n ) {
+
+        if( n < 3 ){
+            return 1;
+        }
+
+        let result = [null, 1, 1];
+        let i = 3
+
+        while ( i <= n) {
+            result[i] = result[i-1] + result[i-2];
+            i++;
+        }
+
+        return result[n];
+    }
+    ```
+7. 递归需要等待所有的前因才能知道（返回）后果，而动态规划每一步都是一个前因推导出一个后果，所以不存在嵌套的调用栈。
+8. 实际应用时，动态规划也是要加上缓存。但这个缓存是为了避免下次计算时的重复计算，而不是当次计算时大量的重复
+    ```js
+    const cache = [null, 1, 1];
+
+    function fibonacci_DP( n ) {
+
+        if ( cache[n] ) {
+            return cache[n];
+        }
+
+        if( n < 3 ){
+            return 1;
+        }
+
+        let i = cache.length;
+
+        while ( i <= n ) {
+            cache[i] = cache[i-1] + cache[i-2];
+            i++;
+        }
+
+        return cache[n];
+    }
     ```
 
 
@@ -213,5 +265,6 @@ console.log(minCoinChange_4.cache);
 
 
 ## Referecens
+* [从最简单的斐波那契数列来学习动态规划（JavaScript版本）](https://developer.51cto.com/art/202005/616273.htm)
 * [动态规划系列（2）——找零钱问题](https://www.jianshu.com/p/9ea65dd9e792)
 * [《Python数据结构与算法分析（第2版）》第四章](https://book.douban.com/subject/34785178/)
