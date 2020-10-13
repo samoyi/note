@@ -10,6 +10,7 @@
     - [原理](#原理)
     - [本质](#本质)
         - [抽象建模](#抽象建模)
+    - [环境](#环境)
     - [DOM 操作为什么慢](#dom-操作为什么慢)
     - [Virtual DOM 的优点](#virtual-dom-的优点)
         - [避免频繁的 DOM 更新](#避免频繁的-dom-更新)
@@ -20,6 +21,7 @@
             - [可以使代码的通用性更强](#可以使代码的通用性更强)
             - [支持 JSX](#支持-jsx)
     - [模板语法和渲染函数](#模板语法和渲染函数)
+    - [模板编译效果](#模板编译效果)
     - [References](#references)
 
 <!-- /TOC -->
@@ -43,6 +45,12 @@
 
 ## 本质
 ### 抽象建模
+
+
+## 环境
+key | value
+--|--
+源码版本 | 2.5.21
 
 
 ## DOM 操作为什么慢
@@ -77,7 +85,7 @@
 #### 支持 JSX
 渲染函数允许 JS 拓展使用 JSX 语法，因此可以更合适的构建基于组件的应用。
 
-
+    
 ## 模板语法和渲染函数
 1. Vue 有两种方法创建虚拟 DOM：模板语法编译和直接使用渲染函数。
 2. `template` 里面的 HTML 模板代码会被 Vue 的编译器隐式的自动编译为虚拟 DOM
@@ -89,7 +97,78 @@
     // }
     ```
 3. 用户也可是手动调用渲染函数来主动的创建虚拟 DOM。
-4. 可以通过[这个简易实现](https://github.com/livoras/blog/issues/13)了解虚拟 DOM 的构建原理
+4. 可以通过 [这个简易实现](https://github.com/livoras/blog/issues/13) 了解虚拟 DOM 的构建原理
+
+
+## 模板编译效果
+1. 具体的编译是通过 `src/compiler/parser/index.js` 中的 `parse` 函数，然后内部会调用 `src/compiler/parser/html-parser.js` 中的 `parseHTML`。很复杂，这里看看效果就行了。
+2. 下面源码中，`compile` 调用 `baseCompile`，`baseCompile` 再调用 `parse`
+    ```js
+    // src/compiler/create-compiler.js
+
+    export function createCompilerCreator(baseCompile: Function): Function {
+        return function createCompiler(baseOptions: CompilerOptions) {
+            function compile(
+                template: string,
+                options?: CompilerOptions
+            ): CompiledResult {
+                const finalOptions = Object.create(baseOptions);
+                const errors = [];
+                const tips = [];
+                finalOptions.warn = (msg, tip) => {
+                    (tip ? tips : errors).push(msg);
+                };
+
+                if (options) {
+                    // merge custom modules
+                    if (options.modules) {
+                        finalOptions.modules = (baseOptions.modules || []).concat(
+                            options.modules
+                        );
+                    }
+                    // merge custom directives
+                    if (options.directives) {
+                        finalOptions.directives = extend(
+                            Object.create(baseOptions.directives || null),
+                            options.directives
+                        );
+                    }
+                    // copy other options
+                    for (const key in options) {
+                        if (key !== "modules" && key !== "directives") {
+                            finalOptions[key] = options[key];
+                        }
+                    }
+                }
+
+                const compiled = baseCompile(template, finalOptions);
+                if (process.env.NODE_ENV !== "production") {
+                    errors.push.apply(errors, detectErrors(compiled.ast));
+                }
+                compiled.errors = errors;
+                compiled.tips = tips;
+                return compiled;
+            }
+
+            return {
+                compile,
+                compileToFunctions: createCompileToFunctionFn(compile)
+            };
+        };
+    }
+    ```
+3. 假设编译以下模板
+    ```html
+    <div id="app">
+        <ul class="list">
+            <li v-for="item in list">{{item}}</li> 
+        </ul>
+        <p class="paragraph">{{number}}</p>
+        <span>123</span>
+    </div>
+    ```
+4. `compile` 函数的 `template` 参数就是上面的模板字符串。编译后的 `compiled` 对象有五个属性，其实属性 `ast` 为抽象语法树，部分展开如下
+    <img src="./images/06.png" width="800" style="display: block; margin: 5px 0 10px 0;" />
 
 
 ## References
@@ -98,3 +177,5 @@
 * [网上都说操作真实 DOM 慢，但测试结果却比 React 更快，为什么？ - 尤雨溪的回答 - 知乎](https://www.zhihu.com/question/31809713/answer/53544875)
 * [前端为什么操作 DOM 是最耗性能的呢？ - justjavac的回答 - 知乎](https://www.zhihu.com/question/324992717/answer/707044362)
 * [深度剖析：如何实现一个 Virtual DOM 算法](https://github.com/livoras/blog/issues/13)
+
+

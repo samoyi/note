@@ -7,7 +7,9 @@
         - [性能权衡](#性能权衡)
     - [原理](#原理)
     - [本质](#本质)
+    - [环境](#环境)
     - [准备知识](#准备知识)
+    - [TODO](#todo)
     - [Level by Level](#level-by-level)
     - [List](#list)
         - [Diff 算法并不知道用户操作](#diff-算法并不知道用户操作)
@@ -15,8 +17,9 @@
     - [渲染差异（patch）原理](#渲染差异patch原理)
         - [patch](#patch)
         - [sameVnode](#samevnode)
+        - [`patch` 函数源码](#patch-函数源码)
     - [差异比较（patchVnode）](#差异比较patchvnode)
-    - [updateChildren](#updatechildren)
+    - [`updateChildren`](#updatechildren)
         - [四个特殊的节点复用情况](#四个特殊的节点复用情况)
         - [其他情况](#其他情况)
         - [`while` 循环结束以后](#while-循环结束以后)
@@ -35,8 +38,18 @@
 ## 本质
 
 
+## 环境
+key | value
+--|--
+源码版本 | 2.5.21
+
+
 ## 准备知识
 * `./VirtualDOM操作.md`
+
+
+## TODO
+从 watcher 更新到触发 patch 的代码流程
 
 
 ## Level by Level
@@ -153,7 +166,8 @@
     ```
 
 ### sameVnode
-1. 看看什么情况下两个 VNode 会属于 sameVnode （相同的节点）
+1. 看看什么情况下两个 VNode 会属于 sameVnode （相同的节点）。
+2. 示意代码
     ```js
     function sameVnode () {
         return (
@@ -173,13 +187,185 @@
         return typeA === typeB
     }
     ```
-2. 当 `key`、 `tag`、 `isComment`（是否为注释节点）、 `data` 同时定义（或不定义），同时满足当标签类型为 `input` 的时候 `type` 相同（某些浏览器不支持动态修改 `<input>` 类型，所以他们被视为不同类型）时，两个节点就被视为相同的节点。
+3. 当 `key`、 `tag`、 `isComment`（是否为注释节点）、 `data` 同时定义（或不定义），同时满足当标签类型为 `input` 的时候 `type` 相同（某些浏览器不支持动态修改 `<input>` 类型，所以他们被视为不同类型）时，两个节点就被视为相同的节点。
+4. 源码
+    ```js
+    `/src/core/vdom/patch.js`
+    function sameVnode(a, b) {
+        return (
+            a.key === b.key // 首先 key 必须要相同
+            && ( // 且满足一下两个条件之一
+                ( 
+                    // 条件一
+                    a.tag === b.tag 
+                    && a.isComment === b.isComment 
+                    && isDef(a.data) === isDef(b.data) 
+                    && sameInputType(a, b)
+                ) 
+                || (
+                    // 条件二
+                    isTrue(a.isAsyncPlaceholder) 
+                    && a.asyncFactory === b.asyncFactory 
+                    && isUndef(b.asyncFactory.error)
+                )
+            )
+        );
+    }
 
+
+    function sameInputType(a, b) {
+        if (a.tag !== "input") {
+            // 这个返回 true，看起来 sameInputType 的判断为真的情况是：可以不是 input，但如果是 input，那就必须满足下面的条件？
+            return true
+        };
+        let i;
+        const typeA = isDef((i = a.data)) && isDef((i = i.attrs)) && i.type;
+        const typeB = isDef((i = b.data)) && isDef((i = i.attrs)) && i.type;
+        return (
+            // 要么是 type 一样，要么虽然不一样，但是都是文本输入的类型
+            typeA === typeB || ( isTextInputType(typeA) && isTextInputType(typeB) )
+        );
+    }
+
+
+    // isTextInputType 在 /src/platforms/web/util/element.js
+    // const isTextInputType = makeMap('text,number,password,search,email,tel,url')
+    ```
+
+### `patch` 函数源码
+`/src/core/vdom/patch.js`
+
+```js
+export function createPatchFunction (backend) {
+    
+    // ...
+    
+    return function patch(oldVnode, vnode, hydrating, removeOnly) {
+        if (isUndef(vnode)) {
+            if (isDef(oldVnode)) invokeDestroyHook(oldVnode);
+            return;
+        }
+
+        let isInitialPatch = false;
+        const insertedVnodeQueue = [];
+
+        if ( isUndef(oldVnode) ) { // 旧节点不存在直接创建新节点
+            // empty mount (likely as component), create new root element
+            isInitialPatch = true;
+            createElm(vnode, insertedVnodeQueue);
+        } 
+        else {
+            const isRealElement = isDef( oldVnode.nodeType );
+            if ( !isRealElement && sameVnode(oldVnode, vnode) ) { // 旧节点是虚拟节点，且新旧虚拟节点是 sameVnode
+                // patch existing root node
+                patchVnode(
+                    oldVnode,
+                    vnode,
+                    insertedVnodeQueue,
+                    null,
+                    null,
+                    removeOnly
+                );
+            } 
+            else { // 要么旧节点不是虚拟节点，要么新旧节点不是 sameVnode
+                if ( isRealElement ) { // 旧节点不是虚拟节点
+                    // mounting to a real element
+                    // check if this is server-rendered content and if we can perform
+                    // a successful hydration.
+                    if (
+                        oldVnode.nodeType === 1 &&
+                        oldVnode.hasAttribute(SSR_ATTR)
+                    ) {
+                        oldVnode.removeAttribute(SSR_ATTR);
+                        hydrating = true;
+                    }
+                    if (isTrue(hydrating)) {
+                        if (hydrate(oldVnode, vnode, insertedVnodeQueue)) {
+                            invokeInsertHook(vnode, insertedVnodeQueue, true);
+                            return oldVnode;
+                        } else if (process.env.NODE_ENV !== "production") {
+                            warn(
+                                "The client-side rendered virtual DOM tree is not matching " +
+                                    "server-rendered content. This is likely caused by incorrect " +
+                                    "HTML markup, for example nesting block-level elements inside " +
+                                    "<p>, or missing <tbody>. Bailing hydration and performing " +
+                                    "full client-side render."
+                            );
+                        }
+                    }
+                    // either not server-rendered, or hydration failed.
+                    // create an empty node and replace it
+                    oldVnode = emptyNodeAt(oldVnode);
+                }
+
+                // replacing existing element
+                const oldElm = oldVnode.elm;
+                const parentElm = nodeOps.parentNode(oldElm);
+
+                // create new node
+                createElm(
+                    vnode,
+                    insertedVnodeQueue,
+                    // extremely rare edge case: do not insert if old element is in a
+                    // leaving transition. Only happens when combining transition +
+                    // keep-alive + HOCs. (#4590)
+                    oldElm._leaveCb ? null : parentElm,
+                    nodeOps.nextSibling(oldElm)
+                );
+
+                // update parent placeholder node element, recursively
+                if (isDef(vnode.parent)) {
+                    let ancestor = vnode.parent;
+                    const patchable = isPatchable(vnode);
+                    while (ancestor) {
+                        for (let i = 0; i < cbs.destroy.length; ++i) {
+                            cbs.destroy[i](ancestor);
+                        }
+                        ancestor.elm = vnode.elm;
+                        if (patchable) {
+                            for (let i = 0; i < cbs.create.length; ++i) {
+                                cbs.create[i](emptyNode, ancestor);
+                            }
+                            // #6513
+                            // invoke insert hooks that may have been merged by create hooks.
+                            // e.g. for directives that uses the "inserted" hook.
+                            const insert = ancestor.data.hook.insert;
+                            if (insert.merged) {
+                                // start at index 1 to avoid re-invoking component mounted hook
+                                for (let i = 1; i < insert.fns.length; i++) {
+                                    insert.fns[i]();
+                                }
+                            }
+                        } else {
+                            registerRef(ancestor);
+                        }
+                        ancestor = ancestor.parent;
+                    }
+                }
+
+                // destroy old node
+                if ( isDef(parentElm) ) {
+                    removeVnodes(parentElm, [oldVnode], 0, 0);
+                } 
+                else if ( isDef(oldVnode.tag) ) {
+                    invokeDestroyHook(oldVnode);
+                }
+            }
+        }
+
+        invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch);
+        return vnode.elm;
+    };
+}
+```
 
 
 ## 差异比较（patchVnode）
-1. patchVnode 是在符合 sameVnode 的条件下触发的，所以会进行「比对」
+1. patchVnode 是在符合 sameVnode 的条件下触发的，所以会进行「比对」。
+2. 示意代码
     ```js
+    `/src/core/vdom/patch.js`
+
     function patchVnode (oldVnode, vnode) {
         if (oldVnode === vnode) {
             return;
@@ -211,99 +397,305 @@
         }
     }
     ```
-2. 首先在新老 VNode 节点相同的情况下，就不需要做任何改变了，直接 return。
-3. 在当新老 VNode 节点都是 `isStatic`（静态的），并且 `key` 相同时，只要将 `componentInstance` 与 `elm` 从老 VNode 节点 “拿过来” 即可，这样就可以跳过比对的过程。
-4. 接下来，当新 VNode 节点是文本节点的时候，直接用 `setTextContent` 来设置 text，这里的 `nodeOps` 是一个适配层，根据不同平台提供不同的操作平台 DOM 的方法，实现跨平台。
-5. 当新 VNode 节点是非文本节点当时候，需要分几种情况
+3. 首先在新老 VNode 节点相同的情况下，就不需要做任何改变了，直接 return。
+4. 在当新老 VNode 节点都是 `isStatic`（静态的），并且 `key` 相同时，只要将 `componentInstance` 与 `elm` 从老 VNode 节点 “拿过来” 即可，这样就可以跳过比对的过程。
+5. 接下来，当新 VNode 节点是文本节点的时候，直接用 `setTextContent` 来设置 text，这里的 `nodeOps` 是一个适配层，根据不同平台提供不同的操作平台 DOM 的方法，实现跨平台。
+6. 当新 VNode 节点是非文本节点当时候，需要分几种情况
     * `oldCh` 与 `ch` 都存在且不相同时，使用 `updateChildren` 函数来更新子节点。
     * 如果只有 `ch` 存在的时候，如果老节点是文本节点则先将节点的文本清除，然后将 `ch` 批量插入插入到节点 `elm` 下。
     * 同理当只有 `oldCh` 存在时，说明需要将老节点通过 `removeVnodes` 全部清除。
     * 最后一种情况是如果两者都没有子节点，还要看看老节点是不是文本节点，是的话清除掉内容。
+7. 源码
+    ```js
+    `/src/core/vdom/patch.js`
 
+    function patchVnode(
+        oldVnode,
+        vnode,
+        insertedVnodeQueue,
+        ownerArray,
+        index,
+        removeOnly
+    ) {
+        if ( oldVnode === vnode ) {
+            return;
+        }
 
-## updateChildren
-```js
-function updateChildren (parentElm, oldCh, newCh) {
-    let oldStartIdx = 0;
-    let newStartIdx = 0;
-    let oldEndIdx = oldCh.length - 1;
-    let oldStartVnode = oldCh[0];
-    let oldEndVnode = oldCh[oldEndIdx];
-    let newEndIdx = newCh.length - 1;
-    let newStartVnode = newCh[0];
-    let newEndVnode = newCh[newEndIdx];
-    let oldKeyToIdx, idxInOld, elmToMove, refElm;
+        if ( isDef(vnode.elm) && isDef(ownerArray) ) {
+            // clone reused vnode
+            vnode = ownerArray[index] = cloneVNode(vnode);
+        }
 
-    while ( oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx ) {
-        if ( !oldStartVnode ) {
-            oldStartVnode = oldCh[++oldStartIdx];
-        } 
-        else if ( !oldEndVnode ) {
-            oldEndVnode = oldCh[--oldEndIdx];
-        } 
-        else if ( sameVnode(oldStartVnode, newStartVnode) ) {
-            patchVnode(oldStartVnode, newStartVnode);
-            oldStartVnode = oldCh[++oldStartIdx];
-            newStartVnode = newCh[++newStartIdx];
-        } 
-        else if ( sameVnode(oldEndVnode, newEndVnode) ) {
-            patchVnode(oldEndVnode, newEndVnode);
-            oldEndVnode = oldCh[--oldEndIdx];
-            newEndVnode = newCh[--newEndIdx];
-        } 
-        else if ( sameVnode(oldStartVnode, newEndVnode) ) {
-            patchVnode(oldStartVnode, newEndVnode);
-            nodeOps.insertBefore(parentElm, oldStartVnode.elm, nodeOps.nextSibling(oldEndVnode.elm));
-            oldStartVnode = oldCh[++oldStartIdx];
-            newEndVnode = newCh[--newEndIdx];
-        } 
-        else if ( sameVnode(oldEndVnode, newStartVnode) ) {
-            patchVnode(oldEndVnode, newStartVnode);
-            nodeOps.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm);
-            oldEndVnode = oldCh[--oldEndIdx];
-            newStartVnode = newCh[++newStartIdx];
-        } 
-        else {
-            let elmToMove = oldCh[idxInOld];
-            if ( !oldKeyToIdx ) {
-                oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx);
-            }
-            idxInOld = newStartVnode.key ? oldKeyToIdx[newStartVnode.key] : null;
-            if ( !idxInOld ) {
-                createElm(newStartVnode, parentElm, oldStartVnode.elm);
-                newStartVnode = newCh[++newStartIdx];
+        const elm = (vnode.elm = oldVnode.elm);
+
+        if ( isTrue(oldVnode.isAsyncPlaceholder) ) {
+            if ( isDef(vnode.asyncFactory.resolved) ) {
+                hydrate(oldVnode.elm, vnode, insertedVnodeQueue);
             } 
             else {
-                elmToMove = oldCh[idxInOld];
-                if ( sameVnode(elmToMove, newStartVnode) ) {
-                    patchVnode(elmToMove, newStartVnode);
-                    oldCh[idxInOld] = undefined;
-                    nodeOps.insertBefore(parentElm, newStartVnode.elm, oldStartVnode.elm);
-                    newStartVnode = newCh[++newStartIdx];
+                vnode.isAsyncPlaceholder = true;
+            }
+            return;
+        }
+
+        // reuse element for static trees.
+        // note we only do this if the vnode is cloned -
+        // if the new node is not cloned it means the render functions have been
+        // reset by the hot-reload-api and we need to do a proper re-render.
+        if (
+            isTrue(vnode.isStatic) &&
+            isTrue(oldVnode.isStatic) &&
+            vnode.key === oldVnode.key &&
+            (isTrue(vnode.isCloned) || isTrue(vnode.isOnce))
+        ) {
+            vnode.componentInstance = oldVnode.componentInstance;
+            return;
+        }
+
+        let i;
+        const data = vnode.data;
+        if (isDef(data) && isDef((i = data.hook)) && isDef((i = i.prepatch))) {
+            i(oldVnode, vnode);
+        }
+
+        const oldCh = oldVnode.children;
+        const ch = vnode.children;
+        if ( isDef(data) && isPatchable(vnode) ) {
+            for (i = 0; i < cbs.update.length; ++i) cbs.update[i](oldVnode, vnode);
+            if (isDef((i = data.hook)) && isDef((i = i.update))) i(oldVnode, vnode);
+        }
+
+        if ( isUndef(vnode.text) ) { // 新节点不是文本节点
+            if ( isDef(oldCh) && isDef(ch) ) { // 都有子节点
+                if ( oldCh !== ch ) // 且子节点不相同
+                    updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly);
+            } 
+            else if ( isDef(ch) ) { // 新节点有子节点但旧节点没有子节点
+                if ( process.env.NODE_ENV !== "production" ) {
+                    checkDuplicateKeys(ch);
+                }
+                if ( isDef(oldVnode.text) ) { // 旧节点没有子节点但有可能有文本节点
+                    nodeOps.setTextContent(elm, "");
+                }
+                addVnodes( elm, null, ch, 0, ch.length - 1, insertedVnodeQueue ); // 插入新节点的子节点
+            } 
+            else if ( isDef(oldCh) ) { // 旧节点有子节点但新节点没有子节点
+                removeVnodes(elm, oldCh, 0, oldCh.length - 1); // 直接移除旧节点的子节点
+            } 
+            else if ( isDef(oldVnode.text) ) {
+                nodeOps.setTextContent(elm, "");
+            }
+        } 
+        else if ( oldVnode.text !== vnode.text ) { // 新节点是文本节点并且旧节点不是相同文本的文本节点节点时
+            nodeOps.setTextContent(elm, vnode.text);
+        }
+
+        if (isDef(data)) {
+            if (isDef((i = data.hook)) && isDef((i = i.postpatch)))
+                i(oldVnode, vnode);
+        }
+    }
+    ```
+
+
+## `updateChildren`
+1. 源码
+    ```js
+    `/src/core/vdom/patch.js`
+
+    function updateChildren(
+        parentElm,
+        oldCh,
+        newCh,
+        insertedVnodeQueue,
+        removeOnly
+    ) {
+        // 四个比对索引指针和对应的四个节点
+        let oldStartIdx = 0;
+        let newStartIdx = 0;
+        let oldEndIdx = oldCh.length - 1;
+        let oldStartVnode = oldCh[0];
+        let oldEndVnode = oldCh[oldEndIdx];
+        let newEndIdx = newCh.length - 1;
+        let newStartVnode = newCh[0];
+        let newEndVnode = newCh[newEndIdx];
+
+        let oldKeyToIdx, idxInOld, vnodeToMove, refElm;
+
+        // removeOnly is a special flag used only by <transition-group>
+        // to ensure removed elements stay in correct relative positions
+        // during leaving transitions
+        const canMove = !removeOnly;
+
+        if (process.env.NODE_ENV !== "production") {
+            checkDuplicateKeys(newCh);
+        }
+
+        // while 为 false 的条件是新子节点列表或旧子节点列表其中之一的首位指针相遇，即其中一个列表比对结束
+        while ( oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx ) { 
+            if ( isUndef(oldStartVnode) ) {
+                oldStartVnode = oldCh[++oldStartIdx]; // Vnode has been moved left
+            } 
+            else if ( isUndef(oldEndVnode) ) {
+                oldEndVnode = oldCh[--oldEndIdx];
+            } 
+
+            else if ( sameVnode(oldStartVnode, newStartVnode) ) {
+                patchVnode(
+                    oldStartVnode,
+                    newStartVnode,
+                    insertedVnodeQueue,
+                    newCh,
+                    newStartIdx
+                );
+                oldStartVnode = oldCh[++oldStartIdx];
+                newStartVnode = newCh[++newStartIdx];
+            } 
+            else if ( sameVnode(oldEndVnode, newEndVnode) ) {
+                patchVnode(
+                    oldEndVnode,
+                    newEndVnode,
+                    insertedVnodeQueue,
+                    newCh,
+                    newEndIdx
+                );
+                oldEndVnode = oldCh[--oldEndIdx];
+                newEndVnode = newCh[--newEndIdx];
+            } 
+            else if ( sameVnode(oldStartVnode, newEndVnode) ) {
+                // Vnode moved right
+                patchVnode(
+                    oldStartVnode,
+                    newEndVnode,
+                    insertedVnodeQueue,
+                    newCh,
+                    newEndIdx
+                );
+                canMove &&
+                    nodeOps.insertBefore(
+                        parentElm,
+                        oldStartVnode.elm,
+                        nodeOps.nextSibling(oldEndVnode.elm)
+                    );
+                oldStartVnode = oldCh[++oldStartIdx];
+                newEndVnode = newCh[--newEndIdx];
+            } 
+            else if ( sameVnode(oldEndVnode, newStartVnode) ) {
+                // Vnode moved left
+                patchVnode(
+                    oldEndVnode,
+                    newStartVnode,
+                    insertedVnodeQueue,
+                    newCh,
+                    newStartIdx
+                );
+                canMove &&
+                    nodeOps.insertBefore(
+                        parentElm,
+                        oldEndVnode.elm,
+                        oldStartVnode.elm
+                    );
+                oldEndVnode = oldCh[--oldEndIdx];
+                newStartVnode = newCh[++newStartIdx];
+            } 
+            
+            else {
+                if ( isUndef(oldKeyToIdx) ) {
+                    // 旧节点列表中，key 到 index 的映射
+                    oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx);
+                }
+
+                // 如果 newStartVnode 存在 key，则通过 key 找到该节点在旧列表中对应的旧节点的索引；
+                // 如果 newStartVnode 不存在 key，让然试图通过 findIdxInOld 找找在旧列表中有没有对应的节点，有的话返回索引
+                idxInOld = isDef(newStartVnode.key)
+                    ? oldKeyToIdx[newStartVnode.key]
+                    : findIdxInOld(newStartVnode, oldCh, oldStartIdx, oldEndIdx);
+
+                // 所以，idxInOld 存在意味着：
+                // 1. 要么在旧节点列表中找到了 key 相同的节点（key 相同也不一定满足 sameVnode）
+                // 2. 要么新节点虽然不存在 key 但是和旧节点列表中的某个节点 sameVnode
+
+                if ( isUndef(idxInOld) ) { // 如果 newStartVnode 这个节点是新的
+                    // New element
+                    // 则新建一个元素
+                    createElm(
+                        newStartVnode,
+                        insertedVnodeQueue,
+                        parentElm,
+                        oldStartVnode.elm,
+                        false,
+                        newCh,
+                        newStartIdx
+                    );
                 } 
                 else {
-                    createElm(newStartVnode, parentElm, oldStartVnode.elm);
-                    newStartVnode = newCh[++newStartIdx];
+                    vnodeToMove = oldCh[idxInOld];
+                    if ( sameVnode(vnodeToMove, newStartVnode) ) { // 有可能 key 相同但不是 sameVode，所以验证一下
+                        patchVnode(
+                            vnodeToMove,
+                            newStartVnode,
+                            insertedVnodeQueue,
+                            newCh,
+                            newStartIdx
+                        );
+                        oldCh[idxInOld] = undefined;
+                        canMove &&
+                            nodeOps.insertBefore(
+                                parentElm,
+                                vnodeToMove.elm,
+                                oldStartVnode.elm
+                            );
+                    } 
+                    else { // key 相同但不是 sameVnode，还是不能复用
+                        // same key but different element. treat as new element
+                        createElm(
+                            newStartVnode,
+                            insertedVnodeQueue,
+                            parentElm,
+                            oldStartVnode.elm,
+                            false,
+                            newCh,
+                            newStartIdx
+                        );
+                    }
                 }
+                newStartVnode = newCh[++newStartIdx];
             }
+        }
+
+        if ( oldStartIdx > oldEndIdx ) { // 老节点比对完了，还有几个新的节点需要插入
+            // 如果 newCh[newEndIdx + 1] 节点存在，则这个节点已经插入到
+            // newCh[newEndIdx + 1] 是上一个从右边比对完成的子节点
+            refElm = isUndef(newCh[newEndIdx + 1])
+                ? null
+                : newCh[newEndIdx + 1].elm;
+            addVnodes(
+                parentElm,
+                refElm,
+                newCh,
+                newStartIdx,
+                newEndIdx,
+                insertedVnodeQueue
+            );
+        } 
+        else if ( newStartIdx > newEndIdx ) {
+            removeVnodes(parentElm, oldCh, oldStartIdx, oldEndIdx);
         }
     }
 
-    if (oldStartIdx > oldEndIdx) {
-        refElm = (newCh[newEndIdx + 1]) ? newCh[newEndIdx + 1].elm : null;
-        addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx);
-    } 
-    else if (newStartIdx > newEndIdx) {
-        removeVnodes(parentElm, oldCh, oldStartIdx, oldEndIdx);
-    }
-}
-```
 
-1. 首先我们定义 `oldStartIdx`、`newStartIdx`、`oldEndIdx` 以及 `newEndIdx` 分别是新老两个 VNode 的子节点两边的索引，同时 `oldStartVnode`、`newStartVnode`、`oldEndVnode` 以及 `newEndVnode` 分别指向这几个索引对应的 VNode 节点
+    function findIdxInOld (node, oldCh, start, end) {
+        for (let i = start; i < end; i++) {
+            const c = oldCh[i]
+            if (isDef(c) && sameVnode(node, c)) return i
+        }
+    }
+    ```
+2. 首先我们定义 `oldStartIdx`、`newStartIdx`、`oldEndIdx` 以及 `newEndIdx` 分别是新老两个 VNode 的子节点两边的索引，同时 `oldStartVnode`、`newStartVnode`、`oldEndVnode` 以及 `newEndVnode` 分别指向这几个索引对应的 VNode 节点
     <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-2. 接下来是一个 `while` 循环，在这过程中，`oldStartIdx`、`newStartIdx`、`oldEndIdx` 以及 `newEndIdx` 会逐渐向中间靠拢
+3. 接下来是一个 `while` 循环，在这过程中，`oldStartIdx`、`newStartIdx`、`oldEndIdx` 以及 `newEndIdx` 会逐渐向中间靠拢
     <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-3. 首先的两个 `if`，是当 `oldStartVnode` 或者 `oldEndVnode` 不存在的时候，`oldStartIdx` 与 `oldEndIdx` 继续向中间靠拢，并更新对应的 `oldStartVnode` 与 `oldEndVnode` 的指向
+4. 首先的两个 `if`，是当 `oldStartVnode` 或者 `oldEndVnode` 不存在的时候，`oldStartIdx` 与 `oldEndIdx` 继续向中间靠拢，并更新对应的 `oldStartVnode` 与 `oldEndVnode` 的指向。不懂，为什么会不存在
     ```js
     if (!oldStartVnode) {
         oldStartVnode = oldCh[++oldStartIdx];
@@ -316,7 +708,7 @@ function updateChildren (parentElm, oldCh, newCh) {
 1. 接下的四个 `if`，是将 `oldStartIdx`、`newStartIdx`、`oldEndIdx` 以及 `newEndIdx` 两两比对的过程，一共会出现 2*2=4 种情况。
 2. 第一种情况，`oldStartVnode` 与 `newStartVnode` 符合 `sameVnode` 时，说明老 VNode 节点的头部与新 VNode 节点的头部是相同的 VNode 节点，直接进行 `patchVnode` 进行复用，同时 `oldStartIdx` 与 `newStartIdx` 向后移动一位。
 3. 第二种情况，`oldEndVnode` 与 `newEndVnode` 符合 `sameVnode`，也就是两个 VNode 的结尾是相同的 VNode，同样进行 `patchVnode` 操作进行复用，并将 `oldEndVnode` 与 `newEndVnode` 向前移动一位。
-4. 第三种情况，`oldStartVnode` 与 `newEndVnode` 符合 `sameVnode` 的时候，也就是老 VNode 节点的头部与新 VNode 节点的尾部是同一节点的时候，将 `oldStartVnode.elm` 这个节点直接移动到 `oldEndVnode.elm` 这个节点的后面即可进行复用。然后 `oldStartIdx` `向后移动一位，newEndIdx` 向前移动一位。
+4. 第三种情况，`oldStartVnode` 与 `newEndVnode` 符合 `sameVnode` 的时候，也就是老 VNode 节点的头部与新 VNode 节点的尾部是同一节点的时候，将 `oldStartVnode.elm` 这个节点直接移动到 `oldEndVnode.elm` 这个节点的后面即可进行复用。然后 `oldStartIdx` 向后移动一位，`newEndIdx` 向前移动一位。
 4. 第四种情况，`oldEndVnode` 与 `newStartVnode` 符合 `sameVnode` 时，也就是老 VNode 节点的尾部与新 VNode 节点的头部是同一节点的时候，将 `oldEndVnode.elm` 插入到 `oldStartVnode.elm` 前面进行复用。同样的，`oldEndIdx` 向前移动一位，`newStartIdx` 向后移动一位。
 
 ### 其他情况
