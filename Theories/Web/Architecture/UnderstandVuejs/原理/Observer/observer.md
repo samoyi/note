@@ -8,13 +8,22 @@
 
 - [observer](#observer)
     - [相关信息](#相关信息)
-    - [思想](#思想)
+    - [设计思想](#设计思想)
+    - [本质](#本质)
+    - [发布-订阅模式的要素](#发布-订阅模式的要素)
+        - [订阅者](#订阅者)
+        - [发布者](#发布者)
+    - [整体流程](#整体流程)
     - [主要模块](#主要模块)
         - [`Observer`](#observer)
         - [`Dep`](#dep)
         - [`Watcher`](#watcher)
         - [从单词语义上看 `Watcher` 和 `Observer` 的命名](#从单词语义上看-watcher-和-observer-的命名)
-    - [响应式的实现](#响应式的实现)
+    - [`Dep.target` 的作用](#deptarget-的作用)
+    - [实现](#实现)
+        - [实现数据响应式](#实现数据响应式)
+            - [初始化](#初始化)
+            - [响应式化](#响应式化)
         - [第一步：使用 `Dep` 类把 data 属性改造为 publisher，设置 getter 和 setter](#第一步使用-dep-类把-data-属性改造为-publisher设置-getter-和-setter)
         - [第二步：`Watcher` 求值，触发 data 属性的 getter](#第二步watcher-求值触发-data-属性的-getter)
         - [第三步：data 属性的 getter 中，`Dep` 获取当前 `Watcher`，并传递自己](#第三步data-属性的-getter-中dep-获取当前-watcher并传递自己)
@@ -26,10 +35,36 @@
 
 ## 相关信息
 * 源码版本：2.5.2
-* 文件路径：`src/core/observer`
+* 文件路径：
+    * `src/core/observer/`
+    * `src/core/instance/state.js`
 
 
-## 思想
+## 设计思想
+
+
+## 本质
+
+
+## 发布-订阅模式的要素
+### 订阅者
+* 变动回调函数：依赖的数据发生变化后，发布者会调用这个函数，里面的逻辑是订阅者针对数据变动做出相应的改变。
+* 对发布者的引用：需要引用到发布者的订阅函数，把自己的变动回调函数传递给发布者。
+
+### 发布者
+* 订阅者列表：保存每个订阅者的变动回调函数。
+* 订阅函数：接受订阅者的变动回调函数并保存进订阅者列表。
+* 通知函数：订阅者依赖的数据发生变动后，依次调用订阅者列表里每个订阅者的变动回调函数，并传递新的数据值。
+
+
+## 整体流程
+<img src="../../images/ReactivitySystem.png" width="600" style="display: block; background-color: #fff; margin: 5px 0 10px 0;" />
+
+1. **实现发布者**：为每个依赖的数据构造一个发布者，依赖的数据发生变化后通知订阅者。发布者由 `Dep` 类实现。
+2. **实现数据响应式**：要获得依赖数据的变化事件，如果让发布者轮询显然不合适，所以需要让数据变动时主动通知发布者。数据响应由 `Observer` 类实现。
+3. **实现订阅者**：每一个依赖该数据的对象，要先把自己变成一个订阅者实例。订阅者由 `Watcher` 类实现。
+4. **订阅依赖**：订阅者向发布者订阅数据变动。订阅时需要调用发布者的订阅函数并传递订阅者，但这个调用是由 `Observer` 发起的。下述原因。
+5. **响应数据变动**：依赖的数据变化后，`Observer` 实现的机制会让发布者者获得变化通知，发布者从自己的订阅者列表里找到所有的订阅者，依次调用它们的回调函数。
 
 
 ## 主要模块
@@ -55,9 +90,82 @@
 2. 所以 `Watcher` 只是一直盯着看有没有变化，而 `Observer` 除了观察以外，还要深入其中去给数据设置 getter 和 setter。
 
 
-## 响应式的实现
+## `Dep.target` 的作用
+1. 引用当前的 watcher
+2. 只对有 watcher 的属性进行响应式化
+
+
+## 实现
 1. 我们举例假设有一个计算属性内部依赖了两个 data 属性，来看看这个依赖关系是怎么绑定的。
 2. 计算属性是 subscriber，对应 `Watcher`；data 属性是 publisher，对应 `Dep`。
+
+### 实现数据响应式
+#### 初始化
+1. 最初通过 `src/core/instance/state.js` 中的 `initState` 方法调用，`initState` 进一步调用 `initData` 方法。
+2. `initData` 会对实例的 `data` 进行一些处理，然后交给 `Observer` 进行响应式化并订阅依赖
+```js
+// src/core/instance/state.js
+
+function initData(vm: Component) {
+    // 获取实例的 data 属性
+    let data = vm.$options.data;
+
+    // 该属性可能直接是个简单对象，也可能是一个返回简单对象的函数。如果是函数的话就调用并获得简单对象。
+    data = vm._data = typeof data === "function" ? getData(data, vm) : data || {};
+
+    // data 如果是函数必须要返回一个简单对象
+    // 如果不是简单对象，会被赋值为一个空的简单对象
+    if ( !isPlainObject(data) ) {
+        data = {};
+        process.env.NODE_ENV !== "production" &&
+            warn(
+                "data functions should return an object:\n" +
+                    "https://vuejs.org/v2/guide/components.html#data-Must-Be-a-Function",
+                vm
+            );
+    }
+
+    // proxy data on instance
+    const keys = Object.keys(data);
+    const props = vm.$options.props;
+    const methods = vm.$options.methods;
+    let i = keys.length;
+    // 遍历 data 对象
+    while (i--) {
+        const key = keys[i];
+
+        // 不能定义和 data 属性名同名的 method
+        if (process.env.NODE_ENV !== "production") {
+            if (methods && hasOwn(methods, key)) {
+                warn(
+                    `Method "${key}" has already been defined as a data property.`,
+                    vm
+                );
+            }
+        }
+
+        // 不能定义和 data 属性名同名的 prop
+        if (props && hasOwn(props, key)) {
+            process.env.NODE_ENV !== "production" &&
+                warn(
+                    `The data property "${key}" is already declared as a prop. ` +
+                        `Use prop default value instead.`,
+                    vm
+                );
+        } 
+        // 属性名不能使保留字
+        else if (!isReserved(key)) {
+            // 将 _data 上面的属性代理到了 vm 实例上
+            proxy(vm, `_data`, key);
+        }
+    }
+    // observe data
+    observe(data, true /* asRootData */);
+}
+```
+
+#### 响应式化
+
 
 ### 第一步：使用 `Dep` 类把 data 属性改造为 publisher，设置 getter 和 setter
 1. Vue 响应式系统的 publisher 是通过 `Dep` 类实现的，因此在编译 `data` 时，会为每一个属性实例化一个 `Dep`。
@@ -237,3 +345,4 @@ depend () {
 
 ## References
 * [Vue原理解析之observer模块](https://segmentfault.com/a/1190000008377887)
+* [learnVue](https://github.com/answershuto/learnVue)
