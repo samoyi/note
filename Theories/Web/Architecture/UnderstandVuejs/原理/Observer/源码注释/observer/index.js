@@ -45,21 +45,31 @@ export class Observer {
 
     constructor(value: any) {
         this.value = value;
+
         // 为整个 data 对象创建一个 publisher，之后还会遍历为每个子属性创建对应的 publisher
         this.dep = new Dep();
         this.vmCount = 0;
-        // def 函数出自 core/util/lang.js
-        // 为 data 对象添加名为 __ob__ 的属性，指向这里被构建的观察者实例，用来标志该 data 对象已经被观察了
+
+        // def 函数出自 src/core/util/lang.js
+        // 为 data 对象添加名为 __ob__ 的属性，指向这里被构建的 Observer 实例，用来标志该 data 对象已经被 observed
         def(value, "__ob__", this);
         // TODO 这里什么时候会出现是数组的情况？
-        if (Array.isArray(value)) {
-            if (hasProto) {
+        
+        if ( Array.isArray(value) ) {
+            // 改进若干数组方法，让这些方法也变成响应式的
+            // 如果当前浏览器支持 __proto__ 属性的话就可以直接覆盖该属性则使数组对象具有了重写后的数组方法。
+            // 如果没有该属性的浏览器，则必须通过遍历 def 所有需要重写的数组方法，这种方法效率较低，所以优先使用第一种。
+            if ( hasProto ) {
                 protoAugment(value, arrayMethods);
-            } else {
+            } 
+            else {
                 copyAugment(value, arrayMethods, arrayKeys);
             }
+
+            // 需要遍历数组的每一个成员进行observe
             this.observeArray(value);
-        } else {
+        } 
+        else {
             // 遍历 data 对象的每个属性，将其定义为访问器属性
             this.walk(value);
         }
@@ -73,6 +83,7 @@ export class Observer {
     walk(obj: Object) {
         const keys = Object.keys(obj);
         for (let i = 0; i < keys.length; i++) {
+            // defineReactive 会实际的把属性转换为访问器属性
             defineReactive(obj, keys[i]);
         }
     }
@@ -88,7 +99,6 @@ export class Observer {
 }
 
 // helpers
-
 /**
  * Augment a target Object or Array by intercepting
  * the prototype chain using __proto__
@@ -117,24 +127,30 @@ function copyAugment(target: Object, src: Object, keys: Array<string>) {
  * or the existing observer if the value already has one.
  */
 export function observe(value: any, asRootData: ?boolean): Observer | void {
-    if (!isObject(value) || value instanceof VNode) {
+    // TODO
+    if ( !isObject(value) || value instanceof VNode ) {
         return;
     }
+
     let ob: Observer | void;
-    if (hasOwn(value, "__ob__") && value.__ob__ instanceof Observer) {
+    // 如果该 data 对象已经有了 Ovserver 实例（会保存在 __ob__ 属性上），则不需要新创建，之后直接返回
+    if ( hasOwn(value, "__ob__") && value.__ob__ instanceof Observer ) {
         ob = value.__ob__;
-    } else if (
+    } 
+    // 如果没有了 Ovserver 实例
+    else if (
         // TODO
         shouldObserve &&
         !isServerRendering() &&
-        (Array.isArray(value) || isPlainObject(value)) &&
+        ( Array.isArray(value) || isPlainObject(value) ) &&
         Object.isExtensible(value) &&
-        !value._isVue
-    ) {
-        ob = new Observer(value);
+        !value._isVue ) 
+    {
+        ob = new Observer(value); // 为该 data 对象创建 Observer 实例
     }
+
     // TODO
-    if (asRootData && ob) {
+    if ( asRootData && ob ) {
         ob.vmCount++;
     }
     return ob;
@@ -178,23 +194,37 @@ export function defineReactive(
     Object.defineProperty(obj, key, {
         enumerable: true,
         configurable: true,
+        
+        // 在编译阶段，会对模板、计算属性之类的求值，求值的过程就会对其依赖属性求值，进而触发这里的 get 函数，完成依赖订阅。
+        // 这样也保证了，只有真正被依赖的数据才会被响应式化，那些没人依赖的数据就不会被 observe。
         get: function reactiveGetter() {
           // 如果属性已经有 getter，则使用本身 getter 返回值
             const value = getter ? getter.call(obj) : val;
             // TODO target
             // Dep.target 如果有对象，就说明当前有一个 watcher 正在求值
-            if (Dep.target) {
-                // 绑定依赖
+            if ( Dep.target ) {
+                // 当前 watcher 订阅依赖
+                // dep.depend 方法会通过 Dep.target 引用当前 watcher，将其添加到 dep 的订阅列表里，代码如下：
+                // depend() {
+                //     if (Dep.target) {
+                //         Dep.target.addDep(this);
+                //     }
+                // }
                 dep.depend();
-                if (childOb) {
+
+                // 如果该对象的子属性对象也被 observe 了，那么子属性对象也会作为其父对象 watcher 的依赖
+                // 例如一个计算属性依赖了对象 outer: {inner: {age: 22}}，那么对象 inner: {age: 22} 也会被设置为该计算属性的依赖
+                if ( childOb ) {
                     childOb.dep.depend();
-                    if (Array.isArray(value)) {
+                    if ( Array.isArray(value) ) {
                         dependArray(value);
                     }
                 }
             }
             return value;
         },
+
+        
         set: function reactiveSetter(newVal) {
             const value = getter ? getter.call(obj) : val;
             /* eslint-disable no-self-compare */

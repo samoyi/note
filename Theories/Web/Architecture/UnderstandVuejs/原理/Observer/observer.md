@@ -23,7 +23,10 @@
     - [实现](#实现)
         - [实现数据响应式](#实现数据响应式)
             - [初始化](#初始化)
-            - [响应式化](#响应式化)
+            - [为实例 data 对象创建 `Observer` 实例，](#为实例-data-对象创建-observer-实例)
+            - [`Observer` 实例的实际创建过程](#observer-实例的实际创建过程)
+        - [被 observe 的对象是数组的情况](#被-observe-的对象是数组的情况)
+            - [`defineReactive` 实现依赖订阅](#definereactive-实现依赖订阅)
         - [第一步：使用 `Dep` 类把 data 属性改造为 publisher，设置 getter 和 setter](#第一步使用-dep-类把-data-属性改造为-publisher设置-getter-和-setter)
         - [第二步：`Watcher` 求值，触发 data 属性的 getter](#第二步watcher-求值触发-data-属性的-getter)
         - [第三步：data 属性的 getter 中，`Dep` 获取当前 `Watcher`，并传递自己](#第三步data-属性的-getter-中dep-获取当前-watcher并传递自己)
@@ -35,9 +38,6 @@
 
 ## 相关信息
 * 源码版本：2.5.2
-* 文件路径：
-    * `src/core/observer/`
-    * `src/core/instance/state.js`
 
 
 ## 设计思想
@@ -103,68 +103,358 @@
 #### 初始化
 1. 最初通过 `src/core/instance/state.js` 中的 `initState` 方法调用，`initState` 进一步调用 `initData` 方法。
 2. `initData` 会对实例的 `data` 进行一些处理，然后交给 `Observer` 进行响应式化并订阅依赖
-```js
-// src/core/instance/state.js
+    ```js
+    // src/core/instance/state.js
 
-function initData(vm: Component) {
-    // 获取实例的 data 属性
-    let data = vm.$options.data;
+    function initData(vm: Component) {
+        // 获取实例的 data 属性
+        let data = vm.$options.data;
 
-    // 该属性可能直接是个简单对象，也可能是一个返回简单对象的函数。如果是函数的话就调用并获得简单对象。
-    data = vm._data = typeof data === "function" ? getData(data, vm) : data || {};
+        // 该属性可能直接是个简单对象，也可能是一个返回简单对象的函数。如果是函数的话就调用并获得简单对象。
+        data = vm._data = typeof data === "function" ? getData(data, vm) : data || {};
 
-    // data 如果是函数必须要返回一个简单对象
-    // 如果不是简单对象，会被赋值为一个空的简单对象
-    if ( !isPlainObject(data) ) {
-        data = {};
-        process.env.NODE_ENV !== "production" &&
-            warn(
-                "data functions should return an object:\n" +
-                    "https://vuejs.org/v2/guide/components.html#data-Must-Be-a-Function",
-                vm
-            );
-    }
-
-    // proxy data on instance
-    const keys = Object.keys(data);
-    const props = vm.$options.props;
-    const methods = vm.$options.methods;
-    let i = keys.length;
-    // 遍历 data 对象
-    while (i--) {
-        const key = keys[i];
-
-        // 不能定义和 data 属性名同名的 method
-        if (process.env.NODE_ENV !== "production") {
-            if (methods && hasOwn(methods, key)) {
-                warn(
-                    `Method "${key}" has already been defined as a data property.`,
-                    vm
-                );
-            }
-        }
-
-        // 不能定义和 data 属性名同名的 prop
-        if (props && hasOwn(props, key)) {
+        // data 如果是函数必须要返回一个简单对象
+        // 如果不是简单对象，会被赋值为一个空的简单对象
+        if ( !isPlainObject(data) ) {
+            data = {};
             process.env.NODE_ENV !== "production" &&
                 warn(
-                    `The data property "${key}" is already declared as a prop. ` +
-                        `Use prop default value instead.`,
+                    "data functions should return an object:\n" +
+                        "https://vuejs.org/v2/guide/components.html#data-Must-Be-a-Function",
                     vm
                 );
-        } 
-        // 属性名不能使保留字
-        else if (!isReserved(key)) {
-            // 将 _data 上面的属性代理到了 vm 实例上
-            proxy(vm, `_data`, key);
         }
+
+        // proxy data on instance
+        const keys = Object.keys(data);
+        const props = vm.$options.props;
+        const methods = vm.$options.methods;
+        let i = keys.length;
+        // 遍历 data 对象
+        while (i--) {
+            const key = keys[i];
+
+            // 不能定义和 data 属性名同名的 method
+            if (process.env.NODE_ENV !== "production") {
+                if (methods && hasOwn(methods, key)) {
+                    warn(
+                        `Method "${key}" has already been defined as a data property.`,
+                        vm
+                    );
+                }
+            }
+
+            // 不能定义和 data 属性名同名的 prop
+            if (props && hasOwn(props, key)) {
+                process.env.NODE_ENV !== "production" &&
+                    warn(
+                        `The data property "${key}" is already declared as a prop. ` +
+                            `Use prop default value instead.`,
+                        vm
+                    );
+            } 
+            // 属性名不能使保留字
+            else if (!isReserved(key)) {
+                // 将 _data 上面的属性代理到了 vm 实例上
+                proxy(vm, `_data`, key);
+            }
+        }
+        // observe data
+        observe(data, true /* asRootData */);
     }
-    // observe data
-    observe(data, true /* asRootData */);
+    ```
+3. `data` 的属性和 `prop` 的属性实际上是保存在实例的 `_data` 和 `_props` 属性上的，但是用户访问的时候并不是通过 `this._data.name` 和 `this._props.age`，而是直接通过 `this.name` 和 `this.age`。就是因为使用了 `proxy` 函数让实例对这两中属性的访问进行了代理
+    ```js   
+    // src/core/instance/state.js
+
+    export function proxy(target: Object, sourceKey: string, key: string) {
+        sharedPropertyDefinition.get = function proxyGetter() {
+            return this[sourceKey][key];
+        };
+        sharedPropertyDefinition.set = function proxySetter(val) {
+            this[sourceKey][key] = val;
+        };
+        Object.defineProperty(target, key, sharedPropertyDefinition);
+    }
+    ```
+
+#### 为实例 data 对象创建 `Observer` 实例，
+`Observer` 实例用于实现数据对象的响应式，创建好之后会被数据对象的 `__ob__` 属性引用
+```js
+// src/core/observer/index.js
+
+/**
+ * Attempt to create an observer instance for a value,
+ * returns the new observer if successfully observed,
+ * or the existing observer if the value already has one.
+ */
+export function observe(value: any, asRootData: ?boolean): Observer | void {
+    // TODO
+    if ( !isObject(value) || value instanceof VNode ) {
+        return;
+    }
+
+    let ob: Observer | void;
+    // 如果该 data 对象已经有了 Ovserver 实例（会保存在 __ob__ 属性上），则不需要新创建，之后直接返回
+    if ( hasOwn(value, "__ob__") && value.__ob__ instanceof Observer ) {
+        ob = value.__ob__;
+    } 
+    // 如果没有了 Ovserver 实例
+    else if (
+        // TODO
+        shouldObserve &&
+        !isServerRendering() &&
+        ( Array.isArray(value) || isPlainObject(value) ) &&
+        Object.isExtensible(value) &&
+        !value._isVue ) 
+    {
+        ob = new Observer(value); // 为该 data 对象创建 Observer 实例
+    }
+
+    // TODO
+    if ( asRootData && ob ) {
+        ob.vmCount++;
+    }
+    return ob;
 }
 ```
 
-#### 响应式化
+#### `Observer` 实例的实际创建过程
+```js
+// src/core/observer/index.js
+
+// Observe 一个 vue 实例，将它的 data 对象里面的属性转换为访问器属性。
+// 将每一个属性设置为 publisher，从而实现在其值更新的时候通知依赖，也就是实现响应式
+/**
+ * Observer class that is attached to each observed
+ * object. Once attached, the observer converts the target
+ * object's property keys into getter/setters that
+ * collect dependencies and dispatch updates.
+ */
+export class Observer {
+    value: any;
+    dep: Dep;
+    vmCount: number; // number of vms that have this object as root $data
+
+    constructor(value: any) {
+        this.value = value;
+
+        // 为整个 data 对象创建一个 publisher，之后还会遍历为每个子属性创建对应的 publisher
+        this.dep = new Dep();
+        this.vmCount = 0;
+
+        // def 函数出自 src/core/util/lang.js
+        // 为 data 对象添加名为 __ob__ 的属性，指向这里被构建的 Observer 实例，用来标志该 data 对象已经 observed
+        def(value, "__ob__", this);
+        
+        if ( Array.isArray(value) ) {
+            // 
+            if ( hasProto ) {
+                protoAugment(value, arrayMethods);
+            } 
+            else {
+                copyAugment(value, arrayMethods, arrayKeys);
+            }
+
+            // 需要遍历数组的每一个成员进行 observe
+            this.observeArray(value);
+        } 
+        else {
+            // 遍历 data 对象的每个属性，将其定义为访问器属性
+            this.walk(value);
+        }
+    }
+
+    /**
+     * Walk through all properties and convert them into
+     * getter/setters. This method should only be called when
+     * value type is Object.
+     */
+    walk(obj: Object) {
+        const keys = Object.keys(obj);
+        for (let i = 0; i < keys.length; i++) {
+            // defineReactive 会实际的把属性转换为访问器属性
+            defineReactive(obj, keys[i]);
+        }
+    }
+
+    /**
+     * Observe a list of Array items.
+     */
+    observeArray(items: Array<any>) {
+        for (let i = 0, l = items.length; i < l; i++) {
+            observe(items[i]);
+        }
+    }
+}
+```
+
+### 被 observe 的对象是数组的情况
+1. 如果是修改一个数组的成员，该成员是一个对象，那只需要递归对数组的成员进行双向绑定即可。但这时候出现了一个问题：如果我们进行 `pop`、`push` 等操作的时候，`push` 进去的对象根本没有进行过双向绑定，更别说 `pop` 了，那么我们如何监听数组的这些变化呢？ 
+2. Vue.js 提供的方法是重写 `push`、`pop`、`shift`、`unshift`、`splice`、`sort`、`reverse` 这七个数组方法
+    ```js
+    /*
+    * not type checking this file because flow doesn't play well with
+    * dynamically accessing methods on Array prototype
+    */
+
+    import { def } from "../util/index";
+
+    const arrayProto = Array.prototype;
+
+    // 创建一个新的数组对象，修改该对象上的数组的七个方法，防止污染原生数组方法
+    export const arrayMethods = Object.create(arrayProto);
+
+    // 重新包装下面的几个数组方法，让它们可以触发数组的变动监听
+    const methodsToPatch = [
+        "push",
+        "pop",
+        "shift",
+        "unshift",
+        "splice",
+        "sort",
+        "reverse"
+    ];
+
+    /**
+    * Intercept mutating methods and emit events
+    */
+    // 截获数组的成员发生的变化，执行原生数组操作的同时通过 dep 发布变化给订阅者
+    methodsToPatch.forEach(function(method) {
+        // cache original method
+        const original = arrayProto[method]; // 基本的数组操作还是要用原始的方法来执行
+        def(arrayMethods, method, function mutator(...args) {
+            const result = original.apply(this, args);
+            const ob = this.__ob__;
+            let inserted;
+            // 如果是往数组里添加新数组项的方法，通过 inserted 记录被插入的数组项，
+            // 然后通过 ob.observeArray 把这些数组项也变成响应式的。
+            switch (method) {
+                case "push":
+                case "unshift":
+                    inserted = args;
+                    break;
+                case "splice":
+                    inserted = args.slice(2);
+                    break;
+            }
+            if (inserted) ob.observeArray(inserted);
+            // notify change
+            ob.dep.notify();
+            return result;
+        });
+    });
+    ```
+3. 并通过 `protoAugment` 和 `copyAugment` 两个方法调用来作用在被 observe 的数组上
+    ```js
+    // src/core/observer/index.js
+    
+    /**
+     * Augment a target Object or Array by intercepting
+     * the prototype chain using __proto__
+     */
+    function protoAugment(target, src: Object) {
+        /* eslint-disable no-proto */
+        target.__proto__ = src;
+        /* eslint-enable no-proto */
+    }
+
+    /**
+     * Augment a target Object or Array by defining
+     * hidden properties.
+     */
+    /* istanbul ignore next */
+    function copyAugment(target: Object, src: Object, keys: Array<string>) {
+        for (let i = 0, l = keys.length; i < l; i++) {
+            const key = keys[i];
+            def(target, key, src[key]);
+        }
+    }
+    ```
+4. 但是修改了数组的原生方法以后，直接通过数组的下标或者设置 `length` 来修改数组依然不会实现响应式。
+
+
+#### `defineReactive` 实现依赖订阅
+1. 源码
+    ```js
+    // observer/index.js
+    /**
+     * Define a reactive property on an Object.
+     */
+    export function defineReactive(
+        obj: Object,
+        key: string,
+        val: any,
+        customSetter?: ?Function,
+        shallow?: boolean
+    ) {
+        // 为每个数据属性创建一个 publisher，所有依赖该数据属性的 subscriber 都会订阅这个 publisher
+        const dep = new Dep();
+
+        // 跳过不可配置的属性
+        const property = Object.getOwnPropertyDescriptor(obj, key);
+        if (property && property.configurable === false) {
+            return;
+        }
+
+        // cater for pre-defined getter/setters
+        // 如果该属性本来就定义了 getter，则以该 getter 为基础
+        const getter = property && property.get;
+        // 如果该属性本来就定义了 setter，则以该 setter 为基础
+        const setter = property && property.set;
+
+        // 如果当前属性不是访问器属性且是用户定义的属性，获取它的属性值，作为 getter 的返回值
+        // 如果是用户自定义的数据属性，arguments 就只有两个，但内置的会更多，
+        // 看到 Vue 对象上的 $listeners 的情况时，有 5 个参数
+        if ((!getter || setter) && arguments.length === 2) {
+            val = obj[key];
+        }
+
+        let childOb = !shallow && observe(val);
+
+        Object.defineProperty(obj, key, {
+            enumerable: true,
+            configurable: true,
+            
+            // 在编译阶段，会对模板、计算属性之类的求值，求值的过程就会对其依赖属性求值，进而触发这里的 get 函数，完成依赖订阅。
+            // 这样也保证了，只有真正被依赖的数据才会被响应式化，那些没人依赖的数据就不会被 observe。
+            get: function reactiveGetter() {
+            // 如果属性已经有 getter，则使用本身 getter 返回值
+                const value = getter ? getter.call(obj) : val;
+                // TODO target
+                // Dep.target 如果有对象，就说明当前有一个 watcher 正在求值
+                if ( Dep.target ) {
+                    // 当前 watcher 订阅依赖
+                    // dep.depend 方法会通过 Dep.target 引用当前 watcher，将其添加到 dep 的订阅列表里，代码如下：
+                    // depend() {
+                    //     if (Dep.target) {
+                    //         Dep.target.addDep(this);
+                    //     }
+                    // }
+                    dep.depend();
+
+                    // 如果该对象的子属性对象也被 observe 了，那么子属性对象也会作为其父对象 watcher 的依赖
+                    // 例如一个计算属性依赖了对象 outer: {inner: {age: 22}}，那么对象 inner: {age: 22} 也会被设置为该计算属性的依赖
+                    if ( childOb ) {
+                        childOb.dep.depend();
+                        if ( Array.isArray(value) ) {
+                            dependArray(value);
+                        }
+                    }
+                }
+                return value;
+            },
+
+            // 依赖更新后通知订阅者。下述
+            set: function reactiveSetter(newVal) {
+                // ...
+            }
+        });
+    }
+    ```
+2. 在编译阶段，会对模板、计算属性之类的求值，求值的过程就会对其依赖属性求值，进而触发这里的 `get` 函数，完成依赖订阅。
+3. 这样也保证了，只有真正被依赖的数据才会被响应式化，那些没人依赖的数据就不会被 observe。
+
 
 
 ### 第一步：使用 `Dep` 类把 data 属性改造为 publisher，设置 getter 和 setter
