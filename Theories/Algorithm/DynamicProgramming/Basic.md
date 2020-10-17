@@ -28,6 +28,7 @@
 
 ### 缓存就挺好，为啥要之前之前每一种找零方案？
 
+
 ## 本质
 
 
@@ -211,56 +212,93 @@ console.log(minCoinChange_4.cache);
 2. 事实上，我们所做的优化并不是动态规划，而是通过缓存的方法来优化程序的性能。
 3. 真正的动态规划算法会用更系统化的方法来解决问题。在解决找零问题时，动态规划算法会从 1 分找零开始，然后系统地一直计算到所需的找零金额。这样做可以保证在每一步都已经知道任何小于当前值的找零金额所需的最少硬币数。
 4. 实现如下
-    ```py
-    def dpMakeChange(coinValueList, change, minCoins, coinsUsed):
-        # 求解 change 金额的最小找零方案时，
-        # 动态规划算法会从单位金额开始递增计算每一个金额的找零方案直到 change
-        for cents in range(change+1):
-            minCount = cents # 最小找零硬币数初始化为当前金额，即全部用单位币值来找零的方案
-            newCoin = 1
+    ```js
+    class MinCoinChange_DP {
+        // coins 为硬币种类
+        constructor ( coins=[] ) {
+            this.coins = coins.sort( (m, n) => m - n );
+            this.minCountList = [0]; // 所有金额的找零最小硬币数
+            this.lastCoinList = [0]; // 每种金额找零方案的最后一枚硬币金额，用于得出该方案的所有硬币
+        }
 
-            # 遍历小于等于当前 cents 的所有硬币币值
-            for j in [c for c in coinValueList if c <= cents]:
-                if minCoins[cents-j] + 1 < minCount:
-                    minCount = minCoins[cents-j] + 1
-                    # newCoin 是最优秀方案的找零组合时最后一个找的硬币。例如：
-                    # 对 2 找零的最优方案的 [1, 1]，因此 newCoin 为 1
-                    # 对 5 找零的最优方案的 [5]，因此 newCoin 为 5
-                    # 对 8 找零的最优方案的 [5, 1, 1, 1]，因此 newCoin 为 1
-                    newCoin = j 
+        padMinCountList ( amount ) {
+            let oldLen = this.minCountList.length;
+            let padded = Array.from({length: amount + 1 - oldLen}, (item, index)=>index);
+            this.minCountList = [...this.minCountList, ...padded];
+        }
 
-            minCoins[cents] = minCount
-            # 所以 coinsUsed 存储的是从 1 到 change 的每一个金额的最小找零方案的最后一个币值。
-            # 但我们是想知道每个方案具体有哪些币值，这里只为每个方案存储了最后一个币值有什么用？
-            # 从下面的 printCoins 的实现可以看到，只需要知道最后方案的最后一个币值。
-            # 就能依次推导出来该方案的所有币值。
-            coinsUsed[cents] = newCoin
+        makeChange ( amount ) {
+            if ( amount > this.minCountList.length+1 ) {
+                this.padMinCountList ( amount );
+            }
             
-        return minCoins[change]
 
-    # 打印某个金额的最小找零方案
-    def printCoins(coinsUsed, change):
-        coin = change
-        # 知道了金额 change 的找零方案的最后一个币值 x，所以我们知道该方案是金额 change-x 的最优方案
-        # 再加上一个 x；于是就可以再看金额 change-x 方案的最后一个币值，以此类推。
-        while coin > 0:
-            # 以 8 的找零方案 [5, 1, 1, 1] 为例
-            # 第一轮循环时，获取到 8 的最后一个找的硬币 1，coin 变成 8 的最优方案的上一轮基础，即 7
-            # 第二轮循环时，获取到 7 的最后一个找的硬币 1，coin 变成 7 的最优方案的上一轮基础，即 6
-            # 第三轮循环时，获取到 6 的最后一个找的硬币 1，coin 变成 6 的最优方案的上一轮基础，即 5
-            # 第四轮循环时，获取到 5 的最后一个找的硬币 5，coin 变成 0，退出循环
-            thisCoin = coinsUsed[coin]
-            print(thisCoin)
-            coin = coin - thisCoin
+            if ( amount < this.coins[0] ) { // 找零钱数小于最小硬币面额，无法找零
+                return [];
+            }
 
-        
-    coinValueList = [1, 5, 10, 21, 25]
-    change = 8
-    coinsUsed = [0]*(change+1)
-    minCoins = [0]*(change+1)
-    print( dpMakeChange(coinValueList, change, minCoins, coinsUsed), '\n' ) # 4
-    print( minCoins, '\n' )  # [0, 1, 2, 3, 4, 1, 2, 3, 4]
-    printCoins(coinsUsed, change) # 依次打印出 1 1 1 5
+            if ( this.coins.includes(amount) ) { // 找零钱数等于某个硬币面额
+                this.lastCoinList[amount] = amount;
+                return 1;
+            }
+
+            // 求解 amount 金额的最小找零方案时，动态规划算法会从最小单位金额开始，
+            // 递增计算每一个金额的找零方案直到 amount。
+            for ( let i=1; i<=amount; i++ ) {
+                let minCount = i; // 最少硬币数。初始值为金额数，即全部用单位金额硬币找零。
+                let lastCoin = 1; // 该找零方案的最后一枚硬币
+
+                // 遍历当前 amount 的若干种可能找零方案
+                this.coins.forEach((coin) => {
+                    if ( coin > amount ) {
+                        return;
+                    }
+                    let n = 1 + this.minCountList[i-coin];
+                    if ( n < minCount ) {
+                        minCount = n;
+                        lastCoin = coin;
+                    }
+                });
+
+                this.minCountList[i] = minCount;
+                // minCountList 存储的是从 1 到 amount 的每一个金额的最小找零方案的最后一个币值。
+                // 但我们是想知道每个方案具体有哪些币值，这里只为每个方案存储了最后一个币值有什么用？
+                //  从下面的 printCoins 的实现可以看到，只需要知道最后方案的最后一个币值。
+                //  就能依次推导出来该方案的所有币值。
+                this.lastCoinList[i] = lastCoin;
+            }
+
+            return this.minCountList[amount];
+        }
+
+        // 打印某个金额的最小找零方案
+        printCoins (amount) {
+            let arr = [];
+            //  知道了金额 amount 的找零方案的最后一个币值 x，所以我们知道该方案是金额 amount-x 的最优方案
+            // 再加上一个 x；于是就可以再看金额 amount-x 方案的最后一个币值，以此类推。
+            // 以 8 的找零方案 [5, 1, 1, 1] 为例
+            // 第一轮循环时，获取到 8 的最后一个找的硬币 1，coin 变成 8 的最优方案的上一轮基础，即 7
+            // 第二轮循环时，获取到 7 的最后一个找的硬币 1，coin 变成 7 的最优方案的上一轮基础，即 6
+            // 第三轮循环时，获取到 6 的最后一个找的硬币 1，coin 变成 6 的最优方案的上一轮基础，即 5
+            // 第四轮循环时，获取到 5 的最后一个找的硬币 5，coin 变成 0，退出循环
+            while ( amount > 0 ) {
+                let last = this.lastCoinList[amount];
+                arr.unshift( last );
+                amount -= last;
+            }
+            return arr;
+        }
+    }
+
+
+    let minCoinChange_4 = new MinCoinChange_DP([1, 5, 10, 25]);
+    console.log(minCoinChange_4.makeChange(36)); // 3
+    console.log(minCoinChange_4.makeChange(8)); // 4
+    console.log( minCoinChange_4.printCoins(8) ); // [5, 1, 1, 1]
+
+    let minCoinChange_3 = new MinCoinChange_DP([1, 3, 4]);
+    console.log(minCoinChange_3.makeChange(6)); // 2
+    console.log(minCoinChange_3.printCoins(6)); // [3, 3]
     ```
 
 
