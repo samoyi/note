@@ -27,6 +27,11 @@
             - [6.6.1 对象型 JSON](#661-对象型-json)
             - [6.6.2 数组型 JSON](#662-数组型-json)
     - [7. `WeakMap`](#7-weakmap)
+    - [8. Object vs Map](#8-object-vs-map)
+        - [8.1 语义](#81-语义)
+        - [8.2 Object 实现映射相比于 Map 相比相比的缺点](#82-object-实现映射相比于-map-相比相比的缺点)
+            - [8.2.1 新键名覆盖原型键名的危险](#821-新键名覆盖原型键名的危险)
+        - [8.3 Map 实现映射相比于 Object 实现的缺点](#83-map-实现映射相比于-object-实现的缺点)
     - [Reference](#reference)
 
 <!-- /TOC -->
@@ -289,7 +294,7 @@ console.log(new Map(JSON.parse('[[true,7],[{"foo":3},["abc"]]]')));
 
 ## 7. `WeakMap`
 1. WeakMap 的键名所指向的对象，不计入垃圾回收机制。
-2. WeakMap 只接受对象作为键名，不接受其他类型的值作为键名。
+2. WeakMap 只接受引用类型作为键名，不接受其他类型的值作为键名。
 3. WeakMap 只有四个方法可用：`set()`、`get()`、`has()` 和 `delete()`，也没有 `size` 属性。
 4. WeakMap 弱引用的只是键名，而不是键值
     ```js
@@ -304,6 +309,30 @@ console.log(new Map(JSON.parse('[[true,7],[{"foo":3},["abc"]]]')));
     ```
 
 
+## 8. Object vs Map
+### 8.1 语义
+`Object` 是对象，`Map` 是映射。所以如果就是想保存映射，那就优先考虑使用 `Map`。
+
+### 8.2 Object 实现映射相比于 Map 相比相比的缺点
+* 键必须是字符串类型或 Symbol 类型
+* 其他类型的键会被隐式的转为字符串，因此常常导致 bug
+* 可能访问到对象原型链上的属性
+* 设置的新键名可能覆盖原型上的键名
+* 没有 `size` 属性
+* 遍历不保证顺序
+* 会遍历到对象方法
+
+#### 8.2.1 新键名覆盖原型键名的危险
+1. 如果用一个 Object 对象来保存用户的输入，又如果因为某些需求，Object 的 key 会保存用户的输入。
+2. 这时如果用户的某个会保存为 key 的输入值和对象原型上的某个 key 同名，那就直接覆盖了。
+3. 比如用户输入了 `toString`，那就覆盖了这个对象的原型方法。
+
+### 8.3 Map 实现映射相比于 Object 实现的缺点
+* 如果键是引用类型，可能会导致内存泄露。不过可以使用 WeakMap 来避免。
+
+
 ## Reference
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)
 * [阮一峰](http://es6.ruanyifeng.com/#docs/set-map)
+* [键值对在Javascript如何保存 —— Object vs Map vs WeakMap](https://zhuanlan.zhihu.com/p/257980685)
+* [When to Use Map instead of Plain JavaScript Object](https://dmitripavlutin.com/maps-vs-plain-objects-javascript/)
