@@ -8,6 +8,7 @@
 
 - [observer](#observer)
     - [相关信息](#相关信息)
+    - [TODO](#todo)
     - [设计思想](#设计思想)
     - [本质](#本质)
     - [发布-订阅模式的要素](#发布-订阅模式的要素)
@@ -21,14 +22,14 @@
         - [从单词语义上看 `Watcher` 和 `Observer` 的命名](#从单词语义上看-watcher-和-observer-的命名)
     - [`Dep.target` 的作用](#deptarget-的作用)
     - [实现](#实现)
-        - [实现数据响应式](#实现数据响应式)
+        - [第一步：实现数据响应式](#第一步实现数据响应式)
             - [初始化](#初始化)
             - [为实例 data 对象创建 `Observer` 实例，](#为实例-data-对象创建-observer-实例)
             - [`Observer` 实例的实际创建过程](#observer-实例的实际创建过程)
-        - [被 observe 的对象是数组的情况](#被-observe-的对象是数组的情况)
+                - [被 observe 的对象是数组的情况](#被-observe-的对象是数组的情况)
             - [`defineReactive` 实现依赖订阅](#definereactive-实现依赖订阅)
+        - [第二步：依赖收集](#第二步依赖收集)
         - [第一步：使用 `Dep` 类把 data 属性改造为 publisher，设置 getter 和 setter](#第一步使用-dep-类把-data-属性改造为-publisher设置-getter-和-setter)
-        - [第二步：`Watcher` 求值，触发 data 属性的 getter](#第二步watcher-求值触发-data-属性的-getter)
         - [第三步：data 属性的 getter 中，`Dep` 获取当前 `Watcher`，并传递自己](#第三步data-属性的-getter-中dep-获取当前-watcher并传递自己)
         - [第四步： `Watch` 判断如果需要订阅，就调用 `Dep` 的 `addSub` 方法，让自己订阅 `Dep` 的更新](#第四步-watch-判断如果需要订阅就调用-dep-的-addsub-方法让自己订阅-dep-的更新)
     - [References](#references)
@@ -37,7 +38,12 @@
 
 
 ## 相关信息
-* 源码版本：2.5.2
+* 源码版本：2.5.21
+
+
+## TODO
+对于一个被观察的对象来说，看起来是在 Observe 建立的的过程中建立的 Dep，那 Watcher 是在之前建立的？
+
 
 
 ## 设计思想
@@ -99,7 +105,7 @@
 1. 我们举例假设有一个计算属性内部依赖了两个 data 属性，来看看这个依赖关系是怎么绑定的。
 2. 计算属性是 subscriber，对应 `Watcher`；data 属性是 publisher，对应 `Dep`。
 
-### 实现数据响应式
+### 第一步：实现数据响应式
 #### 初始化
 1. 最初通过 `src/core/instance/state.js` 中的 `initState` 方法调用，`initState` 进一步调用 `initData` 方法。
 2. `initData` 会对实例的 `data` 进行一些处理，然后交给 `Observer` 进行响应式化并订阅依赖
@@ -289,7 +295,7 @@ export class Observer {
 }
 ```
 
-### 被 observe 的对象是数组的情况
+##### 被 observe 的对象是数组的情况
 1. 如果是修改一个数组的成员，该成员是一个对象，那只需要递归对数组的成员进行双向绑定即可。但这时候出现了一个问题：如果我们进行 `pop`、`push` 等操作的时候，`push` 进去的对象根本没有进行过双向绑定，更别说 `pop` 了，那么我们如何监听数组的这些变化呢？ 
 2. Vue.js 提供的方法是重写 `push`、`pop`、`shift`、`unshift`、`splice`、`sort`、`reverse` 这七个数组方法
     ```js
@@ -373,7 +379,6 @@ export class Observer {
     ```
 4. 但是修改了数组的原生方法以后，直接通过数组的下标或者设置 `length` 来修改数组依然不会实现响应式。
 
-
 #### `defineReactive` 实现依赖订阅
 1. 源码
     ```js
@@ -456,6 +461,79 @@ export class Observer {
 3. 这样也保证了，只有真正被依赖的数据才会被响应式化，那些没人依赖的数据就不会被 observe。
 
 
+### 第二步：依赖收集   
+ `Watcher` 求值，触发 data 属性的 getter
+1. 初次对模板中的变量或计算属性之类进行求值，就会访问到里面依赖的 `data` 属性，进而触发 `data` 属性的 getter，也就是上面 `defineReactive` 中的 `get` 函数。
+
+譬如说现在的的data中可能有a、b、c三个数据，getter渲染需要依赖a跟c，
+      那么在执行getter的时候就会触发a跟c两个数据的getter函数，
+      在getter函数中即可判断Dep.target是否存在然后完成依赖收集，
+      将该观察者对象放入闭包中的Dep的subs中去。
+
+      
+2. 看一下 `Watcher` 的求值函数
+    ```js
+    // watcher.js
+
+    get () {
+        pushTarget(this)
+        let value
+        const vm = this.vm
+        try {
+            value = this.getter.call(vm, vm)
+        }
+        catch (e) {
+            if (this.user) {
+                handleError(e, vm, `getter for watcher "${this.expression}"`)
+            }
+            else {
+                throw e
+            }
+        }
+        finally {
+            if (this.deep) {
+                traverse(value)
+            }
+            popTarget()
+            this.cleanupDeps()
+        }
+        return value
+    }
+    ```
+3. 注意第一步的 `pushTarget`，会把当前 `Watcher` 设为全局可以见的 `Dep.target`。那么前面 getter 里面你的 `if (Dep.target)` 就会判定为真。
+4. 同时，`Dep.target` 还会告诉它依赖的两个 `Dep`，当前是哪个 `Watcher` 在求值。这样，两个 `Dep` 就会知道要让哪个 `Watcher` 订阅自己。在下面的第三步可以看，`Dep` 会通过 `Dep.target` 获得当前是哪个 `Watcher` 在求值。
+5. 接下来，`this.getter.call(vm, vm)` 会对该 `Watcher` 的表达式求值，在这个过程中就会触发两个 `Dep` 的 getter。
+    ```js
+    // observer/index.js
+    Object.defineProperty(obj, key, {
+        enumerable: true,
+        configurable: true,
+        get: function reactiveGetter () {
+            const value = getter ? getter.call(obj) : val
+            // 此时 Dep.target 已经有值
+            if (Dep.target) {
+                dep.depend()
+                if (childOb) {
+                    childOb.dep.depend()
+                    if (Array.isArray(value)) {
+                        dependArray(value)
+                    }
+                }
+            }
+            return value
+        },
+        set: function reactiveSetter (newVal) {
+            // 省略
+        }
+    })
+    ```
+6. getter 里面关键操作，就是 `dep.depend()`。它会开始这时依赖绑定关系，进入第三步的行为。
+
+
+
+
+
+
 
 ### 第一步：使用 `Dep` 类把 data 属性改造为 publisher，设置 getter 和 setter
 1. Vue 响应式系统的 publisher 是通过 `Dep` 类实现的，因此在编译 `data` 时，会为每一个属性实例化一个 `Dep`。
@@ -533,65 +611,7 @@ export function defineReactive (
 }
 ```
 
-### 第二步：`Watcher` 求值，触发 data 属性的 getter
-1. 对计算属性进行求值，也就是执行计算属性的函数，因此就会访问到里面的两个作为 `Dep` 的 data 属性，进而触发 data 属性的 getter。
-2. 看一下 `Watcher` 的求值函数
-    ```js
-    // watcher.js
 
-    get () {
-        pushTarget(this)
-        let value
-        const vm = this.vm
-        try {
-            value = this.getter.call(vm, vm)
-        }
-        catch (e) {
-            if (this.user) {
-                handleError(e, vm, `getter for watcher "${this.expression}"`)
-            }
-            else {
-                throw e
-            }
-        }
-        finally {
-            if (this.deep) {
-                traverse(value)
-            }
-            popTarget()
-            this.cleanupDeps()
-        }
-        return value
-    }
-    ```
-3. 注意第一步的 `pushTarget`，会把当前 `Watcher` 设为全局可以见的 `Dep.target`。那么前面 getter 里面你的 `if (Dep.target)` 就会判定为真。
-4. 同时，`Dep.target` 还会告诉它依赖的两个 `Dep`，当前是哪个 `Watcher` 在求值。这样，两个 `Dep` 就会知道要让哪个 `Watcher` 订阅自己。在下面的第三步可以看，`Dep` 会通过 `Dep.target` 获得当前是哪个 `Watcher` 在求值。
-5. 接下来，`this.getter.call(vm, vm)` 会对该 `Watcher` 的表达式求值，在这个过程中就会触发两个 `Dep` 的 getter。
-    ```js
-    // observer/index.js
-    Object.defineProperty(obj, key, {
-        enumerable: true,
-        configurable: true,
-        get: function reactiveGetter () {
-            const value = getter ? getter.call(obj) : val
-            // 此时 Dep.target 已经有值
-            if (Dep.target) {
-                dep.depend()
-                if (childOb) {
-                    childOb.dep.depend()
-                    if (Array.isArray(value)) {
-                        dependArray(value)
-                    }
-                }
-            }
-            return value
-        },
-        set: function reactiveSetter (newVal) {
-            // 省略
-        }
-    })
-    ```
-6. getter 里面关键操作，就是 `dep.depend()`。它会开始这时依赖绑定关系，进入第三步的行为。
 
 ### 第三步：data 属性的 getter 中，`Dep` 获取当前 `Watcher`，并传递自己
 1. 作为 Publisher 的 `Dep` 对象调用 `depend` 方法。

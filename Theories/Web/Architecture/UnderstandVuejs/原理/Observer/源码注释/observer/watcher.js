@@ -136,7 +136,7 @@ export default class Watcher {
      * Evaluate the getter, and re-collect dependencies.
      */
     get() {
-        // pushTarget 将当前 watcher 设置为 Dep 的静态属性 target
+        // pushTarget 将当前 watcher 设置为 Dep 的静态属性 target，用以依赖收集。
         pushTarget(this);
         let value;
         const vm = this.vm;
@@ -155,7 +155,19 @@ export default class Watcher {
         finally {
             // "touch" every property so they are all tracked as
             // dependencies for deep watching
-            // TODO
+
+            // TODO 详细
+            // 看到在使用 deep $watch 的时候，这个会是 true。比如下面这种情况
+            // vm.$watch('someObject', callback, {
+            //     deep: true
+            // })
+            // 比如这时 someObject 是
+            // someObject: {
+            //     name: '33',
+            //     age: 22,
+            // }
+            // value 就是 someObject 对应的 observer
+            // traverse 应该就是把 someObject 的子属性也作为当前 watcher 的依赖
             if (this.deep) {
                 traverse(value);
             }
@@ -273,7 +285,7 @@ export default class Watcher {
     /**
      * Depend on all deps collected by this watcher.
      */
-    // 调用每个依赖 publisher 的 depend 方法，该方法又会调用该 watcher 的 addDep
+    // 调用每个依赖 dep(publisher) 的 depend 方法，该方法又会调用该 watcher 的 addDep 进行依赖收集
     depend() {
         let i = this.deps.length;
         while (i--) {
@@ -289,6 +301,8 @@ export default class Watcher {
             // remove self from vm's watcher list
             // this is a somewhat expensive operation so we skip it
             // if the vm is being destroyed.
+            // TODO
+            // 从 vm 实例的观察者列表中将自身移除，由于该操作比较耗费资源，所以如果vm实例正在被销毁则跳过该步骤
             if (!this.vm._isBeingDestroyed) {
                 remove(this.vm._watchers, this);
             }

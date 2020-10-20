@@ -167,6 +167,7 @@ export function defineReactive(
     shallow?: boolean
 ) {
     // 为每个数据属性创建一个 publisher，所有依赖该数据属性的 subscriber 都会订阅这个 publisher
+    // 这里是闭包里的 dep 实例，上面 Observer 中的 dep 是在实例属性上的，下面 childOb.dep 的也是在实例属性上的，怎么联系上的？
     const dep = new Dep();
 
     // 跳过不可配置的属性
@@ -224,7 +225,7 @@ export function defineReactive(
             return value;
         },
 
-        
+
         set: function reactiveSetter(newVal) {
             const value = getter ? getter.call(obj) : val;
             /* eslint-disable no-self-compare */
