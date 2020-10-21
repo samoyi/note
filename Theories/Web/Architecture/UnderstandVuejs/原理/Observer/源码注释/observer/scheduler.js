@@ -8,12 +8,13 @@ import { callHook, activateChildComponent } from "../instance/lifecycle";
 
 import { warn, nextTick, devtools } from "../util/index";
 
+// 如果一个 watcher 在一个 tick 里连续更新超过了 MAX_UPDATE_COUNT，就认为是陷入了循环更新
 export const MAX_UPDATE_COUNT = 100;
 
 const queue: Array<Watcher> = [];
 const activatedChildren: Array<Component> = [];
 let has: { [key: number]: ?true } = {};
-let circular: { [key: number]: number } = {};
+let circular: { [key: number]: number } = {}; // 记录每个 watcher 更新了多少次，用来判断是否陷入了循环更新
 let waiting = false; // 是否有 watcher 队列在等待 flush
 let flushing = false; // 是否有 watcher 队列正在 flush
 let index = 0; // flush 队列是执行到第几个 watcher 更新了
@@ -52,6 +53,7 @@ function flushSchedulerQueue() {
     // 遍历队列里的 watcher，依次通过其 run 方法调用其更新回调
     // do not cache length because more watchers might be pushed
     // as we run existing watchers
+    // 也就是说在循环过程中，queue.length 可能会继续增大
     for (index = 0; index < queue.length; index++) {
         watcher = queue[index];
         // watcher.before 是啥
@@ -61,9 +63,18 @@ function flushSchedulerQueue() {
         id = watcher.id;
         has[id] = null;
         watcher.run(); // 调用 watcher 的更新回调
+        
         // in dev build, check and stop circular updates.
+        // 比如这样一种情况：
+        // watch: {
+        //     test () {
+        //         this.test++;
+        //     }
+        // }
         if ( process.env.NODE_ENV !== "production" && has[id] != null ) {
+            // 一个 watcher 在一个 tick 里，更新一次对应的 circular[id] 就加一
             circular[id] = (circular[id] || 0) + 1;
+            // 如果更新次数超过了 MAX_UPDATE_COUNT 指定的值，就被认为是无限更新循环
             if (circular[id] > MAX_UPDATE_COUNT) {
                 warn(
                     "You may have an infinite update loop " +
