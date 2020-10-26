@@ -8,7 +8,8 @@
     - [设计思想](#设计思想)
     - [本质](#本质)
     - [解除绑定](#解除绑定)
-    - [Hooks](#hooks)
+    - [Hooks as Events](#hooks-as-events)
+        - [Registering Hooks Dynamically](#registering-hooks-dynamically)
     - [自己实现的一个自定义事件的对象间通信](#自己实现的一个自定义事件的对象间通信)
 
 <!-- /TOC -->
@@ -52,98 +53,132 @@ methods: {
 因为只 `$off` 了一遍删除了相同回调中的一个，所以仍然会保留一次回调调用
 
 
-## Hooks
-1. 可以参考 [这篇文章](https://alligator.io/vuejs/component-event-hooks/)
-2. 示例
+## Hooks as Events
+1. 生命周期钩子函数也会 emit 自定义事件，参考 [这篇文章](https://alligator.io/vuejs/component-event-hooks/)。
+2. Vue’s lifecycle hooks emit custom events with the name of the hook itself, prefixed by `hook:`. For example, the `mounted` hook will emit a `hook:mounted` event
+    ```html
+    <div id="app">
+        <child @hook:mounted="handleChildMounted"/></child>
+    </div>
+    ```
     ```js
     new Vue({
         el: '#app',
         components: {
-          child: {
-            template: `<p>{{age}}</p>`,
-            data(){
-                return {
-                    age: 22,
-                };
+            child: {
+                template: `<p>{{age}}</p>`,
+                data(){
+                    return {
+                        age: 22,
+                    };
+                },
             },
-            beforeCreate(){
-                console.log('beforeCreate');
+        },
 
-                this.$on('hook:beforeCreate', ()=>{
-                    console.log('hook:beforeCreate');
-                });
-                this.$on('hook:created', ()=>{
-                    console.log('hook:created');
-                });
-                this.$on('hook:beforeMount', ()=>{
-                    console.log('hook:beforeMount');
-                });
-                this.$on('hook:mounted', ()=>{
-                    console.log('hook:mounted');
-                });
-                this.$on('hook:beforeUpdate', ()=>{
-                    console.log('hook:beforeUpdate');
-                });
-                this.$on('hook:updated', ()=>{
-                    console.log('hook:updated');
-                });
-                this.$on('hook:beforeDestroy', ()=>{
-                    console.log('hook:beforeDestroy');
-                });
-                this.$on('hook:destroyed', ()=>{
-                    console.log('hook:destroyed');
-                });
+        methods: {
+            handleChildMounted () {
+                console.log('child mounted');
             },
-            created(){
-                console.log('created');
-            },
-            beforeMount(){
-                console.log('beforeMount');
-            },
-            mounted(){
-                console.log('mounted');
-
-                this.age = 33;
-
-                this.$nextTick(()=>{
-                    this.$destroy();
-                });
-            },
-            beforeUpdate(){
-                console.log('beforeUpdate');
-            },
-            updated(){
-                console.log('updated');
-            },
-            beforeDestroy(){
-                console.log('beforeDestroy');
-            },
-            destroyed(){
-                console.log('destroyed');
-            },
-          },
         },
     });
     ```
-    输出为：
-    ```shell
-    beforeCreate
-    hook:beforeCreate
-    created
-    hook:created
-    beforeMount
-    hook:beforeMount
-    mounted
-    hook:mounted
-    beforeUpdate
-    hook:beforeUpdate
-    updated
-    hook:updated
-    beforeDestroy
-    hook:beforeDestroy
-    destroyed
-    hook:destroyed
+3. That can be useful as well to react to third-party plugins hooks. For instance, if you want to perform an action when [v-runtime-template](https://github.com/alexjoverm/v-runtime-template) finishes rendering the template, you could use the `@hook:updated` event:
+    ```vue
+    <template>
+        <v-runtime-template @hook:updated="doSomething" :template="template"/>
+    </template>
     ```
+
+### Registering Hooks Dynamically
+```js
+new Vue({
+    el: '#app',
+    components: {
+        child: {
+        template: `<p>{{age}}</p>`,
+        data(){
+            return {
+                age: 22,
+            };
+        },
+        beforeCreate(){
+            console.log('beforeCreate');
+
+            this.$on('hook:beforeCreate', ()=>{
+                console.log('hook:beforeCreate');
+            });
+            this.$on('hook:created', ()=>{
+                console.log('hook:created');
+            });
+            this.$on('hook:beforeMount', ()=>{
+                console.log('hook:beforeMount');
+            });
+            this.$on('hook:mounted', ()=>{
+                console.log('hook:mounted');
+            });
+            this.$on('hook:beforeUpdate', ()=>{
+                console.log('hook:beforeUpdate');
+            });
+            this.$on('hook:updated', ()=>{
+                console.log('hook:updated');
+            });
+            this.$on('hook:beforeDestroy', ()=>{
+                console.log('hook:beforeDestroy');
+            });
+            this.$on('hook:destroyed', ()=>{
+                console.log('hook:destroyed');
+            });
+        },
+        created(){
+            console.log('created');
+        },
+        beforeMount(){
+            console.log('beforeMount');
+        },
+        mounted(){
+            console.log('mounted');
+
+            this.age = 33;
+
+            this.$nextTick(()=>{
+                this.$destroy();
+            });
+        },
+        beforeUpdate(){
+            console.log('beforeUpdate');
+        },
+        updated(){
+            console.log('updated');
+        },
+        beforeDestroy(){
+            console.log('beforeDestroy');
+        },
+        destroyed(){
+            console.log('destroyed');
+        },
+        },
+    },
+});
+```
+输出为：
+```shell
+beforeCreate
+hook:beforeCreate
+created
+hook:created
+beforeMount
+hook:beforeMount
+mounted
+hook:mounted
+beforeUpdate
+hook:beforeUpdate
+updated
+hook:updated
+beforeDestroy
+hook:beforeDestroy
+destroyed
+hook:destroyed
+```
 
 
 ## 自己实现的一个自定义事件的对象间通信
