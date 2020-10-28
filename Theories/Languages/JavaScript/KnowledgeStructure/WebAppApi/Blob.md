@@ -14,28 +14,37 @@
             - [2.1.2 通过拖拽事件获得](#212-通过拖拽事件获得)
         - [2.2 `<input type="file">` 的安全性](#22-input-typefile-的安全性)
     - [3. Building Blobs](#3-building-blobs)
-    - [4. Reading Blobs](#4-reading-blobs)
-        - [4.1 调用构造函数并注册读取后的回调函数](#41-调用构造函数并注册读取后的回调函数)
-        - [4.2 请求读取 blob](#42-请求读取-blob)
-        - [4.3 进度事件](#43-进度事件)
-        - [4.4 `readAsText()`](#44-readastext)
-        - [4.5 `readAsArrayBuffer()`](#45-readasarraybuffer)
-    - [5. 功能](#5-功能)
-        - [5.1 和 web 相互传递 blob](#51-和-web-相互传递-blob)
-            - [5.1.1 通过 Ajax 或者 fetch 下载 blob](#511-通过-ajax-或者-fetch-下载-blob)
-            - [5.1.2 使用 Ajax 或表单上传 blob](#512-使用-ajax-或表单上传-blob)
-        - [5.2 通过 URL 来使用 blob](#52-通过-url-来使用-blob)
-            - [5.2.1 转化为 Blob URL](#521-转化为-blob-url)
-                - [5.2.1.1 Create a Blob URL](#5211-create-a-blob-url)
-                - [5.2.1.2 Blob URL 是对资源的引用](#5212-blob-url-是对资源的引用)
-                - [5.2.1.3 同源](#5213-同源)
-                - [5.2.1.4 有效期为 session](#5214-有效期为-session)
-                - [5.2.1.5 Revoke a Blob URL —— 内存回收](#5215-revoke-a-blob-url--内存回收)
-                - [5.2.1.6 `blob://` 类似于 `http://` scheme](#5216-blob-类似于-http-scheme)
-            - [5.2.2 转化为 DataURL](#522-转化为-dataurl)
-        - [5.3 和字符串相互转换](#53-和字符串相互转换)
-        - [5.4 和 ArrayBuffer/ArrayBufferView 相互转换](#54-和-arraybufferarraybufferview-相互转换)
-        - [5.5 和 DataURL 相互转换](#55-和-dataurl-相互转换)
+    - [4. 属性和方法](#4-属性和方法)
+        - [4.1 实例属性](#41-实例属性)
+            - [4.1.1 `size`](#411-size)
+            - [4.1.2 `type`](#412-type)
+        - [4.2 实例方法](#42-实例方法)
+            - [4.2.1 `arrayBuffer()`](#421-arraybuffer)
+            - [4.2.2 `slice()`](#422-slice)
+            - [4.2.3 `stream()`](#423-stream)
+            - [4.2.4 `text()`](#424-text)
+    - [5. Reading Blobs](#5-reading-blobs)
+        - [5.1 调用构造函数并注册读取后的回调函数](#51-调用构造函数并注册读取后的回调函数)
+        - [5.2 请求读取 blob](#52-请求读取-blob)
+        - [5.3 进度事件](#53-进度事件)
+        - [5.4 `readAsText()`](#54-readastext)
+        - [5.5 `readAsArrayBuffer()`](#55-readasarraybuffer)
+    - [6. 功能](#6-功能)
+        - [6.1 和 web 相互传递 blob](#61-和-web-相互传递-blob)
+            - [6.1.1 通过 Ajax 或者 fetch 下载 blob](#611-通过-ajax-或者-fetch-下载-blob)
+            - [6.1.2 使用 Ajax 或表单上传 blob](#612-使用-ajax-或表单上传-blob)
+        - [6.2 通过 URL 来使用 blob](#62-通过-url-来使用-blob)
+            - [6.2.1 转化为 Blob URL](#621-转化为-blob-url)
+                - [6.2.1.1 Create a Blob URL](#6211-create-a-blob-url)
+                - [6.2.1.2 Blob URL 是对资源的引用](#6212-blob-url-是对资源的引用)
+                - [6.2.1.3 同源](#6213-同源)
+                - [6.2.1.4 有效期为 session](#6214-有效期为-session)
+                - [6.2.1.5 Revoke a Blob URL —— 内存回收](#6215-revoke-a-blob-url--内存回收)
+                - [6.2.1.6 `blob://` 类似于 `http://` scheme](#6216-blob-类似于-http-scheme)
+            - [6.2.2 转化为 DataURL](#622-转化为-dataurl)
+        - [6.3 和字符串相互转换](#63-和字符串相互转换)
+        - [6.4 和 ArrayBuffer/ArrayBufferView 相互转换](#64-和-arraybufferarraybufferview-相互转换)
+        - [6.5 和 DataURL 相互转换](#65-和-dataurl-相互转换)
     - [References](#references)
 
 <!-- /TOC -->
@@ -146,18 +155,47 @@ from the user’s computer.
     ```
 
 
-## 4. Reading Blobs
+## 4. 属性和方法
+### 4.1 实例属性
+#### 4.1.1 `size`
+1. The size, in bytes, of the data contained in the `Blob` object.
+2. Read only.
+
+#### 4.1.2 `type`
+1. A string indicating the MIME type of the data contained in the `Blob`. If the type is unknown, this string is empty.
+2. Read only.
+
+### 4.2 实例方法
+#### 4.2.1 `arrayBuffer()`
+Returns a `Promise` that resolves with the contents of the blob as binary data contained in an `ArrayBuffer`.
+
+#### 4.2.2 `slice()`
+Creates and returns a new `Blob` object which contains data from a subset of the blob on which it's called.
+
+#### 4.2.3 `stream()`
+1. Returns a `ReadableStream` which upon reading returns the data contained within the `Blob`.
+2. With `stream()` and the returned `ReadableStream`, you gain several interesting capabilities:
+    * Call `getReader()` on the returned stream to get an object to use to read the data from the blob using methods such as the `ReadableStreamDefaultReader` interface's `read()` method.
+    * Call the returned stream's `pipeTo()` method to pipe the blob's data to a writable stream.
+    * Call the returned stream's `tee()` method to tee the readable stream. This returns an array containing two new `ReadableStream` objects, each of which returns the contents of the `Blob`.
+    * Call the returned stream's `pipeThrough()` method to pipe the stream through a `TransformStream` or any other readable and writable pair.
+
+#### 4.2.4 `text()`
+Returns a `Promise` that resolves with a string containing the contents of the blob, interpreted as UTF-8.
+
+
+## 5. Reading Blobs
 1. The `FileReader` object allows us read access to the characters or bytes contained in a Blob. 
 2. Since Blobs can be very large objects stored in the filesystem, the API for reading them is asynchronous, much like the `XMLHttpRequest` API. 
 3. A synchronous version of the API, `FileReaderSync`, is available in worker threads, although workers can also use the asynchronous version.
 
-### 4.1 调用构造函数并注册读取后的回调函数
+### 5.1 调用构造函数并注册读取后的回调函数
 1. To use a FileReader, first create an instance with the `FileReader()` constructor. 
 2. Next, define event handlers. Typically you’ll define handlers for load and error events and possibly also for progress events. 
 3. You can do this with `onload`, `onerror`, and `onprogress` or with the standard `addEventListener()` method. 
 4. FileReader objects also trigger `loadstart`, `loadend`, and `abort` events, which are like the `XMLHttpRequest` events with the same names.
 
-### 4.2 请求读取 blob
+### 5.2 请求读取 blob
 1. Once you’ve created a FileReader and registered suitable event handlers, you must pass the Blob you want to read to one of four methods: `readAsText()`, `readAsArrayBuffer()`, `readAsDataURL()`, and `readAsBinaryString()`.
 2. You can, of course, call one of these methods first and then register event handlers — the single-threaded nature of
 JavaScript, means that event handlers will never be called until your function has returned and the browser is back in its event loop. 异步的读取回调至少要在下一个事件循环，所以肯定会在注册回调之后。比如这样写
@@ -172,14 +210,14 @@ JavaScript, means that event handlers will never be called until your function h
 3. The first two methods are the most important and are the ones covered here. Each of these read methods takes a Blob as its first argument. 
 4. `readAsText()` takes an optional second argument that specifies the name of a text encoding. If you omit the encoding, it will automatically work with ASCII and UTF-8 text (and also UTF-16 text with a byte-order mark or BOM).
 
-### 4.3 进度事件
+### 5.3 进度事件
 1. As the FileReader reads the Blob you’ve specified, it updates its `readyState` property. 
 2. The value starts off at `0`, indicating that nothing has been read.
 3. It changes to `1` when some data is available, and changes to `2` when the read has completed. 
 4. The `result` property holds a partial or complete result as a string or ArrayBuffer. 
 4. You do not normally poll the `state` and `result` properties, but instead use them from your `onprogress` or `onload` event handler.
 
-### 4.4 `readAsText()`
+### 5.4 `readAsText()`
 Read local text files that the user selects
 ```html
 Select the file to display:
@@ -203,7 +241,7 @@ function readfile(f) {
 }
 ```
 
-### 4.5 `readAsArrayBuffer()`
+### 5.5 `readAsArrayBuffer()`
 Read the first four bytes of a file as a big-endian integer.
 ```html
 <input type="file" onchange="typefile(this.files[0])" />
@@ -241,9 +279,9 @@ function typefile(file) {
 ```
 
 
-## 5. 功能
-### 5.1 和 web 相互传递 blob
-#### 5.1.1 通过 Ajax 或者 fetch 下载 blob
+## 6. 功能
+### 6.1 和 web 相互传递 blob
+#### 6.1.1 通过 Ajax 或者 fetch 下载 blob
 1. 使用时要测试兼容性。
 2. GET the contents of the url as a Blob and pass it to the specified callback.
 3. If the Blob you’re downloading is quite large and you want to start processing it while it is downloading, you can use an `onprogress` event handler
@@ -271,7 +309,7 @@ function typefile(file) {
     }
     ```
 
-#### 5.1.2 使用 Ajax 或表单上传 blob
+#### 6.1.2 使用 Ajax 或表单上传 blob
 1. 使用 Ajax 上传时不需要表单的完整提交文件功能，但仍然需要 `<input type="file" />` 来让用户手动上传本地文件到浏览器。
 2. 同时要结合 `FormData` 来模拟表单的文件提交
     ```js
@@ -293,11 +331,11 @@ function typefile(file) {
     ```
 
 
-### 5.2 通过 URL 来使用 blob
+### 6.2 通过 URL 来使用 blob
 Blob 可以转换为两种形式的 URL：Blob URL 和 DataURL
 
-#### 5.2.1 转化为 Blob URL
-##### 5.2.1.1 Create a Blob URL
+#### 6.2.1 转化为 Blob URL
+##### 6.2.1.1 Create a Blob URL
 1. One of the simplest things you can do with a Blob is create a URL that refers to the Blob. 
 2. You can then use this URL anywhere you’d use a regular URL: in the DOM, in a stylesheet, or even as the target of an XMLHttpRequest.
 3. Pass a blob to `window.URL.createObjectURL()` and it returns a URL (as an ordinary string). 
@@ -312,35 +350,35 @@ Blob 可以转换为两种形式的 URL：Blob URL 和 DataURL
     ```
 4. 使用时测试兼容性，犀牛书第六版说：Chrome and Webkit prefix that new global, calling it `webkitURL` — `webkitURL.createObjectURL`。
 
-##### 5.2.1.2 Blob URL 是对资源的引用
+##### 6.2.1.2 Blob URL 是对资源的引用
 1. The URL will begin with `blob://`, and that URL scheme will be followed by a short string of text that identifies the Blob with some kind of opaque unique identifier. 
 2. Note that this is very different than a `data://` URL, which encodes its own contents. A Blob URL is simply a reference to a Blob that is stored by the browser in memory or on the disk.
 3. `blob://` URLs are also quite different from `file://` URLs, which refer directly to a file in the local filesystem, exposing the path of the file, allowing directory browsing, and otherwise raising security issues.
 
-##### 5.2.1.3 同源
+##### 6.2.1.3 同源
 1. Blob URLs have the same origin as the script that creates them. 
 2. This makes them much more versatile than `file://` URLs, which have a distinct origin and are therefore difficult to use within a web application. 
 3. A Blob URL is only valid in documents of the same origin. If, for example, you passed a Blob URL via `postMessage()` to a window with a different origin, the URL would be meaningless to that window.
 
-##### 5.2.1.4 有效期为 session
+##### 6.2.1.4 有效期为 session
 1. Blob URLs are not permanent. A Blob URL is no longer valid once the user has closed or navigated away from the document whose script created the URL. 
 2. It is not possible, for example, to save a Blob URL to local storage and then reuse it when the user begins a new session with a web application.
 
-##### 5.2.1.5 Revoke a Blob URL —— 内存回收
+##### 6.2.1.5 Revoke a Blob URL —— 内存回收
 1. It is also possible to manually “revoke” the validity of a Blob URL by calling `URL.revokeObjectURL()`. 
 2. This is a memory management issue. Once the thumbnail image has been displayed, the Blob is no longer needed and it should be allowed to be garbage collected. 
 3. But if the web browser is maintaining a mapping from the Blob URL we’ve created to the Blob, that Blob cannot be garbage collected even if we’re not using it. 
 4. The JavaScript interpreter cannot track the usage of strings, and if the URL is still valid, it has to assume that it might still be used. 
 5. This means that it cannot garbage collect the Blob until the URL has been revoked. 
 
-##### 5.2.1.6 `blob://` 类似于 `http://` scheme
+##### 6.2.1.6 `blob://` 类似于 `http://` scheme
 1. The `blob://` URL scheme is explicitly designed to work like a simplified `http://` URL, and browsers are required to act like mini HTTP servers when `blob://` URLs are requested. 
 2. If a Blob URL that is no longer valid is requested, the browser must send a *404 Not Found* status code. 
 3. If a Blob URL from a different origin is requested, the browser must respond with *403 Not Allowed*. 
 4. Blob URLs only work with GET requests, and when one is successfully requested, the browser sends an HTTP *200 OK* status code and also sends a *Content-Type* header that uses the type property of the Blob.
 5. Because Blob URLs work like simple HTTP URLs, you can “download” their content with XMLHttpRequest. (However, you can read the content of a Blob more directly using a `FileReader` object.)
 
-#### 5.2.2 转化为 DataURL
+#### 6.2.2 转化为 DataURL
 通过 `FileReader.readAsDataURL()` 方法
 ```html
 <input type="file" onchange="previewFile()">
@@ -366,15 +404,22 @@ function previewFile() {
 }
 ```
 
-### 5.3 和字符串相互转换
+### 6.3 和字符串相互转换
 1. 通过构造函数把字符串转为 blob
     ```js
     let str = 'hello world';
     let newBlob = new Blob([str]);
     console.log(newBlob); // Blob {size: 11, type: ""}
     ```
-2. 通过 `FileReader` 的 `readAsText` 方法把 blob 转为字符串
+2. 通过 blob 的实例方法 `text` 或者通过 `FileReader` 的 `readAsText` 方法把 blob 转为字符串
     ```js
+    // 使用 blob 实例方法 text()
+    new Blob(['北京欢迎你']).text()
+    .then((text)=>{
+        console.log(text); // "北京欢迎你"
+    });
+
+    // 使用 FileReader
     let reader = new FileReader();
     reader.addEventListener('load', function () {
         console.log(reader.result); // "北京欢迎你"
@@ -382,25 +427,42 @@ function previewFile() {
     reader.readAsText( new Blob(['北京欢迎你']) );
     ```
 
-### 5.4 和 ArrayBuffer/ArrayBufferView 相互转换
-1. 仍然是通过 `Blob` 构造函数和 `FileReader` 互转。
-2. 和 ArrayBuffer 互转
+### 6.4 和 ArrayBuffer/ArrayBufferView 相互转换
+1. ArrayBuffer 可以通过 `Blob` 构造函数转为 blob，blob 可以通过实例方法 `arrayBuffer()` 或者 `FileReader` 转为 ArrayBuffer。
     ```js
     let buffer = new ArrayBuffer(32);
     let blob = new Blob([buffer]);
     console.log(blob); // Blob {size: 32, type: ""}
 
+
+    // 使用 blob 实例方法 arrayBuffer()
+    blob.arrayBuffer()
+    .then((buffer) => {
+        console.log(buffer);  // ArrayBuffer(32) {}
+    });
+
+
+    // 使用 FileReader
     let reader = new FileReader();
     reader.addEventListener('load', ()=>{
         console.log( reader.result ); // ArrayBuffer(32) {}
     });
-    reader.readAsArrayBuffer(blob);
+    reader.readAsArrayBuffer(blob); 
     ```
-3. 和 ArrayBufferView 互转时，`FileReader` 只能转为 ArrayBuffer，还需要使用相同的类型化数组转为视图
+2. ArrayBufferView 也是直接通过 `Blob` 构造函数转为 blob；但从 blob 转为 ArrayBufferView 时，只能先转为 ArrayBuffer，之后还需要使用相同的类型化数组转为视图
     ```js
     let typedArr = new Uint16Array([97, 32, 72, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 33]);
     let blob = new Blob([typedArr]);
     console.log(blob); // Blob {size: 28, type: ""}
+
+
+    blob.arrayBuffer()
+    .then((buffer) => {
+        console.log( buffer ); // ArrayBuffer(28) {}
+        console.log( new Uint16Array(buffer) ); 
+        // Uint16Array(14) [97, 32, 72, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 33]
+    });
+
 
     let reader = new FileReader();
     reader.addEventListener('load', ()=>{
@@ -408,11 +470,10 @@ function previewFile() {
         console.log( new Uint16Array(reader.result) ); 
         // Uint16Array(14) [97, 32, 72, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 33]
     });
-
     reader.readAsArrayBuffer(blob);
     ```
 
-### 5.5 和 DataURL 相互转换
+### 6.5 和 DataURL 相互转换
 1. Blob 转 DataURL 很简单，使用 `FileReader` 的 `readAsDataURL` 方法
     ```js
     let blob = dataURI2Blob(sDataURI);
