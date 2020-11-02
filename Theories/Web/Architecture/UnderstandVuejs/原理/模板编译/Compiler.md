@@ -12,6 +12,7 @@
     - [`compileToFunctions`](#compiletofunctions)
     - [实际的编译](#实际的编译)
     - [生成的渲染函数](#生成的渲染函数)
+    - [optimize](#optimize)
     - [References](#references)
 
 <!-- /TOC -->
@@ -405,6 +406,15 @@
         target._g = bindObjectListeners
     }
     ```
+
+
+## optimize
+1. 有些节点是静态的、和数据无关的，也有些节点虽然是根据数据渲染后，但之后依赖的数据不会发生变化的。这样的节点在之后都是不会发生变化的。
+2. 优化器会遍历模板生成的 AST，查找其中的静态子树。一旦找到一个静态子树，就可以：
+    * 将它提升为常量，这样在每次重渲染时就不需要为它们创建节点。
+    * patch 的过程中直接跳过它。
+
+
 
 
 ## References
