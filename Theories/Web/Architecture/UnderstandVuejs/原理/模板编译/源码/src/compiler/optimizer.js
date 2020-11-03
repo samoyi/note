@@ -2,6 +2,21 @@
 
 // 2.5.21
 
+/**
+ * ******* 注意 *******
+ * 
+ * children 属性：ASTNode 的 children 属性并不是 DOM 的 children 属性。DOM 的 children 属性是只包括元素子节点；
+ *               而 ASTNode 的 children 属性包括所有的节点，类似于 DOM 的 childNodes  属性。
+ *               参考源码 src/compiler/parser/index.js。
+ * 
+ * type 属性：ASTNode 的 type 属性页不是直接使用 DOM 的 nodeType 属性。注释节点的 type 也会被算作 3，而不是 8。
+ *            参考源码 src/compiler/parser/index.js。
+ * 
+ * ifConditions 属性：只有添加了 v-if 的节点才会有这个属性，v-else-if 和 v-else 都不会有；
+ *                    不过这个属性是个数组，包含每个条件分支的节点。
+ */
+
+
 import { makeMap, isBuiltInTag, cached, no } from "shared/util";
 
 let isStaticKey;
@@ -33,10 +48,25 @@ export function optimize(root: ?ASTElement, options: CompilerOptions) {
     isPlatformReservedTag = options.isReservedTag || no;
 
     // first pass: mark all non-static nodes.
-    // 标记是否为静态节点
+    // 遍历 ast，标记所有的节点是否为静态节点
     markStatic(root);
 
     // second pass: mark static roots.
+    // 遍历 ast，标记里面的静态根节点来找出静态子树。
+    // 例如下面的节点经过 markStaticRoots 遍历后
+    // <div id="app">
+    //     <p>
+    //         <span>123</span>
+    //     </p>
+    //     <p>
+    //         <span>{{age}}</span>
+    //     </p>
+    //     <p>
+    //         <span>456</span>
+    //     </p>
+    // </div>
+    // 第一个 <p> 和第三个 <p> 会被标记为静态根节点，进而以这两个 <p> 为根节点的子树就被认为是静态子树，
+    // 整棵子树都会作为整体跳过重渲染时的元素重建和 patch 过程，而不需要单独的一个一个节点的跳过。
     markStaticRoots(root, false);
 }
 
@@ -52,12 +82,15 @@ function genStaticKeys(keys: string): Function {
 
 // 标记节点是否为静态节点
 function markStatic(node: ASTNode) {
+    // 先初步判断是否为静态节点，下面紧接着进一步的判断，可能会得出和初步判断相反的结果
     node.static = isStatic(node);
+
+    // 只有元素节点才需要进一步判断
     if (node.type === 1) {
         // do not make component slot content static. this avoids
         // 1. components not able to mutate slot nodes
         // 2. static slot content fails for hot-reloading
-        // TODO
+        // 如果是组件插槽就不需要进一步判断了。TODO 后续判断会判定为静态的？
         if (
             !isPlatformReservedTag(node.tag) &&
             node.tag !== "slot" &&
@@ -81,9 +114,12 @@ function markStatic(node: ASTNode) {
         if (node.ifConditions) {
             for (let i = 1, l = node.ifConditions.length; i < l; i++) {
                 const block = node.ifConditions[i].block;
+
                 // 从 isStatic 的实现看起来，条件渲染中的节点都会被标记为非静态的，
                 markStatic(block);
+
                 // 因此它们的父级也只能是非静态的。
+                // 这一步是多余的？node.ifConditions 为 true 的话 node 就是静态的把？
                 if (!block.static) {
                     node.static = false;
                 }
@@ -93,29 +129,53 @@ function markStatic(node: ASTNode) {
 }
 
 function markStaticRoots(node: ASTNode, isInFor: boolean) {
+    // 这里会遍历整个数，如果找到了一个节点是静态根节点，则会直接 return，不再遍历它的子节点；
+    // 也就是说，对于一个静态子树，只有该子树整体的根节点才会是静态根节点，
+    // 它内部再有更小的子树，这些更小子树的根节点也不会被标记为静态根节点
+    // 例如下面的模板中
+    // <section id="app">
+    //     <p>{{ message }}</p>
+    //     <div>
+    //         <ul>
+    //             <li>1</li>
+    //             <li>2</li>
+    //         </ul>
+    //     </div>
+    // </section>
+    // 只有 div 会被标记为静态根节点，而 ul 就不会被标记
+
     if (node.type === 1) {
         // 静态节点或 v-once 节点
         if (node.static || node.once) {
             node.staticInFor = isInFor; // TODO
         }
+
+        // 静态根节点要在静态节点的基础上再要求必须要有元素子节点，即里面不能只包含文本或注释。
         // For a node to qualify as a static root, it should have children that
         // are not just static text. Otherwise the cost of hoisting out will
         // outweigh the benefits and it's better off to just always render it fresh.
+        // 对于这里提到的权衡，这篇文章做了推测性的分析 https://segmentfault.com/a/1190000020028904
         if (
-            node.static &&
-            node.children.length &&
+            node.static && // 本身必须是静态节点
+            node.children.length && // 必须有子节点
+            // 子节点不能是文本节点。括号里的条件是：只有一个子节点并且是文本或注释。
             !(node.children.length === 1 && node.children[0].type === 3)
         ) {
             node.staticRoot = true;
             return;
-        } else {
+        } 
+        else {
             node.staticRoot = false;
         }
+
+        // 如果当前节点不是静态根节点，则继续深入遍历，看看里面有没有静态子树
         if (node.children) {
             for (let i = 0, l = node.children.length; i < l; i++) {
                 markStaticRoots(node.children[i], isInFor || !!node.for);
             }
         }
+
+        // 如果该节点是 v-if 节点，则遍历每个条件分支的节点
         if (node.ifConditions) {
             for (let i = 1, l = node.ifConditions.length; i < l; i++) {
                 markStaticRoots(node.ifConditions[i].block, isInFor);
@@ -154,13 +214,15 @@ function isStatic(node: ASTNode): boolean {
 }
 
 // TODO
+// 祖先节点是否有 v-for 
 function isDirectChildOfTemplateFor(node: ASTElement): boolean {
     while (node.parent) {
         node = node.parent;
         if (node.tag !== "template") {
             return false;
         }
-        if (node.for) {
+
+        if (node.for) { // 加了 v-for 的节点
             return true;
         }
     }

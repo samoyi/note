@@ -419,3 +419,4 @@
 
 ## References
 * [聊聊Vue的template编译.MarkDown](https://github.com/answershuto/learnVue/blob/master/docs/%E8%81%8A%E8%81%8AVue%E7%9A%84template%E7%BC%96%E8%AF%91.MarkDown)
+* [【Vue原理】Compile - 源码版 之 optimize 标记静态节点](https://segmentfault.com/a/1190000020028904)
