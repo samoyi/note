@@ -10,7 +10,7 @@
  *               参考源码 src/compiler/parser/index.js。
  * 
  * type 属性：ASTNode 的 type 属性页不是直接使用 DOM 的 nodeType 属性。注释节点的 type 也会被算作 3，而不是 8。
- *            参考源码 src/compiler/parser/index.js。
+ *            另外 type 为 2 时表示 Mustache 表达式。参考源码 src/compiler/parser/index.js。
  * 
  * ifConditions 属性：只有添加了 v-if 的节点才会有这个属性，v-else-if 和 v-else 都不会有；
  *                    不过这个属性是个数组，包含每个条件分支的节点。
@@ -87,14 +87,16 @@ function markStatic(node: ASTNode) {
 
     // 只有元素节点才需要进一步判断
     if (node.type === 1) {
+        
         // do not make component slot content static. this avoids
         // 1. components not able to mutate slot nodes
         // 2. static slot content fails for hot-reloading
-        // 如果是组件插槽就不需要进一步判断了。TODO 后续判断会判定为静态的？
+        // 可以通过这个判断的 node 是自定义组件或者是 vue 的动态组件 component，直接 return 就是不再遍历它们的插槽内容。
+        // 因此插槽里面的节点内容不会检查是否静态，也就是默认为非静态。
         if (
             !isPlatformReservedTag(node.tag) &&
             node.tag !== "slot" &&
-            node.attrsMap["inline-template"] == null
+            node.attrsMap["inline-template"] == null // TODO  为什么 inline-template 可以是静态的？
         ) {
             return;
         }
@@ -119,7 +121,7 @@ function markStatic(node: ASTNode) {
                 markStatic(block);
 
                 // 因此它们的父级也只能是非静态的。
-                // 这一步是多余的？node.ifConditions 为 true 的话 node 就是静态的把？
+                // 这一步是多余的？node.ifConditions 为 true 的话 node 就是静态的吧？
                 if (!block.static) {
                     node.static = false;
                 }
@@ -129,7 +131,7 @@ function markStatic(node: ASTNode) {
 }
 
 function markStaticRoots(node: ASTNode, isInFor: boolean) {
-    // 这里会遍历整个数，如果找到了一个节点是静态根节点，则会直接 return，不再遍历它的子节点；
+    // 这里会遍历整个树，如果找到了一个节点是静态根节点，则会直接 return，不再遍历它的子节点；
     // 也就是说，对于一个静态子树，只有该子树整体的根节点才会是静态根节点，
     // 它内部再有更小的子树，这些更小子树的根节点也不会被标记为静态根节点
     // 例如下面的模板中
@@ -145,9 +147,12 @@ function markStaticRoots(node: ASTNode, isInFor: boolean) {
     // 只有 div 会被标记为静态根节点，而 ul 就不会被标记
 
     if (node.type === 1) {
-        // 静态节点或 v-once 节点
-        if (node.static || node.once) {
-            node.staticInFor = isInFor; // TODO
+        
+        // 标记 v-for 节点子元素的静态节点
+        if (node.static || node.once) { // 静态节点或 v-once 节点
+            // 如果是 v-for 节点的子元素，则标记
+            // src/compiler/codegen/index.js 会用到，但没看出怎么用 // TODO
+            node.staticInFor = isInFor;
         }
 
         // 静态根节点要在静态节点的基础上再要求必须要有元素子节点，即里面不能只包含文本或注释。
@@ -187,10 +192,12 @@ function markStaticRoots(node: ASTNode, isInFor: boolean) {
 function isStatic(node: ASTNode): boolean {
     if (node.type === 2) {
         // expression
+        // Mustache 表达式
         return false;
     }
     if (node.type === 3) {
         // text
+        // 文本节点和注释节点
         return true;
     }
     return !!(
@@ -201,10 +208,10 @@ function isStatic(node: ASTNode): boolean {
           !node.hasBindings // no dynamic bindings
             && !node.if
             && !node.for // not v-if or v-for or v-else
-                // tag 不能是 "slot" 或者 "component"，因为这两个节点肯定是动态编译的。
-                // isBuiltInTag 的实现在 src/shared/util.js。
+            // tag 不能是 "slot" 或者 "component"，因为这两个节点肯定是动态编译的。
+            // isBuiltInTag 的实现在 src/shared/util.js。
             && !isBuiltInTag(node.tag) // not a built-in
-                // 必须是当前平台环境自身的 tag，而不能是自定义组件的 tag。
+            // 必须是当前平台环境自身的 tag，而不能是自定义组件的 tag。
             && isPlatformReservedTag(node.tag) // not a component
             && !isDirectChildOfTemplateFor(node) // TODO
             // ast 的所有 key 都必须是静态 key
@@ -213,8 +220,30 @@ function isStatic(node: ASTNode): boolean {
     );
 }
 
-// TODO
-// 祖先节点是否有 v-for 
+
+// 父节点不是 template，返回 false
+// 父节点如果是 template，如果它加了 v-for，返回 true
+// 父节点如果是 template 但是没有加 v-for，则再以相同规则查看它的父节点
+// 如果直到最外层也没有根据上面的规则返回，则返回 false
+// 
+// 从起始节点逐级访问父节点，尝试找到一个作为终点节点的带 v-for 的 template。
+// 如果没找到则返回 false。
+// 如果找到了，还要看起始节点和终点节点之间如果还有节点的话，必须都是 template 才会返回 true，否则还是返回 false。
+// 类似于如下的两个节点结构会返回 true
+// 
+// <template v-for="end">
+//     <span id="start"></span>
+// </template>
+// 
+// <div>
+//     <template v-for="end">
+//         <template>
+//             <template>
+//                 <span id="start"></span>
+//             </template>
+//         </template>
+//     </template>
+// </div>
 function isDirectChildOfTemplateFor(node: ASTElement): boolean {
     while (node.parent) {
         node = node.parent;
@@ -222,7 +251,7 @@ function isDirectChildOfTemplateFor(node: ASTElement): boolean {
             return false;
         }
 
-        if (node.for) { // 加了 v-for 的节点
+        if (node.for) {
             return true;
         }
     }

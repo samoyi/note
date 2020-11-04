@@ -13,6 +13,10 @@
     - [实际的编译](#实际的编译)
     - [生成的渲染函数](#生成的渲染函数)
     - [optimize](#optimize)
+        - [标记静态节点和静态子树](#标记静态节点和静态子树)
+        - [`markStatic` 遍历标记静态节点](#markstatic-遍历标记静态节点)
+        - [`markStaticRoots` 遍历标记静态子树](#markstaticroots-遍历标记静态子树)
+        - [判断静态节点](#判断静态节点)
     - [References](#references)
 
 <!-- /TOC -->
@@ -413,8 +417,172 @@
 2. 优化器会遍历模板生成的 AST，查找其中的静态子树。一旦找到一个静态子树，就可以：
     * 将它提升为常量，这样在每次重渲染时就不需要为它们创建节点。
     * patch 的过程中直接跳过它。
+3. 详细的注释在源码文件中：`src/compiler/optimizer.js`
 
+### 标记静态节点和静态子树
+1. 遍历 AST，然后找到其中的静态节点；然后再确定这些静态节点组成的静态子树，静态优化的时候直接以静态子树为整体进行优化。
+2. 遍历标记的函数如下
+    ```js
+    // src/compiler/optimizer.js
+    
+    export function optimize(root: ?ASTElement, options: CompilerOptions) {
+        if (!root) return;
 
+        isStaticKey = genStaticKeysCached(options.staticKeys || "");
+        isPlatformReservedTag = options.isReservedTag || no;
+
+        // first pass: mark all non-static nodes.
+        markStatic(root);
+
+        // second pass: mark static roots.
+        markStaticRoots(root, false);
+    }
+    ```
+
+### `markStatic` 遍历标记静态节点
+```js
+// src/compiler/optimizer.js
+
+function markStatic(node: ASTNode) {
+    // 先初步判断是否为静态节点，下面紧接着进一步的判断，可能会得出和初步判断相反的结果
+    node.static = isStatic(node);
+
+    if (node.type === 1) {
+        // do not make component slot content static. this avoids
+        // 1. components not able to mutate slot nodes
+        // 2. static slot content fails for hot-reloading
+        // 可以通过这个判断的 node 是自定义组件或者是 vue 的动态组件 component，直接 return 就是不再遍历它们的插槽内容。
+        // 因此插槽里面的节点内容不会检查是否静态，也就是默认为非静态。
+        if (
+            !isPlatformReservedTag(node.tag) &&
+            node.tag !== "slot" &&
+            node.attrsMap["inline-template"] == null
+        ) {
+            return;
+        }
+
+        // 遍历标记子节点
+        for (let i = 0, l = node.children.length; i < l; i++) {
+            const child = node.children[i];
+            markStatic(child);
+            
+            // 如果一个节点的子节点不是静态的，那这个节点也不能是静态的
+            if (!child.static) {
+                node.static = false;
+            }
+        }
+
+        // 一组条件渲染的节点
+        if (node.ifConditions) {
+            for (let i = 1, l = node.ifConditions.length; i < l; i++) {
+                const block = node.ifConditions[i].block;
+
+                // 条件渲染中的节点都会被标记为非静态的，
+                markStatic(block);
+
+                // 因此它们的父级也只能是非静态的。
+                if (!block.static) {
+                    node.static = false;
+                }
+            }
+        }
+    }
+}
+```
+
+### `markStaticRoots` 遍历标记静态子树
+1. 这里会遍历整个树，如果找到了一个节点是静态根节点，则会直接 return，不再遍历它的子节点。
+2. 也就是说，对于一个静态子树，只有该子树整体的根节点才会是静态根节点，它内部再有更小的子树，这些更小子树的根节点也不会被标记为静态根节点。例如下面的模板中
+    ```html
+    <section id="app">
+        <p>{{ message }}</p>
+        <div>
+            <ul>
+                <li>1</li>
+                <li>2</li>
+            </ul>
+        </div>
+    </section>
+    ```
+    只有 `div` 会被标记为静态根节点，而 `ul` 就不会被标记
+3. 源码
+    ```js    
+    // src/compiler/optimizer.js
+
+    function markStaticRoots(node: ASTNode, isInFor: boolean) {
+    
+        if (node.type === 1) {
+            // 标记 v-for 节点子元素的静态节点
+            if (node.static || node.once) { // 静态节点或 v-once 节点
+                // 如果是 v-for 节点的子元素，则标记
+                // src/compiler/codegen/index.js 会用到，但没看出怎么用 // TODO
+                node.staticInFor = isInFor;
+            }
+
+            // 静态根节点要在静态节点的基础上再要求必须要有元素子节点，即里面不能只包含文本或注释。
+            // For a node to qualify as a static root, it should have children that
+            // are not just static text. Otherwise the cost of hoisting out will
+            // outweigh the benefits and it's better off to just always render it fresh.
+            if (
+                node.static &&
+                node.children.length &&
+                !(node.children.length === 1 && node.children[0].type === 3)
+            ) {
+                node.staticRoot = true;
+                return;
+            } 
+            else {
+                node.staticRoot = false;
+            }
+
+            // 如果当前节点不是静态根节点，则继续深入遍历，看看里面有没有静态子树
+            if (node.children) {
+                for (let i = 0, l = node.children.length; i < l; i++) {
+                    markStaticRoots(node.children[i], isInFor || !!node.for);
+                }
+            }
+
+            // 如果该节点是 v-if 节点，则遍历每个条件分支的节点
+            if (node.ifConditions) {
+                for (let i = 1, l = node.ifConditions.length; i < l; i++) {
+                    markStaticRoots(node.ifConditions[i].block, isInFor);
+                }
+            }
+        }
+    }
+    ```
+
+### 判断静态节点
+`isStatic` 判断一个节点是否为静态节点
+```js
+// src/compiler/optimizer.js
+
+function isStatic(node: ASTNode): boolean {
+    if (node.type === 2) {
+        // expression
+        // Mustache 表达式
+        return false;
+    }
+    if (node.type === 3) {
+        // text
+        // 文本节点和注释节点
+        return true;
+    }
+    return !!(
+        node.pre // v-pre 节点
+        || (
+        !node.hasBindings // no dynamic bindings。hasBindings 为 true 表示有 v-if 以外的 vue 指令
+            && !node.if
+            && !node.for // not v-if or v-for or v-else
+            && !isBuiltInTag(node.tag) // not a built-in。tag 不能是 "slot" 或者 "component"
+            && isPlatformReservedTag(node.tag) // not a component。必须是当前平台环境自身的 tag
+            && !isDirectChildOfTemplateFor(node) // 下述
+            // ast 的所有 key 都必须是静态 key，即 genStaticKeys 返回的 key
+            && Object.keys(node).every(isStaticKey)
+        )
+    );
+}
+```
 
 
 ## References
