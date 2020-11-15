@@ -28,12 +28,15 @@
             - [6.3.3 根据元素列表构建整个堆](#633-根据元素列表构建整个堆)
     - [7. 二叉搜索树](#7-二叉搜索树)
         - [7.1 为什么要用二叉树做搜索](#71-为什么要用二叉树做搜索)
-        - [实现](#实现)
-            - [定义二叉树类和初始状态](#定义二叉树类和初始状态)
+        - [定义二叉树类和初始状态](#定义二叉树类和初始状态)
             - [定义节点类](#定义节点类)
-            - [插入节点](#插入节点)
-            - [搜索最小值和最大值](#搜索最小值和最大值)
-            - [搜索一个特定的值](#搜索一个特定的值)
+        - [插入节点](#插入节点)
+        - [搜索最小值和最大值](#搜索最小值和最大值)
+        - [搜索一个特定的值](#搜索一个特定的值)
+        - [移除一个节点](#移除一个节点)
+            - [注意 `removeNode` 返回值赋值的必要](#注意-removenode-返回值赋值的必要)
+            - [`removeNode` 实现](#removenode-实现)
+        - [完整实现（包括了下面讲到的遍历）](#完整实现包括了下面讲到的遍历)
     - [树的遍历](#树的遍历)
         - [先序遍历（Pre Order）](#先序遍历pre-order)
         - [后序遍历（Post Order）](#后序遍历post-order)
@@ -501,8 +504,7 @@ TODO
 2. 所以，我们折中使用排序二叉树，它的查找和插入的复杂度都是 $O(logN)$。
 3. 在完全平衡的二叉树中，最坏情况的时间复杂度是 $\log_2n$
 
-### 实现
-#### 定义二叉树类和初始状态
+### 定义二叉树类和初始状态
 `root` 属性引用根节点，如果为 `null` 表示当前为空树
 ```js
 class BinarySearchTree {
@@ -526,7 +528,7 @@ class Node(key) {
 }
 ```
 
-#### 插入节点
+### 插入节点
 1. 第一步是创建用来表示新节点的 `Node` 类实例。
 2. 第二步要验证这个插入操作是否为一种特殊情况，也就是要插入的节点是树的第一个节点。如果是，就将根节点指向新节点；如果不是，就要把它插入到合适的位置
     ```js
@@ -565,7 +567,7 @@ class Node(key) {
     }
     ```
 
-#### 搜索最小值和最大值
+### 搜索最小值和最大值
 1. 根据二叉搜索树的规则，递归的查找到最后一个左侧子节点就是最小值，递归的查找到最后一个右侧子节点就是最大值。
 2. 下面的 `min` 作为对象方法暴露，传递根节点作为起始搜素节点。内部通过实际的搜索函数 `minNode` 的进行搜索
     ```js
@@ -575,7 +577,7 @@ class Node(key) {
 
     function minNode (node) {
         if (node) {
-            while (node && node.left !== null) {
+            while ( node && node.left !== null ) {
                 node = node.left;               
             }
             return node.key;
@@ -591,7 +593,7 @@ class Node(key) {
 
     function maxNode (node) {
         if (node) {
-            while (node && node.right !== null) {
+            while ( node && node.right !== null ) {
                 node = node.right;
             }
             return node.key;
@@ -600,7 +602,7 @@ class Node(key) {
     }
     ```
 
-#### 搜索一个特定的值
+### 搜索一个特定的值
 1. 类似于二分搜索的逻辑。
 2. 下面的 `search` 作为对象方法暴露，传递根节点作为起始搜素节点。内部通过实际的搜索函数 `searchNode` 的进行搜索
     ```js
@@ -626,9 +628,311 @@ class Node(key) {
     ```
 3. `parent` 参数可以用来标记节点在树中的位置。通过递归查询，可以找出从根节点到目标节点的路径。
 
+### 移除一个节点
+1. 仍然是实例方法调用一个实际负责删除的函数
+    ```js
+    remove (key) {
+        // 其实大多数情况下，这个赋值都是没用的。但如果移除的正好是根节点：
+        //     如果整棵树只有根节点，那么 root 就要被重新赋值为 null；
+        //     如果整棵树不止根节点，则 root 就要改为引用其他节点。
+        this.root = removeNode(this.root, key);
+    }
+    ```
+2. `removeNode` 函数的逻辑仍然要从搜索待删除的节点开始，指定一个起始搜索节点，通过值的比较，找到待删除的节点
+    ```js
+    function removeNode(node, key) {
+        if (node === null) {
+            return null;
+        }
+
+        if (key < node.key) { // 比 node 的 key 小
+            node.left = removeNode(node.left, key); // 递归左子树 【1】
+            return node;
+        } 
+        else if (key > node.key) { // 比 node 的 key 大
+            node.right = removeNode(node.right, key); // 递归右子树 【2】
+            return node;
+        } 
+        else { // 找到了待删除的节点
+            
+        }
+    }
+    ```
+3. 找到了待删除的节点后，要分为三种情况：
+    * 最简单的情况是该节点是一个叶节点，直接删除即可。
+    * 稍复杂一点点的是该节点只有单侧子节点（子树），那么只要让该节点直接引用这个子节点就行，“儿子篡了父亲的位”。
+    * 最复杂的情况是，该节点有双侧子节点（子树）。
+4. 如果该有双侧子节点（子树），那么该节点现在的值，大于其左子树所有节点的值，小于其右子树所有节点的值。也就是说，其左子树所有的节点都要小于等于其右子树中最小的节点。
+5. 那么，有一个看起来合理但不好的方法是，就是将该节点的整个左子树设为该节点右子树中最小值节点的 `left`，然后让该节点的父节点的 `right` 引用该节点的右子树。也就是把整棵左子树移到右边，然后再删除待删除的节点。
+6. 但这种移动整棵树的方法会让某个分支明显长于其他的，在遍历时就可能带来性能损失。
+7. 既然待删除节点的值是处于左右子树的中间值，那么在个节点被删除后，也可以在左右子树中找一个这样的节点来代替它的位置，也就是左子树的最大值或右子树的最小值。这里选择的是右子树的最小值。
+8. 只需要找到右子树的最小节点，然后把待删除的节点的值设置为该最小节点的值，再删除掉这个最小节点，效果就相当于删除了待删除的节点
+    ```js
+    let aux = findMinNode(node.right); // 找到右子树的最小值
+    node.key = aux.key; // 其实并没有删除该节点，真正删除的是右子树的最小值节点
+    ```
+9. 找到右子树最小节点使用了如下函数，因为是从右子树里寻找，所以参数要传右子树的根节点
+    ```js
+    function findMinNode (node) {
+        while ( node && node.left !== null ) {
+            node = node.left;
+        }
+
+        return node;
+    }
+    ```
+9. 删除最小节点的方法，这里是嵌套的使用 `removeNode` 方法，从右子树里查找并删除
+    ```js
+    node.right = removeNode(node.right, aux.key);
+    ```
+
+#### 注意 `removeNode` 返回值赋值的必要 
+1. 可以看到所有的 `removeNode` 调用的返回值都被赋给了 `removeNode` 第一个参数的节点。也就是说，`removeNode` 从哪个节点开始遍历删除，返回值就要赋值给那个节点。
+2. 首先要明确的一点是，参数是按值传递的，`removeNode` 的第一个参数是对节点的引用，也就是指针，也是按值传递的。
+3. 也就是说，函数调用时，函数外部的实参指针和函数内部的实参指针是指向同一个节点但相互两个独立的指针。
+4. 如果你在 `removeNode` 里面修改了指针所指对象的属性，那外面的实参指针指向的节点可以同步改变；但如果你直接改了指针的指向，那外面的实参指针还是维持不变的。
+5. 现在分 A、B 两种情况讨论：情况 A 是 `removeNode` 调用传参的节点就是要被删除的节点，情况 B 是被删除的节点是传参节点的后代节点。
+6. 情况 A 时，就是直接到了下面【3】的分支，其中又分为三种情况：
+    * 情况一，形参指针指向 `null`，所以需要返回 `null` 让实参指针也指向 `null`，从而让待删除节点失去这两个指针的引用。
+    * 情况二，形参指针指向待删除节点的子节点，然后返回这个子节点，让实参指针也指向这个子节点，从而让待删除节点失去这两个指针的引用。
+    * 情况三，形参指针并没有发生改变，只是节点的属性（`key` 和 `right`）发生了改变。所以这种情况下外部实参指针实际上不需要被赋值，但是前面两个情况都要赋值，完全没有必要函数返回的时候判断是不是第三种情况然后要不要赋值，所以也原样返回。
+7. 情况 B 时，走【1】或【2】，继续对子节点递归调用 `removeNode`。根据情况 A 的分析，这两个递归调用的返回也应该分别进行赋值。
+
+#### `removeNode` 实现
+```js
+function removeNode(node, key) {
+    if (node === null) return null;
+
+    if (key < node.key) { // 比 node 的 key 小
+        node.left = removeNode(node.left, key); // 递归左侧子节点 【1】
+        return node;
+    } 
+    else if (key > node.key) { // 比 node 的 key 大
+        node.right = removeNode(node.right, key); // 递归右侧子节点 【2】
+        return node;
+    } 
+    else { // 【3】
+        // 第一种情况，key 所在的节点是叶节点
+        if (node.left === null && node.right === null) {
+            node = null;
+            return node;
+        }
+
+        // 第二种情况，key 所在的节点是只有一个子节点
+        if (node.left === null) {
+            node = node.right;
+            return node;
+        } 
+        else if (node.right === null) {
+            node = node.left;
+            return node;
+        }
+
+        // 第三种情况，key 所在的节点有两个子节点
+        let aux = findMinNode(node.right); // 找到右子树的最小值
+        node.key = aux.key; // 其实并没有删除该节点，真正删除的是右子树的最小值节点
+        node.right = removeNode(node.right, aux.key);
+        return node;
+    }
+}
+```
+
+### 完整实现（包括了下面讲到的遍历）
+```js
+class Node(key) {
+    constructor (key) {
+        this.key = key;
+        this.left = null;
+        this.right = null;
+    }
+}
+
+function insertNode(node, newNode) {
+    if ( newNode.key < node.key ) {
+        if ( node.left === null ) {
+            node.left = newNode;
+        } 
+        else {
+            insertNode( node.left, newNode );
+        }
+    } 
+    else {
+        if ( node.right === null ) {
+            node.right = newNode;
+        } 
+        else {
+            insertNode( node.right, newNode );
+        }
+    }
+}
+
+function inOrderTraverseNode(node, callback) {
+    if ( node !== null ) {
+        inOrderTraverseNode(node.left, callback);
+        callback(node.key);
+        inOrderTraverseNode(node.right, callback);
+    }
+}
+
+function preOrderTraverseNode(node, callback) {
+    if ( node !== null ) {
+        callback(node.key);
+        preOrderTraverseNode(node.left, callback);
+        preOrderTraverseNode(node.right, callback);
+    }
+}
+
+function postOrderTraverseNode(node, callback) {
+    if ( node !== null ) {
+        postOrderTraverseNode(node.left, callback);
+        postOrderTraverseNode(node.right, callback);
+        callback(node.key);
+    }
+}
+
+function minNode (node) {
+    if (node) {
+        while ( node && node.left !== null ) {
+            node = node.left;               
+        }
+        return node.key;
+    }
+    return null;
+}
+
+function maxNode (node) {
+    if (node) {
+        while ( node && node.right !== null ) {
+            node = node.right;
+        }
+        return node.key;
+    }
+    return null;
+}
+
+function searchNode(node, key, parent = null) {
+    if (node === null) return null;
+
+    if ( node.key > key ) {
+        return searchNode(node.left, key, node);
+    } 
+    else if ( node.key < key ) {
+        return searchNode(node.right, key, node);
+    } 
+    else {
+        return {node, parent};
+    }
+}
+
+function findMinNode (node) {
+    while ( node && node.left !== null ) {
+        node = node.left;
+    }
+
+    return node;
+}
+
+function removeNode(node, key) {
+    if (node === null) {
+        return null;
+    }
+
+    if (key < node.key) {
+        node.left = removeNode(node.left, key);
+        return node;
+    } 
+    else if (key > node.key) {
+        node.right = removeNode(node.right, key);
+        return node;
+    } 
+    else {
+        if (node.left === null && node.right === null) {
+            node = null;
+            return node;
+        }
+        if (node.left === null) {
+            node = node.right;
+            return node;
+
+        } 
+        else if (node.right === null) {
+            node = node.left;
+            return node;
+        }
+        let aux = findMinNode(node.right);
+        node.key = aux.key;
+        node.right = removeNode(node.right, aux.key);
+        return node;
+    }
+}
 
 
+class BinarySearchTree {
 
+    constructor(){
+        this.root = null;
+    }
+
+    insert (key) {
+        let newNode = new Node(key);
+
+        if ( this.root === null ) {
+            this.root = newNode;
+        } 
+        else {
+            insertNode(this.root, newNode);
+        }
+    }
+
+    inOrderTraverse (callback) {
+        inOrderTraverseNode(this.root, callback);
+    }
+
+    preOrderTraverse (callback) {
+        preOrderTraverseNode(this.root, callback);
+    }
+
+    postOrderTraverse (callback) {
+        postOrderTraverseNode(this.root, callback);
+    }
+
+    min () {
+        return minNode(this.root);
+    }
+
+    max () {
+        return maxNode(this.root);
+    }
+
+    search (key) {
+        return searchNode(this.root, key);
+    }
+
+    check (key, node = this.root) {
+        if (node === null) {
+            return false;
+        }
+
+        if ( node.key > key ) {
+            return this.check(key, node.left);
+        } 
+        else if ( node.key < key ) {
+            return this.check(key, node.right);
+        } 
+        else {
+            return true;
+        }
+    }
+
+    remove (key) {
+        this.root = removeNode(this.root, key);
+    }
+
+    getRoot () {
+        return this.root;
+    }
+}
+```
 
 
 ## 树的遍历
@@ -684,14 +988,6 @@ class Node(key) {
         }
     }
     ```
-
-
-
-
-
-
-
-
 
 
 
