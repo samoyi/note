@@ -41,6 +41,9 @@
         - [先序遍历（Pre Order）](#先序遍历pre-order)
         - [后序遍历（Post Order）](#后序遍历post-order)
         - [中序遍历（In Order）](#中序遍历in-order)
+    - [平衡二叉搜索树](#平衡二叉搜索树)
+        - [AVL 树的性能](#avl-树的性能)
+        - [插入操作](#插入操作)
     - [关系](#关系)
         - [二叉树](#二叉树)
     - [References](#references)
@@ -517,51 +520,51 @@ class BinarySearchTree {
 ```
 
 #### 定义节点类
-树中的任意一个节点都会保存当前节点的值，除此以外还会有两个指针，指向它的左侧子节点和右侧子节点。
-```js
-class Node(key) {
-    constructor (key) {
-        this.key = key;
-        this.left = null;
-        this.right = null;
-    }
-}
-```
-
-### 插入节点
-1. 第一步是创建用来表示新节点的 `Node` 类实例。
-2. 第二步要验证这个插入操作是否为一种特殊情况，也就是要插入的节点是树的第一个节点。如果是，就将根节点指向新节点；如果不是，就要把它插入到合适的位置
+1. 树中的任意一个节点都会保存当前节点的值，除此以外还会有两个指针，指向它的左侧子节点和右侧子节点。
     ```js
-    insert (key) {
-        let newNode = new Node(key);
-
-        if ( this.root === null ) {
-            this.root = newNode;
-        } 
-        else {
-            insertNode(this.root, newNode);
+    class Node(key) {
+        constructor (key, parent=null) {
+            this.key = key;
+            this.left = null;
+            this.right = null;
+            this.parent = parent;
         }
     }
     ```
-3. 使用辅助函数 `insertNode` 将它插入到合适的位置
+2. BST 本身并不需要 `parent` 作为父节点的引用，但之后实现子类 AVL 树的时候需要，所以直接在这里加上这个属性。
+
+### 插入节点
+1. 要验证这个插入操作是否为一种特殊情况，也就是要插入的节点是树的第一个节点。如果是，就将根节点指向新节点；如果不是，就要把它插入到合适的位置
+2. `Node` 构造函数调用时要设置父节点的引用：如果当前是空树，那么父节点就是 `null`；如果当前树非空，则要在递归比较的到目标位置时才能确定父节点是谁，才能调用 `Node` 创建新的节点
     ```js
-    function insertNode(node, newNode) {
-        if ( newNode.key < node.key ) { // 如果新节点的键小于当前节点的键，
+    insert (key) {
+        if ( this.root === null ) {
+            this.root = new Node(key);
+        } 
+        else {
+            insertNode(this.root, key);
+        }
+    }
+    ```
+3. 使用辅助函数 `insertNode` 将寻找合适的位置
+    ```js
+    function insertNode(node, key) {
+        if ( key < node.key ) { // 如果新节点的键小于当前节点的键，
             // 那么需要检查当前节点的左侧子节点
             if ( node.left === null ) { // 如果它没有左侧子节点，就在那里插入新的节点
-                node.left = newNode;
+                node.left = new Node(key, node);
             } 
             else {
                 // 如果有左侧子节点，需要通过递归调用 insertNode 方法继续找到树的下一层
-                insertNode( node.left, newNode );
+                insertNode( node.left, key );
             }
         } 
-        else { // 如果新节点的键大于等于当前节点的键
+        else {// 如果新节点的键大于等于当前节点的键
             if ( node.right === null ) { // 当前节点没有右侧子节点则直接作为右侧子节点
-                node.right = newNode;
+                node.right = new Node(key, node);
             } 
             else { // 有的话继续递归查找合适位置
-                insertNode( node.right, newNode );
+                insertNode( node.right, key );
             }
         }
     }
@@ -604,7 +607,7 @@ class Node(key) {
 
 ### 搜索一个特定的值
 1. 类似于二分搜索的逻辑。
-2. 下面的 `search` 作为对象方法暴露，传递根节点作为起始搜素节点。内部通过实际的搜索函数 `searchNode` 的进行搜索
+2. 下面的 `search` 作为对象方法暴露，传递根节点作为起始搜索节点。内部通过实际的搜索函数 `searchNode` 的进行搜索
     ```js
     search (key) {
         return searchNode(this.root, key);
@@ -622,11 +625,10 @@ class Node(key) {
             return searchNode(node.right, key, node);
         } 
         else {
-            return {node, parent};
+            return node;
         }
     }
     ```
-3. `parent` 参数可以用来标记节点在树中的位置。通过递归查询，可以找出从根节点到目标节点的路径。
 
 ### 移除一个节点
 1. 仍然是实例方法调用一个实际负责删除的函数
@@ -739,29 +741,30 @@ function removeNode(node, key) {
 
 ### 完整实现（包括了下面讲到的遍历）
 ```js
-class Node(key) {
-    constructor (key) {
+class Node {
+    constructor (key, parent=null) {
         this.key = key;
         this.left = null;
         this.right = null;
+        this.parent = parent;
     }
 }
 
-function insertNode(node, newNode) {
-    if ( newNode.key < node.key ) {
+function insertNode(node, key) {
+    if ( key < node.key ) {
         if ( node.left === null ) {
-            node.left = newNode;
+            node.left = new Node(key, node);
         } 
         else {
-            insertNode( node.left, newNode );
+            insertNode( node.left, key );
         }
     } 
     else {
         if ( node.right === null ) {
-            node.right = newNode;
+            node.right = new Node(key, node);
         } 
         else {
-            insertNode( node.right, newNode );
+            insertNode( node.right, key );
         }
     }
 }
@@ -820,7 +823,7 @@ function searchNode(node, key, parent = null) {
         return searchNode(node.right, key, node);
     } 
     else {
-        return {node, parent};
+        return node;
     }
 }
 
@@ -874,13 +877,11 @@ class BinarySearchTree {
     }
 
     insert (key) {
-        let newNode = new Node(key);
-
         if ( this.root === null ) {
-            this.root = newNode;
+            this.root = new Node(key);
         } 
         else {
-            insertNode(this.root, newNode);
+            insertNode(this.root, key);
         }
     }
 
@@ -990,12 +991,84 @@ class BinarySearchTree {
     ```
 
 
+## 平衡二叉搜索树
+1. 我们已经知道，当二叉搜索树不平衡时，查询和插入等操作的性能可能降到 $O(n)$。本节将介绍一种特殊的二叉搜索树，它能自动维持平衡。这种树叫作 **AVL树**。
+2. AVL 树实现映射抽象数据类型的方式与普通的二叉搜索树一样，唯一的差别就是性能。实现 AVL 树时，要记录每个节点的 **平衡因子**。
+3. 我们通过查看每个节点左右子树的高度来实现这一点。更正式地说，我们将平衡因子定义为左右子树的高度之差
 
+$$
+balance~Factor=height(left~Sub~Tree)-height(rightSubTree)
+$$
 
+4. 根据上述定义，如果平衡因子大于零，我们称之为左倾；如果平衡因子小于零，就是右倾；如果平衡因子等于零，那么树就是完全平衡的。
+5. 为了实现 AVL 树并利用平衡树的优势，我们将平衡因子为 –1、0 和 1 的树都定义为平衡树。一旦某个节点的平衡因子超出这个范围，我们就需要通过一个过程让树恢复平衡。
+6. 下图展示了一棵右倾树及其中每个节点的平衡因子
+    <img src="images/17.png" width="300" style="display: block; margin: 5px 0 10px;" />
 
+### AVL 树的性能
+<img src="images/18.png" width="300" style="display: block; margin: 5px 0 10px;" />
+TODO
 
+### 插入操作
+1. 所有新键都是以叶子节点插入的，因为新叶子节点的平衡因子是零，所以新插节点没有什么限制条件。
+2. 但插入新节点后，必须更新父节点的平衡因子。新的叶子节点对其父节点平衡因子的影响取决于它是左子节点还是右子节点。
+3. 如果是右子节点，父节点的平衡因子减一。如果是左子节点，则父节点的平衡因子加一。这个关系可以递归地应用到每个祖先，直到根节点。
+4. 既然更新平衡因子是递归过程，就来检查以下两种基本情况：
+    * 递归调用抵达根节点；
+    * 父节点的平衡因子调整为零。如果子树的平衡因子为零，那么祖先节点的平衡因子将不会有变化。也就是说本来只有单侧节点，但是现在有双侧节点了，例如上图中的 B 有了右侧子节点，那么对于 B 的父节点 C 来说，左子树高度并没有发生变化，因为只是把之前单侧的补全为双侧了而已。
+5. 我们将 AVL 树实现为 `BinarySearchTree` 的子类，需要修改辅助方法 `insert`。现在插入一个节点时，需要递归更新它的祖先节点的平衡因子，可能还要移动节点让不平衡的树变的平衡
+    ```js
+    function insertNodeForAVL(node, key) {
+        if ( key < node.key ) {
+            if ( node.left === null ) {
+                node.left = new Node(key, node);
+                // 从新插入的节点开始往上更新平衡因子
+                // updateBalance 方法内部会判断新插入节点是左还是右
+                updateBalance(node.left);
+            } 
+            else {
+                insertNode( node.left, key );
+            }
+        } 
+        else {
+            if ( node.right === null ) {
+                node.right = new Node(key, node);
+                updateBalance(node.right);
+            } 
+            else {
+                insertNode( node.right, key );
+            }
+        }
+    }
+    ```
+6. `updateBalance` 负责更新平衡因子，如果发现树中有不平衡的情况出现，还需要调用 `rebalance` 进行平衡
+    ```js
+    function updateBalance (node) {
+        if ( node.balanceFactor > 1 || node.balanceFactor < -1 ) {
+            rebalance(node);
+        }
+        else {
+            if ( isLeftChild(node) ) {
+                parent.balanceFactor += 1;
+            }
+            else if ( isRightChild (node) ) {
+                parent.balanceFactor -= 1;
+            }
+            // 递归更新上层节点的平衡因子
+            if ( parent.balanceFactor !== 0 ) {
+                updateBalance(parent);
+            }
+        }
+    }
 
+    function isLeftChild (node) {
+        return node.parent && node.parent.left === node;
+    }
 
+    function isRightChild (node) {
+        return node.parent && node.parent.left === node;
+    }
+    ```
 
 
 
