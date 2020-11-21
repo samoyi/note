@@ -44,6 +44,10 @@
     - [平衡二叉搜索树](#平衡二叉搜索树)
         - [AVL 树的性能](#avl-树的性能)
         - [插入操作](#插入操作)
+            - [再平衡](#再平衡)
+            - [新平衡因子的计算](#新平衡因子的计算)
+            - [完善再平衡](#完善再平衡)
+    - [映射实现复杂度比较](#映射实现复杂度比较)
     - [关系](#关系)
         - [二叉树](#二叉树)
     - [References](#references)
@@ -1009,6 +1013,10 @@ $$
 <img src="images/18.png" width="300" style="display: block; margin: 5px 0 10px;" />
 TODO
 
+1. 通过维持树的平衡，可以保证搜索节点方法的时间复杂度为 $O(\log_2n)$。
+2. 因为新节点作为叶子节点插入，所以更新所有父节点的平衡因子最多需要 $\log_2n$ 次操作——每一层一次。如果树失衡了，恢复平衡最多需要旋转两次。每次旋转的时间复杂度是 $O(1)$，所以插入节点操作的时间复杂度仍然是 $O(\log_2n)$。
+
+
 ### 插入操作
 1. 所有新键都是以叶子节点插入的，因为新叶子节点的平衡因子是零，所以新插节点没有什么限制条件。
 2. 但插入新节点后，必须更新父节点的平衡因子。新的叶子节点对其父节点平衡因子的影响取决于它是左子节点还是右子节点。
@@ -1070,11 +1078,111 @@ TODO
     }
     ```
 
+#### 再平衡
+1. 为了让 AVL 树恢复平衡，需要在树上进行一次或多次 **旋转**。下图是一个左旋的过程
+    <img src="images/19.png" width="500" style="display: block; margin: 5px 0 10px;" />
+2. 左旋包括以下步骤。
+    1. 将右子节点（B）提升为子树的根节点。
+    2. 将旧根节点（A）作为新根节点的左子节点。
+    3. 如果新根节点（B）之前有左子节点，将其作为新左子节点（A）的右子节点。
+3. 再看一个右旋的过程
+    <img src="images/20.png" width="600" style="display: block; margin: 5px 0 10px;" />
+4. 右旋步骤如下。
+    1. 将左子节点（C）提升为子树的根节点。
+    2. 将旧根节点（E）作为新根节点的右子节点。
+    3. 如果新根节点（C）之前有右子节点（D），将其作为新右子节点（E）的左子节点。
+5. 以左旋为例，涉及 5 对指向关系的修改
+    * 第一对：旧根节点和新根节点
+    * 第二对：新根节点和它的左侧子节点
+    * 第三对：新根节点的左侧子节点和旧根节点
+    * 第四对：旧根节点和它的父节点
+    * 第五对：新根节点和旧根节点的父节点
+5. 下面是左旋的实现
+    ```js
+    rotateLeft (rotRoot) {
+        let newRoot = rotRoot.right; // 临时变量保存新的根节点
+
+        // 第二对和第三对
+        // 新的根节点如果之前有左子节点，那么让它成为旧根节点的右子节点
+        // 如果没有，那也正确的置为了 null
+        rotRoot.right = newRoot.left;
+        // 新的根节点如果之前有左子节点，那就要修改它父节点的指向
+        if ( newRoot.left ) {
+            newRoot.left.parent = rotRoot;
+        }
+
+        // 第五对和第四对
+        // 新的根节点修改父节点的引用
+        // 如果旧的根节点是整棵树的根节点，那这里也正确的置为了 null
+        newRoot.parent = rotRoot.parent;
+        // 旧的根节点同样把自己的父节点引用指向新的根节点，但在此之前，
+        // 还要再用一下这个引用，因为这引用要把自己的子节点指向新的根节点
+        // 如果旧的根节点之前是整棵树的根节点，那情况比较简单
+        if ( rotRoot.parent === null ) {
+            this.root = newRoot;
+        }
+        // 否则的话，还要看旧的根节点之前是作为那一侧的子节点
+        else {
+            if ( isLeftChild(rotRoot) ) {
+                rotRoot.parent.left = newRoot;
+            } 
+            else {
+                rotRoot.parent.right = newRoot;
+            }
+        }
+
+        // 第一对
+        // 现在可以让旧的根节点把自己的父节点指向新的根节点了
+        rotRoot.parent = newRoot;
+        // 新的根节点节点也要反向指向旧的根节点
+        newRoot.left = rotRoot;
+
+        // 新平衡因子
+        rotBoot.balanceFactor = rotBoot.balanceFactor + 1 - Math.min(newRoot.balanceFactor, 0);
+        newRoot.balanceFactor = newRoot.balanceFactor + 1 + Math.max(rotBoot.balanceFactor, 0);
+    }
+    ```
+
+#### 新平衡因子的计算
+[推导过程](https://www.ituring.com.cn/book/tupubarticle/27758)
+
+#### 完善再平衡
+1. 上面再平衡的分析还有缺陷。考虑下面这个失衡的树
+    <img src="images/21.png" width="100" style="display: block; margin: 5px 0 10px;" />
+2. 按照上面的规则，应该进行左旋。不过，左旋之后变成了
+    <img src="images/22.png" width="100" style="display: block; margin: 5px 0 10px;" />
+3. 现在又需要右旋了。不过如果右旋，则又变回去了。
+4. 要解决这种问题，必须遵循以下规则：
+    * 如果子树需要左旋，首先检查右子树的平衡因子。如果右子树左倾，就对右子树做一次右旋，再围绕原节点做一次左旋。
+    * 如果子树需要右旋，首先检查左子树的平衡因子。如果左子树右倾，就对左子树做一次左旋，再围绕原节点做一次右旋。
+5. 下面是一个示例
+    <img src="images/23.png" width="100" style="display: block; margin: 5px 0 10px;" />
+6. `rebalance` 实现
+    ```js
+    rebalance (node) {
+        if ( node.balanceFactor < 0 ) {
+            if ( node.right.balanceFactor > 0 ) {
+                rotateRight(node.right);
+            }
+            rotateLeft(node);
+        }
+        else if ( node.balanceFactor > 0 ) {
+            if ( node.left.balanceFactor < 0 ) {
+                rotateLeft(node.left);
+            }
+            rotateRight(node);
+        }
+    }
+    ```
 
 
-
-
-
+## 映射实现复杂度比较
+操作\类型 | 有序列表 | 散列表 | 二叉搜索树 | AVL树
+--|--|--|--|--
+插入 | $O(n)$       | $O(1)$ | $O(n)$ | $O(\log_2n)$
+读取 | $O(\log_2n)$ | $O(1)$ | $O(n)$ | $O(\log_2n)$
+查询 | $O(\log_2n)$ | $O(1)$ | $O(n)$ | $O(\log_2n)$
+删除 | $O(n)$       | $O(1)$ | $O(n)$ | $O(\log_2n)$
 
 
 
