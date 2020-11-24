@@ -366,13 +366,9 @@ C 语言允许在实际参数的类型与形式参数的类型不匹配的情况
             }
 
             printf("Play again? ");
-            scanf("%c", &isGoOnInput);
-
-            // 第一次输入 y 的时候 scanf 会剩下一个换行符
-            if ( isGoOnInput == '\n' ) {
-                scanf("%c", &isGoOnInput);
-            }
-
+            // 第一次输入 y 的时候 scanf 会剩下一个换行符，这里加空格匹配换行符，然后让 $c 匹配到实际的字符；
+            // 否则 $c 会匹配到换行符，不给用户输入的机会；然后换行符会走到下面 if 的分支退出程序。
+            scanf(" %c", &isGoOnInput); 
             
             if ( isGoOnInput != 'Y' && isGoOnInput != 'y' ) {
                 isGoOn = false;

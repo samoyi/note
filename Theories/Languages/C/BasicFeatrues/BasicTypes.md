@@ -600,28 +600,33 @@
     Your message was 27 character(s) long.
     ```
 
-#### 混合使用 `getchar` 函数和 `scanf` 函数的问题
-1. 如果在同一个程序中混合使用 `getchar` 函数和 `scanf` 函数，请一定要注意。`scanf` 函数倾向于遗留下它 “扫视” 过但未读取的字符（包括换行符）。
-2. 思考下面的程序段会发生什么：
+### 读入字符时对多字符（包括换行符）的处理
+1. `scanf` 和 `getchar` 都倾向于遗留下它 “扫视” 过但未读取的字符（包括换行符）。
+2. 考虑下面的例子
     ```cpp
-    char ch1, ch2;
+    char c1, c2;
 
-    printf("Enter a first char: ");
-    scanf("%c", &ch1);                     // scanf 读取输入时剩下了换行没有读取
-    printf("First char is: %c \n", ch1);
+    c1 = getchar(); // 使用 scanf("%c", &c1) 也一样
+    printf("c1 is \"%c\" \n", c1);
 
-    printf("Enter a second char: ");
-    ch2 = getchar();                       // 这里并没有让用户输入，而是直接读取了 scanf 留下的换行，
-    printf("Second char is: %c", ch2);     // 这里没有写换行符 \n，但因为 ch2 现在就是换行，所以实际的输出发生了换行
-
-    printf("End");
+    c2 = getchar(); // 使用 scanf("%c", &c2) 也一样
+    printf("c2 is \"%c\" \n", c2);
     ```
-3. 实际的执行结果如下
+3. 预期是：
+    1. 输入 `a` 按回车，打印出 `c1 is "a"`，然后换行。
+    2. 输入 `b` 按回车，打印出 `c2 is "b"`，然后换行。
+    3. 程序结束
+4. 但如果第一次就输入了 `ab`，第一个 `getchar` 只会读取 `a` 而留下 `b`。后面第二个 `getchar` 不会再要求用户输入，而是直接读取之前留下的 `b`，然后执行后面的打印并退出程序。
+5. 更容易出错的情况是，即使你第一次确实值输入了 `a` 并按回车，之后也不会按照预期发展，而后直接打印出如下内容并退出程序
     ```sh
-    Enter a first char: x
-    First char is: x 
-    Enter a second char: Second char is: 
-    End
+    c1 is "a" 
+    c2 is "
+    " 
+    ```
+6. 因为第一个 `getchar` 读取 `a` 之后留下了换行符，所以第二个 `getchar` 仍然 不会再要求用户输入，`c2` 直接读取到了换行并打印。
+7. 解决换行问题还是要用前面说到的 `scanf` 加空格的方法，用这个空格去匹配前面的若干个空白字符，然后 `%c` 就能匹配到正确的字符
+    ```cpp
+    scanf(" %c", &c2);
     ```
 
 ### 什么时候需要考虑字符变量是有符号的还是无符号的
