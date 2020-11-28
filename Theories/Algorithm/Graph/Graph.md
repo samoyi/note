@@ -38,6 +38,7 @@
         - [有向图的 BFS](#有向图的-bfs)
             - [实现](#实现-1)
         - [记录更多信息的广度遍历](#记录更多信息的广度遍历)
+        - [复杂度](#复杂度)
     - [使用 `BFSWidthMoreInfo` 寻找最短路径](#使用-bfswidthmoreinfo-寻找最短路径)
     - [深度优先遍历](#深度优先遍历)
         - [原理和本质](#原理和本质)
@@ -146,8 +147,8 @@
 2. 先初始化
     ```js
     constructor(isDirected=false) {
-        this.vertices = []; // 所有的节点
-        this.adjacencyList = new Dictionary(); // 使用字典来表示邻接表
+        this.vertices = [];
+        this.adjacencyList = new Map(); // 会使用顶点的名字作为键，邻接顶点列表作为值
         this.isDirected = isDirected; // 是否为有向图
     }
     ```
@@ -156,17 +157,21 @@
     addVertex (v) {
         this.vertices.push(v);
         // 在邻接表中为新添加的节点建一个列表，用来保存与它相连接的节点
-        this.adjacencyList.set(v, []);
+        // 使用 Set 而不是数组的原因，见 addEdge 方法
+        this.adjacencyList.set(v, new Set());
     }
     ```
 4. 添加边
     ```js
     addEdge (v, w) {
-        this.adjacencyList.get(v).push(w); // 给节点 v 添加一个与它相邻的节点 w
+        this.adjacencyList.get(v).add(w); // 给节点 v 添加一个与它相邻的节点 w
         // 如果是有向图，那只是从 v 到 w 单方向的边；如果不是，就要双向添加
-        if ( !this.isDirected ) {
-            this.adjacencyList.get(w).push(v);
+        if (!this.isDirected) {
+            this.adjacencyList.get(w).add(v);
         }
+        // 相邻的节点列表之所有用 Set 而不用数组，就是因为这里的双向添加。如果使用数组，
+        // 比如调用方法 addEdge('A', 'B') 会双向添加，之后如果再调用 addEdge('B', 'A')，
+        // 那就会重复添加了，导致 A 的相邻节点里就会有两个 B，B 的相邻节点里也会有两个 A。
     }
     ```
 5. 创建一个打印的函数来查看邻接表
@@ -255,31 +260,39 @@ TODO 为什么要三种颜色，两种行不行？黑色好像没什么用处
 
 ### 实现
 ```js
-normalBFS (v, callback) {
-    let colors = initializeColor(this.vertices);
-    let queue = new Queue();
-    queue.enqueue(v); // 遍历起始节点
-    
+bfs (v, callback) {
+    let colorMapping = initializeColorMapping(this.vertices);
+    let queue = [];
+    queue.push(v); // 遍历起始节点
+
     // 遍历每一个节点
-    while ( !queue.isEmpty() ) {
-        let u = queue.dequeue();
+    while ( queue.length !== 0 ) {
+        let u = queue.shift();
         let neighbors = this.adjacencyList.get(u);
-        colors[u] = 'grey'; // 该节点现在已经访问
+        colorMapping[u] = 'grey'; // 该节点现在已经访问
         // 访问该节点的相邻节点
-        for ( let i = 0; i < neighbors.length; i++ ) {
-            let n = neighbors[i];
-            // 过滤掉已经访问过的相邻节点
-            if ( colors[n] === 'white' ) {
-                colors[n] = 'grey';
+        neighbors.forEach((item) => {
+            if (colorMapping[item] === 'white') {
+                colorMapping[item] = 'grey';
                 // 被访问的节点加入队列，之后会被探索
-                queue.enqueue(n);
+                queue.push(item);
             }
-        }
-        colors[u] = 'black'; // 该节点的所有相邻节点都已经被访问，现在该节点就是被完全探索的状态
-        if ( callback ) {
+        });
+        // 该节点的所有相邻节点都已经被访问，现在该节点就是被完全探索的状态
+        colorMapping[u] = 'black'; 
+        if (callback) {
             callback(u);
         }
     }
+}
+...
+
+function initializeColorMapping (vertices) {
+    let colorMapping = {};
+    vertices.forEach(vertex=>{
+        colorMapping[vertex] = 'white';
+    });
+    return colorMapping;
 }
 ```
 
@@ -292,30 +305,30 @@ normalBFS (v, callback) {
 #### 实现
 参考深度优先搜索实现了兼容有向图的 BFS
 ```js
-BFSCompatibleWithDirected (callback) {
+bfsCompatibleWithDirected (callback) {
     let colorMapping = initializeColorMapping(this.vertices);
 
-    this.vertices.forEach((vertex)=>{ // 尝试从每个节点开始遍历
-        if ( colorMapping[vertex] === 'white' ) {
-            let queue = new Queue();
-            queue.enqueue(vertex);
+    this.vertices.forEach((vertex)=>{
+        if (colorMapping[vertex] === 'white') {
+            let queue = [];
+            queue.push(vertex);
 
-            while ( !queue.isEmpty() ) {
-                let u = queue.dequeue();
+            while ( queue.length !== 0 ) {
+                let u = queue.shift();
                 let neighbors = this.adjacencyList.get(u);
                 colorMapping[u] = 'grey';
 
-                for ( let i = 0; i < neighbors.length; i++ ) {
-                    let n = neighbors[i];
-                    if (colorMapping[n] === 'white') {
-                        colorMapping[n] = 'grey';
-                        queue.enqueue(n);
+                neighbors.forEach((item) => {
+                    if (colorMapping[item] === 'white') {
+                        colorMapping[item] = 'grey';
+                        // 被访问的节点加入队列，之后会被探索
+                        queue.push(item);
                     }
-                }
+                });
 
                 colorMapping[u] = 'black';
 
-                if ( callback ) {
+                if (callback) {
                     callback(u);
                 }
             }
@@ -329,8 +342,8 @@ BFSCompatibleWithDirected (callback) {
 ```js
 BFSWidthMoreInfo (v) {
     let colorMapping = initializeColorMapping(this.vertices);
-    let queue = new Queue();
-    queue.enqueue(v);
+    let queue = [];
+    queue.push(v);
 
     let distances = {};   // 记录每个节点距离起始节点的距离
     let predecessors = {}; // 记录每个节点的前溯节点
@@ -341,18 +354,18 @@ BFSWidthMoreInfo (v) {
         predecessors[vertex] = null;
     });
 
-    while ( !queue.isEmpty() ) {
-        let u = queue.dequeue();
+    while ( queue.length !== 0 ) {
+        let u = queue.shift();
         colorMapping[u] = 'grey';
 
         this.adjacencyList.get(u).forEach((item) => {
-            if ( colorMapping[item] === 'white' ) {
+            if (colorMapping[item] === 'white') {
                 colorMapping[item] = 'grey';
 
                 // 因为节点 item 是 u 的相邻节点，所以距离起始节点的距离就比 u 大一
                 distances[item] = distances[u] + 1;
                 predecessors[item] = u;
-                queue.enqueue(item);
+                queue.push(item);
             }
         });
 
@@ -366,21 +379,23 @@ BFSWidthMoreInfo (v) {
 }
 ```
 
+### 复杂度
+1. 每次 `while` 对应一次 `dequeue`，而每个节点只会一次 `enqueue`，所以 `while` 内部的执行次数是节点数，时间复杂度记为 $O(V)$。
+TODO
+
 
 ## 使用 `BFSWidthMoreInfo` 寻找最短路径
 1. 因为 BFS 是逐层往外搜索，并不会有跳跃的情况，所以就可以确定任意一个节点相对于顶点来说关系最近的层数，或者说要几步才能把顶点和某个节点连接起来。
 2. 使用 `BFSWidthMoreInfo` 中记录的每个节点的前溯节点，来查找某个节点到顶点的最短路径
     ```js
     getShortestPaths (v) {
-        let {predecessors} = this.BFSWidthMoreInfo(v);
+        let {predecessors} = this.BFSWidthMoreInfo(v); // 获得每个节点的前溯节点
         let pathes = {};
-        for ( let key in predecessors ) {
+        for (let key in predecessors) { // 遍历记录每个节点距离顶点的最短路径
             let predecessor = predecessors[key];
-            if ( predecessor === null ) {
-                continue;
-            }
+            if (predecessor === null) continue;
             pathes[key] = key;
-            while ( predecessor ) {
+            while (predecessor) {
                 pathes[key] = predecessor + '-' + pathes[key];
                 predecessor = predecessors[predecessor];
             }
@@ -422,9 +437,10 @@ BFSWidthMoreInfo (v) {
     normalDFS (callback) {
         let colorMapping = initializeColorMapping(this.vertices);
         // 遍历每一个节点，如果某个节点还未被探索，则对它进行深度探索。
-        // 但因为是递归遍历，所以从一个节点开始的第一轮 forEach 里面，就可能遍历了很多后代节点，
-        // 所以其实之后轮的 forEach 很可能很多 vertex 都已经不是 white 了。
-        // 如果从一个节点开始可以递归遍历完成所有的节点，那么 `if (colorMapping[vertex] === 'white')` 里面其实只会被执行一次。
+        // 但因为是递归遍历，如果图是无向的，那么从一个节点开始的第一轮 forEach 里面，
+        // 就会遍历了所有后代节点，所以其实之后轮的 forEach 里面 vertex 都已经不是 white 了。
+        // 但是在有向图中，从一个节点开始并不一定会遍历到所有节点。所以还是要用 forEach，
+        // 在一次遍历到无可遍历但还有节点没有遍历到的时候，再从其他没有遍历的节点新开一轮遍历。
         this.vertices.forEach((vertex)=>{
             if (colorMapping[vertex] === 'white') {
                 exploreForNormalDFS(vertex, this.adjacencyList, colorMapping, callback);
@@ -452,8 +468,49 @@ BFSWidthMoreInfo (v) {
         colorMapping[vertex] = 'black';
 
         normalDFS_indent -= 4;
-        console.log(' '.repeat(normalDFS_indent) + 'explored ' + vertex);
+        console.log(' '.repeat(normalDFS_indent) + 'Explored ' + vertex);
     }
+    ```
+3. 测试
+    ```js
+    let graph = new Graph();
+    let vertices = ['A','B','C','D','E','F','G','H','I'];
+
+    vertices.forEach(vertex=>{
+        graph.addVertex(vertex);
+    });
+
+    graph.addEdge('A', 'B');
+    graph.addEdge('A', 'C');
+    graph.addEdge('A', 'D');
+    graph.addEdge('B', 'E');
+    graph.addEdge('B', 'F');
+    graph.addEdge('C', 'D');
+    graph.addEdge('C', 'G');
+    graph.addEdge('D', 'G');
+    graph.addEdge('D', 'H');
+    graph.addEdge('E', 'I');
+
+
+    graph.normalDFS();
+    // Discovered A
+    //     Discovered B
+    //         Discovered E
+    //             Discovered I
+    //             Explored I
+    //         Explored E
+    //         Discovered F
+    //         Explored F
+    //     Explored B
+    //     Discovered C
+    //         Discovered D
+    //             Discovered G
+    //             Explored G
+    //             Discovered H
+    //             Explored H
+    //         Explored D
+    //     Explored C
+    // Explored A
     ```
 
 ### 记录更多信息的深度遍历
@@ -494,12 +551,9 @@ BFSWidthMoreInfo (v) {
 
         info.discoveredTime[vertex] = ++DFSWidthMoreInfo_time;
 
-        console.log(' '.repeat(DFSWidthMoreInfo_indent) + 'Discovered ' + vertex);
-        DFSWidthMoreInfo_indent += 4;
-
         let neighborList = adjacencyList.get(vertex);
         neighborList.forEach((neighbor) => {
-            if ( colorMapping[neighbor] === 'white' ) {
+            if (colorMapping[neighbor] === 'white') {
                 // 记录 vertex 为其相邻节点的前溯节点
                 info.predecessors[neighbor] = vertex; 
                 // 递归
@@ -510,10 +564,47 @@ BFSWidthMoreInfo (v) {
         // vertex 节点的所有子节点都遍历完成
         colorMapping[vertex] = 'black';
         info.exploredTime[vertex] = ++DFSWidthMoreInfo_time;
-        
-        DFSWidthMoreInfo_indent -= 4;
-        console.log(' '.repeat(DFSWidthMoreInfo_indent) + 'explored ' + vertex);
     };
+    ```
+4. 测试
+    ```js
+    let info = graph.DFSWidthMoreInfo();
+    console.log( JSON.stringify(info, null, 4));
+    // {
+    //     "discoveredTime": {
+    //         "A": 1,
+    //         "B": 2,
+    //         "C": 10,
+    //         "D": 11,
+    //         "E": 3,
+    //         "F": 7,
+    //         "G": 12,
+    //         "H": 14,
+    //         "I": 4
+    //     },
+    //     "exploredTime": {
+    //         "A": 18,
+    //         "B": 9,
+    //         "C": 17,
+    //         "D": 16,
+    //         "E": 6,
+    //         "F": 8,
+    //         "G": 13,
+    //         "H": 15,
+    //         "I": 5
+    //     },
+    //     "predecessors": {
+    //         "A": null,
+    //         "B": "A",
+    //         "C": "A",
+    //         "D": "C",
+    //         "E": "B",
+    //         "F": "B",
+    //         "G": "D",
+    //         "H": "D",
+    //         "I": "E"
+    //     }
+    // }
     ```
 
 
