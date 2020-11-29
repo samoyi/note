@@ -9,6 +9,11 @@
         - [思路](#思路)
         - [实现](#实现)
         - [构建结果](#构建结果)
+    - [实现骑士周游](#实现骑士周游)
+        - [深度优先遍历和周游的区别](#深度优先遍历和周游的区别)
+        - [周游路径](#周游路径)
+        - [思路](#思路-1)
+        - [实现](#实现-1)
 
 <!-- /TOC -->
 
@@ -167,3 +172,90 @@
     // 55 -> 45 61 38 
     // 63 -> 53 46 
     ```
+
+
+## 实现骑士周游
+### 深度优先遍历和周游的区别
+1. 只要是无向图，深度优先遍历就一定会不重复的遍历所有的节点
+    <img src="../images/07.png" width="400" style="display: block; margin: 5px 0 10px;" />
+2. 使用 “不重复” 这个描述都是不必要的，深度优先遍历根本没有重复这个概念，它就只会取访问还没有被访问的节点，而不考虑当前节点和接下来要访问的节点是否连接。例如上图中访问了 I 之后下一个访问的不连接的 F。
+3. 而周游则要求下一个访问的节点必须和当前节点连接，所以上图中是无法实现不重复周游的。
+
+### 周游路径
+1. 因为深度优先遍历是先沿着一条路径走到底，然后再回退尝试其他路径。这样的每一条路径都是一种周游尝试。
+2. 例如在上图中，有 4 条路径，分别是
+    * A-B-E-I
+    * A-B-F
+    * A-C-D-G
+    * A-C-D-H
+3. 如果从 A 开始尝试周游的话，这四条路径都无法实现周游。
+
+### 思路
+1. 在分析深度优先遍历的时候，总结了深度优先遍历是依次尝试每一种可能性。先从一条路一路走到黑，如果不行就回退尝试其他可能性，一个一个的尝试。
+2. 骑士周游正好就可以使用这样的思路：从任意一个起点开始，都会有若干个岔路，而每一个岔路又会有若干个岔路。最终会形成很多条路径。
+3. 使用深度优先遍历依次尝试每一种路径，看看在当前路径上能不能不重复的访问 64 个节点。如果可以那就算是一个解，如果不行就再回退尝试其他路径。
+
+### 实现
+1. 首先是总的函数，用来获得可能的完整巡游路径
+    ```js
+    function getTourPath (graph) {
+        let colorMapping = initializeColorMapping(graph.vertices);
+        let path = []; // 用来记录巡游路径
+        let adjacencyList = graph.adjacencyList;
+
+        // 依次尝试每个格子作为巡游起点，知道找到一个完整的巡游路径
+        // knightTourDFS 返回 true 表示不重复的走完了所有格子
+        graph.vertices.some((v)=>{
+            return knightTourDFS(v, adjacencyList, colorMapping, path);
+        });
+
+        return path;
+    }
+    ```
+2. `knightTourDFS` 实现深度优先遍历的巡游 
+    ```js
+    const LEN = 64;
+
+    function knightTourDFS (vertex, adjacencyList, colorMapping, path) {
+        colorMapping[vertex] = 'grey';
+
+        path.push(vertex);
+        let isDone = false;
+
+        // 如果递归记录的路径达到了 64 个，就证明已经巡游完成了所有的格子
+        if ( path.length < LEN ) {
+            let neighborList = adjacencyList.get(vertex);
+            // 依次尝试每个分支的路径
+            for ( let neighbor of neighborList) {
+                if (colorMapping[neighbor] === 'white') { // 不能到重复的格子去
+                    isDone = knightTourDFS(neighbor, adjacencyList, colorMapping, path);
+                    // 递归返回 true 就证明当前这个路径完成了 64 个格子的巡游
+                    // 跳出循环，之后会也会向父级的调用返回值为 true 的 isDone
+                    if ( isDone ) {
+                        break;
+                    }
+                }
+            }
+            // 如果递归返回了 false，证明最终该条路径没有走通，
+            // 也就是到了某个格子后，还不够 64 但已经没有没走过的格子可以跳了
+            // 那么当前这条路径的尝试就作废了，当前节点要从路径栈中出栈完成回退
+            // 同时，当前格子也要再变回白色，因为其他路径的尝试还会再试图访问这个格子
+            if ( !isDone ) {
+                path.pop();
+                colorMapping[vertex] = 'white';
+            }
+        }
+        else {
+            isDone = true;
+        }
+
+        return isDone;
+    }
+    ```
+3. 一种巡游结果
+    ```js
+    let path = getTourPath (graph);
+    console.log(path);
+    // [0, 17, 32, 49, 34, 24, 9, 26, 16, 1, 18, 8, 25, 40, 57, 42, 48, 33, 50, 56, 41, 58, 43, 28, 11, 5, 20, 10, 27, 12, 2, 19, 4, 14, 29, 35, 52, 62, 47, 37, 31, 46, 63, 53, 59, 44, 61, 51, 36, 30, 15, 21, 6, 23, 38, 55, 45, 60, 54, 39, 22, 7, 13, 3]
+    ```
+    从第一个格子开始就可以完成完整巡游
