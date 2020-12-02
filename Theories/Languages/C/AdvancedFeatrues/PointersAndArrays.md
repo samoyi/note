@@ -111,9 +111,9 @@ int *p = (int []){3, 0, 3, 4, 1};
     a[i++] = j;
     ```
 2. 如果 `p` 指向数组元素，那么相应的语句将会是
-```cpp
-*p++ = j;
-```
+    ```cpp
+    *p++ = j;
+    ```
 3. 因为后缀 `++` 的优先级高于 `*`，所以编译器把上述语句看成是
     ```cpp
     *(p++) = j;
@@ -498,57 +498,211 @@ int *p = (int []){3, 0, 3, 4, 1};
     }
     ```
 
+* 编程题 2
+    ```cpp
+    #include <stdio.h>
+    #include <stdbool.h>
+    #include <ctype.h>
+
+    bool isValidChar ( char ch ) {
+        if ( (ch >=65 && ch <= 90) || (ch >=97 &&  ch <= 122) ) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    bool isPalindrome(void)
+    {
+        char a[SIZE];
+        char r[SIZE];
+        char *p = &a[0];
+        char *q = &r[0];
+        char ch;
+
+        printf("Enter a message: ");
+        while ( (ch=getchar()) != '\n' ) {
+            if ( isValidChar(ch) ) {
+                *p++ = toupper(ch);
+                *q++ = toupper(ch);
+            }
+        }
+
+        p = &a[0];
+        q--;
+        while ( q >= r ) {
+            if ( *p++ != *q-- ) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    int main(void)
+    {
+
+        if ( isPalindrome() ) {
+            printf("Palindrome");
+        }
+        else {
+            printf("Not a palindrome");
+        }
+
+        return 0;
+    }
+    ```
+
+* 编程题 5
+    ```cpp
+    #include <stdio.h>
+    #include <stdbool.h>
+    #include <ctype.h>
+
+    #define SIZE 50
 
 
+    void printCharArray ( char *a, int n);
+    void printIntArray ( int *a, int n);
+
+    void reversal (void);
+    int readStr ( char str[] );
+    bool isTerminator ( char ch );
 
 
+    int main(void)
+    {
+        reversal();
+
+        return 0;
+    }
 
 
+    bool isTerminator ( char ch ) {
+        if ( ch == '?' || ch == '.' || ch == '!' ) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    void printCharArray ( char *a, int n) {
+        char *p;
 
+        for ( p=a; p<a+n; p++ ) {
+            printf("%c ", *p);
+        }
 
+        printf("\n");
+    }
 
+    void printIntArray ( int *a, int n) {
+        int *p;
 
+        for ( p=a; p<a+n; p++ ) {
+            printf("%d ", *p);
+        }
 
+        printf("\n");
+    }
+    int readStr ( char str[] ) {
+        char ch;
+        char *p = str;
+        int len = 0;
 
+        while ( (ch=getchar()) != '\n' ) {
+            *p++ = ch;
+            len++;
+        }
 
+        return len;
+    }
+    void reversal (void) {
+        char str[SIZE];
 
+        printf("Enter a sentence: ");
 
+        int len = readStr( str );
 
+        char *end = str + len-1;
+        char *start = end;
+        char terminator;
+        bool hasTerminator = false;
 
+        if ( isTerminator(*end) ) {
+            terminator = *end;
+            hasTerminator = true;
+            end--;
+            start--;
+        }
 
+        char *i;
+        while ( start >= str ) {
+            while ( *start != ' ' && start >= str ) {
+                start--;
+            }
+            for ( i = start+1; i <= end; i++ ) {
+                printf("%c", *i);
+            }
+            if ( start > str ) {
+                printf(" ");
+            }
 
+            end = --start;
+        }
 
+        if ( hasTerminator ) {
+            printf("%c", terminator);
+        }
+    }
+    ```
 
+* 编程题 7
+    ```cpp
+    /* Finds the largest and smallest elements in an array */
 
+    #include <stdio.h>
 
+    #define N 10
 
+    void max_min(int a[], int n, int *max, int *min);
 
+    int main(void)
+    {
+        int b[N], i, big, small;
 
+        printf("Enter %d numbers: ", N);
+        for (i = 0; i < N; i++)
+            scanf("%d", &b[i]);
 
+        max_min(b, N, &big, &small);
 
+        printf("Largest: %d\n", big);
+        printf("Smallest: %d\n", small);
 
+        return 0;
+    }
 
+    void max_min(int *a, int n, int *max, int *min)
+    {
+        int *q = a + 1;
 
+        // 之前想着，既然 max 和 min 是指针，那作为起点，就让它们指向数组第一个元素。
+        // 又犯了因为参数按值传递在函数内修改指针指向的问题。
+        // max = min = a;
+        *max = *min = *a;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        for ( ; q < a + n; q++ ) {
+            if ( *q > *max ) {
+                *max = *q;
+            }
+            else if ( *q < *min ) {
+                *min = *q;
+            }
+        }
+    }
+    ```
 
 
 ## References
