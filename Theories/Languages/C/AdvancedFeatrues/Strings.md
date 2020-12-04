@@ -18,6 +18,19 @@
         - [用 `scanf` 函数和 `gets` 函数读字符串](#用-scanf-函数和-gets-函数读字符串)
         - [逐个字符读字符串](#逐个字符读字符串)
     - [访问字符串中的字符](#访问字符串中的字符)
+    - [使用 C 语言的字符串库](#使用-c-语言的字符串库)
+        - [`strcpy` 函数和 `strncpy` 函数](#strcpy-函数和-strncpy-函数)
+            - [`strcpy`](#strcpy)
+            - [`strncpy`](#strncpy)
+        - [`strlen` 函数](#strlen-函数)
+        - [`strcat` 函数和 `strncat` 函数](#strcat-函数和-strncat-函数)
+            - [`strcat`](#strcat)
+            - [`strncat`](#strncat)
+        - [`strcmp` 函数](#strcmp-函数)
+        - [示例](#示例)
+    - [字符串惯用法](#字符串惯用法)
+        - [搜索字符串的结尾](#搜索字符串的结尾)
+        - [复制字符串](#复制字符串)
     - [References](#references)
 
 <!-- /TOC -->
@@ -327,6 +340,454 @@ TODO，八进制数和十六进制数的转义序列
     }
     ```
 5. 注意，`const` 没有阻止 `count_spaces` 函数对 `s` 的修改，它的作用是阻止函数改变 `s` 所指向的字符。而且，因为 `s` 是传递给 `count_spaces` 函数的指针的副本，所以对 `s` 进行自增操作不会影响原始的指针。
+
+
+## 使用 C 语言的字符串库
+1. 一些编程语言提供的运算符可以对字符串进行复制、比较、拼接、选择子串等操作，但 C 语言的运算符根本无法操作字符串。在 C 语言中把字符串当作数组来处理，因此对字符串的限制方式和对数组的一样，特别是，它们都不能用 C 语言的运算符进行复制和比较操作。
+2. 假定 `str1` 和 `str2` 有如下声明：
+    ```cpp
+    char str1[10], str2[10];
+    ```
+3. 利用 `=` 运算符来把字符串复制到字符数组中是不可能的：
+    ```cpp
+    str1 = "abc";     /*** WRONG ***/
+    str2 = str1;      /*** WRONG ***/
+    ```
+    因为把数组名用作 `=` 的左操作数是非法的。
+4. 但是，使用 `=` 初始化字符数组是合法的：
+    ```cpp
+    char str1[10] = "abc";
+    ```
+    这是因为在声明中，`=` 不是赋值运算符。
+5. 试图使用关系运算符或判等运算符来比较字符串是合法的，但不会产生预期的结果：
+    ```cpp
+    if (str1 == str2) ...    /*** WRONG ***/
+    ```
+    这条语句把 `str1` 和 `str2` 作为指针来进行比较，而不是比较两个数组的内容。因为 `str1` 和 `str2` 有不同的地址，所以表达式`str1 == str2` 的值一定为 `0`。
+6. 不过，C 语言的函数库为完成对字符串的操作提供了丰富的函数集。这些函数的原型驻留在 `<string.h>` 头中，所以需要字符串操作的程序应该包含下列内容：
+    ```cpp
+    #include <string.h>
+    ```
+7. 在 `<string.h>` 中声明的每个函数至少需要一个字符串作为实际参数。字符串形式参数声明为 `char *` 类型，这使得实际参数可以是字符数组、`char *` 类型的变量或者字符串字面量——上述这些都适合作为字符串。
+8. 然而，要注意那些没有声明为 `const` 的字符串形式参数。这些形式参数可能会在调用函数时发生改变，所以对应的实际参数不应该是字符串字面量。
+
+### `strcpy` 函数和 `strncpy` 函数
+#### `strcpy`
+1. `strcpy`函数在 `<string.h>` 中的原型如下：
+    ```cpp
+    char *strcpy(char *s1, const char *s2);
+    ```
+2. `strcpy` 函数把字符串 `s2` 复制给字符串 `s1`。准确地讲，应该说成是 `strcpy` 函数把 `s2` 指向的字符串复制到 `s1` 指向的数组中。
+3. 也就是说，`strcpy` 函数把 `s2` 中的字符复制到 `s1` 中直到遇到 `s2` 中的第一个空字符为止（该空字符也需要复制）
+    ```cpp
+    int main(void)
+    {
+
+        char str1[STR_SIZE+1];
+        char str2[] = "hello";
+
+        printf("%d\n\n", sizeof(str2)); // 6
+
+        strcpy(str1, str2);
+
+        puts(str1); // hello
+        puts(str2); // hello
+
+        printf("\nstr1: ");
+        for ( int i = 0; i < STR_SIZE+1; i++ ) {
+            printf("[%c] ", str1[i]);
+        }
+        // str1: [h] [e] [l] [l] [o] [ ] 
+
+        printf("\nstr2: ");
+        for ( int i = 0; i < STR_SIZE+1; i++ ) {
+            printf("[%c] ", str2[i]);
+        }
+        // str2: [h] [e] [l] [l] [o] [ ]
+
+        return 0;
+    }
+    ```
+4. `strcpy` 函数返回 `s1`（即指向目标字符串的指针）。
+5. 这一过程不会改变 `s2` 指向的字符串，因此将其声明为 `const`。
+6. 在 `strcpy(str1, str2)` 的调用中，`strcpy` 函数无法检查 `str2` 指向的字符串的大小是否真的适合 `str1` 指向的数组。假设 `str1` 指向的字符串长度为 `n`，如果 `str2` 指向的字符串中的字符数不超过 `n-1`，那么复制操作可以完成
+    ```cpp
+    #define STR_SIZE 5
+
+    int main(void)
+    {
+
+        char str1[STR_SIZE+1];
+        char str2[] = "abc";
+
+        printf("%d\n\n", sizeof(str2)); // 4
+
+        strcpy(str1, str2);
+
+        puts(str1); // abc
+        puts(str2); // abc
+
+        printf("\nstr1: ");
+        for ( int i = 0; i < STR_SIZE+1; i++ ) {
+            printf("[%c] ", str1[i]);
+        }
+        // str1: [a] [b] [c] [ ] [ ] [ ] 
+        // str1 是 6 项数组，但只拷贝进来了 3 个有效字符，所以后面全是空白字符
+
+        printf("\nstr2: ");
+        for ( int i = 0; i < STR_SIZE+1; i++ ) {
+            printf("[%c] ", str2[i]);
+        }
+        // str2: [a] [b] [c] [ ] [a] [b] 
+        // str2 是 4 项数组，后面的位置看起来是 str1 的
+
+        return 0;
+    }
+    ```
+7. 但是，如果 `str2` 指向更长的字符串，那么结果就无法预料了。因为 `strcpy` 函数会一直复制到第一个空字符为止，所以它会越过 `str1` 指向的数组的边界继续复制
+    ```cpp
+    #define STR_SIZE 5
+
+    int main(void)
+    {
+
+        char str1[STR_SIZE+1];
+        char str2[] = "hello world";
+
+        printf("%d\n\n", sizeof(str2)); // 12
+
+        strcpy(str1, str2);
+
+        puts(str1); // hello world
+        puts(str2); // hello world
+
+        printf("\n%d\n", sizeof(str1)); // 6
+
+        printf("\nstr1: ");
+        for ( int i = 0; i < STR_SIZE + 7; i++ ) {
+            printf("[%c] ", str1[i]);
+        }
+        // str1: [h] [e] [l] [l] [o] [ ] [w] [o] [r] [l] [
+        // ] [ ]
+
+        printf("\nstr2: ");
+        for ( int i = 0; i < STR_SIZE + 7; i++ ) {
+            printf("[%c] ", str2[i]);
+        }
+        // str2: [h] [e] [l] [l] [o] [ ] [w] [o] [r] [l] [d] [ ]
+
+        return 0;
+    }
+    ```
+
+#### `strncpy`
+1. 尽管执行会慢一点，但是调用 `strncpy` 函数仍是一种更安全的复制字符串的方法。
+2. `strncpy` 类似于 `strcpy`，但它还有第三个参数可以用于限制所复制的字符数。为了将 `str2` 复制到 `str1`，可以使用如下的 `strncpy` 调用：
+    ```cpp
+    strncpy(str1, str2, sizeof(str1));
+    ```
+    只要 `str1` 足够装下存储在 `str2` 中的字符串（包括空字符），复制就能正确完成。
+3. 当然，`strncpy` 本身也不是没有风险。如果 `str2` 中存储的字符串的长度大于 `str1` 数组的长度，`strncpy` 会导致 `str1` 中的字符串没有终止的空字符。
+4. 下面是一种更安全的用法：
+    ```cpp
+    strncpy(str1, str2, sizeof(str1) - 1);
+    str1[sizeof(str1)-1] = '\0';
+    ```
+    第二条语句确保 `str1` 总是以空字符结束，即使 `strncpy` 没能从 `str2` 中复制到空字符。
+
+### `strlen` 函数
+1. `strlen`函数的原型如下：
+    ```cpp
+    size_t strlen (const char *s);
+    ```
+2. 定义在 C 函数库中的 `size_t` 类型是一个 `typedef` 名字，表示 C 语言中的一种无符号整型。除非是处理极长的字符串，否则不需要关心其技术细节。我们可以简单地把 `strlen` 的返回值作为整数处理。
+3. `strlen` 函数返回字符串 `s` 的长度：`s` 中第一个空字符之前的字符个数（不包括空字符）。下面是几个示例：
+    ```cpp
+    int len;
+
+    len = strlen("abc");        /* len is now 3 */
+    len = strlen("");           /* len is now 0 */
+    strcpy(strl, "abc");
+    len = strlen(strl);         /* len is now 3 */
+    ```
+4. 最后一个例子说明了很重要的一点：当用数组作为实际参数时，`strlen` 不会测量数组本身的长度，而是返回存储在数组中的字符串的长度。
+
+### `strcat` 函数和 `strncat` 函数
+#### `strcat`
+1. `strcat`函数的原型如下：
+    ```cpp
+    char *strcat(char *s1, const char *s2);
+    ```
+2. `strcat` 函数把字符串 `s2` 的内容追加到字符串 `s1` 的末尾，并且返回字符串 `s1`（指向结果字符串的指针）。
+3. 下面列举了一些使用 `strcat` 函数的例子：
+    ```cpp
+    strcpy(str1, "abc");
+    strcat(str1, "def");   /* str1 now contains "abcdef" */
+    strcpy(str1, "abc");
+    strcpy(str2, "def");
+    strcat(str1, str2);    /* str1 now contains "abcdef" */
+    ```
+4. 如果 `str1` 指向的数组没有大到足以容纳 `str2` 指向的字符串中的字符，那么调用 `strcat(str1, str2)` 的结果将是不可预测的。考虑下面的例子：
+    ```cpp
+    char str1[6] = "abc";
+
+    strcat(str1, "def");    /*** WRONG ***/
+    ```
+    `strcat` 函数会试图把字符 `d`、`e`、`f` 和 `\0` 添加到 `str1` 中已存储的字符串的末尾。不幸的是，`str1` 仅限于 6 个字符，这导致 `strcat` 函数写到了数组末尾的后面。
+
+#### `strncat`
+1. `strncat` 函数函数比 `strcat` 更安全，但速度也慢一些。与 `strncpy` 一样，它有第三个参数来限制所复制的字符数。下面是调用的形式：
+    ```cpp
+    strncat(str1,  str2, sizeof(str1) - strlen(str1) - 1) ;
+    ```
+2. `strncat` 函数会在遇到空字符时终止 `str1`，第三个参数（待复制的字符数）没有考虑该空字符。
+3. 在上面的例子中，第三个参数计算 `str1` 中的剩余空间，然后减去 `1` 以确保为空字符留下空间。
+
+### `strcmp` 函数
+1. `strcmp`函数的原型如下：
+    ```cpp
+    int strcmp(const char *s1, const char *s2);
+    ```
+2. `strcmp` 函数比较字符串 `s1` 和字符串 `s2`，然后根据 `s1` 是小于、等于或大于 `s2`， 函数返回一个小于、等于或大于 0 的值。
+    ```cpp
+    if (strcmp(str1, str2) < 0)    /* is str1 < str2? */
+        ...
+    ```
+3. 类似于字典中单词的编排方式，`strcmp` 函数利用字典顺序进行字符串比较。更精确地说，只要满足下列两个条件之一，那么 `strcmp` 函数就认为 `s1` 是小于 `s2` 的
+    * `s1` 与 `s2` 的前 `i` 个字符一致，但是 `s1` 的第 `i+1` 个字符小于 `s2` 的第 `i+1` 个字符。
+    * `s1` 的所有字符与 `s2` 的字符一致，但是 `s1` 比 `s2` 短。例如，`"abc"` 小于 `"abcd"`。
+
+### 示例
+1. [C语言程序设计 第 13 章](https://www.ituring.com.cn/book/tupubarticle/31023) 显示一个月的提醒列表
+    ```cpp
+    /* Prints a one-month reminder list */
+
+    #include <stdio.h>
+    #include <string.h>
+
+    #define MAX_REMIND 50     /* maximum number of reminders */
+    #define MSG_LEN 60        /* max length of reminder message */
+
+    int read_line(char str[], int n);
+
+    int main(void)
+    {
+        // 一行对应一条提醒，每条除了提醒 MSG_LEN 个提醒字符外还有前面的两个日期字符和一个空格
+        char reminders[MAX_REMIND][MSG_LEN+3];
+        char day_str[3], msg_str[MSG_LEN+1];
+
+        int day, i, j, num_remind = 0;
+
+        for (;;) {
+            if (num_remind == MAX_REMIND) {
+                printf("-- No space left --\n");
+                break;
+            }
+
+            printf("Enter day and reminder: ");
+
+            // 读取日期
+            scanf("%2d", &day); // 只读取两位数字
+            if (day == 0)
+                break;
+            sprintf(day_str, "%2d", day); // 转换为字符串
+
+            // 读取提醒
+            read_line(msg_str, MSG_LEN);
+
+            // 找到这条提醒的日期的合适位置
+            // 从最小的日期开始比较，直到出现一个大于当前日期的
+            for (i = 0; i < num_remind; i++)
+                if (strcmp(day_str, reminders[i]) < 0)
+                    break;
+            // 把 i 及以后的所有条目向后移动一个位置
+            for (j = num_remind; j > i; j--)
+                strcpy(reminders[j], reminders[j-1]); // j-1 等于 i
+            // 把当前条目放到 i 的位置
+            strcpy(reminders[i], day_str);
+            strcat(reminders[i], msg_str);
+
+            num_remind++;
+        }
+
+        printf("\nDay Reminder\n");
+        for (i = 0; i < num_remind; i++)
+            printf(" %s\n", reminders[i]);
+
+        return 0;
+    }
+
+    int read_line(char str[], int n)
+    {
+        int ch, i = 0;
+
+        while ((ch = getchar()) != '\n')
+            if (i < n)
+                str[i++] = ch;
+        str[i] = '\0';
+        return i;
+    }
+    ```
+2. 输入和输出
+    ```sh
+    Enter day and reminder:  24 Susan's birthday
+    Enter day and reminder:  5 6:00 - Dinner with Marge and Russ
+    Enter day and reminder:  26 Movie - "Chinatown"
+    Enter day and reminder:  7 10:30 - Dental appointment
+    Enter day and reminder:  12 Movie - "Dazed and Confused"
+    Enter day and reminder:  5 Saturday class
+    Enter day and remlnder:  12 Saturday class
+    Enter day and reminder:  0
+    Day  Reminder
+      5  Saturday class
+      5  6:00 - Dinner with Marge and Russ
+      7  10:30 - Dental appointment
+     12  Saturday class
+     12  Movie - "Dazed and Confused"
+     24  Susan's birthday
+     26  Movie - "Chinatown"
+    ```
+
+
+## 字符串惯用法
+我们不可以编写与库函数同名的函数，即使不包含该函数所属的头也不行。事实上，所有以 `str` 和一个小写字母开头的名字都是保留的（以便在未来的 C 标准版本中往 `<string.h>` 头里加入函数）。
+
+### 搜索字符串的结尾
+1. 下面的 `my_strlen` 函数搜索字符串参数的结尾，并且使用一个变量来跟踪字符串的长度：
+    ```cpp
+    size_t my_strlen(const char *s)
+    {
+        size_t n;
+
+        for (n = 0;  *s != '\0'; s++)
+            n++;
+            
+        return n;
+    }
+    ```
+2. 指针 `s` 从左至右扫描整个字符串，变量 `n` 记录当前已经扫描的字符数量。当 `s` 最终指向一个空字符时，`n` 所包含的值就是字符串的长度。
+3. 现在看看是否能精简 `my_strlen` 函数的定义。首先，把 `n` 的初始化移到它的声明中
+    ```cpp
+    size_t my_strlen(const char *s)
+    {
+        size_t n = 0;
+
+        for (;  *s != '\0'; s++)
+            n++;
+
+        return n;
+    }
+    ```
+4. 接下来注意到，条件 `*s != '\0'`与 `*s != 0` 是一样的，因为空字符的整数值就是 `0`。而测试 `*s != 0` 与测试 `*s` 是一样的，两者都在 `*s` 不为 `0` 时结果为真
+    ```cpp
+    size_t my_strlen(const char *s)
+    {
+        size_t n = 0;
+
+        for (;  *s; s++)
+            n++;
+
+        return n;
+    }
+    ```
+5. 在同一个表达式中对 `s` 进行自增操作并且测试 `*s` 是可行的
+    ```cpp
+    size_t my_strlen(const char *s)
+    {
+        size_t n = 0;
+
+        for (;  *s++;)
+            n++;
+
+        return n;
+    }
+    ```
+6. 用 `while` 语句替换 `for` 语句
+    ```cpp
+    size_t my_strlen(const char *s)
+    {
+        size_t n = 0;
+
+        while (*s++)
+            n++;
+
+        return n;
+    }
+    ```
+7. 对于一些编译器来说下面的版本确实会运行得更快一些
+    ```cpp
+    size_t my_strlen(const char *s)
+    {
+        const char *p = s;
+
+        while (*s)
+            s++;
+        return s - p;
+    }
+    ```
+    运行速度的提升得益于不需要在 `while` 循环内部对 `n` 进行自增操作。
+8. 请注意，在 `p` 的声明中出现了单词 `const`，如果没有它，编译器会注意到把 `s` 赋值给 `p` 会给 `s` 指向的字符串造成一定风险。不懂
+9. 语句
+    ```cpp
+    while (*s)
+        s++;
+    ```
+    和相关的
+    ```cpp
+    while (*s++)
+        ;
+    ```
+    都是惯用法。第一个版本最终使 `s` 指向了空字符。第二个版本更加简洁，但是最后使 `s` 正好指向空字符后面的位置。
+
+### 复制字符串
+1. 首先从直接但有些冗长的 `my_strcat` 函数写法开始
+    ```cpp
+    char *my_strcat(char *s1,  const char *s2)
+    {
+        char *p = s1;
+
+        while ( *p != '\0' )
+            p++;
+        while ( *s2 != '\0' ) {
+            *p = *s2;
+            p++;
+            s2++;
+        }
+        *p =  '\0';
+        return s1;
+    }
+    ```
+2. 简化为下面的写法
+    ```cpp
+    char *my_strcat(char *s1,  const char *s2)
+    {
+        char *p = s1;
+
+        while ( *p != '\0' )
+            p++;
+        while ( *p++ = *s2++ ) {
+            ;
+        }
+        return s1;
+    }
+    ```
+    * 合并自增
+    * 合并赋值
+    * 由于合并了赋值，最后单独的空字符赋值也省略了
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
