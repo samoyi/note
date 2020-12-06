@@ -209,6 +209,110 @@
     //     }
     // }
     ```
+5. 有向图的遍历，图使用《算法导论》图 22-9
+    ```js
+    let graph = new Graph(true);
+    let vertices = ['A','B','C','D','E','F','G','H'];
+
+    vertices.forEach(vertex=>{
+        graph.addVertex(vertex);
+    });
+
+    graph.addEdge('A', 'B');
+    graph.addEdge('B', 'C');
+    graph.addEdge('B', 'E');
+    graph.addEdge('B', 'F');
+    graph.addEdge('C', 'D');
+    graph.addEdge('C', 'G');
+    graph.addEdge('D', 'C');
+    graph.addEdge('D', 'H');
+    graph.addEdge('E', 'A');
+    graph.addEdge('E', 'F');
+    graph.addEdge('F', 'G');
+    graph.addEdge('G', 'F');
+    graph.addEdge('G', 'H');
+    graph.addEdge('H', 'H');
+
+    let info = graph.DFSWidthMoreInfo();
+    console.log( JSON.stringify(info, null, 4));
+    // {
+    //     "discoveredTime": {
+    //         "A": 1,
+    //         "B": 2,
+    //         "C": 3,
+    //         "D": 4,
+    //         "E": 13,
+    //         "F": 9,
+    //         "G": 8,
+    //         "H": 5
+    //     },
+    //     "exploredTime": {
+    //         "A": 16,
+    //         "B": 15,
+    //         "C": 12,
+    //         "D": 7,
+    //         "E": 14,
+    //         "F": 10,
+    //         "G": 11,
+    //         "H": 6
+    //     },
+    //     "predecessors": {
+    //         "A": null,
+    //         "B": "A",
+    //         "C": "B",
+    //         "D": "C",
+    //         "E": "B",
+    //         "F": "G",
+    //         "G": "C",
+    //         "H": "D"
+    //     }
+    // }
+    ```
+6. 不能一次递归完成的有向图示例，图使用《学习JavaScript数据结构与算法》拓扑排序中的
+    ```js
+    let graph = new Graph(true);
+    let vertices = ['A','B','C','D','E','F'];
+
+    vertices.forEach(vertex=>{
+        graph.addVertex(vertex);
+    });
+
+    graph.addEdge('A', 'C');
+    graph.addEdge('A', 'D');
+    graph.addEdge('B', 'D');
+    graph.addEdge('B', 'E');
+    graph.addEdge('C', 'F');
+    graph.addEdge('F', 'E');
+
+    let info = graph.DFSWidthMoreInfo();
+    console.log( JSON.stringify(info, null, 4));
+    // {
+    //     "discoveredTime": {
+    //         "A": 1,
+    //         "B": 11,
+    //         "C": 2,
+    //         "D": 8,
+    //         "E": 4,
+    //         "F": 3
+    //     },
+    //     "exploredTime": {
+    //         "A": 10,
+    //         "B": 12,
+    //         "C": 7,
+    //         "D": 9,
+    //         "E": 5,
+    //         "F": 6
+    //     },
+    //     "predecessors": {
+    //         "A": null,
+    //         "B": null,
+    //         "C": "A",
+    //         "D": "A",
+    //         "E": "F",
+    //         "F": "C"
+    //     }
+    // }
+    ```
 
 ### 前驱子图
 TODO 《算法导论》说 BFS 的前驱子图是一棵树，DFS 的前驱子图可能是多棵树。为什么可能是多棵树？如果是无向图那只需要一个起点就能遍历完成了吧，而如果是有向图，那 DFS 也同样可能需要多个起点。
@@ -251,3 +355,4 @@ TODO
 * [学习JavaScript数据结构与算法](https://book.douban.com/subject/26639401/)
 * [算法（第4版）](https://book.douban.com/subject/19952400/)
 * [Python数据结构与算法分析（第2版）](https://book.douban.com/subject/34785178/)
+* [算法导论（原书第3版）](https://book.douban.com/subject/20432061/)

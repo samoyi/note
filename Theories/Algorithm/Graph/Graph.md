@@ -29,6 +29,9 @@
         - [邻接表](#邻接表)
         - [关联矩阵](#关联矩阵)
     - [使用邻接表创建图](#使用邻接表创建图)
+    - [转置图](#转置图)
+        - [邻接表实现](#邻接表实现)
+        - [邻接矩阵实现](#邻接矩阵实现)
     - [图的遍历综述](#图的遍历综述)
         - [遍历的关键逻辑](#遍历的关键逻辑)
         - [不规则的遍历](#不规则的遍历)
@@ -52,7 +55,6 @@
         - [实现](#实现-2)
         - [记录更多信息的深度遍历](#记录更多信息的深度遍历)
         - [前驱子图](#前驱子图)
-    - [强连通分量](#强连通分量)
     - [References](#references)
 
 <!-- /TOC -->
@@ -198,12 +200,14 @@
     toString () {
         let str = '';
         this.vertices.forEach(vertex=>{
-            str += vertex + ' -> ';
             let neighbors = this.adjacencyList.get(vertex);
-            neighbors.forEach(neighbor=>{
-                str += neighbor + ' ';
-            });
-            str += '\n';
+            if ( neighbors.size ) {
+                str += vertex + ' -> ';
+                neighbors.forEach(neighbor=>{
+                    str += neighbor + ' ';
+                });
+                str += '\n';
+            }
         });
         return str;
     }
@@ -241,6 +245,34 @@
     // I -> E 
     ```
 
+
+## 转置图
+### 邻接表实现
+1. 实现
+    ```js
+    transpose () {
+        if (!this.isDirected) {
+            throw new Error("无向图没有转置");
+        }
+
+        let g = new Graph(true);
+        
+        this.adjacencyList.forEach((set, oldV) => {
+            set.forEach((newV) => {
+                if ( g.vertices.indexOf(newV) === -1 ) {
+                    g.addVertex(newV);
+                }
+                g.addEdge(newV, oldV)
+            });
+        });
+
+        return g;
+    }
+    ```
+2. 复杂度是 $O(E+V)$。
+
+### 邻接矩阵实现
+矩阵转置，复杂度是$O(V*V)$。
 
 ## 图的遍历综述
 1. 和树数据结构类似，我们可以访问图的所有节点。
@@ -621,18 +653,8 @@ TODO
 TODO 《算法导论》说 BFS 的前驱子图是一棵树，DFS 的前驱子图可能是多棵树。为什么可能是多棵树？如果是无向图那只需要一个起点就能遍历完成了吧，而如果是有向图，那 DFS 也同样可能需要多个起点。
 
 
-
-## 强连通分量
-1. 对于有向图 $G=(V, E)$，强连通分量是一个最大节点结合 $C\subset V$，其中对于每一对节点 $v,w\in C$，都有一条从 $v$ 到 $w$ 的路径和一条从 $w$ 到 $v$ 的路径。
-2. 下图展示了一个包含 3 个强连通单元的简单图，不同的强连通单元通过不同的阴影来表现
-    <img src="./images/10.png" width="400" style="display: block; margin: 5px 0 10px;" />
-3. 定义强连通单元之后，就可以把强连通单元中的所有顶点组合成单个顶点，从而将图简化
-    <img src="./images/11.png" width="300" style="display: block; margin: 5px 0 10px;" />
-4. TODO
-
-
-
 ## References
 * [学习JavaScript数据结构与算法](https://book.douban.com/subject/26639401/)
 * [算法（第4版）](https://book.douban.com/subject/19952400/)
 * [Python数据结构与算法分析（第2版）](https://book.douban.com/subject/34785178/)
+* [算法导论（原书第3版）](https://book.douban.com/subject/20432061/)
