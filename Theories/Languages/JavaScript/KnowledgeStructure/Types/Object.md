@@ -489,9 +489,8 @@ console.log(arr); // ["foo", "protoPro"]
     console.log(in_result); // ["0", "1", "2", "3", "foo"]
     ```
 
-### `Object.keys(obj)`  `Object.values(obj)` `Object.entries(obj)`
-1. 返回一个数组，包括对象自身的（不含继承的）所有可枚举属性（不含 Symbol 属性）的键或值
-或键值对。没有`own`居然也不含继承的！
+### `Object.keys(obj)`  `Object.values(obj)` `Object.entries(obj)` `Object.fromEntries(iterable)`
+1. 返回一个数组，包括对象自身的（不含继承的）所有可枚举属性（不含 Symbol 属性）的键或值或键值对。没有 `own` 居然也不含继承的！
     ```js
     let obj = {};
     obj.__proto__.protoPro = 'protoPro';
@@ -519,8 +518,7 @@ console.log(arr); // ["foo", "protoPro"]
     console.log(Object.values(obj)); // ["foo_value", "qux_value"]
     console.log(Object.entries(obj)); // [["foo", "foo_value"], ["qux", "qux_value"]]
     ```
-2. 如果参数不是对象，会先将其转为对象。由于数值和布尔值的包装对象，都不会为实例添加非继
-承的属性。所以会返回空数组。
+2. 如果参数不是对象，会先将其转为对象。由于数值和布尔值的包装对象，都不会为实例添加非继承的属性。所以会返回空数组。
     ```js
     console.log(Object.keys('hello')); // ["0", "1", "2", "3", "4"]
     console.log(Object.values('hello')); // ["h", "e", "l", "l", "o"]
@@ -529,7 +527,7 @@ console.log(arr); // ["foo", "protoPro"]
     console.log(Object.values(true)); // []
     console.log(Object.entries(false)); // []
     ```
-3. `Object.entries`方法的一个用处是，将对象转为真正的 Map 结构
+3. `Object.entries` 方法的一个用处是，将对象转为真正的 Map 结构
     ```js
     let obj = { foo: 'bar', baz: 'qux' };
 
@@ -538,6 +536,16 @@ console.log(arr); // ["foo", "protoPro"]
 
     let map = new Map(entries);
     console.log(map); // {"foo" => "bar", "baz" => "qux"}
+    ```
+4. ES2019 的 `Object.fromEntries()` 方法是 `Object.entries()` 的逆操作，用于将一个键值对数组转为对象。
+    ```js
+    let o = Object.fromEntries(entries);
+    console.log(o) // {foo: "bar", baz: "qux"}
+    ```
+    该方法的主要目的，是将键值对的数据结构还原为对象。并不限于 `Object.entries` 返回值那样的键值对， `Map` 结构也适用
+    ```js
+    let m = Object.fromEntries(map);
+    console.log(m) // {foo: "bar", baz: "qux"}
     ```
 
 ### `Object.getOwnPropertyNames(obj) `

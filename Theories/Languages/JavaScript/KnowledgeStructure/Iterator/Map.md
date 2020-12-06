@@ -181,46 +181,53 @@ console.log(new Map(arr)); // Map(2) {true => 7, {…} => Array(1)}
 ```
 
 ### 6.3 Map 转为对象
-如果所有 `Map` 的键都是字符串，它可以无损地转为对象。如果有非字符串的键名，那么这个键名只能先被转成字符串，再作为对象的键名。
-```js
-function mapToObj(map) {
-    let obj = {};
-    for (let [k, v] of map) {
-        obj[k] = v;
+1. 如果所有 `Map` 的键都是字符串，它可以无损地转为对象。如果有非字符串的键名，那么这个键名只能先被转成字符串，再作为对象的键名。
+2. 可以使用 ES2019 中的方法 `Object.fromEntries(iterable)`
+    ```js
+    console.log(map); // {"foo" => "bar", "baz" => "qux"}
+    let m = Object.fromEntries(map);
+    console.log(m) // {foo: "bar", baz: "qux"}
+    ```
+3. 或者自己实现
+    ```js
+    function mapToObj(map) {
+        let obj = {};
+        for (let [k, v] of map) {
+            obj[k] = v;
+        }
+        return obj;
     }
-    return obj;
-}
 
 
-const map = new Map();
+    const map = new Map();
 
-map
-.set('yes', true)
-.set(false, 'no')
-.set([1, 2, 3], [4, 5, 6])
-.set({age: 22}, {name: '33'});
+    map
+    .set('yes', true)
+    .set(false, 'no')
+    .set([1, 2, 3], [4, 5, 6])
+    .set({age: 22}, {name: '33'});
 
-let obj = mapToObj(map);
+    let obj = mapToObj(map);
 
 
-console.log(obj.yes); // true
-console.log(obj.false); // "no"
-console.log(obj['1,2,3']); // [4, 5, 6]
-console.log(obj['[object Object]']); // {name: "33"}
-console.log(JSON.stringify(obj, null, 4));
-// {
-//     "yes": true,
-//     "false": "no",
-//     "1,2,3": [
-//         4,
-//         5,
-//         6
-//     ],
-//     "[object Object]": {
-//         "name": "33"
-//     }
-// }
-```
+    console.log(obj.yes); // true
+    console.log(obj.false); // "no"
+    console.log(obj['1,2,3']); // [4, 5, 6]
+    console.log(obj['[object Object]']); // {name: "33"}
+    console.log(JSON.stringify(obj, null, 4));
+    // {
+    //     "yes": true,
+    //     "false": "no",
+    //     "1,2,3": [
+    //         4,
+    //         5,
+    //         6
+    //     ],
+    //     "[object Object]": {
+    //         "name": "33"
+    //     }
+    // }
+    ```
 
 ### 6.4 对象转为 Map
 可以使用 `Object.entries` 或者遍历对象逐个 `set`
