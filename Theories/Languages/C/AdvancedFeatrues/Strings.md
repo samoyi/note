@@ -4,11 +4,13 @@
 <!-- TOC -->
 
 - [Strings](#strings)
+    - [TODO](#todo)
     - [字符串字面量](#字符串字面量)
         - [字符串字面量中的转义序列](#字符串字面量中的转义序列)
         - [延续字符串字面量](#延续字符串字面量)
         - [如何存储字符串字面量](#如何存储字符串字面量)
         - [字符串字面量的操作](#字符串字面量的操作)
+            - [试图改变字符串字面量会导致未定义的行为](#试图改变字符串字面量会导致未定义的行为)
         - [字符串字面量与字符常量](#字符串字面量与字符常量)
     - [字符串变量](#字符串变量)
         - [初始化字符串变量](#初始化字符串变量)
@@ -31,13 +33,31 @@
     - [字符串惯用法](#字符串惯用法)
         - [搜索字符串的结尾](#搜索字符串的结尾)
         - [复制字符串](#复制字符串)
+    - [字符串数组](#字符串数组)
+        - [命令行参数](#命令行参数)
+            - [`argv` 形参](#argv-形参)
+            - [例子 核对行星的名字](#例子-核对行星的名字)
+    - [练习](#练习)
     - [References](#references)
 
 <!-- /TOC -->
 
 
+## TODO
+1. 下面的输出
+    ```cpp
+    printf("[%c]", "\n");
+    printf("[%d]", "\n");
+    printf("[%c]", '\n');
+    // [d][4214884][
+    // ]
+    ```
+
+    
+
 ## 字符串字面量
-**字符串字面量**（string literal）是用一对双引号括起来的字符序列。
+1. **字符串字面量**（string literal）是用一对双引号括起来的字符序列。
+2. 按照 C89 标准，编译器必须最少支持 509 个字符长的字符串字面量。C99 把最小长度增加到了 4095 个字符。
 
 ### 字符串字面量中的转义序列
 TODO，八进制数和十六进制数的转义序列
@@ -76,9 +96,9 @@ TODO，八进制数和十六进制数的转义序列
 2. 当 C 语言编译器在程序中遇到长度为 $n$ 的字符串字面量时，它会为字符串字面量分配长度为 $n+1$ 的内存空间。这块内存空间将用来存储字符串字面量中的字符，以及一个用来标志字符串末尾的额外字符（空字符）。
 3. 空字符是一个所有位都为 `0` 的字节，因此用转义序列 `\0` 来表示。
 4. 例如，字符串字面量 `"abc"` 是作为有 4 个字符的数组来存储的（`a`、`b`、`c` 和 `\0`）：
-    <img src="./images/04.png" width="200" style="display: block; margin: 5px 0 10px;" />
+    <img src="./images/01.png" width="200" style="display: block; margin: 5px 0 10px;" />
 5. 字符串字面量可以为空。字符串 `""` 作为单独一个空字符来存储：
-    <img src="./images/05.png" width="50" style="display: block; margin: 5px 0 10px;" />
+    <img src="./images/02.png" width="50" style="display: block; margin: 5px 0 10px;" />
 6. 既然字符串字面量是作为数组来存储的，那么编译器会把它看作是 `char *` 类型的指针。例如，`printf` 函数和 `scanf` 函数都接收 `char *` 类型的值作为它们的第一个参数。思考下面的例子：
     ```cpp
     printf("abc");
@@ -93,31 +113,46 @@ TODO，八进制数和十六进制数的转义序列
     p = "abc";
     ```
     这个赋值操作不是复制 `"abc"` 中的字符，而是使p指向字符串的第一个字符。
-2. C 语言允许对指针取下标，因此可以对字符串字面量取下标：
+2. C 语言允许对指针取下标，因此可以对字符串字面量取下标。下面将字符串中的一个字符保存到 `ch`
     ```cpp
-    char ch;
+    char ch = "abc"[1];
 
-    ch = "abc"[1];
+    putchar(ch); // b
     ```
-    `ch` 的新值将是字母 `b`。
-3. 因为保存字符串的数组是字符长度加一，所以下标还可以取到最后的空字符
+3. 也可以使用指针来访问字符串中的字符
+    ```cpp
+    char *str = "abf";
+
+
+    putchar(*str); // a
+    putchar(*str+2); // c
+    putchar(*(str+2)); // f
+    ```
+4. 因为保存字符串的数组是字符长度加一，所以下标还可以取到最后的空字符
     ```cpp
     char ch = "abc"[3];
     printf("[%c]", ch); // [ ]
     ```
-4. 字符串字面量的这种特性并不常用，但有时也比较方便。思考下面的函数，这个函数把 0~15 的数转换成等价的十六进制的字符形式：
+5. 字符串字面量的这种特性并不常用，但有时也比较方便。思考下面的函数，这个函数把 0~15 的数转换成等价的十六进制的字符形式：
     ```cpp
     char digit_to_hex_char(int digit)
     {
         return "0123456789ABCDEF"[digit];
     }
     ```
-5. 试图改变字符串字面量会导致未定义的行为：
+#### 试图改变字符串字面量会导致未定义的行为
+1. 示例
     ```cpp
     char *p = "abc";
 
     *p = 'd';   /*** WRONG ***/
     ```
+2. 一些编译器试图通过只为相同的字符串字面量存储一份副本来节约内存。考虑下面的例子：
+    ```cpp
+    char *p = "abc", *q = "abc";
+    ```
+    编译器可能只存储 `"abc"` 一次，并且把 `p` 和 `q` 都指向此字符串字面量。如果试图通过指针 `p` 改变 `"abc"`，那么 `q` 所指向的字符串也会受到影响。
+3. 另一个潜在的问题是，字符串字面量可能存储在内存中的 “只读” 区域，试图修改这种字符串字面量的程序会崩溃。
 
 ### 字符串字面量与字符常量
 1. 只包含一个字符的字符串字面量不同于字符常量。字符串字面量 `"a"` 是用 **指针** 来表示的，这个指针指向存放字符 `"a"`（后面紧跟空字符）的内存单元。字符常量 `'a'` 是用 **整数**（字符集的数值码）来表示的。
@@ -161,7 +196,7 @@ TODO，八进制数和十六进制数的转义序列
     char date2[9] = "June 14";
     ```
     之后，`date2` 将如下所示：
-    <img src="./images/06.png" width="400" style="display: block; margin: 5px 0 10px;" />
+    <img src="./images/03.png" width="400" style="display: block; margin: 5px 0 10px;" />
 5. 如果初始化式比字符串变量长，这对字符串而言是非法的，就如同对数组是非法的一样。
 6. 然而，C 语言允许初始化式（不包括空字符）与变量有完全相同的长度：
     ```cpp
@@ -268,6 +303,15 @@ TODO，八进制数和十六进制数的转义序列
     ```cpp
     scanf("%s", str); // 如果输入 hello world，只会录入 hello，后面的内容会被下次录入
     ```
+    ```cpp
+    int i, j;
+    char s[20];
+
+    // 输入 "12abc34  56def78"
+    scanf("%d%s%d", &i, s, &j);
+
+    printf("%d %s %d", i, s, j); // 12 abc34 56
+    ```
 4. `scanf` 函数始终会在字符串末尾存储一个空字符。
 5. 用 `scanf` 函数读入字符串永远不会包含空白字符。因此，`scanf` 函数通常不会读入一整行输入。换行符会使 `scanf` 函数停止读入，空格符或制表符也会产生同样的结果。
 6. 为了一次读入一整行输入，可以使用 `gets` 函数。`gets` 函数有些不同于 `scanf` 函数
@@ -305,7 +349,20 @@ TODO，八进制数和十六进制数的转义序列
     ```
 9. 注意，`ch` 的类型为 `int` 而不是 `char`，这是因为 `getchar` 把它读取的字符作为 `int` 类型的值返回。
 10. 返回之前，`read_line` 函数在字符串的末尾放置一个空字符。`scanf` 和 `gets` 等标准函数会自动在输入字符串的末尾放置一个空字符；然而，如果要自己写输入函数，必须手工加上空字符。
-11. TODO，长度超过数组指定的长度依然可以使用，使用到了数组外面的内存
+11. `read_line` 函数现在不具备检测 `getchar` 函数读入字符是否失败的功能。如果因为错误或到达文件尾而不能读入字符，`getchar` 函数会返回 `int` 类型的值 `EOF`。下面是改进后的
+    ```cpp
+    int read_line(char str[], int n)
+    {
+        int ch, i = 0;
+
+        while ((ch = getchar()) != '\n' && ch != EOF)
+            if (i < n)
+                str[i++] = ch;
+        str[i] = '\0';
+        return i;
+    }
+    ```
+12. TODO，长度超过数组指定的长度依然可以使用，使用到了数组外面的内存
     ```cpp
     char str[10];
     int n = 15; // 可以读取 15 个字符，使用了 16 个字节的内存，包括最后的空白字符
@@ -776,26 +833,364 @@ TODO，八进制数和十六进制数的转义序列
     * 由于合并了赋值，最后单独的空字符赋值也省略了
 
 
+## 字符串数组
+1. 现在来看一个在使用字符串时经常遇到的问题：存储字符串数组的最佳方式是什么？最明显的解决方案是创建二维的字符数组，然后按照每行一个字符串的方式把字符串存储到数组中
+    ```cpp
+    char planets[][8] = {"Mercury", "Venus", "Earth",
+                        "Mars", "Jupiter", "Saturn",
+                        "Uranus", "Neptune", "Pluto"};
+    ```
+2. 下面给出了 `planets` 数组的可能形式
+    <img src="./images/04.png" width="300" style="display: block; margin: 5px 0 10px;" />
+3. 并非所有的字符串都足以填满数组的一整行，所以 C 语言用空字符来填补。因为只有 3 个行星的名字需要用满 8 个字符（包括末尾的空字符），所以这样的数组有一点浪费空间。
+4. 因为大部分字符串集都是长字符串和短字符串的混合，所以这种低效性是在处理字符串时经常遇到的问题。我们需要的是 **参差不齐的数组**（ragged array），即每一行有不同长度的二维数组。
+5. C 语言本身不提供这种 “参差不齐的数组类型”，但它提供了模拟这种数组类型的工具。秘诀就是建立一个特殊的数组，这个数组的元素都是指向字符串的指针。
+6. 下面是 `planets` 数组的另外一种写法，这次把它看成是指向字符串的指针的数组：
+    ```cpp
+    char *planets[] = {"Mercury", "Venus", "Earth",
+                    "Mars", "Jupiter", "Saturn",
+                    "Uranus", "Neptune", "Pluto"};
+    ```
+7. 看上去改动不是很大，只是去掉了一对方括号，并且在 `planets` 前加了一个星号。但是，这对 `planets` 存储方式产生的影响却很大：
+    <img src="./images/05.png" width="300" style="display: block; margin: 5px 0 10px;" />
+8. `planets` 的每一个元素都是指向以空字符结尾的字符串的指针。虽然必须为 `planets` 数组中的指针分配空间，但是字符串中不再有任何浪费的字符。
+9. 为了访问其中一个行星名字，只需要对 `planets` 数组取下标。由于指针和数组之间的紧密关系，访问行星名字中的字符的方式和访问二维数组元素的方式相同。例如，为了在 `planets` 数组中搜寻以字母M开头的字符串，可以使用下面的循环：
+    ```cpp
+    for (i = 0; i < 9;  i++)
+        if (planets[i][0] == 'M')
+            printf("%s begins with M\n", planets[i]);
+    ```
+
+### 命令行参数
+1. 命令行信息不仅对操作系统命令可用，它对所有程序都是可用的。 为了能够访问这些命令行参数（C 标准中称为程序参数），必须把 `main` 函数定义为含有两个参数的函数， 这两个参数通常命名（习惯上）为 `argc` 和 `argv`：
+    ```cpp
+    int main(int argc, char *argv[])
+    {
+        ...
+    }
+    ```
+2. `argc`（“参数计数”）是命令行参数的数量（包括程序名本身），`argv`（“参数向量”）是指向命令行参数的指针数组，这些命令行参数以字符串的形式存储。`argv[0]` 指向程序名，而从 `argv[1]` 到 `argv[argc-1]` 则指向余下的命令行参数。如果程序名不可用，那么 `argv[0]` 会指向空字符串。
+3. `argv` 有一个附加元素，即 `argv[argc]`，这个元素始终是一个空指针。空指针是一种不指向任何地方的特殊指针，宏 `NULL` 代表空指针。
+4. 如果用户输入命令行
+    ```sh
+    ls -l remind.c
+    ```
+    那么 `argc` 将为 3，`argv[0]` 将指向含有程序名的字符串，`argv[1]` 将指向字符串 `"-l"`，`argv[2]` 将指向字符串 `"remind.c"`，而 `argv[3]` 将为空指针。
+    <img src="./images/06.png" width="400" style="display: block; margin: 5px 0 10px;" />
+5. 因为 `argv` 是指针数组，所以访问命令行参数非常容易。常见的做法是，期望有命令行参数的程序将会设置循环来按顺序检查每一个参数。
+6. 设定这种循环的方法之一就是使用整型变量作为 `argv` 数组的下标。例如，下面的循环每行一条地显示命令行参数：
+    ```cpp
+    int i;
+
+    for (i = 1; i < argc; i++)
+        printf("%s\n", argv[i]);
+    ```
+7. 另一种方法是构造一个指向 `argv[1]` 的指针，然后对指针重复进行自增操作来逐个访问数组余下的元素。因为 `argv` 数组的最后一个元素始终是空指针，所以循环可以在找到数组中一个空指针时停止：
+    ```cpp
+    char **p;
+
+    for (p = &argv[1]; *p != NULL; p++)
+        printf("%s\n", *p);
+    ```
+8. 因为 `p` 是指向字符的指针的指针，所以必须小心使用
+    * 设置 `p` 等于 `&argv[1]` 是有意义的，因为 `argv[1]` 是一个指向字符的指针，所以` &argv[1]` 就是指向指针的指针。
+    * 因为 `*p` 和 `NULL` 都是指针，所以测试 `*p!= NULL` 是没有问题的。
+    * 对 `p` 进行自增操作看起来也是对的——因为 `p` 指向数组元素，所以对它进行自增操作将使 `p` 指向下一个元素。显示 `*p` 的语句也是合理的，因为 `*p` 指向字符串中的第一个字符。
+
+#### `argv` 形参
+1. 注意到，这里的形参是 `char *argv[]`。
+2. `[]` 说明形参是一个数组，而 `char *` 说明数组项是指向字符的指针。
+3. 这个形参还可以声明为 `char **argv`。
+4. `char *` 说明声明的变量（`*argv`）是指向字符的指针，而 `*argv` 说明这个指针本身也是一个指针。也就是说，`argv` 是 “指向字符的指针” 的指针。
+
+#### 例子 核对行星的名字
+1. 设计此程序的目的是为了检查一系列字符串，从而找出哪些字符串是行星的名字。程序执行时，用户将把待测试的字符串放置在命令行中：
+    ```sh
+    planet Jupiter venus Earth fred
+    ```
+2. 程序会指出每个字符串是否是行星的名字。如果是，程序还将显示行星的编号（把最靠近太阳的行星编号为 1）：
+    ```sh
+    Jupiter is planet 5
+    venus is not a planet
+    Earth is planet 3
+    fred is not a planet
+    ```
+3. 注意，除非字符串的首字母大写并且其余字母小写，否则程序不会认为字符串是行星的名字。
+4. 实现
+    ```cpp
+    /* Checks planet names */
+
+    #include <stdio.h>
+    #include <string.h>
+
+    #define NUM_PLANETS 9
+
+    int main(int argc, char *argv[])
+    {
+        char *planets[] = {"Mercury", "Venus", "Earth",
+                            "Mars", "Jupiter", "Saturn",
+                            "Uranus", "Neptune", "Pluto"};
+        int i, j;
+
+        for ( i = 1; i < argc; i++ ) {
+            for ( j = 0; j < NUM_PLANETS; j++ )
+                if ( strcmp(argv[i], planets[j]) == 0 ) {
+                    printf("%s is planet %d\n", argv[i], j + 1);
+                    break;
+                }
+            if ( j == NUM_PLANETS )
+                printf("%s is not a planet\n", argv[i]);
+        }
+
+        return 0;
+    }
+    ```
+5. TODO，怎么看效果
 
 
+## 练习
+* 练习题 4(d)
+    ```cpp
+    #include <stdio.h>
+    #include <string.h>
+    #include <ctype.h>
+
+    #define SIZE 10
+
+    int read_line(char str[], int n, char r[], int m);
 
 
+    int main(int argc, char *argv[])
+    {
+        char s[SIZE+1];
+        char r[SIZE+1];
+
+        // 输入 "abcdefghijklmnopqrstu"
+        read_line(s, SIZE, r, SIZE);
+
+        puts(s);
+        puts(r);
+        // abcdefghij
+        // klmnopqrst
+
+        return 0;
+    }
 
 
+    int read_line(char str[], int n, char r[], int m)
+    {
+        int ch, i = 0, j = 0;
+
+        while ((ch = getchar()) != '\n' && ch != EOF) {
+            if (i < n) {
+                str[i++] = ch;
+            }
+            else if (j < m) {
+                r[j++] = ch;
+            }
+        } 
+
+        str[i] = '\0';
+        r[j] = '\0';
+
+        return i;
+    }
+    ```
+
+* 练习题 5(b)
+    ```cpp
+    #include <stdio.h>
+    #include <string.h>
+
+    #define SIZE 20
+
+    void capitalize(char str[], int len);
 
 
+    int main(int argc, char *argv[])
+    {
+        char s[] = "abc7 80D ef";
+
+        capitalize(s, strlen(s));
+
+        puts(s);
+
+        return 0;
+    }
 
 
+    void capitalize(char str[], int len)
+    {
+        int i = len-1;
+        char *q = str + i;
+
+        while ( i >= 0) {
+            if ( *q >= 97 && *q <= 122 ) {
+                str[i] = *q - 32;
+            }
+            i--;
+            q--;
+        }
+    }
+    ```
+
+* 练习题 12
+    ```cpp
+    void get_extension(const char *file_name, char *extension) {
+
+        const char *p = file_name;
+        int len = strlen(file_name), i = 0;
+
+        while ( p++ != file_name + len ) {
+            if ( *p == '.' ) {
+                i = p - file_name;
+            }
+        }
+        
+        if ( i > 0 && i < len - 1 ) {
+            strcpy(extension, &file_name[i+1]);
+        }
+        else {
+            strcpy(extension, "\0");
+        }
+    }
+    ```
+
+* 练习题 17
+    ```cpp
+    bool test_extension(const char *file_name, const char *extension) {
+        int len = strlen(file_name);
+        int dotIndex = len - 1;
+        const char *p = file_name + len - 1;
+        char temp[10];
+
+        while ( p >= file_name ) {
+            if ( *p-- == '.' ) {
+                break;
+            }
+            dotIndex--;
+        }
+
+        if ( dotIndex > -1 && dotIndex < len - 1 ) {
+            strcpy(temp, &file_name[dotIndex+1]);
+        }
+
+        if ( strlen(temp) != strlen(extension) ) {
+            return false;
+        }
+
+        char *m = temp;
+        const char *n = extension;
+
+        while ( *m ) {
+            if ( toupper(*m++) != toupper(*n++) ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    ```
+
+* 编程题 1
+    ```cpp
+    void foo (char *smallest_word, char *largest_word) {
+        char word[20];
+
+        printf("Enter word:  ");
+        gets(word);
+        
+        while ( strlen(word) != 4 ) {
+            if ( !strlen(largest_word) ) {
+                strcpy(largest_word, word);
+            }
+            else if ( !strlen(smallest_word) ) {
+                if ( strcmp(word, largest_word) <= 0 ) {
+                    strcpy(smallest_word, word);
+                }
+                else {
+                    strcpy(smallest_word, largest_word);
+                    strcpy(largest_word, word);
+                }
+            }
+            else {
+                if ( strcmp(word, smallest_word) < 0 ) {
+                    strcpy(smallest_word, word);
+                }
+                else if ( strcmp(largest_word, word) < 0 ) {
+                    strcpy(largest_word, word);
+                }
+            }
+
+            printf("Enter word:  ");
+            gets(word);
+        }
+    }
+    ```
+
+* 编程题 18
+    ```cpp
+    void bar (char *str);
 
 
+    int main(int argc, char *argv[])
+    {
+        char str[20];
+        printf("Enter a date (mm/dd/yyyy): ");
 
+        bar(str);
 
+        printf("You entered the date %s", str);
 
+        return 0;
+    }
 
+    void bar (char *str) {
+        
+        char *monthes[] = {
+                            "January",
+                            "February",
+                            "March",
+                            "April",
+                            "May",
+                            "June",
+                            "July",
+                            "August",
+                            "September",
+                            "October",
+                            "November",
+                            "December"
+                        };
 
+        
+        int m;
+        char dy[20], d[3], y[5];
 
+        scanf("%d", &m);
+        scanf("/%s", &dy);
 
+        int i = 0;
+        char *p = dy;
 
+        while ( *p ) {
+            if ( *p == '/' ) {
+                dy[i] = '\0';
+                break;
+            }
+            p++;
+            i++;
+        }
+
+        strcpy(d, dy);
+        strcpy(y, ++p);
+
+        strcpy(str, monthes[m-1]);
+        strcat(str, " ");
+        strcat(str, d);
+        strcat(str, ", ");
+        strcat(str, y);
+    }
+    ```
 
 
 
