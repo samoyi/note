@@ -22,6 +22,7 @@
                 - [宏可能会不止一次地计算它的参数](#宏可能会不止一次地计算它的参数)
         - [`#` 运算符](#-运算符)
         - [`##` 运算符](#-运算符)
+            - [嵌套问题](#嵌套问题)
         - [宏的通用属性](#宏的通用属性)
             - [宏的替换列表可以包含对其他宏的调用](#宏的替换列表可以包含对其他宏的调用)
             - [预处理器只会替换完整的记号，而不会替换记号的片断](#预处理器只会替换完整的记号而不会替换记号的片断)
@@ -49,6 +50,9 @@
             - [为宏提供默认定义](#为宏提供默认定义)
             - [临时屏蔽包含注释的代码](#临时屏蔽包含注释的代码)
             - [保护头文件以避免重复包含](#保护头文件以避免重复包含)
+    - [其他指令](#其他指令)
+        - [`#error` 指令](#error-指令)
+    - [练习](#练习)
     - [References](#references)
 
 <!-- /TOC -->
@@ -354,6 +358,61 @@
     ```cpp
     float float_max(float x, float y) { return x > y ? x : y; }
     ```
+#### 嵌套问题
+1. 下面这个嵌套的例子
+    ```cpp
+    #define CONCAT(x,y) x##y
+
+    int main(int argc, char *argv[])
+    {
+        char *ab = "hello";
+        char *bc = "world";
+        char *abc = "hello world";
+        
+        puts(CONCAT(a, b)); // "hello"
+        puts(CONCAT(b, c)); // "world"
+        puts( CONCAT(a, CONCAT(b, c)) ); // 期望输出 "hello world" 但出错
+
+        return 0;
+    }
+    ```
+2. 因为 `CONCAT(a, CONCAT(b, c))` 会被扩展为 `aCONCAT(b, c)`。而没有 `aCONCAT` 这个宏，所以就会出错。可以试试加上这个宏
+    ```cpp
+    #define CONCAT(x,y) x##y
+    #define aCONCAT(x,y) x##y // 
+
+
+    int main(int argc, char *argv[])
+    {
+        char *ab = "hello";
+        char *bc = "world";
+        char *abc = "hello world";
+        puts(CONCAT(a, b)); // "hello"
+        puts(CONCAT(b, c)); // "world"
+        puts( CONCAT(a, CONCAT(b, c)) ); // "world"
+
+        return 0;
+    }
+    ```
+    虽然不会出错了，但是也不是预期的效果。
+3. 有一种办法可以解决这个问题，但不太好看。技巧是再定义一个宏来调用第一个宏：
+    ```cpp
+    #define CONCAT2(x,y) CONCAT(x,y)
+    ``` 
+4. 用 `CONCAT2(a, CONCAT2(b,c))` 就会得到我们期望的结果。在扩展外面的 `CONCAT2` 调用时，预处理器将会同时扩展 `CONCAT2(b,c)`
+    ```cpp
+    #define CONCAT(x,y) x##y
+    #define CONCAT2(x,y) CONCAT(x,y)
+
+    int main(int argc, char *argv[])
+    {
+        char *abc = "hello world";
+        puts( CONCAT2(a, CONCAT2(b, c)) ); // "hello world"
+
+        return 0;
+    }
+    ```
+5. 感觉 `CONCAT2(a, CONCAT(b, c))` 这样的调用更好理解一些？
 
 ### 宏的通用属性
 现在我们已经讨论过了简单的宏和带参数的宏，我们来看一下它们都需要遵守的规则。
@@ -675,7 +734,8 @@ C 语言的预处理器可以识别大量用于支持条件编译的指令。**�
 5. 在预处理过程中，`#if` 指令会测试 `DEBUG` 的值。由于 `DEBUG` 的值不是 0，因此预处理器会将这两个 `printf` 函数调用保留在程序中（但` #if` 和 `#endif` 行会消失）。
 6. 如果我们将 `DEBUG` 的值改为 0 并重新编译程序，预处理器则会将这 4 行代码都删除。编译器不会看到这些 `printf` 函数调用，所以这些调用就不会在目标代码中占用空间，也不会在程序运行时消耗时间。
 7. 我们可以将 `#if-#endif` 保留在最终的程序中，这样如果程序在运行时出现问题，可以（通过将 `DEBUG` 改为 1 并重新编译来）继续产生诊断信息。
-8. 值得注意的是，`#if` 指令会把没有定义过的标识符当作是值为 0 的宏对待。因此，如果省略 `DEBUG` 的定义，测试
+8. 测试值为假时，预处理器并不是完全忽略 `#if-#endif` 中间的代码。在执行预处理指令前，先处理注释，并把源代码分为多个预处理记号。因此，`#if` 和 `#endif` 之间的未终止的注释会引起错误消息。此外，不成对的单引号或双引号字符也可能导致未定义的行为。
+9. 值得注意的是，`#if` 指令会把没有定义过的标识符当作是值为 0 的宏对待。因此，如果省略 `DEBUG` 的定义，测试
     ```cpp
     #if DEBUG
     ````
@@ -727,6 +787,10 @@ C 语言的预处理器可以识别大量用于支持条件编译的指令。**�
     等价于指令
     ```cpp
     #if !defined(标识符)
+    ```
+5. 相比于 `#ifdef`，`defined` 增加了灵活性。我们现在可以使用 `#if` 和 `defined` 运算符来测试任意数量的宏，而不再是只能使用 `#ifdef` 和 `#ifndef` 对一个宏进行测试。例如，下面的指令检查是否 `FOO` 和 `BAR` 被定义了而 `BAZ` 没有被定义：
+    ```cpp
+    #if defined(FOO) && defined(BAR) && !defined(BAZ)
     ```
 
 ### `#elif` 指令和 `#else` 指令
@@ -789,35 +853,92 @@ C 语言的预处理器可以识别大量用于支持条件编译的指令。**�
 #### 保护头文件以避免重复包含
 
 
+## 其他指令
+### `#error` 指令
+1. `#error` 指令有如下格式：
+    ```cpp
+    #error 消息
+    ```
+2. 其中，**消息** 是任意的记号序列。如果预处理器遇到` #error` 指令，它会显示一条包含消息的出错消息。
+3. 对于不同的编译器，出错消息的具体形式也可能会不一样。格式可能类似：
+    ```sh
+    Error directive: 消息
+    ```
+    或者
+    ```sh
+    #error 消息
+    ```
+4. 遇到 `#error` 指令预示着程序中出现了严重的错误，有些编译器会立即终止编译而不再检查其他错误。
+4. `#error` 指令通常与条件编译指令一起用于检测正常编译过程中不应出现的情况。例如，假定我们需要确保一个程序无法在一台 `int` 类型不能存储 100 000 的机器上编译。最大允许的 `int` 值用` INT_MAX` 宏表示，所以我们需要做的就是当 `INT_MAX` 宏小于 100 000 时调用 `#error` 指令：
+    ```cpp
+    #if INT_MAX < 100000
+    #error int type is too small
+    #endif
+    ```
+    如果试图在一台以 16 位存储整数的机器上编译这个程序，将产生一条出错消息：
+    ```sh
+    Error directive: int type is too small
+    ```
+5. `#error` 指令通常会出现在 `#if-#elif-#else` 序列中的 `#else` 部分：
+    ```cpp
+    #if defined(WIN32)
+    ...
+    #elif defined(MAC_OS)
+    ...
+    #elif defined(LINUX)
+    ...
+    #else
+    #error No operating system specified
+    #endif
+    ```
 
 
+## 练习
+* 练习题 6
+    ```cpp
+    #include <stdio.h>
+    #include <math.h>
 
+    #define DISP(f, x) ( printf(#f "(%g) = %g\n", x, f(x)) )
+    #define DISP2(f,x,y) ( printf(#f "(%g, %g) = %g\n", x, y, f(x, y)) )
 
+    float foo (float x, float y) {
+        return x + y;
+    }
+    int main(int argc, char *argv[])
+    {
+        DISP(sqrt, 3.0); // sqrt(3) = 1.73205
+        DISP2(foo, 3.14, 0.618); // foo(3.14, 0.618) = 3.758
 
+        return 0;
+    }
+    ```
 
+* 练习题 7(c)
+    ```cpp
+    typedef unsigned long unsigned_long;
+    GENERIC_MAX(unsigned_long);
+    ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* 练习题 8
+    1. 刚开始直接这样定义了
+        ```cpp
+        #define LINE_FILE "Line " __LINE__ " of file " __FILE__
+        ```
+    2. 但是，虽然 `__FILE__` 是字符串常量，可以拼接；但 `__LINE__` 确实整型常量，所以不能直接和字符串拼接。
+    3. 然后想到了 `#` 操作符，结果这样定义了
+        ```cpp
+        #define INT_TO_STR(n) #n
+        #define LINE_FILE "Line " INT_TO_STR(__LINE__) " of file " __FILE__
+        ```
+    4. 但是 `#` 操作符不会对 `n` 的实参求值，而是直接用该实参的名字。所以 `LINE_FILE` 会转换为 `Line __LINE__ of file pun.c`。
+    5. 参考 [这篇](https://blog.csdn.net/pdcxs007/article/details/8581969) 后，如下定义宏
+        ```cpp
+        #define TO_STR(n) #n
+        #define INT_TO_STR(n) TO_STR(n)
+        #define LINE_FILE "Line " INT_TO_STR(__LINE__) " of file " __FILE__
+        ```
+    6. 没看明白文章里说的原因，但我自己分析：`__LINE__` 传给 `INT_TO_STR` 的时候，`__LINE__` 就被转换求值为当前的行数了，所以再调用 `TO_STR` 时，传进去的就是整型了。也就是用，借用中间宏 `INT_TO_STR` 对 `__LINE__` 就行求值，获得它的的整数值。
 
 
 ## References
