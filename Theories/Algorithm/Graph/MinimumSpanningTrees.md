@@ -13,6 +13,10 @@
         - [数据结构](#数据结构)
         - [维护横切边的集合](#维护横切边的集合)
         - [实现](#实现)
+        - [复杂度](#复杂度)
+    - [Kruskal 算法](#kruskal-算法)
+        - [实现](#实现-1)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -73,102 +77,7 @@
 
 ### 实现
 ```js
-
-class QueueElement {
-    constructor(element, priority) {
-        this.element = element;
-        this.priority = priority;
-    }
-}
-
-class PriorityQueue {
-    constructor(){
-        this.items = [];
-    }
-
-    enqueue (element, priority) {
-        let queueElement = new QueueElement(element, priority);
-
-        if (this.isEmpty()) {
-            return this.items.push(queueElement);
-        } 
-        else {
-            for (let i = 0; i < this.items.length; i++) {
-                if (queueElement.priority < this.items[i].priority) {
-                    this.items.splice(i, 0, queueElement);
-                    return this.items.length + 1;
-                }
-            }
-            return this.items.push(queueElement);
-        }
-    }
-
-    dequeue () {
-        return this.items.shift();
-    }
-
-    remove (item) {
-        let index = this.items.indexOf(item);
-        if (index === -1 ) {
-            return;
-        }
-        else {
-            this.items.splice(index, 1);
-        }
-    }
-
-    front () {
-        return this.items[0];
-    }
-
-    priority (index) {
-        return this.items[index].priority;
-    }
-}
-
-
-
-class Edge {
-    constructor (from, value, weight=1) {
-        this.from = from;
-        this.value = value;
-        this.weight = weight;
-    }
-}
-
-class EdgeWeightedGraph {
-    constructor () {
-        this.vertices = [];
-        this.adjacencyList = new Map();
-    }
-
-    addVertex (v) {
-        this.vertices.push(v);
-        this.adjacencyList.set(v, new Set());
-    }
-
-    addEdge (v, w, weight=1) {
-        this.adjacencyList.get(v).add(new Edge(v, w, weight));
-        this.adjacencyList.get(w).add(new Edge(w, v, weight));
-    }
-
-    toString () {
-        let str = '';
-        this.vertices.forEach(vertex=>{
-            let neighbors = this.adjacencyList.get(vertex);
-            if ( neighbors.size ) {
-                str += vertex + ' -> ';
-                neighbors.forEach(n=>{
-                    str += n.value + `(${n.weight}) `;
-                });
-                str += '\n';
-            }
-        });
-        return str;
-    }
-}
-
-
+// 移除无效边
 function removeInvalidEdge (edge_pq, newEdge) {
     let edges = edge_pq.items.filter(el=>el.element.value === newEdge.element.value);
     for (let i=edges.length-1; i>-1; i--) {
@@ -176,6 +85,7 @@ function removeInvalidEdge (edge_pq, newEdge) {
     }
 }
 
+// 计算生成树
 function lazyPrimMST (graph, startVertex) {
     let treeNodes = [startVertex];
     let edges = [];
@@ -212,6 +122,97 @@ function lazyPrimMST (graph, startVertex) {
 }
 
 
+// 加权无向图的实现
+class Edge {
+    constructor (from, value, weight=1) {
+        this.from = from;
+        this.value = value;
+        this.weight = weight;
+    }
+}
+class EdgeWeightedGraph {
+    constructor () {
+        this.vertices = [];
+        this.adjacencyList = new Map();
+    }
+
+    addVertex (v) {
+        this.vertices.push(v);
+        this.adjacencyList.set(v, new Set());
+    }
+
+    addEdge (v, w, weight=1) {
+        this.adjacencyList.get(v).add(new Edge(v, w, weight));
+        this.adjacencyList.get(w).add(new Edge(w, v, weight));
+    }
+
+    toString () {
+        let str = '';
+        this.vertices.forEach(vertex=>{
+            let neighbors = this.adjacencyList.get(vertex);
+            if ( neighbors.size ) {
+                str += vertex + ' -> ';
+                neighbors.forEach(n=>{
+                    str += n.value + `(${n.weight}) `;
+                });
+                str += '\n';
+            }
+        });
+        return str;
+    }
+}
+
+
+// 优先对立的实现
+class QueueElement {
+    constructor(element, priority) {
+        this.element = element;
+        this.priority = priority;
+    }
+}
+class PriorityQueue {
+    constructor(){
+        this.items = [];
+    }
+
+    enqueue (element, priority) {
+        let queueElement = new QueueElement(element, priority);
+
+        if (this.isEmpty()) {
+            return this.items.push(queueElement);
+        } 
+        else {
+            for (let i = 0; i < this.items.length; i++) {
+                if (queueElement.priority < this.items[i].priority) {
+                    this.items.splice(i, 0, queueElement);
+                    return this.items.length + 1;
+                }
+            }
+            return this.items.push(queueElement);
+        }
+    }
+
+    dequeue () {
+        return this.items.shift();
+    }
+
+    remove (item) {
+        let index = this.items.indexOf(item);
+        if (index === -1 ) {
+            return;
+        }
+        else {
+            this.items.splice(index, 1);
+        }
+    }
+
+    isEmpty () {
+        return this.items.length === 0;
+    }
+}
+
+
+// 测试  使用 《算法（第4版）》图 4.3.10 的示例数据
 let graph = new EdgeWeightedGraph();
 let vertices = [0, 1, 2, 3, 4, 5, 6, 7];
 
@@ -288,3 +289,181 @@ console.log( JSON.stringify(lazyPrimMST(graph, 0), null, 4) );
 //     "weight": 1.81
 // }
 ```
+
+### 复杂度
+
+
+## Kruskal 算法
+1. Kruskal 算法的主要思想是按照边的权重顺序从小到大处理它们，将边加入最小生成树中（下图中的黑色边）。
+2. 加入的边不会与已经加入的边构成环，直到树中含有 V-1 条边为止。
+3. 这些黑色的边逐渐由一片森林合并为一棵树，也就是图的最小生成树
+    <img src="./images/18.png" width="400" style="display: block; margin: 5px 0 10px;" />
+4. Prim 算法是一条边一条边地来构造最小生成树，每一步都为一棵树添加一条边。Kruskal 算法构造最小生成树的时候也是一条边一条边地构造，但不同的是它寻找的边会连接一片森林中的两棵树。
+5. 我们从一片由 V 棵 **单顶点**的树构成的森林开始并不断将两棵树合并（用可以找到的最短边）直到只剩下一棵树，它就是最小生成树。
+6. 不断合并的过程中同样也要检查待合并的边是不是无效边，否则就会合并出环
+
+### 实现
+1. 因为要获得所有的边，所以 `EdgeWeightedGraph` 增加一个 `getEdges` 方法
+    ```js
+    getEdges () {
+        let searchedVertices = [];
+        let edges = [];
+        this.vertices.forEach((v) => {
+            searchedVertices.push(v);
+            this.adjacencyList.get(v).forEach((e) => {
+                if ( !searchedVertices.includes(e.value) ) {
+                    edges.push(e);
+                }
+            });
+        });
+        return edges;
+    }
+    ```
+2. 因为是无向图，一条边会被两个节点分别添加。所以使用 `searchedVertices` 记录已经遍历过的节点，如果发现一条边的尾节点在 `searchedVertices` 中，就说明该条边已经加入了 `edges`。
+3. 在把一条边加入到生成树中前，要先检查是不是无效边，如果这个边的两个节点属于同一棵子树，那么就是无效边，例如上图中的边 1-3.
+4. 检查的方法是保证每棵子是都有唯一的 ID。因为一开始有 V 棵子树，就有 V 个ID，在两棵子树合并时，要是的两棵子树的所有节点都有相同的 ID。
+5. 使用一个映射来记录 ID
+    ```js
+    const KruskalMST_ID = new Map();
+    ```
+6. 初始化时每个单节点子树的 ID 都是自身的值
+    ```js
+    graph.vertices.forEach((v)=>{
+        KruskalMST_ID.set(v, v);
+    });
+    ```
+7. 在合并两个子树时，通过 `unionID` 函数来让一棵子树里节点的 ID 变得和另一棵一样
+    ```js
+    function unionID (v, w) {
+        // 两个节点分别属于两个子树，而同一个子树里所有节点都有着同样的 ID
+        let vID = KruskalMST_ID.get(v);
+        let wID = KruskalMST_ID.get(w);
+        if (vID === wID) {
+            return;
+        }
+        else {
+            // 把 v 节点所在子树的每个节点的 ID 都变成 w 所在子树的节点 ID
+            KruskalMST_ID.forEach((id, key)=>{
+                if (id === vID) {
+                    KruskalMST_ID.set(key, wID);
+                }
+            });
+        }
+    }
+    ```
+8. 检测一个边是否无效就是检测两个节点是否有同样的 ID
+    ```js
+    function isConnected (v, w) {
+        return KruskalMST_ID.get(v) === KruskalMST_ID.get(w);
+    }
+    ```
+9. 因为使用了 `isConnected` 来跳过无效边，所以就不适用 Prim 算法中的 `removeInvalidEdge`。
+10. 完整实现，这里只列出和 Prim 相比有改动的部分
+    ```js
+    const KruskalMST_ID = new Map();
+    function unionID (v, w) {
+        let vID = KruskalMST_ID.get(v);
+        let wID = KruskalMST_ID.get(w);
+        if (vID === wID) {
+            return;
+        }
+        else {
+            KruskalMST_ID.forEach((id, key)=>{
+                if (id === vID) {
+                    KruskalMST_ID.set(key, wID);
+                }
+            });
+        }
+    }
+    function isConnected (v, w) {
+        return KruskalMST_ID.get(v) === KruskalMST_ID.get(w);
+    }
+
+
+    // 不需要第二个起始节点参数，因为会按照边权重降序依次添加
+    function KruskalMST (graph) {
+        let treeEdges = [];
+
+        // 初始化每个子树的 ID
+        graph.vertices.forEach((v)=>{
+            KruskalMST_ID.set(v, v);
+        });
+
+        // 边降序
+        let graphEdges = graph.getEdges();
+        graphEdges.sort((e1, e2)=>e1.weight-e2.weight);
+
+        // 生成
+        for (let i=0; i<graphEdges.length; i++) {
+            let edge = graphEdges[i];
+            let {from: v, value: w} = edge;
+            if ( !isConnected(v, w) ) {
+                treeEdges.push(edge);
+                unionID(v, w);
+            }
+            if (treeEdges.length === graph.vertices.length-1) break;
+        }
+
+        let weight = 0;
+        treeEdges.forEach((e)=>{
+            weight += e.weight;
+        })
+
+        return {
+            treeEdges,
+            weight
+        };
+    }
+
+
+    class EdgeWeightedGraph {
+        constructor () {
+            this.vertices = [];
+            this.adjacencyList = new Map();
+        }
+
+        addVertex (v) {
+            this.vertices.push(v);
+            this.adjacencyList.set(v, new Set());
+        }
+
+        addEdge (v, w, weight=1) {
+            this.adjacencyList.get(v).add(new Edge(v, w, weight));
+            this.adjacencyList.get(w).add(new Edge(w, v, weight));
+        }
+
+        getEdges () {
+            let searchedVertices = [];
+            let edges = [];
+            this.vertices.forEach((v) => {
+                searchedVertices.push(v);
+                this.adjacencyList.get(v).forEach((e) => {
+                    if ( !searchedVertices.includes(e.value) ) {
+                        edges.push(e);
+                    }
+                });
+            });
+            return edges;
+        }
+
+        toString () {
+            let str = '';
+            this.vertices.forEach(vertex=>{
+                let neighbors = this.adjacencyList.get(vertex);
+                if ( neighbors.size ) {
+                    str += vertex + ' -> ';
+                    neighbors.forEach(n=>{
+                        str += n.value + `(${n.weight}) `;
+                    });
+                    str += '\n';
+                }
+            });
+            return str;
+        }
+    }
+    ```
+
+## References
+* [算法（第4版）](https://book.douban.com/subject/19952400/)
+* [Python数据结构与算法分析（第2版）](https://book.douban.com/subject/34785178/)
+* [算法导论（原书第3版）](https://book.douban.com/subject/20432061/)
