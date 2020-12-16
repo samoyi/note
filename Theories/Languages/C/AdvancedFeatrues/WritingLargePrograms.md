@@ -14,8 +14,19 @@
         - [保护头文件](#保护头文件)
         - [头文件中的 `#error` 指令](#头文件中的-error-指令)
     - [文本格式化程序示例程序划分成多个文件](#文本格式化程序示例程序划分成多个文件)
-        - [流程](#流程)
+        - [通用流程](#通用流程)
+        - [`justify` 程序的调整规则](#justify-程序的调整规则)
+        - [程序设计](#程序设计)
+        - [程序划分](#程序划分)
+        - [`word.h` 和 `word.c`](#wordh-和-wordc)
+            - [`word.h`](#wordh)
+            - [`word.c` 中的辅助函数 `read_char`](#wordc-中的辅助函数-read_char)
+            - [`word.c` 中的 `read_word` 函数](#wordc-中的-read_word-函数)
+        - [`line.h` 和 `line.c`](#lineh-和-linec)
+            - [`line.h`](#lineh)
+            - [`line.c`](#linec)
         - [完整源码](#完整源码)
+        - [输入重定向和输出重定向](#输入重定向和输出重定向)
         - [运行方式](#运行方式)
     - [References](#references)
 
@@ -231,7 +242,7 @@
 
 
 ## 文本格式化程序示例程序划分成多个文件
-### 流程
+### 通用流程
 1. 现在应用我们已经知道的关于头文件和源文件的知识来开发一种把一个程序划分成多个文件的简单方法。假设已经设计好程序，换句话说，已经决定程序需要什么函数以及如何把函数分为逻辑相关的组。下面是处理的方法。
 2. 把每个函数集合放入一个不同的源文件中（比如用名字 `foo.c` 来表示一个这样的文件）。
 3. 另外，创建和源文件同名的头文件，只是扩展名为 `.h`（在此例中，头文件是 `foo.h`）。
@@ -239,8 +250,238 @@
 5. 每个需要调用定义在 `foo.c` 文件中的函数的源文件都应包含 `foo.h` 文件。此外，`foo.c` 文件也应包含 `foo.h` 文件，这是为了编译器可以检查 `foo.h` 文件中的函数原型是否与 `foo.c` 文件中的函数定义相一致。
 6. `main` 函数将出现在某个文件中，这个文件的名字与程序的名字相匹配。如果希望称程序为 `bar`，那么 `main` 函数就应该在文件 `bar.c` 中。`main` 函数所在的文件中也可以有其他函数，前提是程序中的其他文件不会调用这些函数。
 
+### `justify` 程序的调整规则
+1. 通常情况下，`justify` 的输出应该和输入一样，区别仅在于删除了额外的空格和空行，并对代码行做了填充和调整。
+2. “填充” 行意味着添加单词直到再多加一个单词就会导致行溢出时才停止，“调整” 行意味着在单词间添加额外的空格以便于每行有完全相同的长度（60个字符）。
+3. 必须进行调整，只有这样一行内单词间的间隔才是相等的（或者几乎是相等的）。
+4. 对输出的最后一行不进行调整。
+5. 另外这里假设没有单词的长度超过 20 个字符（把与单词相邻的标点符号看成是单词的一部分）。如果程序遇到较长的单词，它需要忽略前 20 个字符后的所有字符，用一个星号替换它们。例如，单词 `antidisestablishmentarianism` 将会显示成 `antidisestablishment*`。
+
+### 程序设计
+1. 程序不能像读单词一样一个一个地写单词，而必须把单词存储在一个 “行缓冲区” 中，直到足够填满一行后，输出该行，然后继续读入单词。
+2. 程序的核心将是如下所示的循环
+    ```cpp
+    for (; ;) {
+        读单词;
+        if (不能读单词) {
+            输出行缓冲区的内容，不进行调整;
+            终止程序;
+        }
+
+        if (行缓冲区已经填满){
+            输出行缓冲区的内容，进行调整;
+            清除行缓冲区;
+        }
+        往行缓冲区中添加单词;
+    }
+    ```
+
+### 程序划分
+1. 因为我们需要函数处理单词，并且还需要函数处理行缓冲区，所以把程序划分为 3 个源文件。
+2. 把所有和单词相关的函数放在一个文件（`word.c`）中，把所有和行缓冲区相关的函数放在另一个文件（`line.c`）中，第 3 个文件将包含 `main` 函数。
+3. 除了上述这些文件，还需要两个头文件 `word.h` 和 `line.h`。头文件 `word.h` 将包含 `word.c` 文件中函数的原型，而头文件 `line.h` 将包含 `line.c` 文件中函数的原型。
+
+### `word.h` 和 `word.c`
+#### `word.h`
+1. `read_word` 负责读取一个单词。
+2. 如果读取到了文件末尾，会返回一个空字符串给主循环，提示主循环退出程序。
+3. 如果读取的单词超过了指定的长度，则会进行截断。
+4. 代码如下
+    ```cpp
+    #ifndef WORD_H
+    #define WORD_H
+
+    /*********************************************************** *
+     * read_word: Reads the next word from the input and         *
+     *            stores it in word. Makes word empty if no      *
+     *            word could be read because of end-of-file.     *
+     *            Truncates the word if its length exceeds       *
+     *            len.                                           *
+     *********************************************************** */
+    void read_word(char *word, int len);
+
+    #endif
+    ```
+
+#### `word.c` 中的辅助函数 `read_char`
+1. `read_char` 负责读取字符并处理特殊字符。
+2. 实现
+    ```cpp
+    int read_char(void)
+    {
+        int ch = getchar();
+        
+        if (ch == '\n' || ch == '\t')
+            return ' ';
+        return ch;
+    }
+    ```
+3. `read_char` 会把换行符和制表符统一转换为空格，因为 `read_word` 中会统一使用空格来跳过这些空白字符。
+4. `getchar` 函数实际上返回的是 `int` 类型值而不是 `char` 类型值，因此 `read_char` 函数中把变量 `ch` 声明为 `int` 类型并且 `read_char` 函数的返回类型也是 `int`。
+5. 当不能继续读入时（通常因为读到了输入文件的末尾），`getchar` 的返回值为 `EOF`。
+
+#### `word.c` 中的 `read_word` 函数
+1. 读取一个单词
+2. 实现
+    ```cpp
+    void read_word(char *word, int len)
+    {
+        int ch, pos = 0;
+
+        while ( (ch = read_char()) == ' ' )
+            ;
+        while ( ch != ' ' && ch != EOF ) {
+            if ( pos < len )
+                word[pos++] = ch;
+            ch = read_char();
+        }
+
+        word[pos] = '\0';
+    }
+    ```
+3. `read_word` 函数由两个循环构成。第一个循环跳过空格、换行和制表符（但不会跳过 `EOF`），在遇到第一个非空白字符时停止。第二个循环读字符直到遇到空格、换行和制表符或 `EOF` 时停止。
+4. 第二个循环体把字符存储到 `word` 中直到达到 `len` 的限制时停止。超出长度限制之后的字母仍然会被读入，但是不会被写入 `word` 中。
+5. 读完了一个单词，然后在后面加上 `'\0'` 构成字符串。
+6. 如果 `read_word` 在找到非空白字符前遇到 `EOF`，`pos` 将为 0，从而使得 `word` 为空字符串。
+7. 如果这个单词正好处在文件结尾，也就是说它后面没有空白字符。那么第二个 `while` 结束的时候，`word` 的长度不为 0。这时从主循环的逻辑看来，这种情况下不会退出程序。但是主循环会进入下一轮，而下一轮的 `read_word` 就会让 `word` 变成一个空字符串，从而退出程序。
+
+### `line.h` 和 `line.c` 
+#### `line.h`
+```cpp
+#ifndef LINE_H
+#define LINE_H
+
+/**********************************************************
+ * clear_line: Clears the current line.                   *
+ **********************************************************/
+void clear_line(void);
+
+/**********************************************************
+ * add_word: Adds word to the end of the current line.    *
+ *           If this is not the first word on the line,   *
+ *           puts one space before word.                  *
+ **********************************************************/
+void add_word(const char *word);
+
+/**********************************************************
+ * space_remaining: Returns the number of characters left *
+ *                  in the current line.                  *
+ **********************************************************/
+int space_remaining(void);
+
+/**********************************************************
+ * write_line: Writes the current line with               *
+ *             justification.                             *
+ **********************************************************/
+void write_line(void);
+
+/**********************************************************
+ * flush_line: Writes the current line without            *
+ *             justification. If the line is empty, does  *
+ *             nothing.                                   *
+ **********************************************************/
+void flush_line(void);
+
+#endif
+```
+
+#### `line.c`
+```cpp
+#include <stdio.h>
+#include <string.h>
+#include "line.h"
+
+#define MAX_LINE_LEN 60    // 一行总长
+
+char line[MAX_LINE_LEN+1]; // 该行字符串
+int line_len = 0;          // 当前行的已经使用的字符数量
+int num_words = 0;         // 当前行的单词数量
+
+void clear_line(void)
+{
+    line[0] = '\0';
+    line_len = 0;
+    num_words = 0;
+}
+
+void add_word(const char *word)
+{
+    // 如果该行现在就存在单词，则需要空一格
+    if ( num_words > 0 ) {
+        // line[line_len] 之前是 \0，现在替换为空格
+        line[line_len] = ' ';
+        // 添加重新添加 \0
+        line[line_len+1] = '\0';
+        line_len++;
+    }
+
+    // 把单词填进去（最后会自动生成一个 \0）
+    strcat(line, word);
+    line_len += strlen(word);
+    num_words++;
+}
+
+int space_remaining(void)
+{
+    return MAX_LINE_LEN - line_len;
+}
+
+void write_line(void)
+{
+    int extra_spaces, spaces_to_insert, i, j;
+
+    // 为了保持每行长度相等而需要额外添加的空格
+    // 这些额外的空格需要添加在现有的单词之间
+    extra_spaces = MAX_LINE_LEN - line_len; 
+
+    // 遍历所有已有的字符
+    for ( i = 0; i < line_len; i++ ) {
+        if ( line[i] != ' ' ) {
+            // 如果是非空的有效字符则直接输出
+            putchar(line[i]);
+        }
+        else {
+            // 如果是单词间的空格，则插入额外补齐用的空格
+            // 为了在单词之间添加空格，需要计算每个单词间添加几个空格
+            spaces_to_insert = extra_spaces / (num_words - 1);
+            // 插入空格
+            for ( j = 1; j <= spaces_to_insert + 1; j++ ) {
+                putchar(' ');
+            }
+
+            // 每次插入几个空格（spaces_to_insert）要动态计算
+            // 例如本例中输出的一行如下
+            // need for a system implementation language  efficient  enough
+            // 开始 5 次的 spaces_to_insert 计算都是 0.x 向下取整，
+            // 最后两次 spaces_to_insert 都是 1。
+            extra_spaces -= spaces_to_insert; 
+            num_words--;
+        }
+    }
+    putchar('\n');
+}
+
+void flush_line(void)
+{
+    if (line_len > 0)
+        puts(line);
+}
+```
+
 ### 完整源码
 路径 `./examples/justify/`
+
+### 输入重定向和输出重定向
+1. 为了在 UNIX 或 Windows 的命令行环境下运行这个程序，录入命令
+    ```sh
+    justify <quote
+    ```
+2. 符号 `<` 告诉操作系统，程序 `justify` 将从文件 `quote` 而不是从键盘读取输入。由 UNIX、Windows 和其他操作系统支持的这种特性称为 **输入重定向**（input redirection）。
+3. 程序 `justify` 的输出通常显示在屏幕上，但是也可以利用 **输出重定向**（output redirection）把结果保存到文件中：
+    ```sh
+    justify <quote >newquote
+    ```
+    程序 `justify` 的输出将放入到文件 `newquote` 中。
 
 ### 运行方式
 1. 在测试目录里，包含以下文件。其中 `quote` 里面是等待被格式化的文本
@@ -259,10 +500,6 @@
     ```sh
     ./justify.exe <quote >newquote
     ```
-
-
-
-
 
 
 
