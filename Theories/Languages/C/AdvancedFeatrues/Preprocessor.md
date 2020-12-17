@@ -44,6 +44,7 @@
         - [`defined` 运算符](#defined-运算符)
         - [`#ifdef` 指令和 `#ifndef` 指令](#ifdef-指令和-ifndef-指令)
         - [`#elif` 指令和 `#else` 指令](#elif-指令和-else-指令)
+        - [顺序的影响](#顺序的影响)
         - [使用条件编译](#使用条件编译)
             - [编写在多台机器或多种操作系统之间可移植的程序](#编写在多台机器或多种操作系统之间可移植的程序)
             - [编写可以用不同的编译器编译的程序](#编写可以用不同的编译器编译的程序)
@@ -803,6 +804,56 @@ C 语言的预处理器可以识别大量用于支持条件编译的指令。**�
     ```
     这种方法有助于更方便地找到 `#if` 指令的起始位置。
 3. 为了提供更多的便利，预处理器还支持 `#elif` 和 `#else` 指令。`#elif` 指令和 `#else` 指令可以与 `#if` 指令、`#ifdef` 指令和 `#ifndef` 指令结合使用，来测试一系列条件。
+
+### 顺序的影响
+1. 考虑下面两个文件
+    ```cpp
+    // text.c
+    #include <stdio.h>
+
+    #define DEBUG
+    #include "test.h"
+
+    int main(void)
+    {
+
+        PRINT_DEBUG();
+
+        #ifdef DEBUG
+            printf("main: DEBUG is defined:\n");
+        #else
+            printf("main: DEBUG is not defined:\n");
+        #endif
+
+    return 0;
+    }
+    ```
+    ```cpp
+    // test.h
+
+    #ifdef DEBUG
+        #define PRINT_DEBUG() printf("header: DEBUG is defined \n")
+    #else
+        #define PRINT_DEBUG() printf("header: DEBUG is not defined \n")
+    #endif
+    ```
+2. 定义了宏 `DEBUG` 的下一行引入 `test.h`，输出为
+    ```sh
+    header: DEBUG is defined
+    main: DEBUG is defined
+    ```
+    说明两个文件对 `DEBUG` 的判断都是已定义的。
+3. 如果颠倒一下引入 `test.h` 顺序和定义 `DEBUG` 的顺序
+    ```cpp
+    #include "test.h"
+    #define DEBUG
+    ```
+4. 输出就会变成
+    ```cpp
+    header: DEBUG is not defined 
+    main: DEBUG is defined
+    ```
+5. 这就体现出了顺序的影响：定义一个宏的代码之前判断它就是没有定义的，之后判断就是已定义的。
 
 ### 使用条件编译
 条件编译对于调试是非常方便的，但它的应用并不仅限于此。下面是其他一些常见的应用：
