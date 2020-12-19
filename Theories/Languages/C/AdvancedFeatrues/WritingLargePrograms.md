@@ -39,6 +39,7 @@
             - [第二种可能性是修改会影响头文件](#第二种可能性是修改会影响头文件)
             - [`make` 实用程序的流程](#make-实用程序的流程)
         - [在程序外定义宏](#在程序外定义宏)
+    - [练习](#练习)
     - [References](#references)
 
 <!-- /TOC -->
@@ -702,44 +703,35 @@ void flush_line(void)
 5. 许多编译器也支持 `-U` 选项，这个选项用于删除宏的定义，效果相当于 `#undef`。我们可以使用 `-U`选项来删除预定义的宏或之前在命令行方式下用 `-D` 选项定义的宏。TODO，没试出效果。
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 练习
+* 编程题 1
+    1. 在计算空格时，间隔的向上取整和向下取整
+        ```cpp
+        if ( num_words % 2 ) {
+            spaces_to_insert = extra_spaces / (num_words - 1);
+        }
+        else {
+            spaces_to_insert = (extra_spaces + num_words - 2) / (num_words - 1);
+        }
+        ```
+    2. 对比一下，之前的输出是
+        ```
+        C is quirky,  flawed,  and  an  enormous  success.  Although
+        accidents of history surely helped, it evidently satisfied a
+        need for a system implementation language  efficient  enough
+        to displace assembly language, yet sufficiently abstract and
+        fluent to describe algorithms and  interactions  in  a  wide
+        variety of environments. -- Dennis M. Ritchie
+        ```
+        现在的输出是
+        ```
+        C is  quirky, flawed,  and  an  enormous  success.  Although
+        accidents of history surely helped, it evidently satisfied a
+        need  for a  system implementation language efficient enough
+        to displace assembly language, yet sufficiently abstract and
+        fluent to  describe algorithms  and interactions  in a  wide
+        variety of environments. -- Dennis M. Ritchie
+        ```
 
 
 ## References
