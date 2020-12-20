@@ -21,9 +21,11 @@
             - [使用基准分析进行时间分析的例子](#使用基准分析进行时间分析的例子)
         - [基准测试的缺陷](#基准测试的缺陷)
     - [数学模型](#数学模型)
+        - [输入规模和运行时间](#输入规模和运行时间)
         - [使用步骤数来描述一个算法的复杂度](#使用步骤数来描述一个算法的复杂度)
         - [大 O 记法——取函数的数量级函数用来近似计算复杂度，和求极限原理相同](#大-o-记法取函数的数量级函数用来近似计算复杂度和求极限原理相同)
         - [数据对算法性能的影响](#数据对算法性能的影响)
+        - [最坏情况、最好情况和平均情况的评估选择](#最坏情况最好情况和平均情况的评估选择)
         - [常见的大 O 函数](#常见的大-o-函数)
         - [一例](#一例)
         - [异序词检测示例](#异序词检测示例)
@@ -170,6 +172,14 @@
 3. 前者取决于计算机、Java 编译器和操作系统，后者取决于程序本身和输入。
 4. 如果对于程序的所有部分我们都知道了这些性质，可以将它们相乘并将程序中所有指令的成本相加得到总运行时间。
 
+### 输入规模和运行时间
+1. In general, the time taken by an algorithm grows with the size of the input, so it is traditional to describe the running time of a program as a function of the size of its input. 
+2. To do so, we need to define the terms “running time” and “size of input” more carefully.
+3. The best notion for **input size** depends on the problem being studied.
+4. The **running time** of an algorithm on a particular input is the number of primitive operations or “steps” executed. 
+5. It is convenient to define the notion of step so that it is as machine-independent as possible. 6. For the moment, let us adopt the following view. A constant amount of time is required to execute each line of our pseudocode. One line may take a different amount of time than another line, but we shall assume that each execution of the $i$th line takes time $c_i$, where $c_i$ is a
+constant.
+
 ### 使用步骤数来描述一个算法的复杂度
 1. 试图摆脱程序或计算机的影响而描述算法的效率时，量化算法的操作或步骤很重要。
 2. 如果将每一步看成基本计算单位，那么可以将算法的执行时间描述成解决问题所需的步骤数。
@@ -191,6 +201,14 @@
 2. 对于这种算法，要用 **最坏情况**、**最好情况** 和 **普通情况** 来描述性能。
 3. 最坏情况指的是某一个数据集会让算法的性能极差；另一个数据集可能会让同一个算法的性能极好（最好情况）。大部分情况下，算法的性能介于两个极端之间（普通情况）。
 4. 计算机科学家要理解这些区别，以免被某个特例误导。
+
+### 最坏情况、最好情况和平均情况的评估选择
+1. We shall usually concentrate on finding only the **worst-case** running time, that is, the longest running time for any input of size $n$. 
+2. We give three reasons for this orientation
+    * **可保证的底线**。The worst-case running time of an algorithm gives us an upper bound on the running time for any input. Knowing it provides a guarantee that the algorithm will never take any longer. We need not make some educated guess about the running time and hope that it never gets much worse.
+    * **最坏情况很常见**。For some algorithms, the worst case occurs fairly often. For example, in searching a database for a particular piece of information, the searching algorithm’s worst case will often occur when the information is not present in the database. In some applications, searches for absent information may be frequent
+    * **平均情况和最坏情况时常差不了多少**。就插入排序来说，如果每次比较的次数都是最好情况的一半，最终还是平方级别的。
+
 
 ### 常见的大 O 函数
 1. 要判断哪一个才是 `T(n)` 的决定性部分，必须了解它们在 `n` 变大时彼此有多大差别。
@@ -445,3 +463,4 @@
 ## References
 * [算法（第4版）](https://book.douban.com/subject/19952400/)
 * [Python数据结构与算法分析（第2版）](https://book.douban.com/subject/34785178/)
+* [算法导论（原书第3版）](https://book.douban.com/subject/20432061/)
