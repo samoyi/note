@@ -12,6 +12,16 @@
     - [结构类型](#结构类型)
         - [结构标记的声明](#结构标记的声明)
         - [结构类型的定义](#结构类型的定义)
+        - [结构作为参数和返回值](#结构作为参数和返回值)
+        - [复合字面量](#复合字面量)
+    - [嵌套的数组和结构](#嵌套的数组和结构)
+        - [嵌套的结构](#嵌套的结构)
+        - [结构数组](#结构数组)
+        - [结构数组的初始化](#结构数组的初始化)
+        - [示例程序——维护零件数据库](#示例程序维护零件数据库)
+            - [`inventory.c`](#inventoryc)
+            - [`read_line`](#read_line)
+    - [联合](#联合)
     - [References](#references)
 
 <!-- /TOC -->
@@ -214,51 +224,529 @@
 3. 因为类型 `Part` 是 `typedef` 的名字，所以不允许书写 `struct Part`。
 4. 需要命名结构时， 通常既可以选择声明结构标记也可以使用 `typedef`。但是，结构用于链表时，强制使用声明结构标记。
 
+### 结构作为参数和返回值
+1. 函数可以有结构类型的实际参数和返回值。例如，当把 `part` 结构用作实际参数时，下面的 `print_part` 函数显示出结构的成员：
+    ```cpp
+    void print_part(struct part p)
+    {
+        printf("Part number: %d\n", p.number);
+        printf("Part name: %s\n", p.name);
+        printf("Quantity on hand: %d\n", p.on_hand);
+    }
+    ```
+2. 下面是 `print_part` 可能的调用方法：
+    ```cpp
+    print_part(part1);
+    ```
+3. 下面的 `build_part` 函数返回 `part` 结构，此结构由函数的实际参数构成：
+    ```cpp
+    struct part build_part(int number, const char * name, int on_hand)
+    {
+        struct part p;
+
+        p.number = number;
+        strcpy (p.name, name);
+        p.on_hand = on_hand;
+        return p;
+    }
+    ```
+    函数 `build_part` 的形式参数名和结构 `part` 的成员名相同是合法的，因为结构拥有自己的名字空间。
+4. 下面是 `build_part` 可能的调用方法：
+    ```cpp
+    part1 = build_part(528, "Disk drive", 10);
+    ```
+5. 给函数传递结构和从函数返回结构都要求生成结构中所有成员的副本。这样的结果是，这些操作对程序强加了一定数量的系统开销，特别是结构很大的时候。
+6. 为了避免这类系统开销，有时用传递指向结构的指针来代替传递结构本身是很明智的做法。类似地，可以使函数返回指向结构的指针来代替返回实际的结构。
+7. 除了效率方面的考虑之外，避免创建结构的副本还有其他原因。例如，`<stdio.h>` 定义了一个名为 `FILE` 的类型，它通常是结构。每个 `FILE` 结构存储的都是已打开文件的状态信息，因此在程序中必须是唯一的。`<stdio.h>` 中每个用于打开文件的函数都返回一个指向 `FILE` 结构的指针，每个对已打开文件执行操作的函数都需要用 `FILE` 指针作为参数。
+8. 有时，可能希望在函数内部初始化结构变量来匹配其他结构（可能作为函数的形式参数）。在下面的例子中，`part2` 的初始化式是传递给函数 `f` 的形式参数：
+    ```cpp
+    void f(struct part part1)
+    {
+        struct part part2 = part1;
+        ...
+    }
+    ```
+9. C 语言允许这类初始化式，因为初始化的结构（此例中的 `part2`）具有自动存储期限，也就是说它局部于函数并且没有声明为 `static`。
+10. 初始化式可以是适当类型的任意表达式，包括返回结构的函数调用。
 
 
+### 复合字面量
+1. 数组的复合字面量被用于创建没有名字的数组，这样做的目的通常是将数组作为参数传递给函数。复合字面量同样也可以用于 “实时” 创建一个结构，而不需要先将其存储在变量中。
+2. 生成的结构可以像参数一样传递，可以被函数返回，也可以赋值给变量。接下来看两个例子。
+3. 首先，使用复合字面量创建一个结构，这个结构将传递给函数。例如，可以按如下方式调用 `print_part` 函数：
+    ```cpp
+    print_part((struct part) {528, "Disk drive", 10});
+    ```
+4. 下面的语句把复合字面量赋值给变量：
+    ```cpp
+    part1 = (struct part) {528, "Disk drive", 10};
+    ```
+    这一语句类似于包含初始化式的声明，但不完全一样——初始化式只能出现在声明中，不能出现在这样的赋值语句中。
+5. 一般，复合字面量包括圆括号里的类型名和后续花括号里的一组值。如果复合字面量代表一个结构，类型名可以是结构标签的前面加上 `struct` 或者 `typedef`。
+6. 一个复合字面量可以包括指示符，就像指定初始化式一样：
+    ```cpp
+    print_part((struct part) {.on_hand = 10,
+                            .name = "Disk drive",
+                            .number = 528});
+    ```
+7. 复合字面量不会提供完全的初始化，所以任何未初始化的成员默认值为 0。
 
 
+## 嵌套的数组和结构
+### 嵌套的结构
+1. 例如，假设声明了如下的结构，此结构用来存储一个人的名、中名和姓：
+    ```cpp
+    struct person_name {
+        char first[FIRST_NAME_LEN+1];
+        char middle_initial;
+        char last[LAST_NAME_LEN+1];
+    };
+    ```
+2. 可以用结构 `person_name` 作为更大结构的一部分内容：
+    ```cpp
+    struct student {
+        struct person_name name;
+        int_id, age;
+        char sex;
+    } student1, student2;
+    ```
+3. 访问 `student1` 的名、中名或姓需要两次应用 `.` 运算符。
+    ```cpp
+    strcpy(student1.name.first, "Fred");
+    ```
+
+### 结构数组
+1. 数组和结构最常见的组合之一就是其元素为结构的数组。这类数组可以用作简单的数据库。例如，下列结构 `part` 数组能够存储 100 种零件的信息：
+    ```cpp
+    struct part inventory[100];
+    ```
+2. 为了访问数组中的某种零件，可以使用取下标方式
+    ```cpp
+    print_part(inventory[`i`]);
+    ```
+3. 访问结构 `part` 内的成员要求结合使用取下标和成员选择。为了给 `inventory[i]` 中的成员 `number` 赋值 883，可以写成
+    ```cpp
+    inventory[i].number = 883;
+    ```
+4. 为了使存储在 `inventory[i]` 中的名字变为空字符串，可以写成
+    ```cpp
+    inventory[i].name[0] = '\0';
+    ```
+
+### 结构数组的初始化
+1. 初始化结构数组与初始化多维数组的方法非常相似。每个结构都拥有自己的花括号括起来的初始化式，数组的初始化式简单地在结构初始化式的外围括上另一对花括号。
+2. 初始化结构数组的原因之一是，我们打算把它作为程序执行期间不改变的信息的数据库。例如，假设程序在打国际长途电话时会需要访问国家（地区）代码。
+3. 首先，将设置结构用来存储国家（地区）名和相应代码：
+    ```cpp
+    struct dialing_code {
+        char *country;
+        int code;
+    };
+    ```
+    注意，`country` 是指针而不是字符数组。如果计划用 `dialing_code` 结构作为变量可能有问题，但是这里没这样做。当初始化 `dialing_code` 结构时，`country` 会指向字符串字面量。
+4. 接下来，声明这类结构的数组并对其进行初始化，从而使此数组包含一些世界上人口最多的国家的代码：
+    ```cpp
+    const struct dialing_code country_codes[] = {
+        {"Argentina",            54}, {"Bangladesh",          880},
+        {"Brazi1",               55}, {"Burma (Myanmar)",      95},
+        {"China",                86}, {"Colombia",             57},
+        {"Congo, Dem. Rep. of", 243}, {"Egypt",                20},
+        {"Ethiopia",            251}, {"France",               33},
+        {"Germany",              49}, {"India ",               91},
+        {"Indonesia",            62}, {"Iran",                 98},
+        {"Italy",                39}, {"Japan",                81},
+        {"Mexico",               52}, {"Nigeria",             234},
+        {"Pakistan",             92}, {"Philippines",          63},
+        {"Poland",               48}, {"Russia",                7},
+        {"South Africa",         27}, {"Korea",                82},
+        {"Spain",                34}, {"Sudan",               249},
+        {"Thailand",             66}, {"Turkey",               90},
+        {"Ukraine",             380}, {"United Kingdom",       44},
+        {"United States",         1}, {"Vietnam",             84}
+    };
+    ```
+5. 每个结构值两边的内层花括号是可选的。然而，基于书写风格的考虑，最好不要省略它们
+    ```cpp
+    const struct dialing_code country_codes[] = {
+        "Argentina",54, "Bangladesh",880,
+        "Brazi1",55, "Burma (Myanmar)",95,
+        "China",86, "Colombia",57,
+        "Congo, Dem. Rep. of",243, "Egypt",20,
+        "Ethiopia",251, "France",33,
+        "Germany",49, "India ",91,
+        "Indonesia",62, "Iran",98,
+        "Italy",39, "Japan",81,
+        "Mexico",52, "Nigeria",234,
+        "Pakistan",92, "Philippines",63,
+        "Poland",48, "Russia",7,
+        "South Africa",27, "Korea",82,
+        "Spain",34, "Sudan",249,
+        "Thailand",66, "Turkey",90,
+        "Ukraine",380, "United Kingdom",44,
+        "United States",1, "Vietnam",84
+    };
+    ```
+6. 由于结构数组（以及包含数组的结构）很常见，因此 C99 的指定初始化式允许每一项具有多个指示符。假定我们想初始化 `inventory` 数组使其只包含一个零件，零件编号为 528，现货数量为 10，名字暂时为空：
+    ```cpp
+    struct part inventory[100] =
+        {
+            [0].number = 528, [0].on_hand = 10, [0].name[0] = '\0'
+        };
+    ```
+7. 列表中的前两项使用了两个指示符（一个用于选择数组元素 0——`part` 结构，另一个用于选择结构中的成员）。最后一项试用了 3 个指示符：一个用于选择数组元素，一个用于选择该元素的 `name` 成员，另一个用于选择 `name` 的元素 0。
+
+### 示例程序——维护零件数据库
+1. 此程序用来维护仓库存储的零件的信息的数据库。程序围绕一个结构数组构建，且每个结构包含以下信息：零件的编号、名称以及数量。
+2. 程序将支持下列操作
+    * 添加新零件编号、名称和初始的现货数量。如果零件已经在数据库中，或者数据库已满，那么程序必须显示出错信息。
+    * 给定零件编号，显示出零件的名称和当前的现货数量。如果零件编号不在数据库中，那么程序必须显示出错信息。
+    * 给定零件编号，改变现有的零件数量。如果零件编号不在数据库中，那么程序必须显示出错信息。
+    * 显示列出数组库中全部信息的表格。零件必须按照录入的顺序显示出来。
+    * 终止程序的执行。
+3. 使用 `i`（插入）、`s`（搜索）、`u`（更新）、`p`（显示）和 `q`（退出）分别表示这些操作。与程序的会话可能如下：
+    ```sh
+    Enter operation code: i
+    Enter part number: 528
+    Enter part name: Disk drive
+    Enter quantity on hand: 10
+
+    Enter operation code: s
+    Enter part number: 528
+    Part name: Disk drive
+    Quantity on hand: 10
+
+    Enter operation code: s
+    Enter part number: 914
+    Part not found.
+
+    Enter operation code: i
+    Enter part number: 914
+    Enter part name: Printer cable
+    Enter quantity on hand: 5
+
+    Enter operation code: u
+    Enter part number: 528
+    Enter change in quantity on hand: -2
+
+    Enter operation code: s
+    Enter part number: 528
+    Part name: Disk drive
+    Quantity on hand: 8
+
+    Enter operation code: p
+    Part Number   Part Name              Quantity on Hand
+        528       Disk drive                     8
+        914       Printer cable                  5
+
+    Enter operation code: q
+    ```
+4. 程序将在结构中存储每种零件的信息。这里限制数据库的大小为 100 种零件，这使得用数组来存储结构成为可能，这里称此数组为 `inventory`。为了记录当前存储在数组中的零件数，使用名为 `num_parts` 的变量。
+5. 主循环结构：
+    ```cpp
+    for (;;) {
+        提示用户输入操作码
+        读操作码
+        switch（操作码）{
+            case 'i': 执行插入操作; break;
+            case 's': 执行搜索操作; break;
+            case 'u': 执行更新操作; break;
+            case 'p': 执行显示操作; break;
+            case 'q': 终止程序;
+            default: 显示出错信息;
+        }
+    }
+    ```
+6. 为了方便起见，将分别设置不同的函数执行插入、搜索、更新和显示操作。
+7. 因为这些函数都需要访问 `inventory` 和 `num_parts`，所以可以把这些变量设置为外部变量。或者把变量声明在 `main` 函数内，然后把它们作为实际参数传递给函数。
+8. 从设计角度来说，使变量局部于函数通常比把它们外部化更好。然而，在此程序中，把 `inventory` 和 `num_parts` 放在 `main` 函数中只会使程序复杂化。
+9. 这里决定把程序分割为三个文件：`inventory.c` 文件，它包含程序的大部分内容；`readline.h` 文件，它包含 `read_line` 函数的原型； `readline.c` 文件，它包含 `read_line` 函数的定义。
+
+#### `inventory.c`
+1. 实现如下
+    ```cpp
+    /* Maintains a parts database (array version) */
+
+    #include <stdio.h>
+    #include "readline.h"
+
+    #define NAME_LEN 25
+    #define MAX_PARTS 100
+
+    struct part {
+        int number;
+        char name[NAME_LEN+1];
+        int on_hand;
+    } inventory[MAX_PARTS];
+
+    int num_parts = 0;   /* number of parts currently stored */
+
+    int find_part(int number);
+    void insert(void);
+    void search(void);
+    void update(void);
+    void print(void);
+
+    /**********************************************************
+     * main: Prompts the user to enter an operation code,     *
+     *       then calls a function to perform the requested   *
+     *       action. Repeats until the user enters the        *
+     *       command 'q'. Prints an error message if the user *
+     *       enters an illegal code.                          *
+     **********************************************************/
+    int main(void)
+    {
+        char code;
+
+        for (;;) {
+            printf("Enter operation code: ");
+            scanf(" %c", &code);
+            while (getchar() != '\n')   /* skips to end of line */
+                ;
+            switch (code) {
+                case 'i': insert(); break;
+                case 's': search(); break;
+                case 'u': update(); break;
+                case 'p': print();  break;
+                case 'q':           return 0;
+                default:  printf("Illegal code\n");
+            }
+            printf("\n");
+        }
+    }
+
+    /**********************************************************
+     * find_part: Looks up a part number in the inventory     *
+     *            array. Returns the array index if the part  *
+     *            number is found; otherwise, returns -1.     *
+     **********************************************************/
+    int find_part(int number)
+    {
+        int i;
+
+        for (i = 0; i < num_parts; i++)
+            if ( inventory[i].number == number )
+                return i;
+        return -1;
+    }
+
+    /**********************************************************
+     * insert: Prompts the user for information about a new   *
+     *         part and then inserts the part into the        *
+     *         database. Prints an error message and returns  *
+     *         prematurely if the part already exists or the  *
+     *         database is full.                              *
+     **********************************************************/
+    void insert(void)
+    {
+        int part_number;
+
+        if ( num_parts == MAX_PARTS ) {
+            printf("Database is full; can't add more parts.\n");
+            return;
+        }
+
+        printf("Enter part number: ");
+        scanf("%d", &part_number);
+
+        if ( find_part(part_number) >= 0 ) {
+            printf("Part already exists.\n");
+            return;
+        }
+
+        inventory[num_parts].number = part_number;
+        printf("Enter part name: ");
+        read_line(inventory[num_parts].name, NAME_LEN);
+        printf("Enter quantity on hand: ");
+        scanf("%d", &inventory[num_parts].on_hand);
+        num_parts++;
+    }
+
+    /**********************************************************
+     * search: Prompts the user to enter a part number, then  *
+     *         looks up the part in the database. If the part *
+     *         exists, prints the name and quantity on hand;  *
+     *         if not, prints an error message.               *
+     **********************************************************/
+    void search(void)
+    {
+        int i, number;
+
+        printf("Enter part number: ");
+        scanf("%d", &number);
+        i = find_part(number);
+        if (i >= 0) {
+            printf("Part name: %s\n", inventory[i].name);
+            printf("Quantity on hand: %d\n", inventory[i].on_hand);
+        } 
+        else {
+            printf("Part not found.\n");
+        }
+    }
+
+    /**********************************************************
+     * update: Prompts the user to enter a part number.       *
+     *         Prints an error message if the part doesn't    *
+     *         exist; otherwise, prompts the user to enter    *
+     *         change in quantity on hand and updates the     *
+     *         database.                                      *
+     **********************************************************/
+    void update(void)
+    {
+        int i, number, change;
+
+        printf("Enter part number: ");
+        scanf("%d", &number);
+        i = find_part(number);
+        if (i >= 0) {
+            printf("Enter change in quantity on hand: ");
+            scanf("%d", &change);
+            inventory[i].on_hand += change;
+        } 
+        else {
+            printf("Part not found.\n");
+        }
+    }
+
+    /**********************************************************
+     * print: Prints a listing of all parts in the database,  *
+     *        showing the part number, part name, and         *
+     *        quantity on hand. Parts are printed in the      *
+     *        order in which they were entered into the       *
+     *        database.                                       *
+     **********************************************************/
+    void print(void)
+    {
+        int i;
+
+        printf("Part Number   Part Name                  "
+                "Quantity on Hand\n");
+        for (i = 0; i < num_parts; i++)
+            printf("%7d       %-25s%11d\n", inventory[i].number,
+                inventory[i].name, inventory[i].on_hand);
+    }
+    ```
+2. 在 `main` 函数中，格式串 `" %c"` 允许 `scanf` 函数在读入操作码之前跳过空白字符。格式串中的空格是至关重要的，如果没有它，`scanf` 函数有时会读入前一输入行末尾的换行符。
+
+#### `read_line`
+1. 这个函数用来读零件的名字。思考当用户插入零件时会发生什么：
+    ```sh
+    Enter part number: 528
+    Enter part name: Disk drive
+    ```
+2. 在录入完零件的编号后，用户按回车键，录入零件的名字后再次按了回车键，这样每次都无形中给程序留下一个必须读取的换行符。为了讨论方便，现在假装这些字符都是可见的：
+    ```sh
+    Enter part number: 528¤
+    Enter part name: Disk drive¤
+    ```
+3. 当调用 `scanf` 函数来读零件编号时，函数吸收了 `5`、`2` 和 `8`，但是留下了字符 `¤` 未读。之后在读取时，那么函数将会立刻遇到字符 `¤`，并且停止读入。
+4. 解决办法就是让 `read_line` 函数在开始往字符串中存储字符之前跳过空白字符。这不仅解决了换行符的问题，而且可以避免存储用户在零件名称的开始处录入的任何空白。
+5. 由于 `read_line` 函数与 `inventory.c` 文件中的其他函数无关，而且它在其他程序中有复用的可能，所以我们决定把此函数从 `inventory.c` 中独立出来。
+6. `readline.h`
+    ```cpp
+    #ifndef READLINE_H
+    #define READLINE_H
+
+    /**********************************************************
+     * read_line: Skips leading white-space characters, then  *
+     *            reads the remainder of the input line and   *
+     *            stores it in str. Truncates the line if its *
+     *            length exceeds n. Returns the number of     *
+     *            characters stored.                          *
+     **********************************************************/
+    int read_line(char str[], int n);
+
+    #endif
+    ```
+7. `readline.c`
+    ```cpp
+    #include <ctype.h>
+    #include <stdio.h>
+    #include "readline.h"
+
+    int read_line(char str[], int n)
+    {
+        int ch, i = 0;
+
+        while (isspace(ch = getchar()))
+            ;
+        while ( ch != '\n' && ch != EOF ) {
+            if (i < n) {
+                str[i++] = ch;
+            }
+            ch = getchar();
+        }
+        str[i] = '\0';
+        return i;
+    }
+    ```
 
 
+## 联合
+1. 像结构一样，**联合**（union）也是由一个或多个成员构成的，而且这些成员可能具有不同的类型。
+2. 但是，编译器只为联合中最大的成员分配足够的内存空间。联合的成员在这个空间内彼此覆盖。这样的结果是，给一个成员赋予新值也会改变其他成员的值。
+3. 为了说明联合的基本性质，现在声明一个联合变量 `u`，且这个联合变量有两个成员：
+    ```cpp
+    union {
+        int i;
+        double d;
+    } u;
+    ```
+4. 联合的声明方式非常类似于结构的声明方式
+    ```cpp
+    struct {
+        int i;
+        double d;
+    } s;
+    ```
+5. 事实上，结构变量 `s` 和联合变量 `u` 只有一处不同：`s` 的成员存储在 **不同** 的内存地址中，而 `u` 的成员存储在 **同一** 内存地址中。
+6. 下面是 `s `和 `u` 在内存中的存储情况（假设 `int` 类型的值要占 4 个字节内存，而 `double` 类型的值占用 8 个字节）：
+    <img src="./images/09.png" width="300" style="display: block; margin: 5px 0 10px;" />
+7. 在结构变量 `s `中，成员 `i` 和 `d` 占有不同的内存单元。`s` 总共占用了 12 个字节。在联合变量 `u` 中，成员 `i` 和 `d` 互相交迭，`i` 实际上是 `d` 的前 4 个字节，所以 `u` 只占用了 8 个字节。
+8. 此外，`i` 和 `d` 具有相同的地址。
+9. 访问联合成员的方法和访问结构成员的方法相同。为了把数 82 存储到 `u` 的成员 `i` 中，可以写成
+    ```cpp
+    u.i = 82;
+    ```
+    为了把值 74.8 存储到成员 `d` 中，可以写成
+    ```cpp
+    u.d = 74.8;
+    ```
+10. 因为编译器把联合的成员重叠存储，所以改变一个成员就会使之前存储在任何其他成员中的值发生改变。因此，如果把一个值存储到 `u.d` 中，那么先前存储在 `u.i` 中的值将会丢失。如果测试 `u.i` 的值，那么它会显示出无意义的内容
+    ```cpp
+    union {
+        int i;
+        double d;
+    } u;
 
+    int main(void)
+    {
+        u.i = 82;
+        printf("%d\n", u.i); // 82
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        u.d = 74.8;
+        printf("%lf\n", u.d); // 74.800000
+        printf("%d\n", u.i); // 858993459
+        
+        return 0;
+    }
+    ```
+11. 联合的性质和结构的性质几乎一样，所以可以用声明结构标记和类型的方法来声明联合的标记和类型。像结构一样，联合可以使用运算符 `=` 进行复制，也可以传递给函数，还可以由函数返回。
+12. 联合的初始化方式甚至也和结构的初始化很类似。但是，只有联合的第一个成员可以获得初始值。例如，可以用下列方式初始化联合 `u` 的成员 `i` 为 0：
+    ```cpp
+    union {
+        int i;
+        double d;
+    } u = {0};
+    ```
+    注意，花括号是必需的。花括号内的表达式必须是常量。（在C99中规则稍有不同）
+13. 指定初始化式也可以用在联合中。指定初始化式允许我们指定需要对联合中的哪个成员进行初始化。例如，可以像下面这样初始化 `u` 的成员 `d`：
+    ```cpp
+    union {
+        int i;
+        double d;
+    } u = {.d = 10.0};
+    ```
+    只能初始化一个成员，但不一定是第一个。
 
 
 
