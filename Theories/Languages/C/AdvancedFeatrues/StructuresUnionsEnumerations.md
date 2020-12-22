@@ -9,9 +9,11 @@
         - [结构变量的初始化](#结构变量的初始化)
         - [指定初始化（C99）](#指定初始化c99)
         - [对结构的操作](#对结构的操作)
+        - [结构占用的字节数](#结构占用的字节数)
     - [结构类型](#结构类型)
         - [结构标记的声明](#结构标记的声明)
         - [结构类型的定义](#结构类型的定义)
+        - [重复声明](#重复声明)
         - [结构作为参数和返回值](#结构作为参数和返回值)
         - [复合字面量](#复合字面量)
     - [嵌套的数组和结构](#嵌套的数组和结构)
@@ -22,6 +24,13 @@
             - [`inventory.c`](#inventoryc)
             - [`read_line`](#read_line)
     - [联合](#联合)
+        - [用联合来节省空间](#用联合来节省空间)
+        - [用联合来构造混合的数据结构](#用联合来构造混合的数据结构)
+        - [为联合添加 “标记字段”](#为联合添加-标记字段)
+    - [枚举](#枚举)
+        - [枚举标记和类型名](#枚举标记和类型名)
+        - [枚举作为整数](#枚举作为整数)
+        - [用枚举声明“标记字段”](#用枚举声明标记字段)
     - [References](#references)
 
 <!-- /TOC -->
@@ -38,7 +47,7 @@
 3. 由于大多数编程语言都提供类似的特性，所以结构可能听起来很熟悉。在其他一些语言中，经常把结构称为 **记录**（record），把结构的成员称为 **字段**（field）。
 
 ### 结构变量的声明
-1. 例如，假设需要记录存储在仓库中的零件。用来存储每种零件的信息可能包括零件的编号（整数）、零件的名称（字符串）以及现有零件的数量（整数）。为了产生一个可以存储全部3种数据项的变量，可以使用类似下面这样的声明：
+1. 例如，假设需要记录存储在仓库中的零件。用来存储每种零件的信息可能包括零件的编号（整数）、零件的名称（字符串）以及现有零件的数量（整数）。为了产生一个可以存储全部 3 种数据项的变量，可以使用类似下面这样的声明：
     ```cpp
     struct {
         int number;
@@ -134,6 +143,28 @@
 6. 运算符 `=` 仅仅用于类型兼容的结构。两个同时声明的结构是兼容的，使用同样的 “结构标记” 或同样的类型名声明的结构也是兼容的。
 7. 除了赋值运算，C 语言没有提供其他用于整个结构的操作。 特别是不能使用运算符 `==` 和 `!=` 来判定两个结构相等还是不等。
 
+### 结构占用的字节数
+1. 当试图使用 `sizeof` 运算符来确定结构中的字节数量时，获得的数大于成员加在一起后的数
+    ```cpp
+    struct {
+        char a;
+        int b;
+    } s;
+
+    printf("%d", sizeof(s)); // 8
+    ```
+2. 一些计算机要求特定数据项的地址是某个字节数（一般是 2 个、4 个或 8 个字节，由数据项的类型决定）的倍数。为了满足这一要求，编译器会在邻近的成员之间留 “空洞”（即不使用的字节），从而使结构的成员 “对齐”。
+3. 如果假设数据项必须从 4 个字节的倍数开始，那么结构 `s` 的成员 `a` 后面将有 3 个字节的空洞，从而 `sizeof(s)` 为 8。
+4. 就像在成员间有空洞一样，结构也可以在末尾有空洞。例如，结构
+    ```cpp
+    struct {
+        int a;
+        char b;
+    } s;
+    ```
+    可能在成员 `b` 的后边有 3 个字节的空洞。
+5. 但是，结构的开始处不会有 “空洞”。因此可以确保指向结构第一个成员的指针就是指向整个结构的指针。注意这两个指针的类型不同。
+
 
 ## 结构类型
 1. 前面说明了声明结构 **变量** 的方法，但是没有讨论命名结构 **类型**。
@@ -159,7 +190,7 @@
 5. 为了克服这些困难，需要定义表示结构 **类型**（而不是特定的结构 **变量**）的名字。 C 语言提供了两种命名结构的方法：可以声明 “结构标记”，也可以使用 `typedef` 来定义类型名。
 
 ### 结构标记的声明
-1. **结构标记**（structure tag）是用于标识某种特定结构的名字。下面的例子声明了名为 `part 的结构标记：
+1. **结构标记**（structure tag）是用于标识某种特定结构的名字。下面的例子声明了名为 `part` 的结构标记：
     ```cpp
     struct part {
         int number;
@@ -223,6 +254,13 @@
     ```
 3. 因为类型 `Part` 是 `typedef` 的名字，所以不允许书写 `struct Part`。
 4. 需要命名结构时， 通常既可以选择声明结构标记也可以使用 `typedef`。但是，结构用于链表时，强制使用声明结构标记。
+
+### 重复声明
+1. 如果在两个不同的文件中包含了结构 `part` 的声明，那么一个文件中的 `part` 类型变量和另一个文件中的` part` 类型变量是否一样呢？
+2. 技术上来说，不一样。但是，C 标准提到，一个文件中的 `part` 类型变量所具有的类型和另一个文件中的 `part` 类型变量所具有的类型是兼容的。
+3. 具有兼容类型的变量可以互相赋值，所以在实际中 “兼容的” 类型和 “相同的” 类型之间几乎没有差异。
+4. C89 和 C99 中有关结构兼容性的法则稍有不同。在 C89 中，对于在不同文件中定义的结构来说，如果它们的成员具有同样的名字并且顺序一样，那么它们是兼容的，相应的成员类型也是兼容的。C99 则更进一步，它要求两个结构要么具有相同的标记，要么都没有标记。
+5. 类似的兼容性法则也适用于联合和枚举（在 C89 和 C99 标准之间的差异也一样）。
 
 ### 结构作为参数和返回值
 1. 函数可以有结构类型的实际参数和返回值。例如，当把 `part` 结构用作实际参数时，下面的 `print_part` 函数显示出结构的成员：
@@ -748,17 +786,404 @@
     ```
     只能初始化一个成员，但不一定是第一个。
 
+### 用联合来节省空间
+1. 在结构中经常使用联合作为节省空间的一种方法。假设打算设计的结构包含三种商品的信息：书籍、杯子和衬衫。每种商品都含有库存量和价格，另外三个商品还是各自的其他信息：
+    * 书籍：书名、作者、页数。
+    * 杯子：设计。
+    * 衬衫：设计、可选颜色、可选尺寸。
+2. 最初的设计可能会得到如下结构：
+    ```cpp
+    struct catalog_item {
+        int stock_number;
+        double price;
+        int item_type;
+        char title[TITLE_LEN+1];
+        char author[AUTHOR_LEN+1];
+        int num_pages;
+        char design[DESIGN_LEN+1];
+        int colors;
+        int sizes;
+    };
+    ```
+    成员 `item_type` 的值将是 `BOOK`、`MUG` 或 `SHIRT` 之一。
+3. 虽然上述结构十分好用，但是它很浪费空间，因为对礼品册中的所有商品来说只有结构中的部分信息是常用的。
+4. 通过在结构 `catalog_item` 内部放置一个联合，可以减少结构所要求的内存空间。联合的成员将是一些特殊的结构，每种结构都包含特定类型的商品所需要的数据：
+    ```cpp
+    #define TITLE_LEN 20
+    #define AUTHOR_LEN 20
+    #define DESIGN_LEN 20
+
+    struct catalog_item {
+        int stock_number;
+        double price;
+        int item_type;
+        union {
+            struct {
+                char title[TITLE_LEN+1];
+                char author[AUTHOR_LEN+1];
+                int num_pages;
+            } book;
+            struct {
+                char design[DESIGN_LEN+1];
+            } mug;
+            struct {
+                char design[DESIGN_LEN+1];
+                int colors;
+                int sizes;
+            } shirt;
+        } item;
+    };
+    ```
+    联合 `item` 是结构 `catalog_item` 的成员，而结构 `book`、`mug` 和 `shirt` 则是联合 `item` 的成员。
+5. 示例
+    ```cpp
+    #include <stdio.h>
+    #include <string.h>
+
+    #define TITLE_LEN 20
+    #define AUTHOR_LEN 20
+    #define DESIGN_LEN 20
+
+    #define BOOK 0
+    #define MUG 1
+    #define SHIRT 2
 
 
+    struct catalog_item {
+        int stock_number;
+        double price;
+        int item_type;
+        union {
+            struct {
+                char title[TITLE_LEN+1];
+                char author[AUTHOR_LEN+1];
+                int num_pages;
+            } book;
+            struct {
+                char design[DESIGN_LEN+1];
+            } mug;
+            struct {
+                char design[DESIGN_LEN+1];
+                int colors;
+                int sizes;
+            } shirt;
+        } item;
+    };
+
+    void setBook (struct catalog_item *item, 
+                    int stock_number, 
+                    double price,
+                    char title[],
+                    char author[],
+                    int num_pages) 
+    {
+        (*item).stock_number = stock_number;
+        (*item).price = price;
+        (*item).item_type = BOOK;
+        strcpy((*item).item.book.title, title);
+        strcpy((*item).item.book.author, author);
+        (*item).item.book.num_pages = num_pages;
+    }
+    void setMug (struct catalog_item *item, 
+                    int stock_number, 
+                    double price,
+                    char design[]) 
+    {
+        (*item).stock_number = stock_number;
+        (*item).price = price;
+        (*item).item_type = MUG;
+        strcpy((*item).item.mug.design, design);
+    }
+    void setShirt (struct catalog_item *item, 
+                    int stock_number, 
+                    double price,
+                    char design[],
+                    int colors,
+                    int sizes) 
+    {
+        (*item).stock_number = stock_number;
+        (*item).price = price;
+        (*item).item_type = SHIRT;
+        strcpy((*item).item.shirt.design, design);
+        (*item).item.shirt.colors = colors;
+        (*item).item.shirt.sizes = sizes;
+    }
 
 
+    void printItem (struct catalog_item item) {
+        
+        switch (item.item_type) {
+            case 0: {
+                printf("BOOK--------\n");
+                printf("stock_number:  %d\n", item.stock_number);
+                printf("       price:  %.2lf\n", item.price);
+                printf("   num_pages:  %d\n", item.item.book.num_pages);
+                printf("       title:  %s\n", item.item.book.title);
+                printf("      author:  %s\n", item.item.book.author);
+                break;
+            }
+            case 1: {
+                printf("MUG--------\n");
+                printf("stock_number:  %d\n", item.stock_number);
+                printf("       price:  %.2lf\n", item.price);
+                printf("         mug:  %s\n", item.item.mug.design);
+                break;
+            }
+            case 2: {
+                printf("SHIRT--------\n");
+                printf("stock_number:  %d\n", item.stock_number);
+                printf("       price:  %.2lf\n", item.price);
+                printf("         mug:  %s\n", item.item.shirt.design);
+                printf("         mug:  %d\n", item.item.shirt.colors);
+                printf("         mug:  %d\n", item.item.shirt.sizes);
+                break;
+            }
+        }
+        printf("\n\n");
+    }
 
 
+    int main(void)
+    {
+
+        struct catalog_item item1;
+
+        setBook(&item1, 5, 12.3, "tiiiiiiitle", "auuuuuthor", 99);
+        
+        printItem(item1);
+
+        setMug(&item1, 6, 4.3, "mug design");
+
+        printItem(item1);
+
+        setShirt(&item1, 7, 8.3, "shirt design", 22, 33);
+
+        printItem(item1);
+
+        return 0;
+    }
+    ```
+
+### 用联合来构造混合的数据结构
+1. 联合还有一个重要的应用：创建含有不同类型的混合数据的数据结构。现在假设需要数组的元素是 `int` 值和 `double` 值的混合。因为数组的元素必须是相同的类型，所以好像不可能产生如此类型的数组。但是，利用联合这件事就相对容易了。
+2. 首先，定义一种联合类型，它所包含的成员分别表示要存储在数组中的不同数据类型：
+    ```cpp
+    typedef union {
+        int i;
+        double d;
+    } Number;
+    ```
+2. 接下来，创建一个数组，使数组的元素是 `Number` 类型的值：
+    ```cpp
+    Number number_array[1000];
+    ```
+3. 例如，假设需要用数组 `number_array` 的 0 号元素来存储 5，而用 1 号元素来存储 8.395。下列赋值语句可以达到期望的效果：
+    ```cpp
+    number_array[0].i = 5;
+    number_array[1].d = 8.395;
+    ```
+
+### 为联合添加 “标记字段”
+1. 联合所面临的主要问题是：不容易确定联合最后改变的成员，因此所包含的值可能是无意义的。
+2. 请思考下面这个问题：编写了一个函数，用来显示当前存储在联合 `Number` 中的值。这个函数可能有下列框架：
+    ```cpp
+    void print_number(Number n)
+    {
+    if (n包含一个整数)
+        printf("%d", n.i);
+    else
+        printf("%g", n.d);
+    }
+    ```
+    但是，没有方法可以帮助函数 `print_number` 来确定 `n` 包含的是整数还是浮点数。
+3. 为了记录此信息，可以把联合嵌入一个结构中，且此结构还含有另一个成员：“标记字段” 或者 “判别式”，它是用来提示当前存储在联合中的内容的。前面讨论的结构 `catalog_item` 中，`item_type` 就是用于此目的的
+    ```cpp
+    #define INT_KIND 0
+    #define DOUBLE_KIND 1
+
+    typedef struct {
+        int kind;   /* tag field */
+        union{
+            int i;
+            double d;
+        } u;
+    } Number;
+    ```
+    `Number` 有两个成员 `kind` 和 `u`。`kind` 的值可能是 `INT_KIND` 或 `DOUBLE_KIND`。
+4. 每次给 `u` 的成员赋值时，也会改变 `kind`，从而提示出修改的是 `u` 的哪个成员
+    ```cpp
+    n.kind = INT_KIND;
+    n.u.i = 82;
+    ```
+5. 当需要找回存储在 `Number` 型变量中的数时，`kind` 将表明联合的哪个成员是最后被赋值的。函数 `print_number` 可以利用这种能力：
+    ```cpp
+    void print_number(Number n)
+    {
+    if (n.kind == INT_KIND)
+        printf("%d", n.u.i);
+    else
+        printf("%g", n.u.d);
+    }
+    ```
+6. 例如
+    ```cpp
+    #define INT_KIND 0
+    #define DOUBLE_KIND 1
+
+    typedef struct {
+        int kind;
+        union{
+            int i;
+            double d;
+        } u;
+    } Number;
 
 
+    void print_number(Number n)
+    {
+        if (n.kind == INT_KIND)
+            printf("%d", n.u.i);
+        else
+            printf("%g", n.u.d);
+    }
+    void number_setInt ( Number *n, int i ) {
+        (*n).u.i = i;
+        (*n).kind = INT_KIND;
+    }
+    void number_setDouble ( Number *n, double d ) {
+        (*n).u.d = d;
+        (*n).kind = DOUBLE_KIND;
+    }
 
 
+    int main(void)
+    {
+        Number sn;
 
+        number_setInt(&sn, 9);
+        print_number(sn); // 9
+        printf("\n");
+        number_setDouble(&sn, 3.14);
+        print_number(sn); // 3.14
+        
+        return 0;
+    }
+    ```
+
+
+## 枚举
+1. 在许多程序中，我们会需要变量只具有少量有意义的值。例如，布尔变量应该只有2种可能的值：“真” 和 “假”。用来存储扑克牌花色的变量应该只有 4 种可能的值。
+2. 显然可以用声明成整数的方法来处理此类变量，并且用一组编码来表示变量的可能值：
+    ```cpp
+    int s;     /* s will store a suit */
+    ...
+    s = 2;     /* 2 represents "hearts" */
+    ```
+3. 虽然这种方法可行，但是也遗留了许多问题。某些人读程序时可能不会意识到 `s` 只有 4 个可能的值，而且不会知道 `2` 的特殊含义。
+4. 使用宏来定义牌的花色 “类型” 和不同花色的名字是一种正确的措施：
+    ```cpp
+    #define SUIT       int
+    #define CLUBS      0
+    #define DIAMONDS   1
+    #define HEARTS     2
+    #define SPADES     3
+    ```
+    那么前面的示例现在可以变得更加容易阅读：
+    ```cpp
+    SUIT s;
+    ...
+    s = HEARTS;
+    ```
+5. 这种方法是一种改进，但是它仍然不是最好的解决方案，因为这样做没有为阅读程序的人指出宏表示具有相同 “类型” 的值。如果可能值的数量很多，那么为每个值定义一个宏是很麻烦的。而且，由于预处理器会删除我们定义的 `CLUBS`、`DIAMONDS`、`HEARTS` 和 `SPADES` 这些名字，所以在调试期间没法使用这些名字。
+6. C 语言为具有可能值较少的变量提供了一种专用类型。**枚举类型**（enumeration type）是一种值由程序员列出（“枚举”）的类型，而且程序员必须为每个值命名（**枚举常量**）。
+7. 下列示例枚举的值（`CLUBS`、`DIAMONDS`、`HEARTS` 和 `SPADES`）可以赋值给变量 `s1` 和 `s2`：
+    ```cpp
+    enum {CLUBS, DIAMONDS, HEARTS, SPADES} s1, s2;
+    ```
+8. 与结构或联合的成员不同，枚举常量的名字必须不同于作用域范围内声明的其他标识符。
+9. 枚举常量类似于用 `#define` 指令创建的常量，但是两者又不完全一样。特别地，枚举常量遵循 C 语言的作用域规则：如果枚举声明在函数体内，那么它的常量对外部函数来说是不可见的。
+
+### 枚举标记和类型名
+1. 与命名结构和联合的原因相同，我们也常常需要创建枚举的名字。与结构和联合一样，可以用两种方法命名枚举：通过声明标记的方法，或者使用 `typedef` 来创建独一无二的类型名。
+2. 枚举标记类似于结构和联合的标记。例如，为了定义标记 `suit`，可以写成
+    ```cpp
+    enum suit {CLUBS, DIAMONDS, HEARTS, SPADES};
+    ```
+    变量 `suit` 可以按照下列方法来声明：
+    ```cpp
+    enum suit s1, s2;
+    ```
+3. 还可以用 `typedef` 把 `Suit` 定义为类型名：
+    ```cpp
+    typedef enum {CLUBS, DIAMONDS, HEARTS, SPADES} Suit;
+    Suit s1, s2;
+    ```
+4. 在 C89 中，利用 `typedef` 来命名枚举是创建布尔类型的一种非常好的方法：
+    ```cpp
+    typedef enum {FALSE, TRUE} Bool;
+    ```
+
+### 枚举作为整数
+1. 在系统内部，C 语言会把枚举变量和常量作为整数来处理。默认情况下，编译器会把整数 0, 1, 2, … 赋给特定枚举中的常量。例如，在枚举 `suit` 的例子中，`CLUBS`、`DIAMONDS`、`HEARTS` 和 `SPADES` 分别表示 0、1、2 和 3。
+2. 我们可以为枚举常量自由选择不同的值。现在假设希望 `CLUBS`、`DIAMONDS`、`HEARTS` 和 `SPADES` 分别表示 1、2、3 和 4，可以在声明枚举时指明这些数：
+    ```cpp
+    enum suit {CLUBS = 1, DIAMONDS = 2, HEARTS = 3, SPADES = 4};
+    ```
+3. 枚举常量的值可以是任意整数，列出也可以不用按照特定的顺序：
+    ```cpp
+    enum dept {RESEARCH = 20, PRODUCTION = 10, SALES = 25};
+    ```
+4. 两个或多个枚举常量具有相同的值甚至也是合法的。
+5. 当没有为枚举常量指定值时，它的值比前一个常量的值大 1。在下列枚举中，`BLACK` 的值为 0，`LT_GRAY` 为 7，`DK_GRAY` 为 8，而 `WHITE` 为 15：
+    ```cpp
+    enum EGA_colors {BLACK, LT_GRAY = 7, DK_GRAY, WHITE = 15};
+    ```
+6. 枚举的值只不过是一些稀疏分布的整数，所以 C 语言允许把它们与普通整数进行混合：
+    ```cpp
+    int i;
+    enum {CLUBS, DIAMONDS, HEARTS, SPADES} s;
+
+    s = 0;
+    printf("%d\n", s); // 0
+
+    i = DIAMONDS;
+    printf("%d\n", i); // 1
+
+    s++;
+    printf("%d\n", s); // 1
+
+    i = s + 2;
+    printf("%d\n", i); // 3
+    ```
+7. 编译器会把 `s` 作为整型变量来处理，而 `CLUBS`、`DIAMONDS`、`HEARTS` 和 `SPADES` 只是数 0、1、2 和 3 的名字而已。
+    ```cpp
+    enum {CLUBS, DIAMONDS, HEARTS, SPADES} s;
+
+    printf("%d\n", HEARTS); // 2
+    printf("%d\n", s); // 4194432
+
+    s = 3;
+    printf("%d\n", HEARTS); // 2
+    printf("%d\n", s); // 3
+
+    s = 4;
+    printf("%d\n", s); // 4
+    printf("%d\n", SPADES); // 3
+    ``` 
+8. 虽然把枚举的值作为整数使用非常方便，但是把整数用作枚举的值却是非常危险的。例如，我们可能会不小心把 4 存储到 `s` 中，而 4 不能跟任何花色相对应。
+
+### 用枚举声明“标记字段”
+1. 枚举用来确定联合中最后一个被赋值的成员是非常合适的。例如，在结构 `Number` 中，可以把成员 `kind` 声明为枚举而不是 `int`：
+    ```cpp
+    typedef struct {
+    enum {INT_KIND, DOUBLE_KIND} kind;
+    union {
+        int i;
+        double d;
+    } u;
+    } Number;
+    ```
+2. 这种新结构和旧结构的用法完全一样。这样做的好处是不仅远离了宏 `INT_KIND` 和 `DOUBLE_KIND`（它们现在是枚举常量），而且阐明了 `kind` 的含义，现在 `kind` 显然应该只有两种可能的值：`INT_KIND` 和 `DOUBLE_KIND`。
 
 
 
