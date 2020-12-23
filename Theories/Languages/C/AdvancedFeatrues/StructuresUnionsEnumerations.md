@@ -30,7 +30,8 @@
     - [枚举](#枚举)
         - [枚举标记和类型名](#枚举标记和类型名)
         - [枚举作为整数](#枚举作为整数)
-        - [用枚举声明“标记字段”](#用枚举声明标记字段)
+        - [用枚举声明 “标记字段”](#用枚举声明-标记字段)
+    - [练习](#练习)
     - [References](#references)
 
 <!-- /TOC -->
@@ -1072,7 +1073,7 @@
 
 
 ## 枚举
-1. 在许多程序中，我们会需要变量只具有少量有意义的值。例如，布尔变量应该只有2种可能的值：“真” 和 “假”。用来存储扑克牌花色的变量应该只有 4 种可能的值。
+1. 在许多程序中，我们会需要变量只具有少量有意义的值。例如，布尔变量应该只有 2 种可能的值：“真” 和 “假”；用来存储扑克牌花色的变量应该只有 4 种可能的值。
 2. 显然可以用声明成整数的方法来处理此类变量，并且用一组编码来表示变量的可能值：
     ```cpp
     int s;     /* s will store a suit */
@@ -1172,18 +1173,447 @@
     ``` 
 8. 虽然把枚举的值作为整数使用非常方便，但是把整数用作枚举的值却是非常危险的。例如，我们可能会不小心把 4 存储到 `s` 中，而 4 不能跟任何花色相对应。
 
-### 用枚举声明“标记字段”
+### 用枚举声明 “标记字段”
 1. 枚举用来确定联合中最后一个被赋值的成员是非常合适的。例如，在结构 `Number` 中，可以把成员 `kind` 声明为枚举而不是 `int`：
     ```cpp
     typedef struct {
-    enum {INT_KIND, DOUBLE_KIND} kind;
-    union {
-        int i;
-        double d;
-    } u;
+        enum {INT_KIND, DOUBLE_KIND} kind;
+        union {
+            int i;
+            double d;
+        } u;
     } Number;
     ```
 2. 这种新结构和旧结构的用法完全一样。这样做的好处是不仅远离了宏 `INT_KIND` 和 `DOUBLE_KIND`（它们现在是枚举常量），而且阐明了 `kind` 的含义，现在 `kind` 显然应该只有两种可能的值：`INT_KIND` 和 `DOUBLE_KIND`。
+
+
+## 练习
+* 练习题 3
+    ```cpp
+    struct complex {
+        double real;
+        double imaginary;
+    };
+
+    struct complex make_complex( double real, double imaginary ) {
+        struct complex c;
+        c.real = real;
+        c.imaginary = imaginary; 
+        return c;
+    }
+
+    struct complex add_complex ( struct complex c1, struct complex c2 ) {
+        struct complex c;
+        c.real = c1.real + c2.real;
+        c.imaginary = c1.imaginary + c2.imaginary;
+        return c;
+    }
+
+    int main(void)
+    {
+        struct complex c1 = make_complex(0.0, 1.0); 
+        struct complex c2 = make_complex(1.0, 0.0);
+        struct complex c3 = add_complex(c1, c2);
+
+        printf("%lf\n", c1.real);
+        printf("%lf\n", c1.imaginary);
+        printf("%lf\n", c2.real);
+        printf("%lf\n", c2.imaginary);
+        printf("%lf\n", c3.real);
+        printf("%lf\n", c3.imaginary);
+
+        return 0;
+    }
+    ```
+* 练习题 7
+    ```cpp
+    struct fraction {
+        int numerator;
+        int denominator;
+    };
+
+    int gcd(int p, int q) {
+        if ( q == 0 ) {
+            return p;
+        }
+        return gcd(q, p%q);
+    }
+
+    void reduceFrac (struct fraction *f) {
+        int n = gcd((*f).numerator, (*f).denominator);
+        (*f).numerator /= n;
+        (*f).denominator /= n;
+    }
+
+    struct fraction addFrac (struct fraction f1, struct fraction f2) {
+        int n = f1.numerator * f2.denominator + f2.numerator * f1.denominator;
+        int d = f1.denominator * f2.denominator;
+        struct fraction f = {n, d};
+        reduceFrac(&f);
+        return f;
+    }
+
+    struct fraction subFrac (struct fraction f1, struct fraction f2) {
+        int n = f1.numerator * f2.denominator - f2.numerator * f1.denominator;
+        int d = f1.denominator * f2.denominator;
+        struct fraction f = {n, d};
+        reduceFrac(&f);
+        return f;
+    }
+
+    void printFrac (struct fraction f) {
+        printf("%d / %d\n", f.numerator, f.denominator);
+    }
+
+    int main(void)
+    {
+        struct fraction f = {16, 40};
+        reduceFrac(&f);
+        printFrac(f); // 2 / 5
+        
+        struct fraction f1 = {16, 40};
+        struct fraction f2 = {12, 20};
+
+        struct fraction sum = addFrac(f1, f2);
+        printFrac(sum); // 1 / 1
+
+        struct fraction diff = subFrac(f1, f2);
+        printFrac(diff); // 1 / -5
+
+        return 0;
+    }
+    ```
+* 练习题 9
+    ```cpp
+    struct color {
+        int red;
+        int green;
+        int blue;
+    };
+
+    struct color make_color(int red, int green, int blue);
+    struct color brighter(struct color c);
+    void printColor (struct color c);
+
+
+    int main(void)
+    {
+        printColor( make_color(123, 321, -123) ); // (123, 255, 0)
+        printColor( brighter(make_color(0, 0, 0)) ); // (123, 255, 0)
+        printColor( brighter(make_color(140, 140, 140)) ); // (200, 200, 200)
+        printColor( brighter(make_color(200, 200, 200)) ); // (255, 255, 255)
+
+        return 0;
+    }
+
+    struct color make_color(int red, int green, int blue) {
+        if ( red < 0 ) {
+            red = 0;
+        }
+        if ( red > 255 ) {
+            red = 255;
+        }
+        if ( green < 0 ) {
+            green = 0;
+        }
+        if ( green > 255 ) {
+            green = 255;
+        }
+        if ( blue < 0 ) {
+            blue = 0;
+        }
+        if ( blue > 255 ) {
+            blue = 255;
+        }
+
+        struct color c = {red, green, blue};
+        return c;
+    }
+    struct color brighter(struct color c) {
+        int r, g, b;
+        r = c.red / 0.7;
+        g = c.green / 0.7;
+        b = c.blue / 0.7;
+
+        if ( r == 0 && g == 0 && b == 0 ) {
+            return (struct color){3, 3, 3};
+        }
+
+        r = r > 255 ? 255 : r;
+        g = g > 255 ? 255 : g;
+        b = b > 255 ? 255 : b;
+
+        return (struct color){r, g, b};
+    }
+    void printColor (struct color c) {
+        printf("(%d, %d, %d)\n", c.red, c.green, c.blue);
+    }
+    ```
+* 练习题 10
+    ```cpp
+    #include <stdio.h>
+    #include <stdbool.h>
+
+    struct point { int x,  y; };
+    struct rectangle { struct point upper_left, lower_right; };
+
+    int area (struct rectangle r);
+    struct point center (struct rectangle r);
+    struct rectangle move (struct rectangle r, int x, int y);
+    bool isInRec (struct rectangle, struct point);
+
+
+    int main(void)
+    {
+        struct rectangle r = {
+            .upper_left = (struct point) {5, 20},
+            .lower_right = (struct point) {30, 10},
+        };
+
+        printf("%d\n", area(r)); // 250
+        printf("(%d, %d)\n", center(r)); // (17, 15)
+        printf("(%d, %d)\n", center(move(r, 10, 5))); // (27, 20)
+
+        struct point p = {6, 12};
+        printf("%d\n", isInRec(r, p)); // 1
+
+        p.x = 5;
+        printf("%d\n", isInRec(r, p)); // 0
+
+        return 0;
+    }
+
+
+    int area (struct rectangle r) {
+        int w = r.lower_right.x - r.upper_left.x;
+        int h = r.upper_left.y - r.lower_right.y;
+        return w * h;
+    }
+
+    struct point center (struct rectangle r) {
+        int x = (r.lower_right.x + r.upper_left.x) / 2;
+        int y = (r.lower_right.y + r.upper_left.y) / 2;
+        return (struct point) {x, y};
+    }
+
+    struct rectangle move (struct rectangle r, int x, int y) {
+        int lx = r.lower_right.x + x;
+        int ux = r.upper_left.x + x;
+        int ly = r.lower_right.y + y;
+        int uy = r.upper_left.y + y;
+        return (struct rectangle) {
+            .upper_left = (struct point) {ux, uy},
+            .lower_right = (struct point) {lx, ly},
+        };
+    }
+
+    bool isInRec (struct rectangle r, struct point p) {
+        int lx = r.lower_right.x;
+        int ux = r.upper_left.x;
+        int ly = r.lower_right.y;
+        int uy = r.upper_left.y;
+
+        int x = p.x;
+        int y = p.y;
+
+        return x > ux && x < lx && y > ly && y < uy;
+    }
+    ```
+* 练习题 14
+    ```cpp
+    #include <stdio.h>
+    #include <stdbool.h>
+
+    #define PI 3.1415926
+
+    enum {RECTANGLE, CIRCLE} shape_kind;
+
+    struct point { int x,  y; };
+
+    struct shape {
+        int shape_kind;        /* RECTANGLE or CIRCLE    */
+        struct point center;   /* coordinates of center  */
+        union {
+            struct {
+                int height, width;
+            } rectangle;
+            struct {
+                int radius;
+            } circle;
+        } u;
+    } s;
+
+
+    struct shape getRectangle (int height, int width, struct point center);
+    struct shape getCircle (int radius, struct point center);
+    float area(struct shape s);
+    struct shape move(struct shape s, int x, int y);
+    struct shape scale(struct shape s, double times);
+
+    int main(void)
+    {
+
+        struct point center = {0, 0};
+
+        struct shape r = getRectangle(5, 6, center);
+        printf("%.0f\n", area(r)); // 30
+
+        struct shape c = getCircle(5, center);
+        printf("%.2f\n", area(c)); // 78.54
+
+        struct shape movedC = move(c, 2, 4);
+        printf("(%d, %d)\n", movedC.center.x, movedC.center.y); // (2, 4)
+
+        struct shape scaledC = scale(c, 2);
+        printf("%.2f\n", area(scaledC)); // 314.16
+        
+        return 0;
+    }
+
+
+    struct shape getRectangle (int height, int width, struct point center) {
+        struct shape s;
+        s.shape_kind = RECTANGLE;
+        s.center = center;
+        s.u.rectangle.height = height;
+        s.u.rectangle.width = width;
+        return s;
+    }
+    struct shape getCircle (int radius, struct point center) {
+        struct shape s;
+        s.shape_kind = CIRCLE;
+        s.center = center;
+        s.u.circle.radius = radius;
+        return s;
+    }
+    float area(struct shape s) {
+        if ( s.shape_kind == RECTANGLE ) {
+            return s.u.rectangle.height * s.u.rectangle.width;
+        }
+        else {
+            return PI * s.u.circle.radius * s.u.circle.radius;
+        }
+    }
+    struct shape move(struct shape s, int x, int y) {
+        s.center.x += x;
+        s.center.y += y;
+        return s;
+    }
+    struct shape scale(struct shape s, double times) {
+        s.u.circle.radius *= times;
+        return s;
+    }
+    ```
+* 练习题 18
+    ```cpp
+    #include <stdio.h>
+
+    #define SIZE 8
+
+    typedef enum {EMPTY, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING} Piece;
+    typedef enum {BLACK, WHITE} Color;
+
+    typedef struct {
+        Piece p;
+        Color c;
+    } Square;
+
+    void printSquare (Square s);
+    void printBoard (Square b[8][8]);
+
+    int main(void)
+    {
+
+        Square board[8][8] = {
+            {(Square){ROOK, BLACK},  (Square){KNIGHT, BLACK}, (Square){BISHOP, BLACK}, (Square){QUEEN, BLACK},
+                (Square){KING, BLACK},(Square){BISHOP, BLACK}, (Square){KNIGHT, BLACK}, (Square){ROOK, BLACK}
+            },
+            {(Square){PAWN, BLACK}, (Square){PAWN, BLACK}, (Square){PAWN, BLACK}, (Square){PAWN, BLACK}, 
+                (Square){PAWN, BLACK}, (Square){PAWN, BLACK}, (Square){PAWN, BLACK}, (Square){PAWN, BLACK}
+            },
+            {(Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, 
+                (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}
+            },
+            {(Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, 
+                (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}
+            },
+            {(Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, 
+                (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}
+            },
+            {(Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, 
+                (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}, (Square){EMPTY, BLACK}
+            },
+            {(Square){PAWN, WHITE}, (Square){PAWN, WHITE}, (Square){PAWN, WHITE}, (Square){PAWN, WHITE}, 
+                (Square){PAWN, WHITE}, (Square){PAWN, WHITE}, (Square){PAWN, WHITE}, (Square){PAWN, WHITE}
+            },
+            {(Square){ROOK, WHITE},  (Square){KNIGHT, WHITE}, (Square){BISHOP, WHITE}, (Square){QUEEN, WHITE},
+                (Square){KING, WHITE},(Square){BISHOP, WHITE}, (Square){KNIGHT, WHITE}, (Square){ROOK, WHITE}
+            },
+        };
+
+        printBoard(board);
+
+        return 0;
+    }
+
+
+    void printSquare (Square s) {
+        if ( s.p != 0 ) {
+            switch (s.c) {
+                case 0: 
+                    printf("[BLACK ");
+                    break;
+                case 1: 
+                    printf("[WHITE ");
+                    break;
+            }
+        }
+        switch (s.p) {
+            case 0: 
+                printf("[   EMPTY    ]   ");
+                break;
+            case 1:  
+                printf("  PAWN]   ");
+                break;
+            case 2: 
+                printf("KNIGHT]   ");
+                break;
+            case 3: 
+                printf("BISHOP]   ");
+                break;
+            case 4: 
+                printf("  ROOK]   ");
+                break;
+            case 5: 
+                printf(" QUEEN]   ");
+                break;
+            case 6: 
+                printf("  KING]   ");
+                break;
+        }
+    }
+
+    void printBoard (Square b[8][8]) {
+        for (int i=0; i<SIZE; i++) {
+            for (int j=0; j<SIZE; j++) {
+                printSquare(b[i][j]);
+            }
+            printf("\n");
+        }
+    }
+    ```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
