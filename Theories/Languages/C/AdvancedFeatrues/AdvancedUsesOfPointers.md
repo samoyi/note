@@ -24,6 +24,17 @@
         - [`->` 运算符](#--运算符)
         - [在链表的开始处插入结点](#在链表的开始处插入结点)
         - [搜索链表](#搜索链表)
+        - [从链表中删除结点](#从链表中删除结点)
+        - [有序链表](#有序链表)
+    - [指向指针的指针](#指向指针的指针)
+    - [指向函数的指针](#指向函数的指针)
+        - [函数指针作为参数](#函数指针作为参数)
+        - [`qsort` 函数](#qsort-函数)
+        - [函数指针的其他用途](#函数指针的其他用途)
+        - [示例程序　列三角函数表](#示例程序　列三角函数表)
+    - [受限指针](#受限指针)
+    - [灵活数组成员](#灵活数组成员)
+        - [限制](#限制)
     - [References](#references)
 
 <!-- /TOC -->
@@ -468,6 +479,428 @@ int read_line(char str[], int n)
         return list;
     }
     ```
+
+### 从链表中删除结点
+1. 把数据存储到链表中一个很大的好处就是可以轻松删除不需要的结点。就像创建结点一样，删除结点也包含 3 个步骤：
+    1. 定位要删除的结点；
+    2. 改变前一个结点，从而使它 “绕过” 删除结点；
+    3. 调用 `free` 函数收回删除结点占用的内存空间。
+2. 第 1 步并不像看起来那么容易。如果按照显而易见的方式搜索链表，那么将在指针指向要删除的结点时终止搜索。但是，这样做就不能执行第 2 步了，因为第 2 步要求改变前一个结点。
+3. 针对这个问题有各种不同的解决办法。这里将使用 “追踪指针” 的方法：在第 1 步搜索链表时，将保留一个指向前一个结点的指针（`prev`），还有指向当前结点的指针（`cur`）。如果 `list` 指向待搜索的链表，并且 `n` 是要删除的整数，那么下列循环就可以实现第 1 步：
+    ```cpp
+    for (cur = list, prev = NULL;
+        cur != NULL && cur->value != n;
+        prev = cur,  cur = cur->next) ;
+    ```
+4. 接下来，将根据第 2 步的要求执行绕过操作。语句
+    ```cpp
+    prev->next = cur->next;
+    ```
+    使前一个结点中的指针指向了当前结点后面的结点。
+5. 现在准备完成第 3 步，即释放当前结点占用的内存：
+    ```cpp
+    free(cur);
+    ```
+6. 下面的函数 `delete_from_list` 所使用的策略就是刚刚概述的操作。在给定链表和整数 `n` 时，`delete_from_list` 函数就会删除含有 `n` 的第一个结点。如果没有含有 `n` 的结点，那么函数什么也不做。无论上述哪种情况，函数都返回指向链表的指针。
+    ```cpp
+    struct node *delete_from_list(struct node *list, int n)
+    {
+        struct node *cur, *prev;
+
+        for (cur = list, prev = NULL;
+            cur != NULL && cur->value != n;
+            prev = cur,  cur = cur->next) ;
+
+        if (cur == NULL)
+            return list;                /* n was not found */
+            
+        if (prev == NULL)
+            list = list->next;          /* n is in the first node */
+        else
+            prev->next = cur->next;     /* n is in some other node */
+
+        free (cur);
+
+        return list;
+    }
+    ```
+
+### 有序链表
+1. 如果链表的结点是有序的（按结点中的数据排序），我们称该链表是 **有序链表**。往有序列表中插入结点会更困难一些（不再始终把结点放置在链表的开始处），但是搜索会更快（在到达期望结点应该出现的位置后，就可以停止查找了）。下面的程序表明，插入结点的难度增加了，但搜索也更快了。
+2. 下面重做零件数据库程序，这次把数据库存储在链表中。用链表代替数组主要有两个好处
+    * 不需要事先限制数据库的大小，数据库可以扩大到没有更多内存空间存储零件为止；
+    * 可以很容易地按零件编号对数据库排序，当往数据库中添加新零件时，只要把它插入链表中的适当位置就可以了。在原来的程序中，数据库是无序的。
+3. 在新程序中，`part` 结构将包含一个额外的成员，指向链表中下一个结点的指针，而且变量 `inventory` 是指向链表首结点的指针：
+    ```cpp
+    struct part {
+        int number;
+        char name[NAME_LEN+1];
+        int on_hand;
+        struct part *next;
+    };
+
+    struct part *inventory = NULL;     /* points to first part */
+    ```
+4. 新程序中的大多数函数非常类似于它们在原始程序中的版本。然而，`find_part` 函数和 `insert` 函数变得更加复杂了，因为把结点保留在按零件编号排序的链表 `inventory` 中。
+5. 在原来的程序中，函数 `find_part` 返回数组 `inventory` 的索引。而在新程序中，`find_part` 函数返回指针，此指针指向的结点含有需要的零件编号。如果没有找到该零件编号，`find_part` 函数会返回空指针。
+6. 因为链表 `inventory` 是根据零件编号排序的，所以新版本的 `find_part` 函数可以通过在结点的零件编号大于或等于需要的零件编号时停止搜索来节省时间。
+7. `find_part` 函数的搜索循环形式如下
+    ```cpp
+    for (p = inventory;
+        p != NULL && number > p->number;
+        p = p->next) ;
+    ```
+8. 循环终止后还需要另一次判断是否找到了目标节点
+    ```cpp
+    if (p != NULL && number == p->number)
+        return p;
+    ```
+9. 原始版本的 `insert` 函数把新零件存储在下一个有效的数组元素中；新版本的函数需要确定新零件在链表中所处的位置，并且把它插入到那个位置。`insert` 函数还要检查零件编号是否已经出现在链表中了。通过使用与 `find_part` 函数中类似的循环，`insert` 函数可以同时完成这两项任务：
+    ```cpp
+    for (cur = inventory, prev = NULL;
+        cur != NULL && new_node->number > cur->number;
+        prev = cur, cur = cur->next) ;
+    ```
+10. 一旦终止循环，`insert` 函数将检查 `cur` 是否不为 `NULL`，以及 `new_node->number` 是否等于 `cur->number`。如果条件成立，那么零件的编号已经在链表中了，这时需要使用 `free` 释放掉待插入节点占用的内存。否则，`insert` 函数将把新结点插入到 `prev` 和 `cur` 指向的结点之间。
+11. 即使新零件的编号大于链表中的任何编号，此策略仍然有效。这种情况下，`cur` 将为 `NULL`，而 `prev` 将指向链表中的最后一个结点。
+
+
+## 指向指针的指针
+1. 在字符串的内容中，已经遇到过指向指针的指针，使用了元素类型为 `char *` 的数组，指向数组元素的指针的类型为 `char **`。“指向指针的指针” 这一概念也频繁出现在链式数据结构中。特别是，当函数的实际参数是指针变量时，有时候会希望函数能通过指针指向别处的方式改变此变量。做这项工作就需要用到指向指针的指针。
+2. 下面的 `add_to_list` 函数用来在链表的开始处插入结点。当调用函数 `add_to_list` 时，我们会传递给它指向原始链表首结点的指针，然后函数会返回指向新链表首结点的指针：
+    ```cpp
+    struct node *add_to_list(struct node *list, int n)
+    {
+        struct node *new_node;
+
+        new_node = malloc(sizeof(struct node));
+        if (new_node == NULL)  {
+            printf("Error: malloc failed in add_to_list\n");
+            exit(EXIT_FAILURE);
+        }
+        new_node->value = n;
+        new_node->next = 1ist;
+        return new_node;
+    }
+    ```
+3. 假设修改了函数使它不再返回 `new_node`，而是把 `new_node` 赋值给 `list`。换句话说，把 `return` 语句从函数 `add_to_list` 中移走，同时用下列语句进行替换：
+    ```cpp
+    list = new_node;
+    ```
+4. 可惜的是，这个想法无法实现。假设按照下列方式调用函数 `add_to_list`
+    ```cpp
+    add_to_list(first, 10);
+    ```
+    在调用点，会把 `first` 复制给 `list`（按值传递），函数内的最后一行改变了 `list` 的值，使它指向了新的结点。但是，此赋值操作对外面的 `first` 没有影响。
+5. 让函数 `add_to_list` 修改 `first` 是可能的，但是这就要求给函数 `add_to_list` 传递一个指向 `first` 的指针。下面是此函数的正确形式：
+    ```cpp
+    void_add_to_list(struct node **list, int n)
+    {
+        struct node *new_node;
+
+        new_node = malloc(sizeof(struct node));
+        if (new_node == NULL) {
+            printf("Error: malloc failed in add_to_list\n");
+            exit(EXIT_FAILURE);
+        }
+        new_node->value = n;
+        new_node->next = *list;
+        *list = new_node;
+    }
+    ```
+6. 当调用新版本的函数 `add_to_list` 时，第一个实际参数将会是链表首节点的指针（`first`）的指针
+    ```cpp
+    add_to_list(&first, 10);
+    ```
+7. 所以在函数里面，`list` 接收到的就是该指针的指针的副本。所以 `*list` 就是首节点的指针，即 `first`。现在把 `new_node` 赋值给 `*list` 将会修改 `first` 指向的内容。
+
+
+## 指向函数的指针
+C 语言没有要求指针只能指向数据，它还允许指针指向函数。毕竟函数占用内存单元，所以每个函数都有地址，就像每个变量都有地址一样。
+
+### 函数指针作为参数
+1. 假设我们要编写一个名为 `integrate` 的函数来求函数 `f` 在 `a` 点和 `b` 点之间的积分。我们希望函数 `integrate` 尽可能具有一般性，因此把 `f` 作为实际参数传入。为了在 C 语言中达到这种效果，我们把 `f` 声明为指向函数的指针。
+2. 假设希望对具有 `double` 型形式参数并且返回 `double` 型结果的函数求积分，函数 `integrate` 的原型如下所示：
+    ```cpp
+    double integrate(double (*f)(double), double a, double b);
+    ```
+    在 `*f` 两边的圆括号说明 `f` 是个指向函数的指针，而不是返回值为指针的函数。
+3. 把 `f` 当成函数声明也是合法的：
+    ```cpp
+    double integrate(double f(double), double a, double b);
+    ```
+    从编译器的角度来看，这种原型和前一种形式是完全一样的。不懂，这不就不是指针了吗？
+4. 在调用函数 `integrate` 时，将把一个函数名作为第一个实际参数。例如，下列调用将计算 `sin` 函数从 0 到 $\pi/2$ 的积分：
+    ```cpp
+    result = integrate(sin, 0.0, PI / 2);
+    ```
+5. 注意，在 `sin` 的后边没有圆括号。当函数名后边没跟着圆括号时，C 语言编译器会产生指向函数的指针而不会产生函数调用的代码。
+6. 在 `integrate` 函数体内，可以调用 `f` 所指向的函数：
+    ```cpp
+    y = (*f)(x);
+    ```
+7. 作为 `(*f)(x)` 的一种替换选择，C 语言允许用 `f(x)` 来调用 `f` 所指向的函数。虽然 `f(x)` 看上去更自然一些，但是这里将坚持用 `(*f)(x)`，以提醒读者 `f` 是指向函数的指针而不是函数名。
+
+### `qsort` 函数
+1. 函数 `qsort` 是给任意数组排序的通用函数。因为数组的元素可能是任何类型的，甚至是结构或联合，所以必须告诉函数 `qsort` 如何确定两个数组元素哪一个 “更小”。通过编写比较函数可以为函数 `qsort` 提供这些信息。
+2. 当给定两个指向数组元素的指针 `p` 和 `q` 时，比较函数必须返回一个整数。如果 `*p` “小于” `*q`，那么返回的数为负数；如果 `*p` “等于” `*q`，那么返回的数为零；如果 `*p` “大于” `*q`，那么返回的数为正数。这里把 “小于”、“等于” 和 “大于” 放在双引号中是因为需要由我们来确定如何比较 `*p` 和 `*q`。
+3. 函数 `qsort` 具有下列原型：
+    ```cpp
+    void qsort(void *base, size_t nmemb, size_t size,
+              int (*compar) (const void *, const void *));
+    ```
+4. `base` 必须指向数组中的第一个元素。如果只是对数组的一段区域进行排序，那么要使 `base` 指向这段区域的第一个元素。在一般情况下，`base` 就是数组的名字。
+5. `nmemb` 是要排序元素的数量。`size` 是每个数组元素的大小，用字节来衡量。
+6. `compar` 是指向比较函数的指针。当调用函数 `qsort` 时，它会对数组进行升序排列，并且在任何需要比较数组元素的时候调用比较函数。
+7. 例如对上面的 `inventory` 数组进行排序，可以进行如下调用
+    ```cpp
+    qsort(inventory, num_parts, sizeof(struct part), compare_parts);
+    ```
+8. 函数 `qsort` 要求它的形式参数类型为 `void *`，因此我们在传递了 `struct part *` 类型的指针后，在函数内会被转换为 `void *` 类型，但我们不能通过 `void *` 型的指针访问 `part` 结构的成员。
+9. 为了解决这个问题，将用 `compare_parts` 把形式参数 `p` 和 `q` 赋值给 `struct part *` 型的变量，从而把它们转化成为希望的类型
+    ```cpp
+    int compare_parts(const void *p, const void *q)
+    {
+        const struct part *p1 = p;
+        const struct part *q1 = q;
+
+        if (p1->number < q1->number)
+            return -1;
+        else if  (p1->number == q1->number)
+            return 0;
+        else
+            return 1;
+    }
+    ```
+10. `p1` 和 `q1` 的声明中含有单词 `const`，以免编译器生成警告消息。由于 `p` 和 `q` 是 `const` 指针，表明它们指向的对象不能修改，它们只应赋值给声明为 `const` 的指针变量。
+11. 此版本的 `compare_parts` 函数虽然可以使用，但是大多数 C 程序员愿意编写更加简明的函数。首先，注意到能用强制类型转换表达式替换 `p1`和 `q1`：
+    ```cpp
+    int compare_parts(const void *p, const void *q)
+    {
+    if (((struct part *) p)->number <
+        ((struct part *) q)->number)
+        return -1;
+    else if (((struct part *) p)->number ==
+            ((struct part *) q)->number)
+        return 0;
+    else
+        return 1;
+    }
+    ```
+12. 通过移除 `if` 语句可以把函数 `compare_parts` 变得更短：
+    ```cpp
+    int compare_parts(const void *p, const void *q)
+    {
+    return ((struct part *) p)->number -
+            ((struct part *) q)->number;
+    }
+    ```
+
+### 函数指针的其他用途
+1. 我们已经强调了函数指针用作其他函数的实际参数是非常有用的，但函数指针的作用不仅限于此。C 语言把指向函数的指针当成指向数据的指针对待。我们可以把函数指针存储在变量中，或者用作数组的元素，再或者用作结构或联合的成员，甚至可以编写返回函数指针的函数。
+2. 正如其他类型的指针有类型一样，指向函数的指针也要指明将会指向接收什么类型参数返回什么类型值。下面例子中的变量存储的就是指向函数的指针：
+    ```cpp
+    void (*pf)(int);
+    ```
+3. `pf` 可以指向任何带有 `int` 型形式参数并且返回 `void` 型值的函数。如果 `f` 是这样的一个函数，那么可以用下列方式让 `pf` 指向 `f`：
+    ```cpp
+    pf = f;
+    ```
+4. 一旦 `pf` 指向函数 `f`，既可以用下面这种写法调用 `f`：
+    ```cpp
+    (*pf)(i);
+    ```
+    也可以用下面这种写法调用：
+    ```cpp
+    pf(i);
+    ```
+5. 元素是函数指针的数组拥有相当广泛的应用。例如，假设我们编写的程序需要向用户显示可选择的命令菜单。我们可以编写函数实现这些命令，然后把指向这些函数的指针存储在数组中：
+    ```cpp
+    void (*file_cmd[])(void) = {new_cmd,
+                                open_cmd,
+                                close_cmd,
+                                close_all_cmd,
+                                save_cmd,
+                                save_as_cmd,
+                                save_all_cmd,
+                                print_cmd,
+                                exit_cmd
+                            };
+    ```
+
+### 示例程序　列三角函数表
+1. 把书上的例子改成了输入角度而不是弧度
+    ```cpp
+    /* Tabulates values of trigonometric functions */
+
+    #include <math.h>
+    #include <stdio.h>
+
+    void tabulate(double (*f)(double), double first, double last, double incr);
+
+    int main(void)
+    {
+        double final, increment, initial;
+
+        printf("Enter initial value: ");
+        scanf("%lf", &initial);
+
+        printf("Enter final value: ");
+        scanf("%lf", &final);
+
+        printf("Enter increment: ");
+        scanf("%lf", &increment);
+
+        printf("\n      x        cos(x)\n   -------    -------\n");
+        tabulate(cos, initial, final, increment);
+
+        printf("\n      x        sin(x)\n   -------    -------\n");
+        tabulate(sin, initial, final, increment);
+
+        printf("\n      x        tan(x)\n   -------    -------\n");
+        tabulate(tan, initial, final, increment);
+
+        return 0;
+    }
+
+    void tabulate(double (*f)(double), double first, double last, double incr)
+    {
+        double deg, rad;
+        int i, num_intervals;
+
+        num_intervals = ceil((last - first) / incr);
+        for (i = 0; i <= num_intervals; i++) {
+            deg = first + i * incr;
+            rad = deg / 180 * acos(-1);
+            printf("%-10.5f %10.5f\n", deg, (*f)(rad));
+        }
+    }
+    ```
+2. 运行效果如下
+    ```
+    Enter initial value: 0
+    Enter final value: 180
+    Enter increment: 15
+
+        x        cos(x)
+    -------    -------
+    0.00000       1.00000
+    15.00000      0.96593
+    30.00000      0.86603
+    45.00000      0.70711
+    60.00000      0.50000
+    75.00000      0.25882
+    90.00000      0.00000
+    105.00000    -0.25882
+    120.00000    -0.50000
+    135.00000    -0.70711
+    150.00000    -0.86603
+    165.00000    -0.96593
+    180.00000    -1.00000
+
+        x        sin(x)
+    -------    -------
+    0.00000       0.00000
+    15.00000      0.25882
+    30.00000      0.50000
+    45.00000      0.70711
+    60.00000      0.86603
+    75.00000      0.96593
+    90.00000      1.00000
+    105.00000     0.96593
+    120.00000     0.86603
+    135.00000     0.70711
+    150.00000     0.50000
+    165.00000     0.25882
+    180.00000     0.00000
+
+        x        tan(x)
+    -------    -------
+    0.00000       0.00000
+    15.00000      0.26795
+    30.00000      0.57735
+    45.00000      1.00000
+    60.00000      1.73205
+    75.00000      3.73205
+    90.00000   16331778728383844.00000
+    105.00000    -3.73205
+    120.00000    -1.73205
+    135.00000    -1.00000
+    150.00000    -0.57735
+    165.00000    -0.26795
+    180.00000    -0.00000
+    ```
+
+
+## 受限指针 
+1. 在 C99 中，关键字 `restrict` 可以出现在指针的声明中：
+    ```cpp
+    int * restrict p;
+    ```
+2. 用 `restrict` 声明的指针叫做 **受限指针**（restricted pointer）。这样做的目的是，如果指针 `p` 指向的对象在之后需要修改，那么该对象不会允许通过除指针 `p` 之外的任何方式访问（其他访问对象的方式包括让另一个指针指向同一个对象，或者让指针p指向命名变量）。
+3. 下面先来看一个不适合使用受限指针的例子。假设 `p` 和 `q` 的声明如下：
+    ```cpp
+    int * restrict p;
+    int * restrict q;
+    ```
+4. 现在假设 `p` 指向动态分配的内存块：
+    ```cpp
+    p = malloc(sizeof(int));
+    ```
+5. 通常情况下可以将 `p` 复制给 `q`，然后通过 `q` 对整数进行修改。但由于 `p` 是受限指针，语句 `*q = 0` 的执行效果是未定义的
+    ```cpp
+    q = p;
+    *q = 0;     /* causes undefined behavior */
+    ```
+TODO
+
+
+## 灵活数组成员 
+1. 有时我们需要定义一个结构，其中包括未知大小的数组。例如，我们可能需要使用一种与众不同的方式来存储字符串。通常，一个字符串是一个以空字符标志结束的字符数组，但是用其他方式存储字符串是有好处的。一种选择是将字符串的长度与字符存于一起（没有空字符）。长度和字符可以存储在如下的结构中：
+    ```cpp
+    struct vstring {
+        int len;
+        char chars[N];
+    };
+    ```
+2. 这里 `N` 是一个表示字符串最大长度的宏。但是，我们不希望使用这样的定长数组，因为这样会迫使我们限制字符串的长度，而且会浪费内存，因为大多数字符串并不需要N个字符。
+3. C 程序员解决这个问题的传统方案是声明 `chars` 的长度为 1，然后动态地分配每一个字符串：
+    ```cpp
+    struct vstring {
+        int len;
+        char chars[1];
+    };
+    struct vstring *str = malloc(sizeof(struct vstring) + 10 - 1);
+    str->len = 10;
+    printf("%d\n", sizeof(str)); // 4
+    printf("%d\n", str->len); // 10
+    ```
+4. 这里使用了一种 “欺骗” 的方法，分配比该结构声明时应具有的内存更多的内存，然后使用这些内存来存储 `chars` 数组额外的元素。这种方法在过去的这些年中非常流行，称为 “struct hack”。
+5. C99 提供了 **灵活数组成员**（flexible array member）来达到同样的目的。当结构的最后一个成员是数组时，其长度可以省略：
+    ```cpp
+    struct vstring {
+        int len;
+        char chars[];    /* flexible array member - C99 only */
+    };
+    ```
+6. `chars` 数组的长度在为 `vstring` 结构分配内存时确定，通常调用 `malloc`:
+    ```cpp
+    struct vstring *str = malloc(sizeof(struct vstring) + 10);
+    str->len = 10;
+    printf("%d\n", sizeof(str)); // 4
+    printf("%d\n", str->len); // 10
+    ```
+7. 在这个例子中，`str` 指向一个 `vstring` 结构，其中 `char` 数组占有 10 个字符。`sizeof` 操作在计算结构大小时忽略了 `chars` 的大小。灵活数组成员不同寻常之处在于，它在结构内并不占空间。
+8. 包含灵活数组成员的结构需要遵循一些专门的规则
+    * 灵活数组成员必须出现在结构的最后。
+    * 结构必须至少还有一个其他成员。
+    * 复制包含灵活数组成员的结构时，其他成员都会被复制但不复制灵活数组本身。
+
+### 限制    
+1. 具有灵活数组成员的结构是 **不完整类型**（incomplete type）。不完整类型缺少用于确定所需内存大小的信息。
+2. 特别是，不完整类型（包括含有灵活数组成员的结构）不能作为其他结构的成员和数组的元素，但是数组可以包含指向具有灵活数组成员的结构的指针。
+
+
 
 
 
