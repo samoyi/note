@@ -1,21 +1,50 @@
 # Cookie
 
-## Cookie 主要用于以下三个方面：
-* **Session management**(会话状态管理) --
-    如用户登录状态、购物车、游戏分数或其它需要记录的信息
-* **Personalization**(个性化设置) --
-    如用户自定义设置、主题等
-* **Tracking**(浏览器行为跟踪) --
-    如跟踪分析用户行为等
 
-Cookie 曾一度用于客户端数据的存储，因当时并没有其它合适的存储办法而作为唯一的存储手段，
-但现在随着现代浏览器开始支持各种各样的存储方式，Cookie 渐渐被淘汰。由于服务器指定
-Cookie后，浏览器的每次请求都会携带 Cookie 数据，会带来额外的性能开销（尤其是在移动环境
-下）。
+<!-- TOC -->
+
+- [Cookie](#cookie)
+    - [Summary](#summary)
+    - [Cookie 主要用于以下三个方面：](#cookie-主要用于以下三个方面)
+    - [Creating cookies](#creating-cookies)
+    - [Lifetime of a cookie](#lifetime-of-a-cookie)
+        - [Session cookies](#session-cookies)
+        - [Permanent cookies](#permanent-cookies)
+    - [Restrict access to cookies](#restrict-access-to-cookies)
+        - [`Secure` cookies](#secure-cookies)
+        - [`HttpOnly` cookies](#httponly-cookies)
+        - [SameSite (experimental by 2018.6)](#samesite-experimental-by-20186)
+    - [Scope of cookies](#scope-of-cookies)
+        - [`Domain`](#domain)
+        - [`Path`](#path)
+        - [`document.cookie`](#documentcookie)
+    - [Security](#security)
+        - [Session hijacking and XSS](#session-hijacking-and-xss)
+        - [Cross-site request forgery (CSRF)](#cross-site-request-forgery-csrf)
+    - [Tracking and privacy](#tracking-and-privacy)
+        - [Third-party cookies](#third-party-cookies)
+        - [Do-Not-Track](#do-not-track)
+        - [EU cookie directive](#eu-cookie-directive)
+        - [Zombie cookies and Evercookies](#zombie-cookies-and-evercookies)
+    - [Misc](#misc)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
+## Summary
+1. An HTTP cookie is a small piece of data that a server sends to the user's web browser. The browser may store it and send it back with later requests to the same server. 
+2. Cookies were once used for general client-side storage. While this was legitimate when they were the only way to store data on the client, it is now recommended to use modern storage APIs. Cookies are sent with every request, so they can worsen performance.
+
+
+## Cookie 主要用于以下三个方面：
+* **Session management**: Logins, shopping carts, game scores, or anything else the server should remember.
+* **Personalization**: User preferences, themes, and other settings.
+* **Tracking**: Recording and analyzing user behavior.
 
 
 ## Creating cookies
-1. 服务器收到 HTTP 请求时，可以在响应里面添加一个`Set-Cookie` header 用来设置 cookie
+1. After receiving an HTTP request, a server can send one or more `Set-Cookie` headers with the response
     ```js
     // Node
     res.setHeader('Set-Cookie', 'CookieName=CookieValue');
@@ -24,8 +53,7 @@ Cookie后，浏览器的每次请求都会携带 Cookie 数据，会带来额外
     // Browser
     document.cookie = 'CookieName=CookieValue';
     ```
-2. 浏览器收到响应后通常会保存下 Cookie，之后对该服务器每一次请求中都通过`Cookie`请求
-header 将 Cookie 信息发送给服务器。
+2. The cookie is usually stored by the browser, and then the cookie is sent with requests made to the same server inside a `Cookie` HTTP header.
 3. 不管是在服务器还是在浏览器中设置，空格都会被自动忽略
     ```js
     res.setHeader('Set-Cookie', 'CookieName=CookieValue;max-age=1800');
@@ -38,93 +66,75 @@ header 将 Cookie 信息发送给服务器。
     res.end();
     ```
 
+
+## Lifetime of a cookie
 ### Session cookies
-1. A cookie without `Expires` or `Max-Age` directive is a session cookie: it is
-deleted when the client shuts down.
-2. Note that this is a subtly different lifetime than `sessionStorage`: cookies
-are not scoped to a single window, and their default lifetime is the same as the
-entire browser process, not the lifetime of any one window.
-3. However, web browsers may use **session restoring**, which makes most session
-cookies permanent, as if the browser was never closed.
+1. A cookie without `Expires` or `Max-Age` directive is a session cookie: it is deleted when the client shuts down.
+2. Note that this is a subtly different lifetime than `sessionStorage`: cookies are not scoped to a single window, and their default lifetime is the same as the entire browser process, not the lifetime of any one window.
+3. However, web browsers may use **session restoring**, which makes most session cookies permanent, as if the browser was never closed.
 
 ### Permanent cookies
-1. Instead of expiring when the client closes, permanent cookies expire at a
-specific date (`Expires`) or after a specific length of time (`Max-Age`).
-2. If a response includes both an `Expires` header and a `max-age` directive,
-the `max-age` directive overrides the `Expires` header, even if the `Expires`
-header is more restrictive.
-3. When an expiry date is set, the time and date set is relative to the client
-the cookie is being set on, not the server. 出于这个原因也不应该使用`Expires`
-4. 如果设置为小数，则向下取整
+1. Instead of expiring when the client closes, permanent cookies expire at a specific date (`Expires`) or after a specific length of time (`Max-Age`).
+2. If a response includes both an `Expires` header and a `max-age` directive, the `max-age` directive overrides the `Expires` header, even if the `Expires` header is more restrictive
+    ```js
+    // Node
+    res.setHeader('Set-Cookie', 'CookieName=CookieValue;Max-Age=3600');
 
-```js
-// Node
-res.setHeader('Set-Cookie', 'CookieName=CookieValue;Max-Age=3600');
+    // Browser
+    document.cookie = 'CookieName=CookieValue;max-age=3600';
+    ```
+3. When an expiry date is set, the time and date set is relative to the client the cookie is being set on, not the server. 出于这个原因也不应该使用 `Expires`。
+4. 如果设置为小数，则向下取整。
 
-// Browser
-document.cookie = 'CookieName=CookieValue;max-age=3600';
-```
 
+## Restrict access to cookies
 ### `Secure` cookies
-* A secure cookie is only sent to the server with a encrypted request over the
-HTTPS protocol.
+1. A secure cookie is only sent to the server with a encrypted request over the HTTPS protocol, never with unsecured HTTP (except on localhost), and therefore can't easily be accessed by a man-in-the-middle attacker
     ```js
     res.setHeader('Set-Cookie', 'SecureCookieName=SecureCookieValue;Secure');
     ```
-* Starting with Chrome 52 and Firefox 52, insecure sites (`http:`) can't set
-cookies with the `Secure` directive. 但是在服务器中设置的 secure cookie 会出现在响
-应首部里。
-* Even with `Secure`, sensitive information should *never* be stored in cookies,
- as they are inherently insecure and this flag can't offer real protection.
+2. Starting with Chrome 52 and Firefox 52, insecure sites (`http:`) can't set cookies with the `Secure` directive. 
+3. Even with `Secure`, sensitive information should **never** be stored in cookies, as they are inherently insecure and this flag can't offer real protection.
 
 ### `HttpOnly` cookies
-To prevent cross-site scripting (XSS) attacks, `HttpOnly` cookies are
-inaccessible to JavaScript's `document.cookie` API; they are only sent to the
-server. For example, cookies that persist server-side sessions don't need to be
-available to JavaScript, and the `HttpOnly` flag should be set.
-```js
-document.cookie = 'NormalCookieName1=NormalCookieValue1';
-document.cookie = 'HttpOnlyCookieName=HttpOnlyCookieValue;HttpOnly';
-document.cookie = 'NormalCookieName2=NormalCookieValue2;max-age=3600';
-console.log(document.cookie);
-// NormalCookieName1=NormalCookieValue1; NormalCookieName2=NormalCookieValue2
-```
+1. To prevent cross-site scripting (XSS) attacks, `HttpOnly` cookies are inaccessible to JavaScript's `document.cookie` API; they are only sent to the server. 
+2. For example, cookies that persist server-side sessions don't need to be available to JavaScript, and the `HttpOnly` flag should be set.
+    ```js
+    document.cookie = 'NormalCookieName1=NormalCookieValue1';
+    document.cookie = 'HttpOnlyCookieName=HttpOnlyCookieValue;HttpOnly';
+    document.cookie = 'NormalCookieName2=NormalCookieValue2;max-age=3600';
+    console.log(document.cookie);
+    // NormalCookieName1=NormalCookieValue1; NormalCookieName2=NormalCookieValue2
+    ```
 
-### Scope of cookies
-The `Domain` and `Path` directives define the scope of the cookie: what URLs the
-cookies should be sent to.
+### SameSite (experimental by 2018.6)
+1. `SameSite` cookies let servers require that a cookie shouldn't be sent with cross-site requests, which somewhat protects against cross-site request forgery attacks (CSRF)
+    ```js
+    Set-Cookie: mykey=myvalue; SameSite=Strict
+    ```
+2. `SameSite` cookies are still experimental and not yet supported by all browsers.
 
-#### `Domain`
+
+## Scope of cookies
+The `Domain` and `Path` directives define the scope of the cookie: what URLs the cookies should be sent to.
+
+### `Domain`
 1. `Domain` specifies allowed hosts to receive the cookie.
-2. If unspecified, it defaults to the host of the current document location,
-**excluding subdomains**.
-3. If `Domain` is specified, then subdomains are always included. For example,
-if `Domain=mozilla.org` is set, then cookies are included on subdomains like
-`developer.mozilla.org`.
+2. If unspecified, it defaults to the host of the current document location, **excluding subdomains**.
+3. If `Domain` is specified, then subdomains are always included. For example, if `Domain=mozilla.org` is set, then cookies are included on subdomains like `developer.mozilla.org`.
 
-#### `Path`
-1. `Path` indicates a URL path that must exist in the requested URL in order to
-send the `Cookie` header.
-2. The %x2F (`/`) character is considered a directory separator, and
-subdirectories will match as well. For example, if `Path=/docs` is set, these
-paths will match:
+### `Path`
+1. `Path` indicates a URL path that must exist in the requested URL in order to send the `Cookie` header.
+2. The `%x2F` (`/`) character is considered a directory separator, and subdirectories will match as well. For example, if `Path=/docs` is set, these paths will match:
     * `/docs`
     * `/docs/Web/`
     * `/docs/Web/HTTP`
-3. 在请求的路径不符合`Path`的设定时，仍然可以正常的保存响应的 cookie。之后请求路径修改
-为符合的情况时，可以正常发送之前收到的 cookie。
-4. 另外，在网页不符合`Path`指定的路径时，前端使用`document.cookie`也无法读取使用该
-`Path`指定的 cookie。也就是说，不管是浏览器自动发送，还是前端主动获取，只要路径不对，虽
-然仍会保存，但都没有权限使用该 cookie。
+3. 在请求的路径不符合 `Path` 的设定时，仍然可以正常的保存响应的 cookie。之后请求路径修改为符合的情况时，可以正常发送之前收到的 cookie。
+4. 另外，在网页不符合 `Path` 指定的路径时，前端使用 `document.cookie` 也无法读取使用该 `Path` 指定的 cookie。也就是说，不管是浏览器自动发送，还是前端主动获取，只要路径不对，虽然仍会保存，但都没有权限使用该 cookie。
 
-### SameSite (experimental by 2018.6)
-`SameSite` cookies let servers require that a cookie shouldn't be sent with
-cross-site requests, which somewhat protects against cross-site request forgery
-attacks (CSRF). `SameSite` cookies are still experimental and not yet supported
-by all browsers.
 
 ### `document.cookie`
-* 可以设置 cookies 和读取非`HttpOnly`cookies。XSS 盗取 cookies 就是使用这个方法。
+1. 可以设置 cookies 和读取非 `HttpOnly` cookies。XSS 盗取 cookies 就是使用这个方法。
     ```js
     document.cookie = 'CookieName1=CookieValue1';
     document.cookie = 'CookieName2 = CookieValue2 ;max-age=3600';
@@ -136,8 +146,7 @@ by all browsers.
     });
     console.log(oCookies); // {CookieName1: "CookieValue1", CookieName2: "CookieValue2"}
     ```
-* 和`res.setHeader`多次使用会覆盖的情况不同，第二次的`document.cookie`并不会覆盖第一
-次的。因为不会覆盖，所以也无法通过赋值`undefined`进行删除。但是可以修改已经存在的值：
+2. 和 `res.setHeader` 多次使用会覆盖的情况不同，第二次的 `document.cookie` 并不会覆盖第一次的。因为不会覆盖，所以也无法通过赋值 `undefined` 进行删除。但是可以修改已经存在的值：
     ```js
     document.cookie = 'Name1=Value1';
     document.cookie = 'Name2=Value2';
@@ -147,72 +156,49 @@ by all browsers.
     document.cookie = undefined;
     console.log(document.cookie); // Name1=Value1; Name2=Value3; undefined
     ```
-
+3. 如果要删除的话，就要通过让 cookie 过期的方法
+    ```js
+    document.cookie = 'Name1=Value1;max-age=0';
+    ```
+    名为 `Name1` 的 cookie 会立刻过期并被删除。
+    
 
 ## Security
-Confidential or sensitive information should never be stored or transmitted in
-HTTP Cookies, as the entire mechanism is inherently insecure.
+Confidential or sensitive information should never be stored or transmitted in HTTP Cookies, as the entire mechanism is inherently insecure.
 
 ### Session hijacking and XSS
-1. Cookies are often used in web application to identify a user and their
-authenticated session, so stealing a cookie can lead to hijacking the
-authenticated user's session. Common ways to steal cookies include Social
-Engineering or exploiting an XSS vulnerability in the application.
-2. The `HttpOnly` cookie attribute can help to mitigate this attack by
-preventing access to cookie value through JavaScript.
+1. Cookies are often used in web application to identify a user and their authenticated session, so stealing a cookie can lead to hijacking the authenticated user's session. 
+2. Common ways to steal cookies include Social Engineering or exploiting an XSS vulnerability in the application.
+3. The `HttpOnly` cookie attribute can help to mitigate this attack by preventing access to cookie value through JavaScript.
 
 ### Cross-site request forgery (CSRF)
-上面说到的`SameSite`属性以及《白帽子讲Web安全》中写到的防御 CSRF 的三个手段：
-* 验证码：保证只有用户明确交互才会发送请求
-* Referer Check：通过检查请求的`Referer`首部来确定请求页面“来路正当”
-* Anti CSRF Token：大意就是设置 cookie 时生成一个随机 token，同时保存在用户表单隐藏域
-    和 cookie 里。用户提交表单时，服务器会检查这两个 token 是否一致。如果有人 CSRF ，
-    除非他看到了用户的前端代码，否则不会知道这个 token，因而即使发送了请求，服务器也可
-    以发现请求中没有 token 或者和 cookie 中的 token 不同。
+上面说到的 `SameSite` 属性以及《白帽子讲Web安全》中写到的防御 CSRF 的三个手段：
+* **验证码**：保证只有用户明确交互才会发送请求。
+* **Referer Check**：通过检查请求的 `Referer` 首部来确定请求页面 “来路正当”。
+* **Anti CSRF Token**：大意就是设置 cookie 时生成一个随机 token，同时保存在用户表单隐藏域和 cookie 里。用户提交表单时，服务器会检查这两个 token 是否一致。如果有人 CSRF ，除非他看到了用户的前端代码，否则不会知道这个 token，因而即使发送了请求，服务器也可以发现请求中没有 token 或者和 cookie 中的 token 不同。
 
 
 ## Tracking and privacy
 ### Third-party cookies
-1. Cookies have a domain associated to them. If this domain is the same as the
-domain of the page you are on, the cookies is said to be a first-party cookie.
-If the domain is different, it is said to be a third-party cookie.
-2. While first-party cookies are sent only to the server setting them, a web
-page may contain images or other components stored on servers in other domains
-(like ad banners). Cookies that are sent through these third-party components
-are called third-party cookies and are mainly used for advertising and tracking
-across the web.
-3. Most browsers allow third-party cookies by default, but there are add-ons
-available to block them.
-4. If you are not disclosing third-party cookies, consumer trust might get
-harmed if cookie use is discovered. A clear disclosure (such as in a privacy
-policy) tends to eliminate any negative effects of a cookie discovery. Some
-countries also have legislation about cookies.
+1. Cookies have a domain associated to them. If this domain is the same as the domain of the page you are on, the cookies is said to be a first-party cookie. If the domain is different, it is said to be a third-party cookie.
+2. While first-party cookies are sent only to the server setting them, a web page may contain images or other components stored on servers in other domains (like ad banners). Cookies that are sent through these third-party components are called third-party cookies and are mainly used for advertising and tracking across the web.
+3. Most browsers allow third-party cookies by default, but there are add-ons available to block them.
+4. If you are not disclosing third-party cookies, consumer trust might get harmed if cookie use is discovered. A clear disclosure (such as in a privacy policy) tends to eliminate any negative effects of a cookie discovery. Some countries also have legislation about cookies.
 
 ### Do-Not-Track
-There are no legal or technological requirements for its use, but the `DNT`
-header can be used to signal that a web application should disable either its
-tracking or cross-site user tracking of an individual user. See the [`DNT`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/DNT)
-header for more information.  
+There are no legal or technological requirements for its use, but the `DNT` header can be used to signal that a web application should disable either its tracking or cross-site user tracking of an individual user. See the [`DNT`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/DNT) header for more information.  
 因为没有法律或技术的要求，所以即使用户选择使用该 header，也并不能保证服务器一定不追踪
 
 ### EU cookie directive
-1. Requirements for cookies across the EU are defined in [Directive 2009/136/EC](http://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32009L0136)
-of the European Parliament and came into effect on 25 May 2011.
-2. A directive is not a law by itself, but a requirement for EU member states to
- put laws in place that meet the requirements of the directive. The actual laws
-can differ from country to country.
-3. In short the EU directive means that before somebody can store or retrieve
-any information from a computer, mobile phone or other device, the user must
-give informed consent to do so. Many websites have added banners (AKA "cookie
+1. Requirements for cookies across the EU are defined in [Directive 2009/136/EC](http://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32009L0136) of the European Parliament and came into effect on 25 May 2011.
+2. A directive is not a law by itself, but a requirement for EU member states to put laws in place that meet the requirements of the directive. The actual laws can differ from country to country.
+3. In short the EU directive means that before somebody can store or retrieve any information from a computer, mobile phone or other device, the user must give informed consent to do so. Many websites have added banners (AKA "cookie
 banners") since then to inform the user about the use of cookies.
 4. For more, see this [Wikipedia section](https://en.wikipedia.org/wiki/HTTP_cookie#EU_cookie_directive)
-and consult state laws for the latest and most accurate information.  
-确实在近几个月内（2018.5）看到一些外国网站打开后会在顶部出现 cookies 使用的 banner。
+and consult state laws for the latest and most accurate information. 确实在近几个月内（2018.5）看到一些外国网站打开后会在顶部出现 cookies 使用的 banner。
 
 ### Zombie cookies and Evercookies
-A more radical approach to cookies are zombie cookies or "Evercookies" which are
- recreated after their deletion and are intentionally hard to delete forever.
-They are using the Web storage API, Flash Local Shared Objects and other
+A more radical approach to cookies are zombie cookies or "Evercookies" which are recreated after their deletion and are intentionally hard to delete forever. They are using the Web storage API, Flash Local Shared Objects and other
 techniques to recreate themselves whenever the cookie's absence is detected.
 * [Evercookie by Samy Kamkar](https://github.com/samyk/evercookie)
 * [Zombie cookies on Wikipedia](https://en.wikipedia.org/wiki/Zombie_cookie)
@@ -225,4 +211,4 @@ techniques to recreate themselves whenever the cookie's absence is detected.
 
 ## References
 * [《图解HTTP》](http://www.ituring.com.cn/book/1229)
-* [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
+* [Using HTTP cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
