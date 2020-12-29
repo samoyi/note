@@ -38,6 +38,7 @@
     - [受限指针](#受限指针)
     - [灵活数组成员](#灵活数组成员)
         - [限制](#限制)
+    - [练习](#练习)
     - [References](#references)
 
 <!-- /TOC -->
@@ -1003,9 +1004,103 @@ TODO
 2. 特别是，不完整类型（包括含有灵活数组成员的结构）不能作为其他结构的成员和数组的元素，但是数组可以包含指向具有灵活数组成员的结构的指针。
 
 
+## 练习
+* 练习题 7
+    ```cpp
+    // 不知道还有没有更好的方法
+    list = add_to_list(list, 5);
+    list = add_to_list(list, 4);
+    list = add_to_list(list, 3);
+    list = add_to_list(list, 2);
+
+    struct node *p= list;
+    struct node *q= list;
+
+    for (; p != NULL; ) {
+        printf("%d ", p->value);
+        q = p;
+        p = p->next;
+        free(q);
+    }
+    ```
+* 练习题 13
+    ```cpp
+    #include <stdio.h>
+    #include <stdlib.h>
+    struct node {
+        int value;            
+        struct node *next;    
+    };
+    struct node *list = NULL;
+    struct node *add_to_list(struct node *list, int n);
+    struct node *insert_into_ordered_list(struct node *list, struct node *new_node);
+    void printList (struct node *list);
 
 
+    int main(void)
+    {
+        struct node newNode9 = {9};
+        list = insert_into_ordered_list(list, &newNode9);
 
+        list = add_to_list(list, 7);
+        list = add_to_list(list, 6);
+        list = add_to_list(list, 4);
+        list = add_to_list(list, 3);
+
+        struct node newNode2 = {2};
+        list = insert_into_ordered_list(list, &newNode2);
+        struct node newNode5 = {5};
+        list = insert_into_ordered_list(list, &newNode5);
+        struct node newNode8 = {8};
+        list = insert_into_ordered_list(list, &newNode8);
+
+        printList(list); // 2 3 4 5 6 7 8 9
+
+        return 0;
+    }
+
+
+    struct node *add_to_list(struct node *list, int n)
+    {
+        struct node *new_node;
+
+        new_node = malloc(sizeof(struct node));
+        if (new_node == NULL) {
+            printf("Error: malloc failed in add_to list\n");
+            exit(EXIT_FAILURE);
+        }
+
+        new_node->value = n;
+        new_node->next = list;
+
+        return new_node;
+    }
+    struct node *insert_into_ordered_list(struct node *list, struct node *new_node)
+    {
+        struct node *cur = list, *prev = NULL;
+        while (cur != NULL && cur->value <= new_node->value) {
+            prev = cur;
+            cur = cur->next;
+        }
+        if (prev == NULL ) {
+            list = new_node;
+            new_node->next = cur;
+        }
+        else if (cur == NULL ) {
+            prev->next = new_node;
+        }
+        else {
+            prev->next = new_node;
+            new_node->next = cur;
+        }
+        return list;
+    }
+    void printList (struct node *list) {
+        for (; list != NULL; list = list->next) {
+            printf("%d ", list->value);
+        }
+    }
+    ```
 
 
 
