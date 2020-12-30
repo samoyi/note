@@ -860,7 +860,17 @@ TODO，八进制数和十六进制数的转义序列
         if (planets[i][0] == 'M')
             printf("%s begins with M\n", planets[i]);
     ```
-
+10. 两种数组功能类似，但是有着本质的区别。字符串数组的数组项是字符串
+    ```cpp
+    char str_arr[5][11];
+    printf("%d", sizeof(str_arr[0])); // 11
+    ```
+    而字符串指针数组的数组项是指针
+    ```cpp
+    char *str_ptr_arr[5] = {"helloworld"};
+    printf("%d", sizeof(str_ptr_arr[0])); // 4
+    ```
+    
 ### 命令行参数
 1. 命令行信息不仅对操作系统命令可用，它对所有程序都是可用的。 为了能够访问这些命令行参数（C 标准中称为程序参数），必须把 `main` 函数定义为含有两个参数的函数， 这两个参数通常命名（习惯上）为 `argc` 和 `argv`：
     ```cpp

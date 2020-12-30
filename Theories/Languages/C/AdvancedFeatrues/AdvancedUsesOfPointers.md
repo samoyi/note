@@ -11,6 +11,7 @@
     - [动态分配字符串](#动态分配字符串)
         - [使用 `malloc` 函数为字符串分配内存](#使用-malloc-函数为字符串分配内存)
         - [在字符串函数中使用动态存储分配](#在字符串函数中使用动态存储分配)
+        - [为字符串指针数组数组项分配内存](#为字符串指针数组数组项分配内存)
         - [动态分配字符串的数组](#动态分配字符串的数组)
     - [动态分配数组](#动态分配数组)
         - [使用 `malloc` 函数为数组分配存储空间](#使用-malloc-函数为数组分配存储空间)
@@ -161,6 +162,91 @@
     ```
 4. 如果 `malloc` 函数返回空指针，那么 `concat` 函数显示出错消息并且终止程序。这并不是正确的措施，一些程序需要从内存分配失败后恢复并且继续运行。
 5. 像 `concat` 这样动态分配存储空间的函数必须小心使用。当不再需要 `concat` 函数返回的字符串时，需要调用 `free` 函数来释放它占用的空间。如果不这样做，程序最终会用光内存空间。
+
+### 为字符串指针数组数组项分配内存
+1. 下面的例子定义了一个字符串数组，然后读取一个字符串保存进数组第一项
+    ```cpp
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+
+    #define NAME_SIZE 10
+    #define MAX_NAMES 5
+
+    int read_line(char str[], int n);
+    int strArrSortFn(const void *p, const void *q);
+
+
+    int main(void)
+    {
+
+        char names[5][NAME_SIZE+1];
+
+        printf("Input a name: ");
+
+        read_line(names[0], NAME_SIZE);
+
+        printf("Name is: %s", names[0]);
+
+        return 0;
+    }
+
+
+    int read_line(char str[], int n)
+    {
+        int ch, i = 0;
+
+        while ((ch = getchar()) != '\n') {
+            if (i < n) {
+                str[i++] = ch;
+            }
+        }
+        str[i] = '\0';
+        return i;
+    }
+    ```
+2. 但是如果使用字符串指针数组则会出错
+    ```cpp
+    char *names[MAX_NAMES];
+
+    printf("Input a name: ");
+
+    read_line(names[0], NAME_SIZE); // 错误
+    ```
+3. 应该是因为 `read_line` 要写入字符，而数组项现在只是指针，而且并没有为指针分配保存字符串的内存。
+4. 所以应该先分配内存
+    ```cpp
+    char *names[MAX_NAMES];
+
+    names[0] = malloc(NAME_SIZE+1);
+
+    if (names[0] == NULL)  {
+        printf("malloc error");
+        return 0;
+    }
+
+    printf("Input a name: ");
+
+    read_line(names[0], NAME_SIZE);
+    ```
+5. 使用 `strcpy` 的时候也会遇到同样的问题。下面因为没有内存分配但是却要把它当做字符串使用，所以会出错
+    ```cpp
+    char *names[MAX_NAMES];
+    strcpy(names[0], "hello");
+    ```
+6. 同样可以分配内存在复制，或者把 `names` 声明为字符串数组。
+7. 当然也可以直接让数组项的指针指向字符串
+    ```cpp
+    names[0] = "hello";
+    ```
+8. 但不懂为什么给字符串指针初始化了字符串值仍然需要分配内存
+    ```cpp
+    char *names[MAX_NAMES] = {"world"};
+
+    printf("Input a name: ");
+
+    read_line(names[0], NAME_SIZE); // 错误
+    ``` 
 
 ### 动态分配字符串的数组
 ```cpp
@@ -940,7 +1026,7 @@ C 语言没有要求指针只能指向数据，它还允许指针指向函数。
     ```cpp
     int * restrict p;
     ```
-2. 用 `restrict` 声明的指针叫做 **受限指针**（restricted pointer）。这样做的目的是，如果指针 `p` 指向的对象在之后需要修改，那么该对象不会允许通过除指针 `p` 之外的任何方式访问（其他访问对象的方式包括让另一个指针指向同一个对象，或者让指针p指向命名变量）。
+2. 用 `restrict` 声明的指针叫做 **受限指针**（restricted pointer）。这样做的目的是，如果指针 `p` 指向的对象在之后需要修改，那么该对象不会允许通过除指针 `p` 之外的任何方式访问（其他访问对象的方式包括让另一个指针指向同一个对象，或者让指针 `p` 指向命名变量）。
 3. 下面先来看一个不适合使用受限指针的例子。假设 `p` 和 `q` 的声明如下：
     ```cpp
     int * restrict p;
@@ -1102,10 +1188,129 @@ TODO
     }
     ```
 
+* 编程题 1  
+1. 开始时只分配一个 `struct part` 的内存，之后在每次输入 `i` 命令时追加一个。
+2. 改动部分如下
+    ```cpp
+    #include <stdlib.h>
+
+    // ...
+
+    struct part {
+        int number;
+        char name[NAME_LEN+1];
+        int on_hand;
+    };
+
+    struct part *inventory;
+
+    // ...
+
+    int main(void)
+    {
+        inventory = malloc(sizeof(struct part));
+
+        // ...
+    }
+
+    void insert(void)
+    {
+        // ...
+
+        inventory = realloc(inventory, (num_parts+1) * sizeof(struct part));
+
+        // ...
+    }
+    ```
+
+* 编程题 2
+    ```cpp
+    int cmpByName(const void *p, const void *q) {
+        const struct part *part1 = p;
+        const struct part *part2 = q;
+
+        return strcmp(part1->name, part2->name);
+    }
+    int cmpByNumber(const void *p, const void *q) {
+        const struct part *part1 = p;
+        const struct part *part2 = q;
+
+        if ( part1->number == part2->number) {
+            return 0;
+        }
+        else {
+            return part1->number > part2->number;
+        }
+    }
+    ```
+
+* 编程题 5
+    ```cpp
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+
+    void *my_malloc (size_t size);
+    int read_line(char str[], int n);
+    int strArrSortFn(const void *p, const void *q);
+    void printStrArr(char *arr[], int size);
+
+    #define STR_SIZE 20
+    #define MAX_WORD 20
+
+    int main(void)
+    {
+        char *words[MAX_WORD];
+        int index = 0;
+
+        while (1) {
+            
+            printf("Enter word:");
+            words[index] = malloc(STR_SIZE+1); // 
+            read_line(words[index], STR_SIZE);
+            if (strlen(words[index]) == 0) {
+                break;
+            }
+            index++;
+        }
+
+        qsort(words, index, sizeof(words[0]), strArrSortFn);
+        printStrArr(words, index);
+
+        return 0;
+    }
 
 
+    void *my_malloc (size_t size) {
+        void *p = malloc(size);
+        if ( p == NULL ) {
+            printf("malloc returned NULL");
+        }
+        return p;
+    }
+    int read_line(char str[], int n)
+    {
+        int ch, i = 0;
 
-
+        while ((ch = getchar()) != '\n') {
+            if (i < n) {
+                str[i++] = ch;
+            }
+        }
+        str[i] = '\0';
+        return i;
+    }
+    int strArrSortFn(const void *p, const void *q) {
+        char * const *m = p;
+        char * const *n = q;
+        return strcmp(*m, *n);
+    }
+    void printStrArr(char *arr[], int size) {
+        for (int i=0; i<size; i++) {
+            printf("%s ", arr[i]);
+        }
+    }
+    ```
 
 
 
