@@ -11,6 +11,7 @@
         - [共享宏定义和类型定义](#共享宏定义和类型定义)
         - [共享函数原型](#共享函数原型)
             - [引用源文件而不引用头文件的问题](#引用源文件而不引用头文件的问题)
+        - [Difference between a definition and a declaration](#difference-between-a-definition-and-a-declaration)
         - [共享变量声明](#共享变量声明)
         - [保护头文件](#保护头文件)
         - [头文件中的 `#error` 指令](#头文件中的-error-指令)
@@ -165,6 +166,31 @@
     ```
 3. 这些文件都会很好地被编译。但当链接器发现函数 `f` 的目标代码有两个副本时，问题就出现了。
 4. 当然，如果只是 `bar.c` 包含此函数，而 `baz.c` 没有，那么将没有问题。为了避免出现问题，最好只用 `#include` 包含头文件而非源文件。
+
+### Difference between a definition and a declaration
+1. A **declaration** introduces an identifier and describes its type, be it a type, object, or function. A declaration is **what the compiler** needs to accept references to that identifier. These are declarations:
+    ```cpp
+    extern int bar;
+    extern int g(int, int);
+    double f(int, double); // extern can be omitted for function declarations
+    class foo; // no extern allowed for type declarations
+    ```
+2. A **definition** actually instantiates/implements this identifier. It's **what the linker needs** in order to link references to those entities. These are definitions corresponding to the above declarations:
+    ```cpp
+    int bar;
+    int g(int lhs, int rhs) {return lhs*rhs;}
+    double f(int i, double d) {return i+d;}
+    class foo {};
+    ```
+3. A definition can be used in the place of a declaration.
+4. An identifier can be declared as often as you want. Thus, the following is legal in C and C++:
+    ```cpp
+    double f(int, double);
+    double f(int, double);
+    extern double f(int, double); // the same as the two above
+    extern double f(int, double);
+    ```
+5. However, it must be defined exactly once. If you forget to define something that's been declared and referenced somewhere, then the linker doesn't know what to link references to and complains about a missing symbols. If you define something more than once, then the linker doesn't know which of the definitions to link references to and complains about duplicated symbols.
 
 ### 共享变量声明
 1. 为了共享函数，要把函数的定义放在一个源文件中，然后在需要调用此函数的其他文件中放置声明。共享外部变量的方法和此方式非常类似。
@@ -736,3 +762,4 @@ void flush_line(void)
 
 ## References
 * [C语言程序设计](https://book.douban.com/subject/4279678/)
+* [What is the difference between a definition and a declaration?](https://stackoverflow.com/questions/1410563/what-is-the-difference-between-a-definition-and-a-declaration)
