@@ -10,7 +10,7 @@ typedef struct moe {
 
 typedef struct stack_type *Stack;
 
-Stack create(void);
+Stack create(void); // 不再需要指定 size
 void destroy(Stack s);
 void make_empty(Stack s);
 bool is_empty(Stack s);

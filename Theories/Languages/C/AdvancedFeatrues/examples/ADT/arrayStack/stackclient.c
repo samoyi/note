@@ -11,12 +11,12 @@ int main(void)
     Stack s1, s2;
     struct moe moe_ptr;
 
-    s1 = create();
-    s2 = create();
+    s1 = create(2);
+    s2 = create(2);
 
     push(s1, moe22);
     push(s1, moe33);
-    
+
     moe_ptr = pop(s1);
     
     printf("Popped %s(age %d) from s1\n", moe_ptr.name, moe_ptr.age);

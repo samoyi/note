@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include "stackADT.h"
 
-#define STACK_SIZE 100
 
 struct stack_type {
-  Item contents[STACK_SIZE];
+  Item *contents; // content 指向 Item 类型数组
   int top;
+  int size; // content 指向数组的 size
 };
 
 static void terminate (const char *message)
@@ -15,17 +15,25 @@ static void terminate (const char *message)
     exit(EXIT_FAILURE);
 }
 
-Stack create(void)
+Stack create(int size)
 {
     Stack s = malloc(sizeof(struct stack_type));
     if (s == NULL)
         terminate("Error in create: stack could not be created.");
+    s->contents = malloc(size * sizeof(Item)); // 为 contents 指向的数组分配指定的内存
+    if (s->contents == NULL) {
+        // 栈创建成功了，但需要的数组创建失败
+        free(s);
+        terminate("Error in create: stack could not be created.");
+    }
     s->top = 0;
+    s->size = size; // 设置 size
     return s;
 }
 
 void destroy(Stack s)
 {
+    free(s->contents); // 分配了两个内存，两个都要释放
     free(s);
 }
 
@@ -41,7 +49,7 @@ bool is_empty(Stack s)
 
 bool is_full(Stack s)
 {
-    return s->top == STACK_SIZE;
+    return s->top == s->size; // 使用动态指定的 size 判断
 }
 
 void push(Stack s, Item i)
