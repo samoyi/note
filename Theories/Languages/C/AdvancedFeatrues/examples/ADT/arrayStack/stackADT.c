@@ -54,8 +54,25 @@ bool is_full(Stack s)
 
 void push(Stack s, Item i)
 {
-    if (is_full(s))
-        terminate("Error in push: stack is full.");
+    if (is_full(s)) {
+        int newSize = s->size * 2;
+        
+        // Item *newArr = malloc(s->size * sizeof(Item)); 
+        Item *newArr = calloc(newSize, sizeof(Item)); 
+        if (newArr == NULL) {
+            terminate("Error in doubling stack size");
+        }
+
+        for (int i=0; i<s->size; i++) {
+            newArr[i] = s->contents[i];
+        }
+
+        free(s->contents);
+        
+        s->size = newSize;
+        s->contents = newArr;
+        
+    }
     s->contents[s->top++] = i;
 }
 
@@ -64,4 +81,11 @@ Item pop(Stack s)
     if (is_empty(s))
         terminate("Error in pop: stack is empty.");
     return s->contents[--s->top];
+}
+
+Item peek(Stack s)
+{
+    if (is_empty(s))
+        terminate("Error in pop: stack is empty.");
+    return s->contents[s->top - 1];
 }

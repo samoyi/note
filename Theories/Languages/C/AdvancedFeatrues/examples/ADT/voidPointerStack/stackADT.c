@@ -3,7 +3,7 @@
 #include "stackADT.h"
 
 struct node {
-    Item data;
+    void *data;
     struct node *next;
 };
 
@@ -54,24 +54,24 @@ bool is_full(Stack s)
     return false; // 永远 false
 }
 
-void push(Stack s, Item i)
+void push(Stack s, void *p)
 {
     struct node *new_node = malloc(sizeof(struct node)); // 创建列表节点
     if (new_node == NULL) {
         terminate("Error in push: stack is full.");
     }
 
-    new_node->data = i;
+    new_node->data = p;
     // 新节点将作为新的栈顶节点，next 属性指向原来的栈顶结点（从上往下指）
     new_node->next = s->top; 
     s->top = new_node;
     s->len++;
 }
 
-Item pop(Stack s)
+void *pop (Stack s)
 {
     struct node *old_top; // 指向被 pop 的栈顶节点，临时的中间指针
-    Item i;
+    void *i;
     if (is_empty(s))
         terminate("Error in pop: stack is empty.");
 
@@ -85,13 +85,15 @@ Item pop(Stack s)
     s->len--;
     return i;
 }
-Item peek(Stack s)
+
+void *peek (Stack s)
 {
     if (is_empty(s))
         terminate("Error in pop: stack is empty.");
 
     return s->top->data;
 }
+
 int length (Stack s) {
     return s->len;
 }

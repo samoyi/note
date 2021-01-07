@@ -11,20 +11,26 @@ int main(void)
     Stack s1, s2;
     struct moe moe_ptr;
 
-    s1 = create(2);
-    s2 = create(2);
+    s1 = create(1);
+    s2 = create(1);
 
     push(s1, moe22);
     push(s1, moe33);
 
+    moe_ptr = peek(s1);
+    printf("Peak from s1: %s(age %d)\n", moe_ptr.name, moe_ptr.age);
+
     moe_ptr = pop(s1);
-    
     printf("Popped %s(age %d) from s1\n", moe_ptr.name, moe_ptr.age);
 
     push(s2, moe_ptr);
+
+    moe_ptr = peek(s1);
+    printf("Peak from s1: %s(age %d)\n", moe_ptr.name, moe_ptr.age);
+
     moe_ptr = pop(s1);
-    
     printf("Popped %s(age %d) from s1\n", moe_ptr.name, moe_ptr.age);
+
     push(s2, moe_ptr);
 
     destroy(s1);
@@ -35,6 +41,7 @@ int main(void)
     }
     
     push(s2, moeTV);
+    
     make_empty(s2);
     
     if (is_empty(s2))

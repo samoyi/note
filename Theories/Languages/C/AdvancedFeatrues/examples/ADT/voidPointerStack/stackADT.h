@@ -3,10 +3,6 @@
 
 #include <stdbool.h>
 
-typedef struct moe {
-    char name[10];
-    int age;
-} Item;
 
 typedef struct stack_type *Stack;
 
@@ -15,9 +11,9 @@ void destroy(Stack s);
 void make_empty(Stack s);
 bool is_empty(Stack s);
 bool is_full(Stack s);
-void push(Stack s, Item i);
-Item pop (Stack s);
-Item peek (Stack s);
+void push(Stack s, void *p);
+void *pop (Stack s);
+void *peek (Stack s);
 int length (Stack s);
 
 #endif
