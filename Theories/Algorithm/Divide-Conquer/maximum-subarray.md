@@ -11,11 +11,12 @@
     - [设计思想](#设计思想)
         - [怎么想到用分治的](#怎么想到用分治的)
         - [暴力算法的改进](#暴力算法的改进)
+        - [动态规划](#动态规划)
     - [分治思路](#分治思路)
         - [划分](#划分)
         - [寻找跨越中点的最大子数组](#寻找跨越中点的最大子数组)
         - [递归求解](#递归求解)
-        - [复杂度](#复杂度)
+        - [递归式和复杂度](#递归式和复杂度)
     - [暴力求解](#暴力求解)
     - [线性时间的动态规划版本](#线性时间的动态规划版本)
     - [References](#references)
@@ -41,9 +42,10 @@
 
 #### 分治法的情况
 1. 直观的看，分治法应该会增加工作量才对。比如说要遍历 n 个数，正常是需要时间 n，但你如果一分为二，不仅仍然要数 n 个数，还要再加入划分的时间。
-2. 这里的分治复杂是和归并排序一样的，可以使用《算法导论》20 和 21 页的两个图来思考。
-3. 考虑一个 8 项数组，使用分治算法，一共只需要计算 32 个子数组，而不是暴力算法的 35 个。
+2. 这里的分治复杂度是和归并排序一样的，可以使用《算法导论》20 和 21 页的两个图来思考。
+3. 考虑一个 8 项数组，使用分治算法，一共只需要计算 32 个子数组，而不是暴力算法的 36 个。
 4. 拆分到最后一层时，拆分出了 8 个单项子数组。
+TODO
 
 
 ## 设计思想
@@ -56,6 +58,8 @@
 ### 暴力算法的改进
 1. 在确定的子数组起点的情况下，求不同终点时的子数组 sum 有些动态规划的感觉：每次求一个新的 sum 不需要从头开始求，而只需要用当前项加上之前的结果即可。
 2. 当我们在解决某个问题的时候，可能会首先想到一个直接粗暴的解法，那我们需要再想想有什么更好的办法，而一种常见的优化就是：利用已有的结果最为基础。
+
+### 动态规划
 
 
 ## 分治思路
@@ -142,7 +146,7 @@
     }
     ```
 
-### 复杂度
+### 递归式和复杂度
 直接看《算法导论》42页的分析。和归并排序具有一样的复杂度，都是 $n\lg n$ 级别。
 
 
@@ -151,7 +155,7 @@
     ```js
     function brute_force_find_maximum_subarray(arr, lowIdx, highIdx) {
         let i, j, k, maxLeft, maxRight, sum, max = Number.NEGATIVE_INFINITY;
-        for (i=lowIdx; i<highIdx; i++) {
+        for (i=lowIdx; i<=highIdx; i++) {
             for (j=i; j<=highIdx; j++) {
                 sum = 0;
                 for (k=i; k<=j; k++) {
@@ -171,7 +175,7 @@
     ```js
     function brute_force_find_maximum_subarray(arr, lowIdx, highIdx) {
         let i, j, maxLeft, maxRight, sum, max = Number.NEGATIVE_INFINITY;
-        for (i=lowIdx; i<highIdx; i++) {
+        for (i=lowIdx; i<=highIdx; i++) {
             sum = 0;
             for (j=i; j<=highIdx; j++) {
                 sum += arr[j];
@@ -248,8 +252,68 @@
     ```
 7. 使用数组 `[13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7]` 测试时没发现问题。但使用 `[13, -3, -25, 20, -3, -16, -23, 18]` 测试时，正确的情况是 `maxLeft` 和 `maxRight` 都是 3，但计算结果 `maxLeft` 变成了 7。
 8. 问题就在于，这样的实现中，找到了最大子数组之后，如果后面的累加导致 `currSum` 小于等于 0，则 `maxLeft` 会错误的发生变化。那个长数组之所以没法显示出错误，是因为最大子数组是 `[18, 20, -7, 12]`，此时 `currSum` 为 43，后面几项累加的过程也都是正值。
-9. 所以，`maxLeft` 的确定也必须要在 `if (currSum > maxSum)` 里面。
+9. 所以，`maxLeft` 的确定也必须要在 `if (currSum > maxSum)` 里面。那么怎么确定？
+10. 一步步推演一次计算的过程会发现，需要在局部 sum 从负值变为非负值的时候记下当前的索引，然后在 `currSum` 大于 `maxSum` 的时候，把刚才记下的索引作为 `maxLeft`。增加一个变量 `tempMaxLeft` 用于记录
+    ```js
+    function kadane_find_maximum_subarray(arr, lowIdx, highIdx) {
+        let maxSum = Number.NEGATIVE_INFINITY;
+        let currSum = Number.NEGATIVE_INFINITY;
+        let maxLeft = -1;
+        let maxRight = -1;
 
+        let tempMaxLeft = -1;
+
+        for (let i=lowIdx; i<=highIdx; i++) {
+            if (currSum > 0) {
+                currSum += arr[i]; 
+            }
+            else {
+                currSum = arr[i];
+                // 上一轮的 currSum 小于等于零，所以走到了这里的 else
+                // 下面的 if 说明变为了非负值
+                if (currSum >= 0) {
+                    tempMaxLeft = i;
+                }
+            }
+            if (currSum > maxSum) {
+                maxSum = currSum;
+                maxLeft = tempMaxLeft;
+                maxRight = i;
+            }
+        }
+
+        return [maxLeft, maxRight, maxSum];
+    }
+    ```
+11. 但现在还有问题，比如说输入数组是 `[-5, -4, -3, -2, -1]` 这样全都是负值的，则 `currSum >= 0` 永远都会是 `false`。导致 `maxLeft` 停留在初始的 -1。在这种情况下，并不存在 “局部 sum 从负值变为非负值”。
+12. 实际上，`maxLeft` 所在的位置并不要求是非负值，而是要求它前一个位置不能是正值，因为如果是正值，那 `maxLeft` 就应该左移到这个正值上。
+13. 所以 `tempMaxLeft = i` 不需要外层的判断
+    ```js
+    function kadane_find_maximum_subarray(arr, lowIdx, highIdx) {
+        let maxSum = Number.NEGATIVE_INFINITY;
+        let currSum = Number.NEGATIVE_INFINITY;
+        let maxLeft = -1;
+        let maxRight = -1;
+
+        let tempMaxLeft = -1;
+
+        for (let i=lowIdx; i<=highIdx; i++) {
+            if (currSum > 0) {
+                currSum += arr[i]; 
+            }
+            else {
+                currSum = arr[i];
+                tempMaxLeft = i;
+            }
+            if (currSum > maxSum) {
+                maxSum = currSum;
+                maxLeft = tempMaxLeft;
+                maxRight = i;
+            }
+        }
+        return [maxLeft, maxRight, maxSum];
+    }
+    ```
 
 
 ## References
