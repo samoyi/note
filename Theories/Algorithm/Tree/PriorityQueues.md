@@ -12,9 +12,6 @@
     - [二叉堆的实现](#二叉堆的实现)
         - [构造数组](#构造数组)
     - [堆的算法](#堆的算法)
-        - [堆的有序化（reheapifying）](#堆的有序化reheapifying)
-            - [大元素上浮](#大元素上浮)
-            - [小元素下沉](#小元素下沉)
         - [插入元素和删除最大元素](#插入元素和删除最大元素)
         - [完整实现](#完整实现)
         - [分析](#分析)
@@ -85,53 +82,7 @@
 
 
 ## 堆的算法
-### 堆的有序化（reheapifying）
-1. 这里以大顶堆为例，**堆的有序性** 是指：对于堆中任意元素 $x$ 及其父元素 $p$，$p$ 都不小于 $x$。
-2. 通过有两种方法来进行大顶堆的有序化：大元素上浮（`swim`）和小元素下沉（`sink`）。
 
-#### 大元素上浮 
-1. 如果堆的有序状态因为某个节点变得比它的父节点更大而被打破，那么我们就需要通过交换它和它的父节点来修复堆。
-2. 交换后，这个上浮的节点比它的两个子节点都大（现在的两个子节点，一个是刚被换下来的曾经的父节点，另一个比曾经的父节点更小，因为它是曾经父节点的子节点）。
-3. 但这个上浮的节点仍然可能比它现在新的父节点更大。因此我们可以一遍遍地用同样的办法恢复秩序，将这个节点不断向上移动直到我们遇到了一个更大的父节点
-    <img src="./images/13.png" width="400" style="display: block; margin: 5px 0 10px;" />
-4. 只要记住位置 $k$ 的节点的父节点的位置是 $\lfloor k/2\rfloor$，这个过程实现起来很简单
-    ```js
-    swim ( k ) {
-        while ( k > 1 && this.less(Math.floor(k/2), k) ) {
-            let parentIndex = Math.floor(k/2);
-            this.swap( parentIndex , k );
-            k = parentIndex;
-        }
-    }
-    ```
-
-#### 小元素下沉
-1. 如果堆的有序状态因为某个节点变得比它的两个子节点或是其中之一更小了而被打破了，那么我们可以通过将它和它的两个子节点中的较大者交换来恢复堆。
-2. 交换可能会在子节点处继续打破堆的有序状态，因此我们需要不断地用相同的方式将其修复，将节点向下移动直到它的子节点都比它更小或是到达了堆的底部
-    <img src="./images/14.png" width="400" style="display: block; margin: 5px 0 10px;" />
-3. 由位置为 $k$ 的节点的子节点位于 $2k$ 和 $2k+1$ 可以直接得到对应的代码
-    ```js
-    sink ( k ) {
-        let size = this.size();
-        while ( 2*k <= size ) {
-            let left = 2*k; 
-            let right = 2*k + 1; 
-            let bigger = left; 
-
-            if ( right <= size && this.less( left, right) ) {
-                bigger = right;
-            }
-
-            if ( !this.less(k, bigger) ) {
-                break;
-            }
-
-            this.swap( k, bigger );
-
-            k = bigger;
-        }
-    }
-    ```
 
 ### 插入元素和删除最大元素
 <img src="./images/15.png" width="600" style="display: block; margin: 5px 0 10px;" />
