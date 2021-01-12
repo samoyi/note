@@ -25,7 +25,9 @@
         - [用联合提供数据的多个视角](#用联合提供数据的多个视角)
             - [大端和小端](#大端和小端)
         - [将指针作为地址使用](#将指针作为地址使用)
-            - [程序示例　查看内存单元](#程序示例　查看内存单元)
+            - [程序示例——查看内存单元](#程序示例查看内存单元)
+        - [`volatile` 类型限定符](#volatile-类型限定符)
+    - [练习](#练习)
     - [References](#references)
 
 <!-- /TOC -->
@@ -495,7 +497,7 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
     p = (BYTE *) 0x1000;           /* p contains address 0x1000 */
     ```
 
-#### 程序示例　查看内存单元
+#### 程序示例——查看内存单元
 1. 这个程序允许用户查看计算机内存段，这主要得益于 C 允许把整数用作指针。
 2. 大多数 CPU 执行程序时都是处于 “保护模式”，这样就意味着程序只能访问那些分配给它的内存。这种方式还可以阻止对其他应用程序和操作系统本身所占用的内存的访问。因此我们只能看到程序本身分配到的内存，如果要对其他内存地址进行访问将导致程序崩溃。
 3. 程序 `viewmemory.c` 先显示了该程序主函数的地址和主函数中一个变量的地址。这可以给用户一个线索去了解哪个内存区可以被探测。
@@ -598,18 +600,169 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
     ```
 11. 存储在这个内存区域的数据都不是字符格式，所以有点难以理解。但是，我们知道一点：`addr` 变量占了这个区域的前 4 个字节。如果对这 4 个字节进行反转，就得到了 BF EC 54 84，这就是用户输入的地址。为什么要反转呢？ 因为 x86 处理器按小端方式存储数据。
 
+### `volatile` 类型限定符
+1. 在一些计算机中，一部分内存空间是 “易变” 的，保存在这种内存空间的值可能会在程序运行期间发生改变，即使程序自身并未试图存放新值。例如，一些内存空间可能被用于保存直接来自输入设备的数据。
+2. `volatile` 类型限定符使我们可以通知编译器，程序中的某些数据是 “易变” 的。`volatile` 限定符通常使用在用于指向易变内存空间的指针的声明中：
+    ```cpp
+    volatile BYTE *p;      /* p will point to a volatile byte */
+    ```
+3. 为了了解为什么要使用 `volatile`，我们假设指针 `p` 指向的内存空间用于存放用户通过键盘输入的最近一个字符。这个内存空间是易变的：每次用户输入一个新字符，这里的值都会发生改变。我们可能使用下面的循环获取键盘输入的字符，并将它们存入一个缓冲区数组中：
+    ```cpp
+    while (缓冲区未满) {
+        等待输入;
+        buffer[i] = *p;
+        if (buffer[i++] == '\n')
+            break;
+    }
+    ```
+4. 比较好的编译器可能会注意到这个循环既没有改变 `p`，也没有改变 `*p`，因此编译器可能会对程序进行优化，使 `*p` 只被取一次：
+    ```cpp
+    在寄存器中存储*p;
+        while (缓冲区未满) {
+        等待输入;
+        buffer[i] = 存储在寄存器中的值;
+        if (buffer[i++] == '\n')
+            break;
+    }
+    ```
+    优化后的程序会不断复制同一个字符来填满缓冲区，这并不是我们想要的程序。
+5. 将 `p` 声明成指向易变的数据的指针可以避免这一问题的发生，因为 `volatile` 限定符会通知编译器 `*p` 每一次都必须从内存中重新取。
 
 
+## 练习
+* 练习题 2
+    ```cpp
+    #include <stdio.h>
 
 
+    unsigned int foo (unsigned int i, short pos) {
+        if (i & 1 << pos) {
+            unsigned int mask = ~(1 << pos);
+            return i & mask;
+        }
+        else {
+            return i | 1 << pos;
+        }
+    }
+
+    int main(void)
+    {
+        unsigned int i, j, k;
+
+        i = 255;
+        int pos = 2;
+
+        i = foo(i, pos);
+        printf("%u\n", i); // 251
+
+        i = foo(i, pos);
+        printf("%u\n", i); // 255
+        
+        return 0;
+    }
+    ```
+* 练习题 3  
+    颠倒 `x` 和 `y`：1、2 步把 `x` 换到 `y`，2、3 步把 `y` 换到 `x`
+    ```cpp
+    #include <stdio.h>
+    // #include<stdbool.h>
+
+    #define M(x,y) ((x)^=(y),(y)^=(x),(x)^=(y))
 
 
+    int main(void)
+    {
+        unsigned int i, j, k;
+
+        i = 4;
+        j = 9;
+
+        // 00000100  00001101  00001101  00001001
+        // 00001001  00001001  00000100  00000100
+            
+
+        M(i, j);
+        printf("%u %u\n", i, j); // 9 4
 
 
+        return 0;
+    }
+    ```
+* 练习题 6
+    ```cpp
+    unsigned short swap_bytes(unsigned short i) {
+        unsigned short j = (i & 0xff) << 8;
+        return j += i >> 8;
+        // return ((i & 0xff) << 8) + (i >> 8);
+    }
+    ```
+* 练习 7
+    ```cpp
+    #include <stdio.h>
+
+    #define UI_WIDTH (sizeof(unsigned int) * 8)
+    unsigned int rotate_left(unsigned int i, int n);
+    unsigned int rotate_right(unsigned int i, int n);
 
 
+    int main(void)
+    {    
+        unsigned int r = rotate_left(0x12345678, 4);
+        printf("%x\n", r);                     // 23456781
+        printf("%x\n", rotate_right(r, 4));    // 12345678
+
+        return 0;
+    }
 
 
+    unsigned int rotate_left(unsigned int i, int n){
+        int offset = n % UI_WIDTH;
+        unsigned int rotated = i >> (UI_WIDTH - offset);
+        return (i << offset) + rotated;
+    }
+    unsigned int rotate_right(unsigned int i, int n){
+        int offset = n % UI_WIDTH;
+        unsigned int rotated = i << (UI_WIDTH - offset);
+        return rotated + (i >> offset);
+    }
+    ```
+* 练习 8  TODO
+    ```cpp
+    unsigned int f(unsigned int i, int m, int n)
+    {
+        // printf("%d", ~(~0 << n));
+        return (i >> (m + 1 - n)) & ~(~0 << n);
+        // i = 11111111 11111111 11111111 01111111   // 4294967167
+        // m = 8  n = 4
+        // l = 00011111 11111111 11111111 11111011
+        // r = 00000000 00000000 00000000 00001111
+        // f = 00000000 00000000 00000000 00001011
+        // 右边是 2^n - 1，n 个 1，也就是左边有 32-n 个 0
+
+        // i = 00000000 00000000 00000000 11011111   // 223
+        // m = 8  n = 4
+        // l = 00000000 00000000 00000000 00000110
+        // r = 00000000 00000000 00000000 00001111
+        // f = 00000000 00000000 00000000 00000110
+    }
+    ```
+* 练习 9  TODO，不使用循环的方法
+    ```cpp
+    int count_ones(unsigned char ch) {
+        int width = sizeof(unsigned char) * 8;
+        int count = 0;
+        int mask;
+
+        for (int i=0; i<width; i++) {
+            mask = 1 << i;
+            if (mask & ch) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+    ```
 
 
 
