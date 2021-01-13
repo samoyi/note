@@ -27,6 +27,12 @@
         - [将指针作为地址使用](#将指针作为地址使用)
             - [程序示例——查看内存单元](#程序示例查看内存单元)
         - [`volatile` 类型限定符](#volatile-类型限定符)
+    - [一些位操作实用技巧](#一些位操作实用技巧)
+        - [大小写转换](#大小写转换)
+        - [判断两个数是否异号](#判断两个数是否异号)
+        - [使用 `n & (n-1)` 及其应用](#使用-n--n-1-及其应用)
+            - [计算 Hamming Weight](#计算-hamming-weight)
+            - [判断一个数是不是 2 的指数](#判断一个数是不是-2-的指数)
     - [练习](#练习)
     - [References](#references)
 
@@ -318,7 +324,22 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
         unsigned int day: 5, month: 4, year: 7;
     };
     ```
-5. 位域的类型必须是 `int`、`unsigned int` 或 `signed int`。使用 `int` 会引起二义性，因为一些编译器将位域的最高位作为符号位，而其他一些编译器则不会。TODO，有什么问题。考虑到可移植性，将所有的位域声明为 `unsigned int` 或 `signed int`。
+5. 位域的类型必须是 `int`、`unsigned int` 或 `signed int`。使用 `int` 会引起二义性，因为一些编译器将位域的最高位作为符号位，而其他一些编译器则不会。考虑到可移植性，将所有的位域声明为 `unsigned int` 或 `signed int`。下面的例子中，在有些编译器下，输出会是 1，但在有的编译器下，输出是 -1
+    ```cpp
+    struct {
+        int flag: 1;
+    } s;
+
+
+    int main(void)
+    {   
+
+        s.flag = 1;
+        printf("%d\n", s.flag);
+
+        return 0;
+    }
+    ```
 6. 在 C99 中，位域也可以具有类型 `_Bool`。C99 编译器还允许额外的位域类型。
 7. 们可以将位域像结构的其他成员一样使用，如下面的例子所示：
     ```cpp
@@ -369,7 +390,7 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
         unsigned int b: 8;
     };
     ```
-    长度为 0 的位域是给编译器的一个信号，告诉编译器将下一个位域在一个存储单元的起始位置对齐。假设存储单元是 8 位长的，编译器会给成员 `a` 分配 4 位，接着跳过余下的 4 位到下一个存储单元，然后给成员 `b` 分配8位。如果存储单元是 16 位，编译器会给 `a` 分配 4 位，接着跳过 12 位，然后给成员 `b` 分配 8 位。
+    长度为 0 的位域是给编译器的一个信号，告诉编译器将下一个位域在一个存储单元的起始位置对齐。假设存储单元是 8 位长的，编译器会给成员 `a` 分配 4 位，接着跳过余下的 4 位到下一个存储单元，然后给成员 `b` 分配 8 位。如果存储单元是 16 位，编译器会给 `a` 分配 4 位，接着跳过 12 位，然后给成员 `b` 分配 8 位。
 
 
 ## 其他底层技术
@@ -443,14 +464,14 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
     ```cpp
     union {
         struct {
-            WORD ax, bx, cx,dx;
+            WORD ax, bx, cx, dx;
         } word;
         struct {
             BYTE al, ah, bl, bh, cl, ch, dl, dh;
         } byte;
     } regs;
     ```
-    `word` 结构的成员会和 `byte` 结构的成员相互重叠。例如，`ax` 会使用与 `al` 和 `ah` 同样的内存空间。
+    `word` 结构的成员会和 `byte` 结构的成员相互重叠。例如，`ax` 会使用与 `ah` 和 `al` 同样的内存空间。
 8. 下面是一个使用 `regs` 联合的例子：
     ```cpp
     #include <stdio.h>
@@ -460,7 +481,7 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
 
     union {
         struct {
-            WORD ax, bx, cx,dx;
+            WORD ax, bx, cx, dx;
         } word;
         struct {
             BYTE al, ah, bl, bh, cl, ch, dl, dh;
@@ -486,7 +507,6 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
 4. C 对存储的顺序没有要求，因为这取决于程序执行时所使用的 CPU。一些 CPU 使用大端方法，一些使用小端方法。
 5. x86 处理器假设数据按小端方式存储，所以 `regs.word.ax` 的第一个字节是低位字节。
 6. 通常我们不用担心字节存储的顺序。但是，在底层对内存进行操作的程序必须注意字节的存储顺序（`regs` 的例子就是如此）。处理含有非字符数据的文件时也需要当心字节的存储顺序。
-
 
 ### 将指针作为地址使用 
 1. 之前说过，指针实际上就是一种内存地址。虽然我们通常不需要知道其细节内容，但是编写底层程序时，这些细节内容就很重要了。
@@ -618,7 +638,7 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
 4. 比较好的编译器可能会注意到这个循环既没有改变 `p`，也没有改变 `*p`，因此编译器可能会对程序进行优化，使 `*p` 只被取一次：
     ```cpp
     在寄存器中存储*p;
-        while (缓冲区未满) {
+    while (缓冲区未满) {
         等待输入;
         buffer[i] = 存储在寄存器中的值;
         if (buffer[i++] == '\n')
@@ -627,6 +647,70 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
     ```
     优化后的程序会不断复制同一个字符来填满缓冲区，这并不是我们想要的程序。
 5. 将 `p` 声明成指向易变的数据的指针可以避免这一问题的发生，因为 `volatile` 限定符会通知编译器 `*p` 每一次都必须从内存中重新取。
+
+
+## 一些位操作实用技巧
+### 大小写转换
+1. 看一下 ASCII 上大小写字母的编码：
+    * 大写字母从 `0100 0001` 到 `0101 1010`，占据了 9-12 byte 的前 26 位。
+    * 小写字母从 `0110 0001` 到 `0111 1010`，占据了 13-16 byte 的前 26 位。
+2. 也许就是故意这么安排的，小写字母并没有紧跟着大写字母，而是在大写字母后面有补了 6 个其他字符，这样小写字母就从一个新 byte 开始，从而小写字母就刚好比大写字母多了 4 个 byte，而在二进制上就是正好从右往左的前五位都相同第六位变成了 1。
+3. 所以大写转小写只需要按位或 `0010 0000`，也就是空格
+    ```cpp
+    ('a' | ' ') = 'a'
+    ('A' | ' ') = 'a'
+    ```
+4. 小写转大写只需要按位与 `1101 1111`，也就是空格。如果也想使用字符，这里 `1101 1111` 已经超出了 ASCII 的范围。不过发现其实大小写的第八位都是 0，所以按位与 `0101 1111` 也没问题，也就是下划线 `_`
+    ```cpp
+    ('b' & '_') = 'B'
+    ('B' & '_') = 'B'
+    ```
+5. 大小写互换的话，就是按位异或 `0010 0000`
+    ```cpp
+    ('d' ^ ' ') = 'D'
+    ('D' ^ ' ') = 'd'
+    ```
+
+### 判断两个数是否异号
+```cpp
+int x = -1, y = 2;
+bool f = ((x ^ y) < 0); // true
+
+int x = 3, y = 2;
+bool f = ((x ^ y) < 0); // false
+```
+
+### 使用 `n & (n-1)` 及其应用
+1. 这个操作是算法中常见的，作用是消除数字 `n` 的二进制表示中的最后一个 `1`。原理如图
+    <img src="./images/17.jpg" width="600" style="display: block; margin: 5px 0 10px; background-color: #fff;" />
+
+#### 计算 Hamming Weight
+Hamming Weight 的定义是一段二进制树中 `1` 的个数，那么就可以通过 `n & (n-1)` 不断消除 `1` 直到这个数变成 0
+```cpp
+int hammingWeight(unsigned int n) {
+    int count = 0;
+    while (n != 0) {
+        n &= n - 1;
+        count++;
+    }
+    return count;
+}
+```
+
+#### 判断一个数是不是 2 的指数
+1. 一个数如果是 2 的指数，那么它的二进制表示一定只含有一个 `1`：
+    ```
+    2^0 = 1 = 0b0001
+    2^1 = 2 = 0b0010
+    2^2 = 4 = 0b0100
+   ``` 
+2. 如果这个数是正数，那么它经过一次 `n & (n-1)` 就会变成 0
+    ```cpp
+    bool isPowerOfTwo(int n) {
+        if (n <= 0) return false;
+        return (n & (n - 1)) == 0;
+    }
+    ```
 
 
 ## 练习
@@ -748,6 +832,7 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
     ```
 * 练习 9  TODO，不使用循环的方法
     ```cpp
+    // 下面最直接的方法或者计算 Hamming Weight
     int count_ones(unsigned char ch) {
         int width = sizeof(unsigned char) * 8;
         int count = 0;
@@ -763,27 +848,84 @@ C 语言提供了 6 个位运算符。这些运算符可以用于对整数数据
         return count;
     }
     ```
+* 练习 14
+    ```cpp
+    // 注意顺序
+    struct IEEE_float {
+        unsigned int mantissa: 23;
+        unsigned int exponent: 8;
+        unsigned int sign: 1;
+    };
+    ```
+* 练习 16
+    ```cpp
+    typedef unsigned char BYTE;
+    typedef unsigned short WORD;
+    typedef unsigned long DWORD;
+
+    union {
+        struct {
+            DWORD eax, ebx, ecx, edx;
+        } dword;
+        struct {
+            WORD ax, _ax, 
+                bx, _bx, 
+                cx, _cx, 
+                dx, _dx;
+        } word;
+        struct {
+            BYTE al, ah, _al, _ah, 
+                bl, bh, _bl, _bh, 
+                cl, ch, _cl, _ch, 
+                dl, dh, _dl, _dh;
+        } byte;
+    } regs;
 
 
 
+    int main(void)
+    {   
+
+        regs.byte.ah = 0x12; // 00010010
+        regs.byte.al = 0x34; // 00110100
+        printf("AX: %hx\n", regs.word.ax); // 1234
+        printf("AX: %hx\n", regs.dword.eax); // 1234
+
+        // 00000000 00000001 00000010 00000011
+        regs.dword.ebx = 0b00000000000000010000001000000011;
+        printf("BX: %hx\n", regs.word.bx); // 203  // 00000010 00000011
+        printf("BH: %hx\n", regs.byte.bh); // 2    // 00000010
+        printf("BL: %hx\n", regs.byte.bl); // 3    // 00000011
+
+        return 0;
+    }
+    ```
+* 编程题 1
+    ```cpp
+    union {
+        struct {
+            unsigned int mantissa: 23;
+            unsigned int exponent: 8;
+            unsigned int sign: 1;
+        } fp;
+        float f;
+    } IEEE_float;
 
 
+    int main(void)
+    {   
 
+        IEEE_float.fp.sign = 1;
+        IEEE_float.fp.exponent = 128;
+        IEEE_float.fp.mantissa = 0;
 
+        printf("%f", IEEE_float.f);
 
-
-
-
-
-
-
-
-
-
-
-
-
+        return 0;
+    }
+    ```
 
 
 ## References
 * [C语言程序设计](https://book.douban.com/subject/4279678/)
+* [位运算的一些实用技巧](https://zhuanlan.zhihu.com/p/79754598)
