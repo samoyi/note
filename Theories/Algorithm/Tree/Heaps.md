@@ -4,6 +4,13 @@
 <!-- TOC -->
 
 - [堆](#堆)
+    - [本质](#本质)
+        - [维护同一子树中根节点与后代节点的大小关系](#维护同一子树中根节点与后代节点的大小关系)
+    - [设计思想](#设计思想)
+        - [`sink` 和 `swim`](#sink-和-swim)
+        - [排序](#排序)
+        - [优先队列](#优先队列)
+    - [用途](#用途)
     - [概述](#概述)
     - [结构属性](#结构属性)
     - [堆的有序化（reheapifying）](#堆的有序化reheapifying)
@@ -17,8 +24,33 @@
         - [添加新节点](#添加新节点)
         - [移除最大的顶节点](#移除最大的顶节点)
     - [Heapsort](#heapsort)
+        - [时间复杂度](#时间复杂度)
 
 <!-- /TOC -->
+
+
+## 本质
+### 维护同一子树中根节点与后代节点的大小关系
+1. 对于堆中的任意子树，根节点永远不小于它的后代节点；但如果两个节点并不是某个子树的根节点和后代节点的关系，那么它们的高度并不能保证大小关系。
+2. 也就是说它维护的有序性并不是系统内任意两个节点的，而是系统中任意子系统的根节点和后代节点的。
+
+
+## 设计思想
+
+### `sink` 和 `swim`
+
+### 排序
+1. 上面本质中说到堆只能维护任意子树的根节点和后代节点的大小关系，所以排序的具体比较步骤只能发生在根节点和后代节点之间，而不能是任意两个节点。
+2. 所以堆排序每次都是通过移除最大节点，因为你只能保证这种大小与关系是确定的。
+
+### 优先队列
+1. 同样根据上面的本质，优先队列只能保证子树的根节点相对于后代节点的优先，而不能保证整个队列是按照优先度排序的。
+2. 所以，当我们希望 **一整组** 对象都要按照某个顺序时，就符合优先队列的特性。
+3. 注意必须是一整组，这样才能通过不断的移除堆顶来维持顺序；而如果只是组内的一部分，是不能保证顺序的，因为顺序的维持必须要通过不断设置堆顶元素来实现。
+
+
+## 用途
+
 
 
 ## 概述
@@ -52,7 +84,7 @@
     2. 现在就假设 $n$ 个元素的堆有 $x$ 行，所以 $2^{x-1} \leq n < 2^x$。
     3. 取对数，有 $x-1 \leq \lg n < x$。所以 $x-1 = \lfloor \lg n \rfloor$。
     4. 因为 $x$ 是对的行数，所以 $x - 1$ 就是堆的高度。
-11. 证明当用数组表示存储 $n$ 个元素的堆时，叶节点下表分别是 $\lfloor n/2 \rfloor + 1, \lfloor n/2 \rfloor + 2, ..., n$
+11. 证明当用数组表示存储 $n$ 个元素的堆时，叶节点下标分别是 $\lfloor n/2 \rfloor + 1, \lfloor n/2 \rfloor + 2, ..., n$
     1. 因为最后一个节点的序号是 $n$，所以它的父节点是 $\lfloor n/2 \rfloor$。
     2. 而该父节点之后所有的节点都是叶节点。
 12. 证明对于有 $n$ 个元素的堆中，至少有 $\lceil n/2^{h+1} \rceil$ 个高度为 $h$ 的节点
@@ -72,12 +104,13 @@
     <img src="./images/13.png" width="400" style="display: block; margin: 5px 0 10px;" />
 4. 只要记住位置 $k$ 的节点的父节点的位置是 $\lfloor k/2\rfloor$，这个过程实现起来很简单
     ```js
-    swim ( k ) {
+    swim (k) {
         while ( k > 1 && this.less(Math.floor(k/2), k) ) {
             let parentIndex = Math.floor(k/2);
-            this.swap(parentIndex , k);
+            this.swap(parentIndex, k);
             k = parentIndex;
         }
+        return k;
     }
     ```
 
@@ -139,10 +172,9 @@ TODO
 
 
 ## Building a heap
-1. We can use the procedure MAX-HEAPIFY（小元素下沉） in a bottom-up manner to convert an
-array $A[1 \ ..\ n]$, where $n = A.length$, into a max-heap. 
-2. The elements in the subarray $A[\lfloor n/2 \rfloor + 1 \ ..\ n]$ are all leaves of the tree, and so each is a 1-element heap to begin with. 
-3. The procedure BUILD-MAX-HEAP goes through the remaining nodes of the tree and runs MAX-HEAPIFY on each one
+1. 既然 `sink` 方法会让一个节点有序，那么我们就可以自底向上的让所有的节点都有序。
+2. 当然不需要对每个节点都执行 `sink`，因为叶节点 `sink` 了也没效果，它们只需要等待上面节点的 `sink`。
+3. 所以我们就自底向上的对所有的非叶节点进行 `sink`
     ```js
     build () {
         for (let i=Math.floor(this.size/2); i>0; i--) {
@@ -152,11 +184,20 @@ array $A[1 \ ..\ n]$, where $n = A.length$, into a max-heap.
     ```
 
 ### 顺序问题
-1. Why do we want the loop index `i` to decrease from $\lfloor n/2 \rfloor$ to $1$ rather than increase from `1` to $\lfloor n/2 \rfloor$? 
-2. 对于现在的实现，当一个元素沉下去后，之后还是有可能再浮起来。比如《算法导论》88 页的节点 8。初看起来似乎是应该从上到下的，因为这样可以让最小的元素直接沉到底部。
-3. 但这样的问题是，如果下面有更大的元素，它就只可能上浮一层，而不能一直上浮。如果采用这种方法，对于《算法导论》88 页的例子，第一次交换是节点 1 和 16，16 只会上浮一层，没有机会上到顶端了。
-4. 现在正确的方法使得浮上去的元素之后还要再进行比较，而如果反过来从上到下，浮上去的元素就没有机会了。
-5. 再反过来想一下，现在的方法会不会导致小元素下降一次之后就没有机会再下降？并不会，因为下降的方法是一降到底的。
+1. 为什么是自底向上而不是自顶向下？
+2. 以《算法导论》88页为例，考虑自顶向下的情况。当节点 1 和节点 16 交换后，16 上浮；之后再也不会访问到节点 16 了，但其实它还没有上浮到位。
+3. 因为 `sink` 只会循环的让小节点一直下沉的合适的位置，但是对于最大的节点，就只会上浮一行，不能保证上浮到位。
+4. 而自底向上就保证了那些没有上浮到位的节点还会被访问到。
+5. 那么，现在就可以想到，如果要自顶向下，就不能用 `sink` 而要用 `swim`，`swim` 会让之后不再访问的大节点上浮到位，而只会让小节点下沉一层，但因为是自顶向下，所以它们还会被访问到。
+6. 但是因为 `swim` 是从子节点出发向父节点比较，所以不能省略对叶节点的遍历
+    ```js
+    build () {
+        for (let i=1; i<=this.size; i++) {
+            this.swim(i);
+        }
+    }
+    ```
+
 
 ### 复杂度
 TODO   $O(n)$
@@ -196,6 +237,7 @@ class BinaryHeap {
             this.swap(parentIndex, k);
             k = parentIndex;
         }
+        return k;
     }
 
     sink (i) {
@@ -250,7 +292,7 @@ class BinaryHeap {
     insert (v) {
         this.arr.push(v);
         this.size++;
-        this.swim(this.size);
+        return this.swim(this.size);
     }
 
     delMax () {
@@ -271,22 +313,19 @@ class BinaryHeap {
     insert (v) {
         this.arr.push(v);
         this.size++;
-        this.swim(this.size);
-    }
-
-    swim (k) {
-        while ( k > 1 && this.less(Math.floor(k/2), k) ) {
-            let parentIndex = Math.floor(k/2);
-            this.swap(parentIndex, k);
-            k = parentIndex;
-        }
+        return this.swim(this.size);
     }
     ```
 
 ### 移除最大的顶节点
-1. 把最后一个节点移到顶节点，然后再通过大小比较把它移动到合适的位置
+1. 要移除根节点，肯定不能直接移除，否则就变成两棵树了。那么找谁来填补空位呢？
+2. 因为根节点是最大的，那么看起来应该找第二大的节点来填补，也就是根节点的某个子节点。
+3. 但是这样并不行，因为这个第二大的节点几乎都有两个子节点了，不能再接收和它同父的节点了。就算让这个第二大的节点舍弃调一个本身的子树，那这个子树的重新安放就会很麻烦。
+4. 不过，因为有了 `sink` 方法，所以就可以换上了一个节点，然后再让它 sink 到合适的位置。
+5. 被换上的节点只能是叶节点，因为如果不是的话，那就要拆树。
+6. 理论上可以换上去任何一个叶节点，但考虑到后续操作的方便性，还是应该换上去最后一个叶节点
     <img src="./images/08.png" width="400"  style="display: block; margin: 5px 0 10px;" />
-2. `delMax` 先把最后一个节点移动到顶部，然后再使用 `sink` 方法把它移动到合适的位置
+7. 把最后一个节点移到顶节点，然后再通过大小比较把它移动到合适的位置
     ```js
     delMax () {
         let maxNode = this.arr[1];
@@ -301,7 +340,7 @@ class BinaryHeap {
 
 ## Heapsort
 1. 上面实现的 `delMax` 可以把最大节点移到 `list` 尾部，然后再从 `list` 中移除。
-2. 反复调用 `delMax` 就可以从大到小的移除堆中的节点，被移除的节点按从小到大顺序保存在 `arr` 中。
+2. 那么反复调用 `delMax` 就可以从大到小的移除堆中的节点，被移除的节点按从小到大顺序保存在 `arr` 中
     ```js
     function heapSort(arr) {
         let heap = new BinaryHeap(arr);
@@ -313,4 +352,14 @@ class BinaryHeap {
         return heap.arr.slice(1);
     }
     ```
-3. 为什么不是反向交换，也就是说从堆顶开始？
+3. 为什么不是反向交换，也就是说从堆顶开始？好像也可以，试了一下没发现问题
+    ```js
+    for (let i=1; i<size; i++) {
+        heap.delMax();
+    }
+    ```
+
+### 时间复杂度
+1. `build` 的时间复杂度是 $O(n)$；每次 `sink` 的时间复杂度是 $O(\lg n)$，一共 $n-1$ 次。所以排序的复杂度是 $O(n \lg n)$。
+2. 如果输入数组是升序的，复杂度如何？因为是升序，所以 build 过程移动的会比较多，因为整体要让小节点下来大节点上去，但时间复杂度仍然是 $O(n)$。在经过 build 后，其实也就打乱顺序了，而且升序的数组并不会让 build 更快。所以复杂度还是一样的。
+3. 降序呢？降序的数组在 build 时每个 sink 都会在第一次 `while` 循环 break，但 build 的复杂度仍然是 $O(n)$ 级别。build 完之后顺序并没有改变，还是降序的，正好和期望的排顺序相反，排序会不会更慢呢？因为是降序，所以每次 `delMax` 中的 `sink` 都会从根节点下降到叶节点，但仍然是 $O(\lg n)$ 界别的。所以整体的时间复杂度还是不变的。
