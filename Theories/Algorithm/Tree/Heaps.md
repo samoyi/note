@@ -23,8 +23,16 @@
     - [其他堆操作的实现](#其他堆操作的实现)
         - [添加新节点](#添加新节点)
         - [移除最大的顶节点](#移除最大的顶节点)
+    - [最小堆的实现](#最小堆的实现)
     - [Heapsort](#heapsort)
         - [时间复杂度](#时间复杂度)
+    - [优先队列（Priority Queues）](#优先队列priority-queues)
+        - [最大优先队列（Max-priority queues）的实现](#最大优先队列max-priority-queues的实现)
+            - [建立队列](#建立队列)
+            - [删除并返回最大元素](#删除并返回最大元素)
+            - [提升一个元素的优先级](#提升一个元素的优先级)
+            - [加入新元素](#加入新元素)
+        - [用最小堆实现最小优先队列](#用最小堆实现最小优先队列)
 
 <!-- /TOC -->
 
@@ -337,6 +345,84 @@ class BinaryHeap {
     }
     ```
 
+## 最小堆的实现
+需要修改 `swim` 和 `sink` 方法，以及把 `delMax` 换成 `delMin`
+```js
+class MinBinaryHeap {
+    constructor (arr=[]) {
+        this.arr = [null];
+        this.size = arr.length; 
+        if (arr.length) {
+            this.arr = [null, ...arr];
+            this.build();
+        }
+    }
+
+    swap( index1, index2 ) {
+        let aux = this.arr[index1];
+        this.arr[index1] = this.arr[index2];
+        this.arr[index2] = aux;
+    }
+
+    less ( index1, index2 ) {
+        return this.arr[index1] < this.arr[index2];
+    }
+
+    get list () {
+        return this.arr.slice(1, this.size+1);
+    }
+
+    swim (k) {
+        while ( k > 1 && this.less(k, Math.floor(k/2)) ) {
+            let parentIndex = Math.floor(k/2);
+            this.swap(parentIndex, k);
+            k = parentIndex;
+        }
+        return k;
+    }
+
+    sink (i) {
+        while (2*i <= this.size) {
+            let left = 2*i; 
+            let right = 2*i + 1; 
+            let smallest = left;
+
+            if ( right <= this.size && this.less(right, left)) {
+                smallest = right;
+            }
+
+            if (!this.less(smallest, i)) {
+                break;
+            }
+
+            this.swap(i, smallest);
+
+            i = smallest;
+        }
+    }
+
+    build () {
+        for (let i=Math.floor(this.size/2); i>0; i--) {
+            this.sink(i);
+        }
+    }
+
+    insert (v) {
+        this.arr.push(v);
+        this.size++;
+        return this.swim(this.size);
+    }
+
+    delMin () {
+        let minNode = this.arr[1];
+        this.swap(1, this.size); 
+        this.size--;
+        this.sink(1);
+        return minNode;
+    }
+}
+```
+
 
 ## Heapsort
 1. 上面实现的 `delMax` 可以把最大节点移到 `list` 尾部，然后再从 `list` 中移除。
@@ -363,3 +449,83 @@ class BinaryHeap {
 1. `build` 的时间复杂度是 $O(n)$；每次 `sink` 的时间复杂度是 $O(\lg n)$，一共 $n-1$ 次。所以排序的复杂度是 $O(n \lg n)$。
 2. 如果输入数组是升序的，复杂度如何？因为是升序，所以 build 过程移动的会比较多，因为整体要让小节点下来大节点上去，但时间复杂度仍然是 $O(n)$。在经过 build 后，其实也就打乱顺序了，而且升序的数组并不会让 build 更快。所以复杂度还是一样的。
 3. 降序呢？降序的数组在 build 时每个 sink 都会在第一次 `while` 循环 break，但 build 的复杂度仍然是 $O(n)$ 级别。build 完之后顺序并没有改变，还是降序的，正好和期望的排顺序相反，排序会不会更慢呢？因为是降序，所以每次 `delMax` 中的 `sink` 都会从根节点下降到叶节点，但仍然是 $O(\lg n)$ 界别的。所以整体的时间复杂度还是不变的。
+
+
+## 优先队列（Priority Queues）
+1. 许多应用程序都需要处理有序的元素，但不一定要求它们全部有序，或是不一定要一次就将它们排序。很多情况下我们会收集一些元素，处理当前键值最大的元素，然后再收集更多的元素，再处理当前键值最大的元素，如此这般。
+2. 在这种情况下，一个合适的数据结构应该支持两种操作：**删除并返回最大元素**（或最小元素） 和 **插入元素**。这种数据类型叫做 **优先队列**。
+3. 优先队列的典型应有包括作业调度，每次都要从作业队列中选择优先级最高的作业来执行，这可以用最大优先队列实现；还有比如基于事件驱动的模拟器，队列中保存着要模拟的事件，每个时间都有一个发生时间的属性，要按照时间从小到大依次的触发，这可以用最小优先队列实现。
+4. 如果使用优先队列来处理一个数值数组，我们可以规定数组项就是队列元素，数组项值的大小就是元素的优先级。对于实际的应用中，优先队列对应的不是数组，而是应用程序中的对象，因此我们需要确定对象和队列元素的对应关系。为此，需要再队列的每个元素中存储对应对象的 **句柄**（handle），通过一个队列元素的句柄（如一个指针或者整型数），我们可以找到应用程序里对应的那个对象；同样在应用程序的每个对象中，我们也要存储一个可以找到对应队列元素的句柄，通常使用队列数组的下标（如果这个对象的优先级变化，那对应的下标也会跟着变化）。
+
+### 最大优先队列（Max-priority queues）的实现
+#### 建立队列
+```js
+class Max_Priority_Queue {
+    constructor (arr) {
+        this.heap = new BinaryHeap(arr);
+    }
+
+    get list () {
+        return this.heap.list;
+    }
+
+    get maximum () {
+        return this.heap.list[1];
+    }
+}
+```
+
+#### 删除并返回最大元素
+时间复杂度由 `delMax` 中的 `sink` 来决定，因此是 $O(\lg n)$
+```js
+dequeue () {
+    if (this.heap.size < 1) {
+        throw new RangeError("Heap underflow");
+    }
+
+    return this.heap.delMax();
+}
+```
+
+#### 提升一个元素的优先级
+1. 增加一个数组项的值，然后通过上面实现的 `swim` 把它移动到合适的位置。
+2. 提升之后，还要知道被提升到什么位置了，所以要返回 `swim` 的结果。在堆的实现中，序号是从 1 开始计的，不过感觉这里的队列还是从 0 开始计比较合适，所以 `increase_key` 的实现里涉及两个 +1 和一个 -1 的操作
+    ```js
+    increase_key (index, key) {
+        if (index >= this.heap.size || index < 0) {
+            throw new RangeError("Wrong index");
+        }
+        if (key < this.list[index]) {
+            throw new RangeError("New key is smaller than current key");
+        }
+        this.heap.arr[index+1] = key;
+        return this.heap.swim(index+1) - 1;
+    }
+    ```
+3. 时间复杂度由 `swim` 来决定，因此是 $O(\lg n)$。
+
+#### 加入新元素
+1. 把一个元素加入到最后，然后根据优先级 `swim` 到合适的位置。可以直接使用堆的 `insert` 方法
+    ```js
+    enqueue (key) {
+        let idx = this.heap.size + 1;
+        this.heap.arr[idx] = key;
+        return this.heap.insert(idx) - 1;
+    }
+    ```
+2. 时间复杂度由 `insert` 中的 `swim` 来决定，因此是 $O(\lg n)$。
+
+### 用最小堆实现最小优先队列
+只需要把 `increase_key` 换成 `decrease_key`
+```js
+decrease_key (index, key) {
+    if (index >= this.heap.size || index < 0) {
+        throw new RangeError("Wrong index");
+    }
+    if (key > this.list[index]) {
+        throw new RangeError("New key is bigger than current key");
+    }
+    this.heap.arr[index+1] = key;
+    return this.heap.swim(index+1) - 1;
+}
+```
