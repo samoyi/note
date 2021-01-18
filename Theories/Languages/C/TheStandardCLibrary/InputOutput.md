@@ -1,7 +1,6 @@
 # Input/Output
 
 
-
 <!-- TOC -->
 
 - [Input/Output](#inputoutput)
@@ -34,7 +33,33 @@
             - [长度修饰符（可选项）](#长度修饰符可选项)
             - [转换说明符](#转换说明符)
             - [`*` 的示例](#-的示例)
+            - [不常用的两个转换说明的示例](#不常用的两个转换说明的示例)
         - [C99 对 `…printf` 转换说明的修改](#c99-对-printf-转换说明的修改)
+        - [`…scanf` 函数](#scanf-函数)
+        - [`…scanf` 格式串](#scanf-格式串)
+        - [`…scanf` 转换说明](#scanf-转换说明)
+        - [C99 对 `…scanf` 转换说明的改变](#c99-对-scanf-转换说明的改变)
+        - [`scanf` 示例](#scanf-示例)
+        - [检测文件末尾和错误条件](#检测文件末尾和错误条件)
+    - [字符的输入/输出](#字符的输入输出)
+        - [输出函数](#输出函数)
+        - [输入函数](#输入函数)
+        - [程序　复制文件](#程序　复制文件)
+    - [行的输入/输出](#行的输入输出)
+        - [输出函数](#输出函数-1)
+        - [输入函数](#输入函数-1)
+    - [块的输入/输出](#块的输入输出)
+    - [文件定位](#文件定位)
+        - [`fseek`](#fseek)
+        - [`ftell`](#ftell)
+        - [`rewind`](#rewind)
+        - [`fgetpos` 和 `fsetpos`](#fgetpos-和-fsetpos)
+        - [程序　修改零件记录文件](#程序　修改零件记录文件)
+    - [字符串的输入/输出](#字符串的输入输出)
+        - [输出函数](#输出函数-2)
+            - [`sprintf`](#sprintf)
+            - [`snprintf`](#snprintf)
+        - [输入函数](#输入函数-2)
     - [References](#references)
 
 <!-- /TOC -->
@@ -541,8 +566,6 @@ int printf(const char * restrict format, ...);
     printf("[%-6s]\n", s2);   // [buzzword]
     ```
 
-
-
 #### 最小字段宽度（可选项）
 1. 如果数据项太小以至于无法达到这一宽度，那么会对字段进行填充。默认情况下会在数据项的左侧添加空格，从而使其在字段宽度内右对齐。
 2. 如果数据项过大以至于超过了这个宽度，那么会完整地显示数据项。
@@ -616,17 +639,435 @@ int printf(const char * restrict format, ...);
     printf("%*d", page_width / num_cols, i);
     ```
 
-#### `%p` 和 `%n` 的示例
-TODO
-   
+####  不常用的两个转换说明的示例
+`%n` 和 `%p` （左边这两个如果出现在标题 markdown TOC 就不更新了……）
+
 ### C99 对 `…printf` 转换说明的修改
-书上
+书上  
 
-### 
+### `…scanf` 函数
+```cpp
+int fscanf(FILE * restrict stream, const char * restrict format, ...);
+int scanf(const char * restrict format, ...);
+```
+
+1. `fscanf` 函数和 `scanf` 函数从输入流读入数据，并且使用格式串来指明输入的格式。格式串的后边可以有任意数量的指针（每个指针指向一个对象）作为额外的实际参数。输入的数据项（根据格式串中的转换说明）进行转换并且存储在指针指向的对象中。
+2. `scanf` 函数始终从标准输入流 `stdin` 中读入内容，而 `fscanf` 函数则从它的第一个参数所指定的流中读入内容：
+    ```cpp
+    scanf("%d%d", &i, &j);       /* reads from stdin */
+    fscanf(fp, "%d%d", &i, &j);  /* reads from fp */
+    ```
+    `scanf` 函数的调用等价于以 `stdin` 作为第一个实际参数的 `fscanf` 函数调用。
+3. 如果发生输入失败（即没有输入字符可以读）或者匹配失败（即输入字符和格式串不匹配），那么 `…scanf` 函数会提前返回。在 C99 中，输入失败还可能由编码错误导致。编码错误意味着我们试图按多字节字符的方式读取输入，但输入字符却不是有效的多字节字符。
+4. 这两个函数都返回读入并且赋值给对象的数据项的数量。如果在读取任何数据项之前发生输入失败，那么会返回 `EOF`。
+5. 在 C 程序中测试 `scanf` 函数的返回值的循环很普遍。例如，下列循环逐个读取一串整数，在首个遇到问题的符号处停止：
+    ```cpp
+    while (scanf("%d", &i) == 1) {
+    ...
+    }
+    ```
+
+### `…scanf` 格式串
+1. `…scanf` 函数的调用类似于 `…printf` 函数的调用。然而，这种相似可能会产生误导，实际上 `…scanf` 函数的工作原理完全不同于 `…printf` 函数。
+2. 我们应该把 `scanf` 函数和 `fscanf` 函数看成是 “模式匹配” 函数。格式串表示的就是 `…scanf` 函数在读取输入时试图匹配的模式。如果输入和格式串不匹配，那么一旦发现不匹配函数就会返回。不匹配的输入字符将被 “放回” 留待以后读取。
+3. `…scanf` 函数的格式串可能含有三种信息 TODO
+
+### `…scanf` 转换说明
+TODO
+
+### C99 对 `…scanf` 转换说明的改变
+TODO
+
+### `scanf` 示例
+TODO
+
+### 检测文件末尾和错误条件
+```cpp
+void clearerr(FILE *stream);
+int feof(FILE *stream);
+int ferror(FILE *stream);
+```
+
+1. 如果要求 `…scanf` 函数读入并存储 n 个数据项，那么希望它的返回值就是 n。如果返回值小于 n，那么一定是出错了。一共有三种可能情况。
+    * **文件末尾**。函数在完全匹配格式串之前遇到了文件末尾。
+    * **读取错误**。函数不能从流中读取字符。
+    * **匹配失败**。数据项的格式是错误的。例如，函数可能在搜索整数的第一个数字时遇到了一个字母。
+2. 每个流都有与之相关的两个指示器：**错误指示器**（error indicator）和 **文件末尾指示器**（end-of-file indicator），当打开流时会清除这些指示器。遇到文件末尾就设置文件末尾指示器，遇到读错误就设置错误指示器。（输出流上发生写错误时也会设置错误指示器。）匹配失败不会改变任何一个指示器。
+3. 一旦设置了错误指示器或者文件末尾指示器，它就会保持这种状态直到被显式清除（可能通过 `clearerr` 函数的调用）。`clearerr` 会同时清除文件末尾指示器和错误指示器：
+    ```cpp
+    clearerr(fp);        /* clears eof and error indicators for fp */
+    ```
+4. 某些其他库函数因为副作用可以清除某种指示器或两种都可以清除，所以不需要经常使用 `clearerr` 函数。
+5. 我们可以调用 `feof` 函数和 `ferror` 函数来测试流的指示器，从而确定出先前在流上的操作失败的原因。如果为与 `fp` 相关的流设置了文件末尾指示器，那么 `feof(fp)` 函数调用就会返回非零值。如果设置了错误指示器，那么 `ferror(fp)` 函数的调用也会返回非零值。而其他情况下，这两个函数都会返回零。
+6. 当 `scanf` 函数返回小于预期的值时，可以使用 `feof` 函数和 `ferror` 函数来确定原因：
+    * 如果 `feof` 函数返回了非零的值，那么就说明已经到达了输入文件的末尾；
+    * 如果 `ferror` 函数返回了非零的值，那么就表示在输入过程中产生了读错误；
+    * 如果两个函数都没有返回非零值，那么一定是发生了匹配失败。
+7. 不管问题是什么，`scanf` 函数的返回值都会告诉我们在问题产生前所读入的数据项的数量。
 
 
+## 字符的输入/输出
+1. 在本节中，我们将讨论用于读和写单个字符的库函数。这些函数可以处理文本流和二进制流。
+2. 请注意，本节中的函数把字符作为 `int` 型而非 `char` 类型的值来处理。这样做的原因之一就是输入函数是通过返回 `EOF` 来说明文件末尾（或错误）情况的，而 `EOF` 又是一个负的整数常量。
+
+### 输出函数
+```cpp
+int fputc(int c, FILE *stream);
+int putc(int c, FILE *stream);
+int putchar(int c);
+```
+
+1. putchar函数向标准输出流stdout写一个字符：
+    ```cpp
+    putchar(ch);        /* writes ch to stdout */
+    ```
+2. `fputc` 函数和 `putc` 函数是 `putchar` 函数向任意流写字符的更通用的版本：
+    ```cpp
+    fputc(ch, fp);      /* writes ch to fp */
+    putc(ch, fp);       /* writes ch to fp */
+    ```
+3. 虽然 `putc` 函数和 `fputc` 函数做的工作相同，但是 `putc` 通常作为宏来实现（也有函数实现），而 `fputc` 函数则只作为函数实现。`putchar` 本身通常也定义为宏：
+    ```cpp
+    #define putchar(c) putc((c), stdout)
+    ```
+4. 标准库既提供 `putc` 又提供 `fputc` 看起来很奇怪。但是，正如介绍宏时看到的那样，宏有几个潜在的问题。C 标准允许 `putc` 宏对 `stream` 参数多次求值，而 `fputc` 则不可以。 虽然程序员通常偏好使用 `putc`，因为它的速度较快，但是 `fputc` 作为备选也是可用的。
+5. 如果出现了写错误，那么上述这 3 个函数都会为流设置错误指示器并且返回 `EOF`。否则，它们都会返回写入的字符
+    ```cpp
+    printf("%c", putchar('b')); // bb
+    ```
+
+### 输入函数
+```cpp
+int fgetc(FILE *stream);
+int getc(FILE *stream);
+int getchar(void);
+int ungetc(int c, FILE *stream);
+```
+
+1. `getchar` 函数从标准输入流 `stdin` 中读入一个字符：
+    ```cpp
+    ch = getchar();    /* reads a character from stdin */
+    ```
+2. `fgetc` 函数和 `getc` 函数从任意流中读入一个字符：
+    ```cpp
+    ch = fgetc(fp);    /* reads a character from fp */
+    ch = getc(fp);     /* reads a character from fp */
+    ```
+3. 这三个函数都把字符看成 `unsigned char` 类型的值，返回之前转换成 `int` 类型。因此，它们不会返回 `EOF` 之外的负值。
+4. `getc` 和 `fgetc` 之间的关系类似于 `putc` 和 `fputc` 之间的关系。`getc` 通常作为宏来实现（也有函数实现），而 `fgetc` 则只作为函数实现。`getchar` 本身通常也定义为宏：
+    ```cpp
+    #define getchar() getc(stdin)
+    ```
+5. 对于从文件中读取字符来说，程序员通常喜欢用 `getc` 胜过用 `fgetc`。因为 `getc` 一般是宏的形式，所以它执行起来的速度较快。如果 `getc` 不合适，那么可以用 `fgetc` 作为备选。标准允许 `getc` 宏对参数多次求值，这可能会有问题。
+6. 如果出现问题，那么这三个函数的行为是一样的。如果遇到了文件末尾，那么这三个函数都会设置流的文件末尾指示器，并且返回 `EOF`。如果产生了读错误，它们则都会设置流的错误指示器，并且返回 `EOF`。为了区分这两种情况，可以调用 `feof` 函数或者 `ferror` 函数。
+7. `fgetc` 函数、`getc` 函数和 `getchar` 函数最常见的用法之一就是从文件中逐个读入字符直到遇到文件末尾。一般习惯使用下列 `while` 循环来实现此目的：
+    ```cpp
+    while ((ch = getc(fp)) != EOF){
+    ...
+    }
+    ```
+8. 始终要把 `fgetc`、`getc` 或 `getchar` 函数的返回值存储在 `int` 型的变量中，而不是 `char` 类型的变量中。 把 `char` 类型变量与 `EOF` 进行比较可能会得到错误的结果。
+9. 还有另外一种字符输入函数，即 `ungetc` 函数。此函数把从流中读入的字符 “放回” 并清除流的文件末尾指示器。
+10. 如果在输入过程中需要往前多看一个字符，那么这种能力可能会非常有效。比如，为了读入一系列数字，并且在遇到首个非数字时停止操作，可以写成
+    ```cpp
+    while (isdigit(ch = getc(fp))) {
+    ...
+    }
+    ungetc(ch, fp);    /* pushes back last character read */
+    ```
+11. 通过持续调用 `ungetc` 函数而放回的字符数量（不干涉读操作）依赖于实现和所含的流类型。只有第一次的 `ungetc` 函数调用是保证会成功的。调用文件定位函数（即 `fseek`、`fsetpos` 或 `rewind`）会导致放回的字符丢失。
+12. `ungetc` 返回要求放回的字符。如果试图放回 `EOF` 或者试图放回超过最大允许数量的字符数，`ungetc` 会返回 `EOF`。
+
+### 程序　复制文件
+1. 下面的程序用来进行文件的复制操作。当程序执行时，会在命令行上指定原始文件名和新文件名。例如，为了把文件 `f1.c` 复制给文件 `f2.c`，可以使用命令
+    ```cpp
+    fcopy f1.c f2.c
+    ```
+2. 如果命令行上的文件名不是两个，或者至少有一个文件无法打开，那么程序 `fcopy` 都将产生出错消息。
+3. 采用 `"rb"` 和 `"wb"` 作为文件模式使 `fcopy` 程序既可以复制文本文件也可以复制二进制文件。如果用 `"r"` 和 `"w"` 来代替，那么程序将无法复制二进制文件。
+4. fcopy.c
+    ```cpp
+    /* Copies a file */
+
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    int main(int argc, char *argv[])
+    {
+        FILE *source_fp, *dest_fp;
+        int ch;
+
+        if (argc != 3) {
+            fprintf(stderr, "usage: fcopy source dest\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if ((source_fp = fopen(argv[1], "rb")) == NULL) {
+            fprintf (stderr, "Can't open %s\n", argv[1]);
+            exit(EXIT_FAILURE);
+        }
+
+        if ((dest_fp = fopen(argv[2], "wb")) == NULL) {
+            fprintf (stderr, "Can't open %s\n", argv[2]);
+            fclose(source_fp);
+            exit(EXIT_FAILURE);
+        }
+
+        while ((ch = getc(source_fp)) != EOF) {
+            putc (ch, dest_fp);
+        }
+
+        fclose(source_fp);
+        fclose(dest_fp);
+        
+        return 0;
+    }
+    ```
 
 
+## 行的输入/输出
+### 输出函数
+```cpp
+int fputs(const char * restrict s, FILE * restrict stream);
+int puts(const char *s);
+```
+
+1. `puts` 函数用来向标准输出流 `stdout` 写入字符串的：
+2. 在写入字符串中的字符以后，`puts` 函数总会添加一个换行符。
+3. `fputs` 函数是 `puts` 函数的更通用版本。此函数的第二个实参指明了输出要写入的流：
+    ```cpp
+    fputs("Hi, there!", fp)     /* writes to fp */
+    ```
+4. 不同于 `puts` 函数，`fputs` 函数不会自己写入换行符，除非字符串中本身含有换行符。
+5. 当出现写错误时，上面这两种函数都会返回 `EOF`。否则，它们都会返回一个非负的数（在我当前环境试了下返回了 0）。
+
+### 输入函数
+```cpp
+char *fgets(char * restrict s, int n, FILE * restrict stream);
+char *gets(char *s);
+```
+
+1. `gets` 函数用来从标准输入流 `stdin` 中读取一行的：
+2. `gets` 函数逐个读取字符，并且把它们存储在 `str` 所指向的数组中，直到它读到换行符时停止（丢弃换行符）。
+3. `fgets` 函数是 `gets` 函数的更通用版本，它可以从任意流中读取信息。
+4. `fgets` 函数也比 `gets` 函数更安全，因为它会限制将要存储的字符的数量。
+5. 下面是使用 `fgets` 函数的方法，假设 `str` 是字符数组的名字：
+    ```cpp
+    fgets(str, sizeof(str), fp);     /* reads a line from fp */
+    ```
+5. 此调用将导致 `fgets` 函数逐个读入字符，直到遇到首个换行符时或者已经读入了 `sizeof(str)-1` 个字符时结束操作，这两种情况哪种先发生都可以。
+6. 如果 `fgets` 函数读入了换行符，那么它会把换行符和其他字符一起存储。因此，`gets` 函数从来不存储换行符，而 `fgets` 函数有时会存储换行符。
+7. 如果出现了读错误，或者是在存储任何字符之前达到了输入流的末尾，那么 `gets` 函数和 `fgets` 函数都会返回空指针。（通常，可以使用 `feof` 函数或 `ferror` 函数来确定出现的是哪种情况。）否则，两个函数都会返回自己的第一个实参（指向保存输入的数组的指针）。
+8. 与预期一样，两个函数都会在字符串的末尾存储空字符。
+9. 建议在大多数情况下用 `fgets` 函数来代替 `gets` 函数来使用。对于 `gets` 函数而言，接收数组的下标总有可能越界，所以只有在保证读入的字符串正好适合数组大小时使用 `gets` 函数才是安全的。在没有保证的时候（通常是没有的），使用 `fgets` 函数要安全得多。
+10. 注意，如果把 `stdin` 作为第三个实参进行传递，那么 `fgets` 函数就会从标准输入流中读取：
+    ```cpp
+    fgets(str, sizeof(str), stdin);
+    ```
+
+
+## 块的输入/输出
+```cpp
+size_t fread(void * restrict ptr,
+             size_t size, 
+             size_t nmemb,
+             FILE * restrict stream);
+size_t fwrite(const void * restrict ptr,
+              size_t size, 
+              size_t nmemb,
+              FILE * restrict stream);
+```
+
+1. `fread` 函数和 `fwrite` 函数允许程序在单步中读和写大的数据块。 如果小心使用，`fread` 函数和 `fwrite` 函数可以用于文本流，但是它们主要还是用于二进制的流。
+2. `fwrite` 函数被设计用来把内存中的数组复制给流。`fwrite` 函数调用中第一个参数就是数组的地址，第二个参数是每个数组元素的大小（以字节为单位），而第三个参数则是要写的元素数量，第四个参数是文件指针，此指针说明了要写的数据位置。
+3. 例如，为了写整个数组 `a` 的内容，就可以使用下列 `fwirte` 函数调用：
+    ```cpp
+    fwrite(a, sizeof(a[0]), sizeof(a) / sizeof(a[0]), fp);
+    ```
+4. `fwrite` 函数返回实际写入的元素（不是字节）的数量。如果出现写入错误，那么此数就会小于第三个实参。
+5. `fread` 函数将从流读入数组的元素。`fread` 函数的参数类似于 `fwrite` 函数的参数：数组的地址、每个元素的大小（以字节为单位）、要读的元素数量以及文件指针。
+6. 为了把文件的内容读入数组 `a`，可以使用下列 `fread` 函数调用：
+    ```cpp
+    n = fread(a, sizeof(a[0]), sizeof(a) / sizeof(a[0]), fp);
+    ```
+7. 检查 `fread` 函数的返回值是非常重要的。此返回值说明了实际读的元素（不是字节）的数量。此数应该等于第三个参数，除非达到了输入文件末尾或者出现了错误。可以用 `feof` 函数和 `ferror` 函数来确定出问题的原因。
+8. 不考虑形式，数据不一定要是数组格式的。`fread` 函数和 `fwrite` 函数都可以用于所有类型的变量。特别是可以用 `fread` 函数读结构，或者用 `fwrite` 函数写结构。例如，为了把结构变量 `s` 写入文件，可以使用下列形式的 `fwrite` 函数调用：
+    ```cpp
+    fwrite(&s, sizeof(s), 1, fp);
+    ```
+9. 使用 `fwrite` 输出包含指针值的结构时需要小心。读回时不能保证这些值一定有效。
+
+
+## 文件定位
+```cpp
+int fgetpos(FILE * restrict stream, fpos_t * restrict pos);
+int fseek(FILE *stream, long int offset, int whence);
+int fsetpos(FILE *stream, const fpos_t *pos);
+long int ftell(FILE *stream);
+void rewind(FILE *stream);
+```
+
+1. 每个流都有相关联的 **文件位置**（file position）。打开文件时，会将文件位置设置在文件的起始处。但如果文件按“追加”模式打开，初始的文件位置可以在文件起始处也可以在文件末尾，这依赖于具体的实现。然后，在执行读或写操作时，文件位置会自动推进，并且允许按照顺序贯穿整个文件。
+2. 虽然对许多应用来说顺序访问是很好的，但是某些程序需要具有在文件中跳跃的能力，即可以在这里访问一些数据又可以到那里访问其他数据。例如，如果文件包含一系列记录，我们可能希望直接跳到特定的记录处，并对其进行读或更新。
+3. `<stdio.h>` 通过提供 5 个函数来支持这种形式的访问，这些函数允许程序确定当前的文件位置或者改变文件的位置。
+
+### `fseek`
+1. `fseek` 函数改变与第一个参数（即文件指针）相关的文件位置。
+2. 第三个参数说明新位置是根据文件的起始处、当前位置还是文件末尾来计算。`<stdio.h>` 为此定义了三种宏
+    * `SEEK_SET`：文件的起始处。
+    * `SEEK_CUR`：文件的当前位置。
+    * `SEEK_END`：文件的末尾处。
+3. 第二个参数是个（可能为负的）字节计数。
+4. 例如，为了移动到文件的起始处，搜索的方向将为 `SEEK_SET`，而且字节计数为零：
+    ```cpp
+    fseek(fp, 0L, SEEK_SET);          /* moves to beginning of file */
+    ```
+    为了移动到文件的末尾，搜索的方向则应该是 `SEEK_END`：
+    ```cpp
+    fseek(fp, 0L, SEEK_END);          /* moves to end of file */
+    ```
+    为了往回移动 10 个字节，搜索的方向应该为 `SEEK_CUR`，并且字节计数要为 -10：
+    ```cpp
+    fseek(fp, -10L, SEEK_CUR);        /* moves back 10 bytes */
+    ```
+5. 注意，字节计数是 `long int` 类型的，所以这里用 `0L` 和 `-10L` 作为实参。当然，用 `0` 和 `-10` 也可以，因为参数会自动转化为正确的类型。
+6. 通常情况下，`fseek` 函数返回零。如果产生错误（例如，要求的位置不存在），那么 `fseek` 函数就会返回非零值。
+7. 不懂。顺便提一句，文件定位函数最适合用于二进制流。C 语言不禁止程序对文本流使用这些定位函数，但是由于操作系统的差异要小心使用。`fseek` 函数对流是文本的还是二进制的很敏感。对于文本流而言，要么 `offset`必须为零，要么 `whence`必须是 `SEEK_SET`，且 `offset` 的值通过前面的 `ftell` 函数调用获得。换句话说，我们只可以利用 `fseek` 函数移动到文件的起始处或者文件的末尾处，或者返回前面访问过的位置。对于二进制流而言，`fseek` 函数不要求支持 `whence` 是 `SEEK_END` 的调用。
+
+### `ftell`
+1. `ftell` 函数以长整数返回当前文件位置。
+2. 如果发生错误，`ftell` 函数会返回 `-1L`，并且把错误码存储到 `errno`中。
+3. `ftell` 可能会存储返回的值并且稍后将其提供给 `fseek` 函数调用，这也使返回前面的文件位置成为可能：
+    ```cpp
+    long file_pos;
+    ...
+    file_pos = ftell(fp);            /* saves current position */
+    ...
+    fseek (fp, file_pos, SEEK_SET);  /* returns to old position */
+    ```
+4. 如果 `fp` 是二进制流，那么 `ftell(fp)` 调用会以字节计数来返回当前文件位置，其中零表示文件的起始处。但是，如果 `fp` 是文本流，`ftell(fp)` 返回的值不一定是字节计数，因此最好不要对 `ftell` 函数返回的值进行算术运算。例如，为了查看两个文件位置的距离而把 `ftell` 返回的值相减不是个好做法。
+
+### `rewind`
+`rewind` 函数会把文件位置设置在起始处。调用 `rewind(fp)` 几乎等价于 `fseek(fp, 0L, SEEK_SET)`，两者的差异是 `rewind` 函数不返回值，但是会为 `fp` 清除错误指示器。
+
+### `fgetpos` 和 `fsetpos`
+1. `fseek` 函数和 `ftell` 函数都有一个问题：它们只能用于文件位置可以存储在长整数中的文件。为了用于非常大的文件，C 语言提供了另外两个函数：`fgetpos` 函数和 `fsetpos` 函数。
+2. 这两个函数可以用于处理大型文件，因为它们用 `fpos_t` 类型的值来表示文件位置。`fpos_t` 类型值不一定就是整数，比如，它可以是结构。
+3. 调用 `fgetpos(fp, &file_pos)` 会把与 `fp` 相关的文件位置存储到 `file_pos` 变量中。调用 `fsetpos(fp, &file_pos)` 会为 `fp` 设置文件的位置，此位置是存储在 `file_pos` 中的值（此值必须通过前面的 `fgetpos` 调用获得）。
+4. 如果 `fgetpos` 函数或者 `fsetpos` 函数调用失败，那么都会把错误码存储到 `errno` 中。当调用成功时，这两个函数都会返回零；否则，都会返回非零值。
+5. 下面是使用 `fgetpos` 函数和 `fsetpos` 函数保存文件位置并且稍后返回该位置的方法：
+    ```cpp
+    fpos_t file_pos;
+    ...
+    fgetpos(fp, &file_pos);  /* saves current position */
+    ...
+    fsetpos(fp, &file_pos);  /* returns to old position */
+    ```
+
+### 程序　修改零件记录文件
+1. 下面这个程序打开包含 `part` 结构的二进制文件，把结构读到数组中，把每个结构的成员 `on_hand` 置为 0，然后再把此结构写回到文件中。
+2. 注意，程序用 `"rb+"` 模式打开文件，因此既可读又可写
+    ```cpp
+    /* Modifies a file of part records by setting the quantity
+    on hand to zero for all records*/
+
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    #define NAME_LEN 25
+    #define MAX_PARTS 100
+
+    struct part {
+        int number;
+        char name[NAME_LEN+1];
+        int on_hand;
+    } inventory[MAX_PARTS];
+
+    int num_parts;
+
+    int main(void)
+    {
+        FILE *fp;
+        int i;
+
+        if ((fp = fopen("inventory.dat", "rb+")) == NULL) {
+            fprintf(stderr,"Can't open inventory file\n");
+            exit(EXIT_FAILURE);
+        }
+
+        num_parts = fread(inventory, sizeof (struct part),
+                            MAX_PARTS, fp);
+
+        for (i = 0; i < num_parts; i++)
+            inventory[i].on_hand = 0;
+
+        rewind(fp);
+        fwrite(inventory, sizeof(struct part), num_parts, fp);
+        fclose(fp);
+
+        return 0;
+    }
+    ```
+3. 这里调用 `rewind` 函数是很关键的。在调用完 `fread` 函数之后，文件位置是在文件的末尾。如果不先调用 `rewind` 函数就调用 `fwrite` 函数，那么 `fwrite` 函数将会在文件末尾添加新数据，而不会覆盖旧数据。
+
+
+## 字符串的输入/输出
+1. 本节里描述的函数有一点不同，因为它们与数据流或文件并没有什么关系。相反，它们允许我们使用字符串作为流读写数据。
+2. `sprintf` 和 `snprintf` 函数将按写到数据流一样的方式写字符到字符串，`sscanf` 函数从字符串中读出数据就像从数据流中读数据一样。
+3. `sprintf` 和 `snprintf` 函数可以让我们使用 `printf` 的格式化能力，不需要真的往流中写入数据。类似地，`sscanf` 函数也可以让我们使用 `scanf` 函数的强大的模式匹配能力。
+4. 下面将详细讲解 `sprintf`、`snprintf` 和 `sscanf` 函数。三个相似的函数（`vsprintf`、`vsnprintf` 和 `vsscanf`）也属于 `<stdio.h>`，但这些函数依赖于在 `<stdarg.h>` 中声明的 `va_list` 类型。
+
+### 输出函数
+```cpp
+int sprintf(char * restrict s, const char * restrict format, ...);
+int snprintf(char *restrict s, size_t n, const char * restrict format, ...);
+```
+
+#### `sprintf`
+1. `sprintf` 函数类似于 `printf` 函数和 `fprintf` 函数，唯一的不同就是 `sprintf` 函数把输出写入第一个实参指向的字符数组而不是流中。
+2. `sprintf` 函数的第二个参数是格式串，这与 `printf` 函数和 `fprintf` 函数所用的一样。例如，函数调用
+    ```cpp
+    sprintf(date, "%d/%d/%d", 9, 20, 2010);
+    ```
+    会把 `"9/20/2010"` 复制到 `date` 中。
+3. 当完成向字符串写入的时候，`sprintf` 函数会添加一个空字符，并且返回所存储字符的数量（不计空字符）。
+4. 如果遇到错误（宽字符不能转换成有效的多字节字符），`sprintf` 返回负值。
+5. `sprintf` 函数有着广泛的应用。例如，有些时候可能希望对输出数据进行格式化，但不是真的要把数据写出。这时就可以使用 `sprintf` 函数来实现格式化，然后把结果存储在字符串中直到需要产生输出的时候再写出。
+6. `sprintf` 函数还可以用于把数转换成字符格式。
+
+#### `snprintf`
+1. `snprintf` 函数与` sprintf` 一样，但多了一个参数 `n`。写入字符串的字符不会超过 `n-1`，结尾的空字符不算。或者说，`snprintf` 最多向字符串中写入 `n` 个字符，最后一个是空字符。
+2. 例如，函数调用
+    ```cpp
+    snprintf(name, 13, "%s, %s", "Einstein", "Albert");
+    ```
+    会把 `"Einstein, Al"` 写入到 `name` 中。
+3. 如果没有长度限制（没有被长度限制截断？），`snprintf` 函数返回需要写入的字符数（不包括空字符）。如果出现编码错误，`snprintf` 函数返回负值。
+4. 为了查看 `snprintf` 函数是否有空间写入所有要求的字符，可以测试其返回值是否非负且小于 `n`。
+
+### 输入函数
+```cpp
+int sscanf(const char * restrict s, const char * restrict format, ... );
+```
+
+1. `sscanf` 函数与 `scanf` 函数和 `fscanf` 函数都很类似，唯一的不同就是 `sscanf` 函数是从第一个参数指向的字符串而不是流中读取数据。
+2. `sscanf` 函数的第二个参数是格式串，这与 `scanf` 函数和 `fscanf` 函数所用的一样。
+3. `sscanf` 函数对于从由其他输入函数读入的字符串中提取数据非常方便。例如，可以使用 `fgets` 函数来获取一行输入，然后把此行数据传递给 `sscanf` 函数进一步处理：
+    ```cpp
+    fgets(str, sizeof(str), stdin);       /* reads a line of input */
+    sscanf(str, "%d%d", &i, &j);          /* extracts two integers */
+    ```
+4. 用 `sscanf` 函数代替 `scanf` 函数或者 `fscanf` 函数的好处之一就是，可以按需要多次检测输入行，而不再只是一次，这样使识别替换的输入格式和从错误中恢复都变得更加容易了。
+5. 下面思考一下读取日期的问题。读取的日期既可以是 *月/日/年* 的格式，也可以是 *月-日-年* 的格式。假设 `str` 包含一行输入，那么可以按如下方法提取出月、日和年的信息：
+    ```cpp
+    if (sscanf(str, "%d /%d /%d", &month, &day, &year) == 3)
+        printf("Month: %d, day: %d, year: %d\n", month, day, year);
+    else if (sscanf (str, "%d -%d -%d", &month, &day, &year) == 3)
+        printf("Month: %d, day: %d, year: %d\n", month, day, year);
+    else
+        printf("Date not in the proper form\n");
+    ```
+6. 像 `scanf` 函数和 `fscanf` 函数一样，`sscanf` 函数也返回成功读入并存储的数据项的数量。如果在找到第一个数据项之前到达了字符串的末尾（用空字符标记），那么 `sscanf` 函数会返回 `EOF`。
 
 
 
