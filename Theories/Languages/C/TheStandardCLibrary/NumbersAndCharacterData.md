@@ -23,6 +23,13 @@
         - [比较函数](#比较函数)
             - [`memcmp`、`strcmp` 和 `strncmp`](#memcmpstrcmp-和-strncmp)
             - [`strcoll` 和 `strxfrm`](#strcoll-和-strxfrm)
+        - [搜索函数](#搜索函数)
+            - [`strchr`](#strchr)
+            - [`memchr`](#memchr)
+            - [`strrchr`](#strrchr)
+            - [`strpbrk`](#strpbrk)
+            - [`strspn` 和 `strcspn`](#strspn-和-strcspn)
+            - [`strstr`](#strstr)
     - [References](#references)
 
 <!-- /TOC -->
@@ -332,19 +339,101 @@ size_t strxfrm(char * restrict s1, const char * restrict s2, size_t n);
     strxfrm(transformed, original, len);
 	```
 
+### 搜索函数
+```cpp
+void *memchr(const void *s, int c, size_t n);
+char *strchr(const char *s, int c);
+size_t strcspn(const char *s1, const char *s2);
+char *strpbrk(const char *s1, const char *s2);
+char *strrchr(const char *s, int c);
+size_t strspn(const char *s1, const char *s2);
+char *strstr(const char *s1, const char *s2);
+char *strtok(char * restrict s1, const char * restrict s2);
+```
+
+#### `strchr`
+1. `strchr` 函数在字符串中搜索特定字符。下面的例子说明了如何使用 `strchr` 函数在字符串中搜索字母 `f`：
+	```cpp
+	char *p, str[] = "Form follows function.";
+
+	p = strchr(str, 'f');     /* finds first 'f' */
+
+	printf("%s", p); // follows function.
+	```
+	`strchr` 函数会返回一个指针，这个指针指向 `str` 中出现的第一个 `f`。
+2. 如果需要多次搜索字符也很简单，例如，可以使用下面的调用搜索 `str` 中的第二个 `f`：
+	```cpp
+	p = strchr(p + 1, 'f');   /* finds next 'f' */
+
+	printf("%s", p); // function.
+	```
+3. 如果不能定位所需的字符，`strchr` 返回空指针。
+
+#### `memchr`
+1. `memchr` 函数与 `strchr` 函数类似，但 `memchr` 函数会在搜索了指定数量的字符后停止搜索，而不是当遇到首个空字符时才停止。
+2. `memchr` 函数的第三个参数用来限制搜索时需要检测的字符总数。当不希望对整个字符串进行搜索或搜索的内存块不是以空字符结尾时，`memchr` 函数会十分有用
+	```cpp
+	char *p;
+    char str[] = {'b', 'i', 'g', '\0', 'c', 'a', 't'};
 
 
+    p = strchr(str, 'c');
+    printf("%d\n", p == NULL); // 1
+
+    p = memchr(str, 'c', sizeof(str));
+    printf("%d\n", p == NULL); // 0
+    printf("%c\n", *p); // c
+	```
+#### `strrchr`
+`strrchr` 函数与 `strchr` 类似，但它会反向搜索字符：
+```cpp
+char *p, str[] = "Form follows function.";
+
+p = strrchr(str, 'f');   /* finds last 'f' */
+
+puts(p); // function.
+```
+
+#### `strpbrk`
+`strpbrk` 函数比 `strchr` 函数更通用，它返回一个指针，该指针指向参数一中第一个与参数二中任意一个字符匹配的字符：
+```cpp
+char *p, str[] = "Form follows function.";
+
+puts(strpbrk(str, "mn"));  // m follows function.
+puts(strpbrk(str, "nm"));  // m follows function.
+puts(strpbrk(str, "nmo")); // orm follows function.
+```
+
+#### `strspn` 和 `strcspn`
+1. 这两个函数与其他的搜索函数不同，它们会返回一个表示字符串中特定位置的整数（`size_t` 类型）。
+2. 当给定一个需要搜索的字符串以及一组需要搜索的字符时，`strspn` 函数返回字符串中第一个不属于该组字符的字符的下标。
+3. 对于同样的参数，`strcspn` 函数返回第一个属于该组字符的字符的下标。
+4. 下面是使用这两个函数的例子：
+    ```cpp
+    size_t n;
+    char str[] = "Form follows function.";
+
+    printf("%d\n", strspn(str, "mosF"));    // 2
+    printf("%d\n", strspn(str, "morF"));    // 4
+    printf("%d\n", strspn(str, " \t\n"));   // 0
+
+    printf("%d\n", strcspn(str, "morF"));   // 0
+    printf("%d\n", strcspn(str, " \t\n"));  // 4
+    ```
+
+#### `strstr`
+1. `strstr` 函数在第一个参数（字符串）中搜索第二个参数（也是字符串）。在下面的例子中，`strstr` 函数搜索单词 `fun`：
+    ```cpp
+    char *p, str[] = "Form follows function.";
+
+    p = strstr(str, "fun");   /* locates "fun" in str */
+
+    puts(p); // function.
+    ```
+2. `strstr` 函数返回一个指向待搜索字符串第一次出现的地方的指针。如果找不到，则返回空指针。
 
 
-
-
-
-
-
-
-
-
-
+TODO  后续内容
 
 
 
