@@ -5,7 +5,19 @@
 
 - [QuickSort](#quicksort)
     - [设计思想](#设计思想)
+    - [概述](#概述)
     - [基本算法](#基本算法)
+        - [分治描述](#分治描述)
+        - [`partition` 实现](#partition-实现)
+    - [时间复杂度](#时间复杂度)
+        - [`partition` 的时间复杂度](#partition-的时间复杂度)
+        - [最坏的输入情况](#最坏的输入情况)
+        - [最好的输入情况](#最好的输入情况)
+        - [平均的输入情况](#平均的输入情况)
+    - [改进](#改进)
+        - [特殊输入的处理](#特殊输入的处理)
+            - [输入数组全部相同时](#输入数组全部相同时)
+        - [如果想按照递减的顺序排序](#如果想按照递减的顺序排序)
         - [实现](#实现)
     - [注意点](#注意点)
         - [对输入数组乱序](#对输入数组乱序)
@@ -38,12 +50,142 @@
 ## 设计思想
 
 
+## 概述
+1. The quicksort algorithm has a worst-case running time of $O(n^2)$ on an input array
+of n numbers. Despite this slow worst-case running time, quicksort is often the best
+practical choice for sorting because it is remarkably efficient on the average: its
+expected running time is $O(n \lg n)$, and the constant factors hidden in the $O(n \lg n)$
+notation are quite small. 
+2. It also has the advantage of sorting in place, and it works well even in virtual-memory environments.
+
+
 ## 基本算法
 1. 快速排序是一种分治的排序算法。它将一个数组分成两个子数组，将两部分独立地排序。
 2. 快速排序和归并排序是互补的：归并排序将数组分成两个子数组分别排序，并将有序的子数组归并以将整个数组排序；而快速排序将数组排序的方式则是当两个子数组都有序时整个数组也就自然有序了。
 3. 在第一种情况中，递归调用发生在处理整个数组之前；在第二种情况中，递归调用发生在处理整个数组之后。
 4. 在归并排序中，一个数组被等分为两半；在快速排序中，切分（partition）的位置取决于数组的内容。
 5. 主要缺点是非常脆弱，在实现时要非常小心才能避免低劣的性能。已经有无数例子显示许多种错误都能致使它在实际中的性能只有平方级别。幸好我们将会看到，由这些错误中学到的教训也大大改进了快速排序算法，使它的应用更加广泛。
+
+### 分治描述
+1. **分解**：确定一个 pivot，把数组分为两个子数组，一个子数组的每个元素都小于等于 pivot，另一个子数组的每个元素都大于等于 pivot。
+2. **解决**：对两个子数组递归调用快速排序。
+3. **合并**：因为子数组都是原址排序，所以不需要合并。
+4. 外层的实现如下
+    ```js
+    function quickSort (arr, leftIndex, rightIndex) {
+        if (leftIndex < rightIndex ) {
+            let index = partition(arr, leftIndex, rightIndex);
+            quickSort( arr, leftIndex, index-1);
+            quickSort( arr, index+1, rightIndex);
+        }
+    }
+    ```
+
+### `partition` 实现
+1. `partition` 会先确定一个元素作为 pivot ，然后根据 pivot 的值将数组划分为两部分。
+2. 在划分的过程中，除了 pivot 以外，数组是被划分为三部分的：小于等于 pivot 的、大于 pivot 的、尚未被划分的
+    <img src="./images/15.png" width="400" style="display: block; margin: 5px 0 10px;" />
+3. 这里把数组最后一个元素作为 pivot，然后如上图设定两个索引来把其余部分划分为三部分。索引 `i` 标记比 pivot 大的区间的前一个位置、索引 `j` 标记下一个待探索的位置。排序过程如下
+    <img src="./images/16.png" width="300" style="display: block; margin: 5px 0 10px;" />
+4. 排序开始的时候，因为还没有比 pivot 大的，所以 `i` 在 `leftIndex` 的左边；将要被探索的元素是第一个元素。
+5. 每次探索一个元素，该元素分为两种情况
+    * 如果大于 pivot：直接 `j` 加一。以 `j` 作为循环的索引，循环体内什么都不用做。
+    * 如果小于等于 pivot：把当前元素和深色区域最左边的元素交换，然后 `i` 和 `j` 都加一。
+6. 循环结束后，`j` 走到 pivot 的位置，把 pivot 和深色区域最左边的交换后，整个数组就是被 pivot 一分为二了。
+7. 实现如下
+    ```js
+    function partition (arr, leftIndex, rightIndex) {
+        let pivot = arr[rightIndex];
+        let i = leftIndex - 1;
+        let j = leftIndex;
+
+        for (; j<rightIndex; j++) {
+            if (arr[j] <= pivot) {
+                swap(arr, ++i, j);
+            }
+        } 
+
+        swap(arr, i+1, rightIndex);
+
+        return i+1;
+    }
+    ```
+
+
+## 时间复杂度
+1. The running time of quicksort depends on whether the partitioning is balanced or unbalanced, which in turn depends on which elements are used for partitioning.
+2. If the partitioning is balanced, the algorithm runs asymptotically as fast as merge sort. If the partitioning is unbalanced, however, it can run asymptotically as slowly as insertion sort.
+
+### `partition` 的时间复杂度
+1. `for` 之前和之后的操作都输常数次数。
+2. `for` 的次数是 $n-1$，里面的每次比较和交换也都是常数次数。
+3. 所示整体的时间复杂度是 $O(n)。
+
+### 最坏的输入情况
+1. 输入数据最坏情况是，快速排序的每次 `partition` 产生的两部分分别包含 $n-1$ 和 0 个元素。
+2. 在这种情况下，快速排序运行时间的递归式为 $T(n) = O(n) + T(n-1) + T(0) = T(n-1) + O(n)$。
+3. 可以想象，随着不断的递归，会得到一个算术级数，结果为 $O(n^2)$。
+4. 所以在最坏的输入情况下，快速排序并不比插入排序更好。
+5. 进一步的，如果输入数组本来就是有序的（也包括所有元素都相等的情况），快速排序的算法时间复杂度就是这里的 $O(n^2)$；而插入排序此时只需要 $O(n)$。
+
+### 最好的输入情况
+1. 输入数据最好情况是，快速排序的每次 `partition` 产生的两部分都不大于 $n/2$，也就是 $n$ 为偶数时平分、为奇数时差一个。
+2. 在这种情况下，快速排序运行时间的递归式为 $T(n) = O(n) + 2T(n/2)$。
+3. 和归并排序的复杂度一样，$O(n \lg n)$。
+
+### 平均的输入情况
+1. 快速排序的平均运行时间更接近于最好情况，而非最坏情况。
+2. 假设划分算法总是产生 1:9 的划分，看起来是很不平衡的。递归式为 $T(n) = cn + T(n/10) + T(9n/10)$。
+3. 这里直接看《算法导论》98 页。
+4. 这样的划分会产生左右很不平衡的递归树。短的那边高度是 $\log_{10} n$，长的那边高度是 $\log_{10/9} n$。
+5. 在短的那侧还没递归结束之前，对于整棵树来说，每层的划分代价都是 $cn$，$O(n)$ 级别。
+6. 短的那侧递归完了之后只剩下长的那侧自己递归，这时对于整棵树来说，每层的划分代价的上限是 $cn$（在本例中是 $9cn/10$ ？），$O(n)$ 级别。
+7. 所以纵观整棵树，：每层的代价都是 $O(n)$ 级别；而深度 $\log_{10/9} n$ 为 $O(\lg n)$ 级别。所以整棵树总的复杂度还是 $O(n \lg n)$。
+
+
+
+## 改进
+### 特殊输入的处理
+#### 输入数组全部相同时
+1. 每次 `partition` 返回的都是最后一个索引，`quickSort` 调用次数因此变成线性的。
+2. 下面判断是否所有元素都相等，如果是的话，每次返回中间的索引
+    ```js
+    function partition (arr, leftIndex, rightIndex) {
+        let pivot = arr[rightIndex];
+        let i = leftIndex - 1;
+        let j = leftIndex;
+        let nSameTimes = 0;
+
+        for (; j<rightIndex; j++) {
+            let val = arr[j];
+            if (val <= pivot) {
+                swap(arr, ++i, j);
+            }
+            if (val === pivot) {
+                nSameTimes++; // 记录相等的次数
+            }
+        } 
+
+        if (nSameTimes === rightIndex - leftIndex) { // 所有元素都相等
+            return Math.floor((leftIndex + rightIndex)/2);
+        }
+
+        swap(arr, i+1, rightIndex);
+
+        return i+1;
+    }
+    ```
+
+### 如果想按照递减的顺序排序
+1. 思考一下现有的 `partition` 逻辑，左边的两部分分别是小于等于 pivot 的和大于 pivot 的。
+2. 那么只要把这两部分变成大于等于 pivot 的和小于 pivot 的就行了，也就是只需要把 `if (val <= pivot)` 改成  `if (val >= pivot)` 就行了。
+
+
+
+
+
+
+
 
 ### 实现
 ```js
