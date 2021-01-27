@@ -1,0 +1,252 @@
+## Block Scope
+
+
+## `let` 的块级作用域机制
+1. 并不是 `let` 让代码块拥有了独立的作用域，而是让它所声明的变量有了块级作用域。
+2. 考虑下面的例子，怎么理解其中的块级作用域
+    ```js
+    var a = 2;
+    var b = 3;
+
+    {
+        let a = 22;
+        var b = 33;
+    }
+
+    console.log(a);
+    console.log(b);
+    ```
+3. 最初我的理解是，因为代码块（`{}`）中有个 `let`，所以这个代码块就有了独立的作用域。这样不仅内部的 `a` 是在内层作用域里面，顺带的导致 `b` 也在内层作用域里面了。所以打印出来的是 `2` 和 `3`。然而实际上打印出来的是 `2` 和 `33`。
+4. 所以实际上 `let` 的机制是上面说的：“让它所声明的变量有了块级作用域”。所以在代码块中，只有 `a` 有块级作用域，`b` 还是和外面在同一个作用域。
+5. 另一例
+    ```js
+    var m = 22;
+    var n = 33;
+    for (let i=0; i<3; i++){
+        var m = 222; // 并不拥有块级作用域
+        let n = 333;
+    }
+    console.log(m); // 222
+    console.log(n); // 33
+    ```
+
+
+## 用途
+### 内存回收
+1. 考虑以下代码
+    ```js
+    function process(data) {
+
+    }
+
+    var someReallyBigData = { .. };
+
+    process( someReallyBigData );
+
+    var btn = document.getElementById( "my_button" );
+
+    btn.addEventListener( "click", function() {
+        console.log("button clicked");
+    }, false );
+    ```
+2. 点击事件的回调并不需要 `someReallyBigData` 变量。理论上这意味着当 `process(..)` 执行后，在内存中占用大量空间的数据结构就可以被垃圾回收了。
+3. 但是，由于回调函数形成了一个覆盖整个作用域的闭包，JavaScript 引擎极有可能依然保存着这个结构（取决于具体实现）。
+4. 块作用域可以打消这种顾虑，可以让引擎清楚地知道没有必要继续保存 `someReallyBigData` 了：
+    ```js
+    function process(data) {
+
+    }
+
+    // 在这个块中定义的内容完事可以销毁！
+    {
+        let someReallyBigData = { .. };
+        process( someReallyBigData );
+    }
+
+    var btn = document.getElementById( "my_button" );
+
+    btn.addEventListener( "click", function() {
+        console.log("button clicked");
+    }, false);
+    ```
+
+### `for` 循环
+1. 一个常见的非预期 `for` 循环
+    ```js
+    var arr = [];
+    for (var i = 0; i < 3; i++){
+        arr[i] = function(){console.log(i)};
+    }
+    arr[1](); // 期望1，实际3
+    ```
+2. 实际上如果将 `for` 循环展开，就会很好理解
+    ```js
+    {
+        var i = 0;
+        arr[i] = function(){console.log(i)};
+    }
+    {
+        var i = 1;
+        arr[i] = function(){console.log(i)};
+    }
+    {
+        var i = 2;
+        arr[i] = function(){console.log(i)};
+    }
+    {
+        var i = 3;
+    }
+    ```
+3. 对于 `var` 声明的变量，花括号并不会对其生成一层作用域，所以这三个函数中的 `i` 的作用域链就只有两层：函数内部和全局。在调用函数的时候，全局的 `i` 已经 3 了。
+4. 一个常见的解决方法使用 IIFE 生成一层函数作用域
+    ```js
+    for (var i = 0; i < 3; i++){
+        (function(i){
+            arr[i] = function(){console.log(i)};
+        })(i);
+    }
+    arr[1](); // 1
+    ```
+5. `for` 循环内部现在是一个立即执行的函数，因此就有了一层新的作用域，并且通过函数参数复制进去了当前的 `i`。因此在这个 IIEF 内部的 `i` 就是预期的值了。最内部的 `console.log(i)` 在执行时不需要检索到最外层的全局作用域，直接在立即执行函数内部就找到了 `i` 的值。  
+6. 现在使用 `let` 可以更好地解决这个问题
+    ```js
+    var arr = [];
+    for (let i = 0; i < 3; i++){
+        arr[i] = function(){console.log(i)};
+    }
+    arr[1](); // 1
+    ```
+7. 将循环展开，就能清楚的看到为什么用会是 1 而不是 3
+    ```js
+    {
+        let i = 0;
+        arr[i] = function(){console.log(i)};
+    }
+    {
+        let i = 1;
+        arr[i] = function(){console.log(i)};
+    }
+    {
+        let i = 2;
+        arr[i] = function(){console.log(i)};
+    }
+    {
+        let i = 3;
+    }
+    ```
+    现在每个函数都有自己的块级作用域，内部定义了自己的 `i`。
+
+### `for` 循环中的四种 `var` 和 `let
+* `var` + `var`
+    ```js
+    for (var i=0; i<3; i++){
+        var i = 3;
+        console.log(i);
+    }
+    ```
+    输出一个 `3`。相当于：
+    ```js
+    var i;
+    for (i=0; i<3; i++){
+        i = 3;
+        console.log(i);
+    }
+    ```
+* `let` + `let` 形成三级作用域：小括号作用域是外部作用域的子作用域、大括号作用域是小括号作用域的子作用域
+    ```js
+	// 下面有三级作用域：全局的、小括号的和大括号的
+
+	let i = 5; // 全局 i
+
+	for (let i=0; i<3; i++){ // 重新定义了自己的 i
+		let i=3; // 又重新定义了自己的 i，不影响循环
+		console.log(i); // 三个 3
+	}
+
+	for (let i=0; i<3; i++){ 
+		i=3; // 直接修改了父级的 i
+		console.log(i); // 一个 3
+	}
+
+	console.log(i); // 5 
+
+	for (; i<9; i++) {} // 直接修改了全局 i
+	console.log(i); // 9
+    ```
+* `var` + `let`
+    ```js
+    var i = 9;
+	for (var i=0; i<3; i++){ // 仍然是全局作用域，直接修改之前的 9
+		let i = 999;  //  定义自己的局部作用域，不影响外部
+		console.log(i); // 三个 999
+	}
+	console.log(i); // 3
+    ```
+* `let` + `var`：大括号会使用小括号的作用域
+    ```js
+    for (let i=0; i<3; i++){
+		var i; // 因为使用的 var，所以没有形成自己的作用域，使用父级作用域，所以是重复声明
+	}
+    // Uncaught SyntaxError: Identifier 'i' has already been declared
+    ```
+    ```js
+    var m = 22;
+    for (let i=0; i<3; i++){
+        var m = 33;  // 并不拥有块级作用域 （对一个变量重复使用 var 并不会重新声明）
+    }
+    console.log(m); // 33
+    ```
+
+
+## 其他例子
+#### 例 1
+1. 非严格模式下，下载怎么输出
+	```js
+    function foo() {
+        function bar(a) {
+            i = 3;
+            console.log( a + i );
+        }
+
+        for (var i=0; i<10; i++) {
+            bar( i * 2 );
+            debugger;
+        }
+    }
+
+    foo();
+	```
+2. 因为使用 `var` 声明 `i`，所以没有形成块级作用域，`bar` 内部对 `i` 的赋值会影响循环的 `i`。所以输出为一个 `3` 和无限循环的 `11`。
+3. 改成用 `let` 声明 `i`，形成了块级作用域。虽然 `bar` 调用在循环的块里，但作用域不是由调用位置决定的，而是定义位置，而定义所在的 `foo` 函数作用域里没有 `i`。
+4. 但并不会报错，因为这是非严格模式，所以 `bar` 里面的 `i = 3;` 实际上是重新声明了一个变量 `i`，而且因为没有用 `var` 或者 `let`，所以这个 `i` 实际上声明为全局变量了
+	```js
+    function foo() {
+        function bar(a) {
+            i = 3;
+            console.log( a + i );
+            // 3
+            // 5
+            // 7
+            // 9
+            // 11
+            // 13
+            // 15
+            // 17
+            // 19
+            // 21
+        }
+
+        for (let i=0; i<10; i++) {
+            bar( i * 2 );
+        }
+    }
+
+    foo();
+
+    console.log(i); // 3
+	```
+
+
+## Reference
+* [《You-Dont-Know-JS》 Function vs. Block Scope](https://github.com/getify/You-Dont-Know-JS/blob/1st-ed/scope%20%26%20closures/ch3.md)
+
