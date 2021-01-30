@@ -11,13 +11,12 @@ function swap(arr, index1, index2){
 function shuffle(arr) {
     // 从右至左依次选取一个，和它自己及左边随机位置交换，总共交换 `length - 1` 次
     for (let i = arr.length - 1; i > 0; i--) {
-        let j = Math.floor(Math.random() * (i + 1)); // 它自己及左边随机位置
+        let j = Math.floor(Math.random() * (i + 1)); // 它自己也属于未被打乱的部分，所以也要包括进去
         // Swapping variables with destructuring assignment causes significant
         // performance loss, as of October 2017.
         // [arr[i], arr[j]] = [arr[j], arr[i]];
         swap(arr, i, j);
     }
-    return arr;
 }
 ```
 

@@ -26,6 +26,7 @@
             - [循环不变式](#循环不变式)
         - [实现](#实现-1)
             - [易错点](#易错点)
+            - [指定索引的版本](#指定索引的版本)
         - [分析](#分析-1)
             - [倒置数等于 `while` 循环数的证明](#倒置数等于-while-循环数的证明)
         - [练习](#练习)
@@ -408,6 +409,44 @@
 
 #### 易错点
 * 循环控制变量 `i` 和 `j` 的开始值和结束值，以及结束之后的值。比如《算法导论》第 10 页的伪代码最后一行的数组索引是 `i+1` 而不是 `i`。
+
+#### 指定索引的版本
+1. 最初实现为
+    ```js
+    function insertionSort (arr, leftIndex, rightIndex) {
+        for (let i = leftIndex + 1; i <= rightIndex; i++) {
+            let curr = arr[i];
+            let j = i-1;
+            for (; j>=0; j--) {
+                if (arr[j] > curr) {
+                    arr[j+1] = arr[j];
+                }
+                else {
+                    break;
+                }
+            }
+            if (j !== i-1) {
+                arr[j+1] = curr; // 注意要加一
+            }
+        }
+    }
+    ```
+2. 不过既然 `for` 循环还用了 `break`，那就使用 `while` 更好
+    ```js
+    function insertionSort (arr, leftIndex, rightIndex) {
+        for (let i = leftIndex + 1; i <= rightIndex; i++) {
+            let curr = arr[i];
+            let j = i-1;
+            while (j >= 0 && arr[j] > curr) {
+                arr[j+1] = arr[j];
+                j--;
+            }
+            if (j !== i-1) {
+                arr[j+1] = curr;
+            }
+        }
+    }
+    ```
 
 ### 分析
 0. 《算法导论》14-16 页开始很详细且精确的分析了插入排序的复杂度，并给出了复杂度分析的通用模式，务必仔细看。
