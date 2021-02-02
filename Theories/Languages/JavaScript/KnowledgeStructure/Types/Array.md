@@ -503,7 +503,7 @@ console.log(arr); // [1, 2, 3]
 
 
 ## Array-Like
-1. 通过`call`等方法，也可以对类数组对象和字符串实现数组的部分方法
+1. 通过 `call` 等方法，也可以对类数组对象和字符串实现数组的部分方法
     ```js
     let str = "JavaScript";
 
@@ -515,25 +515,24 @@ console.log(arr); // [1, 2, 3]
     }).join("");
     console.log(result2); // "JvScrpt"
     ```
-2. 请记住，字符串是不可变值，故当把它们作为数组看待时，它们是只读的。如`push()`、
-`sort()`、`reverse()`和`splice()`等数组方法会修改数组，它们在字符串上是无效的。
+2. 请记住，字符串是不可变值，故当把它们作为数组看待时，它们是只读的。如 `push()`、`sort()`、`reverse()` 和 `splice()`等数组方法会修改数组，它们在字符串上是无效的。
     ```js
     let str = 'JavaScript';
     Array.prototype.push.call(str, '!');
     // TypeError: Cannot assign to read only property 'length' of object '[object String]'
     ```
 3. 检测是否是类数组对象
-```js
-function isArrayLike(o){
-	if (o && // o is not null, undefined, etc.
-		typeof o === "object" && // o is an object
-		!Array.isArray(o) && // o is not array
-		Number.isFinite(o.length) && // o.length is a finite number
-		o.length >= 0 && // o.length is non-negative
-		o.length === Math.floor(o.length) && // o.length is an integer
-		o.length < 4294967296 // o.length < 2^32
-	)
-	return true; // Then o is array-like
-	return false; // Otherwise it is not
-}
-```
+    ```js
+    function isArrayLike(o){
+        if (o && // o is not null, undefined, etc.
+            typeof o === "object" && // o is an object
+            !Array.isArray(o) && // o is not array
+            Number.isFinite(o.length) && // o.length is a finite number
+            o.length >= 0 && // o.length is non-negative
+            o.length === Math.floor(o.length) && // o.length is an integer
+            o.length < 4294967296 // o.length < 2^32
+        )
+        return true; // Then o is array-like
+        return false; // Otherwise it is not
+    }
+    ```

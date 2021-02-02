@@ -39,6 +39,7 @@ console.log( void foo() );       // undefined
 ## Null
 * Logically, a `null` value is an empty object pointer, which is why `typeof`
 returns `object` when it’s passed a `null` value
+* 不同的对象在底层都表示为二进制，在 JavaScript 中二进制前三位都为 0 的话会被判断为 `object` 类型，`null` 的二进制表示是全 0，所以执行 `typeof` 时会返回 `object`。
 * The value `undefined` is a derivative of null, so ECMA-262 defines them to be
 superficially equal
 ```js
@@ -66,3 +67,7 @@ undefined = 22; // TypeError: Cannot assign to read only property 'undefined' of
     let null = 22; // SyntaxError: Unexpected strict mode reserved word
 }
 ```
+
+
+## References
+* [《你不知道的JavaScript（上卷）》](https://book.douban.com/subject/26351021/)
