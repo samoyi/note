@@ -11,18 +11,12 @@
         - [任何形式的删除都会触发该事件](#任何形式的删除都会触发该事件)
         - [`inputType` 属性](#inputtype-属性)
     - [composition 事件](#composition-事件)
-        - [MDN 的介绍](#mdn-的介绍)
-            - [`compositionstart`](#compositionstart)
-            - [`compositionupdate`](#compositionupdate)
-            - [`compositionend`](#compositionend)
-        - [实际测试](#实际测试)
-            - [搜狗拼音](#搜狗拼音)
-            - [微软拼音](#微软拼音)
+        - [`compositionstart`](#compositionstart)
+        - [`compositionupdate`](#compositionupdate)
+        - [`compositionend`](#compositionend)
         - [`ev.isTrusted`](#evistrusted)
 
 <!-- /TOC -->
-
-
 
 
 ## `input`
@@ -51,8 +45,9 @@
     你好
     你好
     ```
-5. 按照 [规范](https://w3c.github.io/uievents/#event-type-input)上的说法：A user agent MUST dispatch this event immediately after the DOM has been updated，看起来搜狗输入法的更合理，因为只有按下 `n` 和空格的时候 DOM 才会发生变化。
-6. 但还有比较不直观的，就是为什么第2到第5次不是`i`、`h`、`a`、`o`？
+5. 按照 [规范](https://w3c.github.io/uievents/#event-type-input)上的说法：A user agent MUST dispatch this event immediately after the DOM has been updated。
+6. 搜狗输入法时，输入的时候注意观察，在按下 `n` 之后，输入框里会出现一个空格，之后四个字母按下后输入框不会变化，最后按下空格，输入框变成汉字。因为只有按下 `n` 和空格的时候 DOM 才会发生变化，所以只会触发两次事件处理。
+7. 而微软输入发每次输入字母，输入框里面都会发生变化。只是不知道为啥每次都触发两次。
 
 ### 直接粘贴
 会触发一次 `input`，但是 `ev.data` 值为 `null`。
@@ -64,7 +59,7 @@
 1. 每次触发事件，根据触发的类型，`inputType` 属性值都会有所不同。
 2. 尝试了一下几种类型：
     * 输入字母或者数字： `insertText`
-    * 拼音输入时所有的事件：`insertCompositionText`
+    * 拼音输入时按下字母或者最后按下空格：`insertCompositionText`
     * 粘贴：`insertFromPaste`
     * backspace 键删除：`deleteContentBackward`
     * delete 键删除：`deleteContentForward`
@@ -72,35 +67,22 @@
 
 
 ## composition 事件
-### MDN 的介绍
-#### `compositionstart`
+### `compositionstart`
 1. The `compositionstart` event is fired when the composition of a passage of text is prepared (similar to `keydown` for a keyboard input, but fires with special characters that require a sequence of keys and other inputs such as speech recognition or word suggestion on mobile).
 2. 例如使用拼音输入法时，开始输入拼音的时候就会触发该事件。
 3. 这个事件获得不了关于输入的有用信息，输入的信息要使用下面的 `compositionupdate` 事件来获得
 
-#### `compositionupdate`
+### `compositionupdate`
 1.  The `compositionupdate` event is fired when a character is added to a passage of text being composed (fires with special characters that require a sequence of keys and other inputs such as speech recognition or word suggestion on mobile).
-* 通过 `ev.data` 获取那些组成用的字符，例如拼音输入法的拼音。
+2. 通过 `ev.data` 获取输入到输入框里的字符，效果和上面 `input` 事件的 `ev.data`。例如输入中文 “你好”
+    * 在搜狗输入法中，按下 `n` 时，会触发 `compositionupdate` 事件，`ev.data` 是一个空格；之后输入 `i`、`h`、`a`、`o` 都不会触发，因为输入框里没有变化；最后按下空格后，会第二次也是最后一次触发 `compositionupdate` 事件，`ev.data` 是 “你好”。
+    * 在微软输入法中，按下 `n`、`i`、`h`、`a`、`o` 和空格，每次都会重复触发两次 `compositionupdate` 事件，`ev.data` 也和上面的 `input` 事件时一样。
+3. 所以，你不能通过这个事件来实时的判断用户按下的字母。
 
-#### `compositionend`
+### `compositionend`
 1. The `compositionend` event is fired when the composition of a passage of text has been completed or cancelled (fires with special characters that require a sequence of keys and other inputs such as speech recognition or word suggestion
 on mobile).
-2. `ev.data`获得是最终生成的字符串，例如拼音生成的汉字。
-3. `compositionstart` 和 `compositionupdate` 的`ev.isTrusted` 是 `true`，而 `compositionend` 的 `false`。
-
-### 实际测试
-和 `input` 事件一样，不同的输入法也有不同的效果。以拼写 “你好” 为例。
-
-#### 搜狗拼音
-1. 只有按下第一个字母 `n` 和最后按下空格时会触发事件。
-2. 按下 `n` 时，先后触发 `compositionstart` 和 `compositionupdate`。前者的 `ev.data` 是空字符串（`""`），后者的 `ev.data` 是一个空格（`" "`）。
-3. 按下空格时，先后触发 `compositionupdate` 和 `compositionend`。两者的 `ev.data` 都是 `"你好"`。
-
-#### 微软拼音
-1. 总共出发了 14 次！
-2. 按下 `n` 时，先触发一次 `compositionstart`，然后是两次 `compositionupdate`。`compositionstart` 的 `ev.data` 是空字符串（`""`），`compositionupdate` 的 `ev.data` 是 `"n"`。
-3. 之后按下 `i`、`h`、`a`、`o`，每次按下触发两次 `compositionupdate` 事件，这两次的 `ev.data` 属性值相同。四次按下的 `ev.data` 分别为：`ni`、`ni'h`、`ni'ha`、`ni'hao`。
-4. 最后按下空格时，先触发两次 `compositionupdate`，然后是一次 `compositionend`。三个的 `ev.data` 都是 `"你好"`。
+2. `ev.data` 获得是最终生成的字符串，例如拼音生成的汉字。
 
 ### `ev.isTrusted`
 `compositionstart` 和 `compositionupdate` 的 `ev.isTrusted` 都是 `true`，`compositionend` 是 `false`。

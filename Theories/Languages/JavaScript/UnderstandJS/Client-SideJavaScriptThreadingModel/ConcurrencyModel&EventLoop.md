@@ -1,7 +1,29 @@
 # Concurrency model and Event Loop
 
-![Runtime concepts](./images/RuntimeConcepts.svg)  
-JavaScript Runtime
+
+JavaScript Runtime:
+<img src="./images/RuntimeConcepts.svg" width="400" style="display: block; margin: 5px 0 10px 0;" />
+
+
+<!-- TOC -->
+
+- [Concurrency model and Event Loop](#concurrency-model-and-event-loop)
+    - [TODO](#todo)
+        - [异步回调是否被会错误打断](#异步回调是否被会错误打断)
+    - [The JavaScript Engine](#the-javascript-engine)
+        - [Call stack](#call-stack)
+        - [Memory Heap](#memory-heap)
+    - [JS 既然是单线程，为什么可以执行异步操作？](#js-既然是单线程为什么可以执行异步操作)
+        - [Basic Architecture](#basic-architecture)
+    - [Event Table and Event Queue](#event-table-and-event-queue)
+        - [Event Table（事件表）](#event-table事件表)
+        - [Event Queue（事件队列）](#event-queue事件队列)
+    - [Event loop（事件循环）](#event-loop事件循环)
+        - [一个事件循环流程](#一个事件循环流程)
+        - [`main()` 以及 `setTimeout` 的回调总是最后执行](#main-以及-settimeout-的回调总是最后执行)
+    - [Macrotask 和 Microtask](#macrotask-和-microtask)
+
+<!-- /TOC -->
 
 
 ## TODO
@@ -19,9 +41,7 @@ JavaScript Runtime
 
 
 ## The JavaScript Engine
-A popular example of a JavaScript Engine is Google’s V8 engine. The V8 engine is
-used inside Chrome and Node.js for example. Here is a very simplified view of
-what it looks like:  
+A popular example of a JavaScript Engine is Google’s V8 engine. The V8 engine is used inside Chrome and Node.js for example. Here is a very simplified view of what it looks like:  
 
 ![V8 Engine](./images/V8Engine.png)  
 

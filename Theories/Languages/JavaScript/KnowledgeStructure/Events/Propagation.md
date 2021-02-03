@@ -59,7 +59,7 @@
     }, false);
     ```
 4. 点击 div 之后的输出是：
-    ```sh
+    ```
     Capturing window
     Capturing document
     Capturing body
@@ -68,6 +68,13 @@
     Bubbling  body
     Bubbling  document
     Bubbling  window
+    ```
+5. 如果点击其他区域，假设页面上没有其他元素，且没有设置 body 高度，那点击的对象就是 document，输出如下
+    ```sh
+    Capturing window
+    Capturing document
+    Bubbling document
+    Bubbling window
     ```
 
 
@@ -86,9 +93,104 @@
         console.log(ev.currentTarget === this); // true
     }, true);
     ```
+    事件绑定在 body 上，点击 div 后，触发了 body 的事件处理。因为点击是发生在 div 上，所以 `target` 是 div；因为事件是绑定在 body 上，所以 `currentTarget` 是 body。
 
 ### `ev.eventPhase`
-事件当前处于哪个阶段：调用事件处理程序的阶段：`1` 表示此事件处理发生在捕获阶段，`2` 表示在处于目标阶段，`3` 表示在冒泡阶段。
+1. 表明事件当前处于哪个阶段。调用事件处理程序的阶段：`1` 表示此事件处理发生在捕获阶段，`2` 表示在处于目标阶段，`3` 表示在冒泡阶段。
+2. 还使用开始那个例子
+    ```js
+    window.addEventListener('click', function(ev){
+        console.log('Capturing window');
+        console.log(ev.eventPhase);
+        console.log('-------------');
+    }, true);
+
+    document.addEventListener('click', function(ev){
+        console.log('Capturing document');
+        console.log(ev.eventPhase);
+        console.log('-------------');
+    }, true);
+
+    document.body.addEventListener('click', function(ev){
+        console.log('Capturing body');
+        console.log(ev.eventPhase);
+        console.log('-------------');
+    }, true);
+
+    document.querySelector('div').addEventListener('click', function(ev){
+        console.log('Capturing div');
+        console.log(ev.eventPhase);
+        console.log('-------------');
+    }, true);
+
+    document.querySelector('div').addEventListener('click', function(ev){
+        console.log('Bubbling div');
+        console.log(ev.eventPhase);
+        console.log('-------------');
+    }, false);
+
+    document.body.addEventListener('click', function(ev){
+        console.log('Bubbling body');
+        console.log(ev.eventPhase);
+        console.log('-------------');
+    }, false);
+
+    document.addEventListener('click', function(ev){
+        console.log('Bubbling document');
+        console.log(ev.eventPhase);
+        console.log('-------------');
+    }, false);
+
+    window.addEventListener('click', function(ev){
+        console.log('Bubbling window');
+        console.log(ev.eventPhase);
+        console.log('-------------');
+    }, false);
+    ```
+3. 点击 div，输出如下
+    ```
+    Capturing window
+    1
+    -------------
+    Capturing document
+    1
+    -------------
+    Capturing body
+    1
+    -------------
+    Capturing div
+    2
+    -------------
+    Bubbling div
+    2
+    -------------
+    Bubbling body
+    3
+    -------------
+    Bubbling document
+    3
+    -------------
+    Bubbling window
+    3
+    -------------
+    ```
+    因为 `target` 是 div，所以不管在它上面用捕获绑定还是冒泡绑定，事件发生时 `eventPhase` 都是处于目标阶段；而其他不是 `target` 的元素，则根据其在哪个阶段触发事件处理，`eventPhase` 是相应的值。
+4. 同样如果再尝试点击 document，输出为
+    ```
+    Capturing window
+    1
+    -------------
+    Capturing document
+    1
+    -------------
+    Bubbling document
+    3
+    -------------
+    Bubbling window
+    3
+    -------------
+    ```
+    因为这次的事件都不是直接发生在这两个对象上的，也就是说它俩都不是 `target`，所以它们的事件处理只可能是捕获阶段或冒泡阶段。
 
 ### `ev.bubbles`
 1. 一个事件是否可冒泡。

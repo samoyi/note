@@ -1,35 +1,107 @@
 # Primitive value vs Reference value
 
-## Primitive values
-* stored on the stack.
-* stored directly in the location that the variable accesses.
 
-## Reference values
-* Stored in the heap.
-* Stored in the variable location is a pointer to a location in memory where the
-object is stored.
+<!-- TOC -->
+
+- [Primitive value vs Reference value](#primitive-value-vs-reference-value)
+        - [基本类型](#基本类型)
+        - [引用类型](#引用类型)
+        - [复制变量值](#复制变量值)
+        - [传递参数](#传递参数)
+    - [References](#references)
+
+<!-- /TOC -->
 
 
-```js
-// 堆内存中保存着数组 [22]
-// 变量 arr 保存着一个指针，指向堆内存中的数组 [22]
-// arr 把它的指针复制了一份给 a1，a1 也保存一个指针，指向 [22]
-let arr = [22],
-    a1 = arr;
+### 基本类型
+1. 基本数据类型保存在栈中，直接保存在变量访问的位置。
+2. 基本类型是按值访问的，因为可以操作保存在变量中的实际的值。
 
-// 通过 arr[0] 直接找到 [22] 的数组第一项，对其进行修改，数组变成了 [33]
-// 因为 a1 也指向实际的数组，所以打印 a1 页看到了变化
-arr[0] = 33;
-console.log( a1 ); // [33]
+### 引用类型
+1. 引用类型保存在堆中，引用类型变量访问的只是该引用类型的指针，指向堆中引用类型保存的位置。
+2. 也就是说，引用类型变量实际上本身就是指针，也就是说 **引用类型变量的值** 就是指针，而不是 **堆内存中实际保存的** 值。
+2. 与其他语言不同，ECMAScript 不允许直接访问内存中的位置，也就是说不能直接操作对象的内存空间。在操作对象时，实际上是在操作对象的引用而不是实际的对象。为此，引用类型的值是按引用访问的。
+3. 因此你只能直接删除基本类型的值，而不能直接删除引用类型的值。
+    ```js
+    let n = 2;
+    n = undefined;
+    ```
+    上面是直接把保存着 `2` 的那个内存清空了。
 
-// 堆内存中的实际数组 [33] 还正常的存在，但此时在堆内存中又保存了一个数组 [44]
-// 变量 arr 的指针此时改为指向数组 [44] ，所以打印 arr显示 “[44]”
-// 而因为数组 [33] 仍然存在于内存中，且仍然被变量 a1 的指针引用，所以打印 a1 显示 “[33]”
-arr = [44];
-console.log( arr ); // [44]
-console.log( a1 ); // [33]
-```
+    ```js
+    let o = {};
+    o = null;
+    ```
+    而这里，并不是把保存着对象的内存清空了，只是让 `o` 取消引用这一块内存。真正清空这一块内存的，是随后运行的垃圾回收机制。
+4. 对引用类型的访问
+    ```js
+    // 堆内存中保存着数组 [22]
+    // 变量 arr 保存着一个指针，指向堆内存中的数组 [22]
+    // arr 把它的指针复制了一份给 a1，a1 也保存一个指针，指向 [22]
+    let arr = [22],
+        a1 = arr;
+
+    // 通过 arr[0] 直接找到 [22] 的数组第一项，对其进行修改，数组变成了 [33]
+    // 因为 a1 也指向实际的数组，所以打印 a1 页看到了变化
+    arr[0] = 33;
+    console.log( a1 ); // [33]
+
+    // 堆内存中的实际数组 [33] 还正常的存在，但此时在堆内存中又保存了一个数组 [44]
+    // 变量 arr 的指针此时改为指向数组 [44] ，所以打印 arr 显示 “[44]”
+    // 而因为数组 [33] 仍然存在于内存中，且仍然被变量 a1 的指针引用，所以打印 a1 显示 “[33]”
+    arr = [44];
+    console.log( arr ); // [44]
+    console.log( a1 ); // [33]
+    ```
+
+### 复制变量值
+* 如果从一个变量向另一个变量复制基本类型的值，会在变量对象上创建一个新值，然后把该值复制到为新变量分配的位置上。两个变量里的值是完全独立的。此后，这两个变量可以参与任何操作而不互相影响。
+* 当从一个变量向另一个变量复制引用类型的值时，同样也会将存储在变量中的值复制一份放到为新变量分配的空间中。不同的是，这个值实际上是一个指针，而这个指针指向存储在堆内存中的一个对象，复制的是指针而不是引用类型本身。复制操作结束后，两个变量实际上将引用同一个对象。
+
+### 传递参数
+1. ECMAScript 中所有函数的参数都是按值传递的，即把函数外部的值复制给函数内部的参数。
+2. 基本类型值的传递如同基本类型变量的复制一样，而引用类型值的传递，则如同引用类型变量的复制一样，即拷贝一份指针传给新的变量。
+3. 在向参数传递基本类型的值时，被传递的值会被复制给一个局部变量（即命名参数，或者用 ECMAScript 的概念来说，就是 `arguments` 对象中的一个元素）
+    ```js
+    function addTen(num) {
+        // 因为传进来的是 20，而不是对 count 的引用，所以这里怎么变都和外面的 count 没关系
+        // 如果传进来的是对 count 的引用，则这里 num 一变外面的 count 也要变
+        num += 10;
+        return num;
+    }
+    var count = 20;
+    var result = addTen(count); // 按值传递，所以传进去的就是 count 的值——20
+    alert(count); // 20 - no change
+    alert(result); // 30
+    ```
+4. 在向参数传递引用类型的值时，会把这个值在内存中的地址复制给一个局部变量，因此这个局部变量的变化会反映在函数的外部，因为两个指针引用的是同一个对象。引用类型变量的值就是指针，所以说也是按值传递的
+    ```js
+    function setName(obj) {
+        obj.name = 33;
+    }
+    var person = {};
+    person.name = 22;
+    setName(person);
+    alert(person.name); // 33
+    ```
+    如果没有搞清楚上面所说的何为 **引用类型变量的值**，则会错误的认为既然函数内部改变变量不会对外部的 `person` 产生影响，所以应该弹出 `22` 才对。
+5. 再看下面一例：
+   ```js
+   function setName(obj) {
+       obj.name = 33;
+       obj = {};
+       obj.name = 66;
+   }
+
+   var person = {};
+   person.name = 22;
+   setName(person);
+   alert(person.name);    // 33
+   ```
+   传入了 `person` 中保存的指针，所以函数内部第一行的时候，`obj` 是指向 `person`指向的对象的，所以修改为 `33` 后，`person` 指向对象也发生了变化。但第二行将 `obj` 指向了新的对象，从这里开始，`obj` 就和 `person` 指向的对象没关系了。
+6. 传参都是按值传递，但在内部访问时，基本类型是按值访问，引用类型仍然是按引用访问。
 
 
 ## References
 * [Primitive value vs Reference value](https://stackoverflow.com/questions/13266616/primitive-value-vs-reference-value)
+* [《Professional JavaScript for Web Developers》](https://book.douban.com/subject/7157249/)
