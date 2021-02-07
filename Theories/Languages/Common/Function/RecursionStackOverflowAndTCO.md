@@ -1,127 +1,138 @@
 # Recursion stack overflow and Tail Call Optimization
 
+
+<!-- TOC -->
+
+- [Recursion stack overflow and Tail Call Optimization](#recursion-stack-overflow-and-tail-call-optimization)
+    - [Recursion stack overflow](#recursion-stack-overflow)
+    - [Tail call and tail recursive](#tail-call-and-tail-recursive)
+    - [Trampoline 解决递归导致的栈溢出](#trampoline-解决递归导致的栈溢出)
+    - [模拟 TCO](#模拟-tco)
+    - [JS 中使用 `setTimeout` 防止递归栈溢出](#js-中使用-settimeout-防止递归栈溢出)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
 ## Recursion stack overflow
 1. 执行一个函数时，该函数所使用的的局部变量需要占用一定的栈内存。
 2. 在函数执行完毕后才会释放其所占用的栈内存。
-3. 在没有尾调用优化机制的情况下，一个函数还没有执行完就再一次调用了一遍自身，这就导致每
-一次的栈内存都无法释放，从而产生大量内存占用甚至栈溢出。
+3. 在没有尾调用优化机制的情况下，一个函数还没有执行完就再一次调用了一遍自身，这就导致每一次的栈内存都无法释放，从而产生大量内存占用甚至栈溢出。
 
 
 ## Tail call and tail recursive
-1. In computer science, a tail call is a subroutine call performed as the final
-action of a procedure. If a tail call might lead to the same subroutine being
-called again later in the call chain, the subroutine is said to be tail
-recursive, which is a special case of recursion.
-2. The tail call doesn't have to appear lexically after all other statements in
-the source code; it is only important that the calling function return
-immediately after the tail call, returning the tail call's result if any, since
-the calling function will never get a chance to do anything after the call if
-the optimization is performed.
-3. 尾调用的规则必须是：函数**执行**的最后一步是**返回**一个**函数调用**  
-以下三种情况，都不属于尾调用：
-```js
-function f(x){
-    let y = g(x);
-    return y;
-}
-function f(x){
-    return g(x) + 1;
-}
-function f(x){
-    g(x);
-}
-```
-下面的函数中的`m`虽然 lexically 不是在函数最后一行，但在函数执行上则是最后一步，所以
-属于尾调用
-```js
-function f(x) {
-    if (x > 0) {
-        return m(x)
+1. In computer science, a **tail call** is a subroutine call performed as the final action of a procedure. 
+2. If a tail call might lead to the same subroutine being called again later in the call chain, the subroutine is said to be **tail recursive**, which is a special case of recursion.
+3. The tail call doesn't have to appear lexically after all other statements in the source code; it is only important that the calling function return immediately after the tail call, returning the tail call's result if any, since the calling function will never get a chance to do anything after the call if the optimization is performed.
+4. 尾调用的规则必须是：函数 **执行** 的最后一步是 **返回** 一个 **函数调用**。
+5. 以下三种情况，都不属于尾调用：
+    ```js
+    function f(x){
+        let y = g(x);
+        return y;
     }
-    return n(x);
-}
-```
-4. 尾递归实现阶乘
-下面这个不是尾递归：
-```js
-function factorial(n){
-    if (n>1){
-        return n * factorial(n-1);
+    function f(x){
+        return g(x) + 1;
     }
-    else {
-        return 1;
+    function f(x){
+        g(x);
     }
-}
-```
-如果实现支持尾递归，可以改成下面的写法：
-```js
-function factorial(n, accumulator = 1){
-    if (n>1){
-        return factorial(n - 1, n * accumulator);
+    ```
+6. 下面的函数中的 `m` 虽然 lexically 不是在函数最后一行，但在函数执行上则是最后一步，所以属于尾调用
+    ```js
+    function f(x) {
+        if (x > 0) {
+            return m(x)
+        }
+        return n(x);
     }
-    else {
-        return accumulator;
-    }
-}
-```
-5. 尾递归实现求 Fibonacci 数
-Fibonacci 数列使用`0 0 1...`的模式
-下面这个不是尾递归：
-```js
-function Fibonacci (n) {
-    if (n <= 1) {return n};
-    return Fibonacci(n - 1) + Fibonacci(n - 2);
-}
-```
-如果实现支持尾递归，可以改成下面的写法：
-```js
-// ac1 是序号为 n-2 的值，ac2 是序号为 n-1 的值。序号最小为 0
-function Fibonacci(n , ac1 = 0 , ac2 = 1){
-    if (n > 1){
-        // 计算顺序是从左到右，但序号是相反的递减顺序
-        // 本次的 ac2 会作为下一次的 ac1，本次相加的结果会作为下一次的 ac2
-        return Fibonacci(n - 1, ac2, ac1 + ac2);
-    }
-    else if (n === 1){
-        return ac2;
-    }
-    else if (n === 0){
-        return 0;
-    }
-}
-```
-6. 因为并不是所有语言及其实现都支持 TCO，例如虽然 ES6 的规范要求实现在严格模式下支持
-TCO，但至少截至 Chrome66.0.3359.139 及 Node 8.1.2，并没有支持 TCO。
+    ```
+7. 尾递归实现阶乘
+    1. 下面这个不是尾递归：
+        ```js
+        function factorial(n){
+            if (n>1){
+                return n * factorial(n-1);
+            }
+            else {
+                return 1;
+            }
+        }
+        ```
+    2. 如果实现支持尾递归，可以改成下面的写法：
+        ```js
+        function factorial(n, accumulator = 1){
+            if (n>1){
+                return factorial(n - 1, n * accumulator);
+            }
+            else {
+                return accumulator;
+            }
+        }
+        ```
+        通过参数 `accumulator` 来计算阶乘。
+8. 尾递归实现求 Fibonacci 数
+    1. Fibonacci 数列使用 `0 0 1...` 的模式
+    2. 下面这个不是尾递归：
+        ```js
+        function Fibonacci (n) {
+            if (n <= 1) {return n};
+            return Fibonacci(n - 1) + Fibonacci(n - 2);
+        }
+        ```
+    3. 如果实现支持尾递归，可以改成下面的写法：
+        ```js
+        // ac1 是序号为 n-2 的值，ac2 是序号为 n-1 的值。序号最小为 0
+        function Fibonacci(n , ac1 = 0 , ac2 = 1){
+            if (n > 1){
+                // 计算顺序是从左到右，但序号是相反的递减顺序
+                // 本次的 ac2 会作为下一次的 ac1，本次相加的结果会作为下一次的 ac2
+                return Fibonacci(n - 1, ac2, ac1 + ac2);
+            }
+            else if (n === 1){
+                return ac2;
+            }
+            else if (n === 0){
+                return 0;
+            }
+        }
+        ```
+    4. 同样是通过参数来计算。
+9. 因为并不是所有语言及其实现都支持 TCO，例如虽然 ES6 的规范要求实现在严格模式下支持 TCO，但至少截至 Chrome66.0.3359.139 及 Node 8.1.2，并没有支持 TCO。
 
 
 ## Trampoline 解决递归导致的栈溢出
-在不支持尾递归的环境下，可以使用 Trampoline 将递归调用变为循环调用
-```js
-// 参数 fn 为要循环调用的函数
-// 执行 fn 后如果返回值为函数，则继续执行；否则返回该非函数返回值
-// 可以看出来，fn 需要循环的返回一个函数，直到循环结束时，返回一个非函数
-function trampoline(fn){
-    while (fn && fn instanceof Function) {
-        fn = fn();
+1. 在不支持尾递归的环境下，可以使用 Trampoline 将递归调用变为循环调用。如果函数 `fn` 的最后一步不是直接执行尾递归的调用，而是返回需要递归调用的函数，那就结束当前调用栈，可以用循环代替递归
+    ```js
+    // 参数 fn 是要循环调用的函数
+    // 执行 fn 后如果返回值为函数，则继续执行；否则返回该非函数返回值
+    // 可以看出来，fn 需要循环的返回一个函数，直到循环结束时，返回一个非函数
+    function trampoline(fn){
+        while (fn && fn instanceof Function) {
+            fn = fn();
+        }
+        return fn;
     }
-    return fn;
-}
-// 根据上述对 fn 的要求，对尾递归的 Fibonacci 函数进行改写
-function Fibonacci(n , ac1 = 0 , ac2 = 1){
-    if (n>1){
-        return Fibonacci.bind(null, n - 1, ac2, ac1 + ac2);
+    ```
+2. 根据上述对 `fn` 的要求，对尾递归的 Fibonacci 函数进行改写，把尾递归调用改为返回递归函数
+    ```js
+    function Fibonacci(n , ac1 = 0 , ac2 = 1){
+        if (n>1){
+            return Fibonacci.bind(null, n - 1, ac2, ac1 + ac2);
+        }
+        else if (n === 1){
+            return ac2;
+        }
+        else if (n === 0){
+            return 0;
+        }
     }
-    else if (n === 1){
-        return ac2;
-    }
-    else if (n === 0){
-        return 0;
-    }
-}
-```
+    ```
+    现在就可以使用 `trampoline` 来包装执行。
+
 
 ## 模拟 TCO
-如果需要使用尾递归的写法但是环境暂不支持，可以用如下方法，将一个尾递归函数进行“TCO化”：
+如果需要使用尾递归的写法但是环境暂不支持，可以用如下方法，将一个尾递归函数进行 “TCO化”：
 ```js
 function TCO(fn) {
     let value;
@@ -184,27 +195,29 @@ Fibonacci(100);
 `while`循环结束。返回`value`中保存的最终累加值。`accumulator`调用结束。
 
 
-## JS 中使用`setTimeout`防止递归栈溢出
-```js
-let list = readHugeList(); // 一个很大的数组
-function nextListItem() {
-    let item = list.pop();
-    if (item) {
-        // process the list item...
-        nextListItem();
+## JS 中使用 `setTimeout` 防止递归栈溢出
+1. 假设下面一段程序
+    ```js
+    let list = readHugeList(); // 一个很大的数组
+    function nextListItem() {
+        let item = list.pop();
+        if (item) {
+            // process the list item...
+            nextListItem();
+        }
     }
-}
-```
-如果`list`足够大，上述递归将导致栈溢出。只需要把`nextListItem`为如下修改就可以避免：
-```js
-function nextListItem() {
-    let item = list.pop();
-    if (item) {
-        setTimeout(nextListItem, 0);
-    }
-};
-```
-这样`nextListItem`就可以直接返回`undefined`从而释放栈内存。
+    ```
+    如果 `list` 足够大，上述递归将导致栈溢出。
+2. 只需要把 `nextListItem` 如下修改就可以避免
+    ```js
+    function nextListItem() {
+        let item = list.pop();
+        if (item) {
+            setTimeout(nextListItem, 0);
+        }
+    };
+    ```
+这样 `nextListItem` 就可以直接返回 `undefined` 从而释放栈内存。下一次的 `nextListItem` 会在下一个事件循环中重新开始。
 
 
 ## References
