@@ -5,9 +5,10 @@
 
 - [Queue](#queue)
     - [队列和栈的比较](#队列和栈的比较)
-        - [流动感](#流动感)
+        - [线性流动感](#线性流动感)
     - [可能的变体结构](#可能的变体结构)
         - [环](#环)
+    - [两个队列实现一个栈](#两个队列实现一个栈)
     - [一些习题](#一些习题)
         - [1.3.37 Josephus 问题](#1337-josephus-问题)
             - [死亡顺序](#死亡顺序)
@@ -17,7 +18,7 @@
 
 
 ## 队列和栈的比较
-### 流动感
+### 线性流动感
 1. 队列有一种线性的、定向的流逝感，从一端进入，从另一端离开。
 2. 如果把队列的首尾相连，线性的流逝就变成了流动的环，也就是不断的出队列再入队列。
 3. 栈就不是线性的结构，而且也没有流动感。
@@ -26,6 +27,96 @@
 
 ## 可能的变体结构
 ### 环
+
+
+## 两个队列实现一个栈
+1. 和两个栈实现一个队列的情况一样，都是加入元素的方法是相同的，但是取出元素的方法是相反的。
+2. 那么同样尝试，在不改变出列规则的情况下，使用第二个队列改变被操作操作的队列元素。
+3. 按照两个两个栈实现一个队列的思路尝试，发现不行。因为队列并不是栈那样对称性的数据结构，而是顺序性的，所以并不会对称反转。
+4. 好像没什么办法，只能用最笨的办法了，也就是要实现出栈的时候让它前面的元素都先出列到另一个队列。
+5. 那么根据这种出栈方法，入栈的的时候只能是让新元素加入到非空的那个队列里，这样才能维持所有元素的队列顺序，才能正确出列
+    ```cpp
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include "Queue.h"
+
+
+    Queue q1;
+    Queue q2;
+
+    void push(int);
+    int pop();
+    void remove_to_q2();
+    void remove_to_q1();
+    void printStack();
+
+
+    int main(void) {
+        q1.head = q2.head = 0;
+        q1.tail = q2.tail = 0;
+
+        push(15);
+        push(6);
+        push(9);
+        push(8);
+        push(4);
+        printStack();
+
+        push(17);
+        push(3);
+        push(5);
+        printStack();
+
+        printf("Pop %d\n", pop());
+        
+        printStack();
+    }
+
+
+
+    void push(int n) {
+        if (isEmpty(&q2)) {
+            enqueue(&q1, n);
+        }
+        else {
+            enqueue(&q2, n);
+        }
+    }
+    int pop() {
+        if (isEmpty(&q1) && isEmpty(&q2)) {
+            printf("underflow");
+            exit(EXIT_FAILURE);
+        }
+        else if (isEmpty(&q2)) {
+            remove_to_q2();
+            return dequeue(&q1);
+        }
+        else {
+            remove_to_q1();
+            return dequeue(&q2);
+        }
+    }
+    void remove_to_q2() {
+        int i = countQueue(&q1);
+        while (i-- > 1) {
+            enqueue(&q2, dequeue(&q1));
+        }   
+    }
+    void remove_to_q1() {
+        int i = countQueue(&q2);
+        while (i-- > 1) {
+            enqueue(&q1, dequeue(&q2));
+        }   
+    }
+    void printStack() {
+        if (isEmpty(&q2)) {
+            printQueue(&q1);
+        }
+        else {
+            printQueue(&q2);
+        }
+    }
+    ```
 
 
 ## 一些习题
