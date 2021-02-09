@@ -1,6 +1,6 @@
 class Node {
-    constructor(element) {
-        this.element = element;
+    constructor(key) {
+        this.key = key;
         this.prev = null;
         this.next = null;
     }
@@ -15,8 +15,8 @@ let tail = null;
 class DoublyLinkedList {
     constructor(){}
 
-    append (element) {
-        let node = new Node(element);
+    append (key) {
+        let node = new Node(key);
         let current;
 
         if (head === null) { // 当前列表为空
@@ -34,10 +34,10 @@ class DoublyLinkedList {
         return this;
     }
 
-    insert (position, element) {
+    insert (position, key) {
         if (position < 0 || position > length) return false;
 
-        let node = new Node(element);
+        let node = new Node(key);
         let current = head;
         let previous;
         // 注意这里 index 和 current 指向同一个节点，下面迭代的时候它俩也是指向同一个。明确一下位置关系。
@@ -143,20 +143,20 @@ class DoublyLinkedList {
 
         length--;
 
-        return current.element;
+        return current.key;
     }
 
-    remove (element) {
-        let index = this.indexOf(element);
+    remove (key) {
+        let index = this.indexOf(key);
         return this.removeAt(index);
     }
 
-    indexOf (element) {
+    indexOf (key) {
         let current = head;
         let index = 0;
 
         while (current) {
-            if (element === current.element) {
+            if (key === current.key) {
                 return index;
             }
             index++;
@@ -186,7 +186,7 @@ class DoublyLinkedList {
         let string = '';
 
         while (current) {
-            string += ", " + current.element;
+            string += ", " + current.key;
             current = current.next;
         }
         return string.slice(2);
