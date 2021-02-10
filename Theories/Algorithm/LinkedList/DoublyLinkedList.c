@@ -3,8 +3,8 @@
 #include "DoublyLinkedList.h"
 
 
-Node* head = NULL;
-Node* tail = NULL;
+static Node* head = NULL;
+static Node* tail = NULL;
 
 
 Node* search_node (int key) {

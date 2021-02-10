@@ -3,7 +3,7 @@
 #include "SinglyLinkedList.h"
 
 
-Node* head = NULL;
+static Node* head = NULL;
 
 
 Node* search_node (int key) {

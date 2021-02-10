@@ -310,6 +310,7 @@ function hoare_partition (arr, leftIndex, rightIndex) {
 
 
 ## References
+* [算法导论](https://book.douban.com/subject/20432061/)
 * [算法（第4版）](https://book.douban.com/subject/19952400/)
 * [学习JavaScript数据结构与算法](https://book.douban.com/subject/26639401/)
 * [图解排序算法(二)之希尔排序](https://www.cnblogs.com/chengxiao/p/6104371.html)
