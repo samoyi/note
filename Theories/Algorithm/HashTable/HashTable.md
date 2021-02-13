@@ -12,15 +12,15 @@
         - [散列函数](#散列函数)
         - [载荷因子](#载荷因子)
     - [散列函数实现](#散列函数实现)
+        - [散列正整数](#散列正整数)
+        - [散列浮点数](#散列浮点数)
+        - [散列字符串](#散列字符串)
+            - [一个简单的实现](#一个简单的实现)
+            - [结合《算法导论》和《算法4》的方法](#结合算法导论和算法4的方法)
         - [折叠法](#折叠法)
         - [平方取中法](#平方取中法)
-        - [基于字符的元素创建散列函数](#基于字符的元素创建散列函数)
-    - [处理冲突（Collision）](#处理冲突collision)
-        - [线性探测（Linear Probing）方法](#线性探测linear-probing方法)
-            - [扩展线性探测](#扩展线性探测)
-            - [平方探测](#平方探测)
-    - [链接法（Chaining）散列](#链接法chaining散列)
-        - [实现](#实现)
+    - [处理冲突（Collision）的两种方法简述](#处理冲突collision的两种方法简述)
+    - [链接法](#链接法)
         - [复杂度](#复杂度)
             - [查找元素](#查找元素)
             - [插入元素](#插入元素)
@@ -36,7 +36,6 @@
 1. A hash table is an effective data structure for implementing dictionaries. 
 2. Although searching for an element in a hash table can take as long as searching for an element in a linked list — $O(n)$ time in the worst case — in practice, hashing performs extremely well. 
 3. Under reasonable assumptions, the average time to search for an element in a hash table is $O(1)$.
-
 
 
 ## 设计思想
@@ -85,16 +84,45 @@
 5. 我们的目标是创建这样一个散列函数：冲突数最少，计算方便，元素均匀分布于散列表中。有多种常见的方法来扩展取余函数，下面介绍其中的几种。
 6. 你也许能想到多种计算散列值的其他方法。重要的是，散列函数一定要高效，以免它成为存储和搜索过程的负担。如果散列函数过于复杂，计算槽编号的工作量可能比在进行顺序搜索或二分搜索时的更大，这可不是散列的初衷。
 
-### 折叠法
-1. 折叠法先将元素切成等长的部分（最后一部分的长度可能不同），然后将这些部分相加，得到散列值。
-2. 假设元素是电话号码 436-555-4601，以 2 位为一组进行切分，得到 43、65、55、46 和 01。将这些数字相加后，得到 210。假设散列表有 11 个槽，接着需要用 210 除以 11，并保留余数 1。所以，电话号码 436-555-4601 被映射到散列表中的 1 号槽。
-3. 有些折叠法更进一步，在加总前每隔一个数反转一次。就本例而言，反转后的结果是：43+56+55+64+01=219，219%11=10。
+### 散列正整数
+1. 将整数散列最常用方法是除留余数法。我们选择大小为质数 $M$ 的数组，对于任意正整数 $k$，计算 $k$ 除以 $M$ 的余数。
+2. $M$ 要避免选择一些值，最常见的比如说 $k$ 的进制的幂。例如，如果键是十进制数而 $M$ 为 $10^k$，那么我们只能利用键的后 $k$ 位。例如 $M=100$，那么对于任何数，我们的散列都只是根据个位和十位来划分了，再高的数位不管是什么都不会有影响。
+3. 通过会使用质数作为 $M$ 的值。如果 $k$ 是无规律的均匀分布的，那么是不是质数并没有关系，结果都是均匀的分布在 0 和 $M-1$ 自检。但是 $k$ 的值时常是有规律的，或者至少不是那么均匀的部分有规律的，那么质数的用处就体现出来了。例如下面的一组输入
+    Input | Modulo 8 | Modulo 7
+    --|--|--
+    0  | 0 | 0
+    4  | 4 | 4
+    8  | 0 | 1
+    12 | 4 | 5
+    16 | 0 | 2
+    20 | 4 | 6
+    24 | 0 | 3
+    28 | 4 | 0
+4. 这里我一直没想明白为什么 $M$ 为 8 时余数那么有规律，但 $M$ 为 7 时就没有那么有规律，有规律的本质是什么？。
+5. 然后我使用了下面一组数据
+    Input | Modulo 9 | Modulo 7
+    --|--|--
+    0  | 0 | 0
+    3  | 3 | 3
+    6  | 6 | 6
+    7  | 7 | 0
+    10 | 1 | 3
+    13 | 4 | 6
+    14 | 5 | 0
+    17 | 8 | 3
+    20 | 2 | 6
+6. 现在有意思了，变成质数时很有规律了。那就可以猜测，之所以要使用质数，并不是质数本身更不容易引起冲突，而是我们一般情况下的数据和质数搭配起来更不容易引起冲突。
+7. 结合上面两个例子，如果要冲突比较多，那么输入的数据要相对于 $M$ 有某种 “周期性”。也就是输入的数据每隔一小段它们的差距正好等于 $M$。（当然输入时并不一定就是按照从小到大的顺序，但如果按照从小到大顺序排列，就会看到这个周期性。）
+8. 这个周期越短，冲突就会越多。在一个确定的 $M$ 下，周期最短的情况就是所有的输入都是 $M$ 的整数倍，周期最长的情况呢？所有的输入组成公差为 1 的等差数列是周期会很长，如果是一些特殊的输入会不会更长呢？
+9. 但还有一种情况下，周期也会是比较短的，那就是输入数据组成以 $M$ 的因数为公差的等差数列。比如 $M$ 有一个因数是 $q$，那以此为公差的输入只要 $M/q$ 次就能完成一个周期，进而散列出相同的结果。
+10. 数据中出现等差数列也是挺常见的，例如 $2^n$ 就很普遍。所以在不确定输入的情况下为了让这里的周期性尽量的长，就应该使用质数。
 
-### 平方取中法
-1. 另一个构建散列函数的数学技巧是平方取中法：先将元素取平方，然后提取中间几位数。
-2. 如果元素是 44，先计算 44^2=1936，然后提取中间两位 93，继续进行取余的步骤，得到 5（93%11）。
+### 散列浮点数
+1. 如果键是 0 到 1 之间的实数，我们可以将它乘以 $M$ 并四舍五入得到一个 0 至 $M-1$ 之间的索引值。
+2. 尽管这个方法很容易理解，但它是有缺陷的，因为这种情况下键的高位起的作用更大，最低位对散列的结果没有影响。修正这个问题的办法是将键表示为二进制数然后再使用除留余数法。
 
-### 基于字符的元素创建散列函数
+### 散列字符串
+#### 一个简单的实现
 1. 我们也可以为基于字符的元素（比如字符串）创建散列函数。可以将单词 “cat” 看作序数值序列:
     ```sh
     >>> ord('c')
@@ -112,177 +140,75 @@
         for pos in range(len(astring)):
             sum = sum + ord(astring[pos])
 
-        return sum%tablesize
+        return sum % tablesize
     ```
 3. 有趣的是，针对同素异序词，这个散列函数总是得到相同的散列值。要弥补这一点，可以用字符位置作为权重因子
     ```py
     def hash(astring, tablesize):
         sum = 0
         for pos in range(len(astring)):
-            sum = sum + ord(astring[pos])*(pos+1)
+            sum = sum + ord(astring[pos]) * (pos+1)
 
-        return sum%tablesize
+        return sum % tablesize
 
 
     print(hash('cat', 11)) # 3
     print(hash('tac', 11)) # 2
     ```
 
+#### 结合《算法导论》和《算法4》的方法
+1. 下面是对 ASCII 字符串散列的函数，所以使用了基准值 128。这个基准值相当于上面的权重因子，但是不懂具体值的选择有什么讲究。TODO
+2. 每次循环都是用之前的散列值乘以基准值，再加上新字符的值，然后求模并作为新的散列值
+    ```cpp
+    int hash_fn_str (char* str) {
+        int hash = 0;
+        char* ptr = str;
+        while (*ptr != '\0') {
+            hash = (128 * hash + *ptr++) % SIZE;
+        }
+        return hash;
+    }
+    ```
+3. 这里与上面的方法不同，并不是最后计算完总和再求模，而是每一步都求模。至少有一个原因应该是防止溢出吧。
+4. 以两个字符的字符串为例，看看基准值在处理同素异序词的效果。如果没有基准值，那么 `"AB"` 和 `"BA"` 散列计算如下
+    ```
+    mod( mod(A) + B )
+    mod( mod(B) + A )
+    ```
+5. 第一行，`mod(A)` 在求模的结果还是 `mod(A)`，之后再加上 `mod(B)`；第二行同样，结果还是 `mod(A) + mod(B)`。
+6. 即使基准值是加上去而不是乘上去，结果还是一样的。因为加法只是偏置而不是权重，不同位置的字符还是没有体现出不同来
+    ```
+    mod( mod(A) + 128 + B )
+    mod( mod(B) + 128 + A )
+    ```
+    
+### 折叠法
+1. 折叠法先将元素切成等长的部分（最后一部分的长度可能不同），然后将这些部分相加，得到散列值。
+2. 假设元素是电话号码 436-555-4601，以 2 位为一组进行切分，得到 43、65、55、46 和 01。将这些数字相加后，得到 210。假设散列表有 11 个槽，接着需要用 210 除以 11，并保留余数 1。所以，电话号码 436-555-4601 被映射到散列表中的 1 号槽。
+3. 有些折叠法更进一步，在加总前每隔一个数反转一次。就本例而言，反转后的结果是：43+56+55+64+01=219，219%11=10。
 
-## 处理冲突（Collision）
+### 平方取中法
+1. 另一个构建散列函数的数学技巧是平方取中法：先将元素取平方，然后提取中间几位数。
+2. 如果元素是 44，先计算 44^2=1936，然后提取中间两位 93，继续进行取余的步骤，得到 5（93%11）。
+
+
+## 处理冲突（Collision）的两种方法简述
 1. 当两个元素被分到同一个槽中时，必须通过一种系统化方法在散列表中安置第二个元素。这个过程被称为处理冲突。
 2. 前文说过，如果散列函数是完美的，冲突就永远不会发生。然而，这个前提往往不成立，因此处理冲突是散列计算的重点。
+3. 处理冲突有两类方法：**链接法**（Chaining） 和 **开放寻址法**（Open addressing）。
+4. 链接法会把散列值为同一个槽位的元素放在当前槽位的链表里。而开放寻址法不会在一个槽位存储超过一个元素，如果一个元素散列值和之前的重复，会进行再散列找到新的槽位。
+5. 因此在开发寻址法中，散列表可能被填满而不能再插入元素。同理，开放寻址法的装载因子 $α$ 也不会大于 1。
+6. The advantage of open addressing is that it avoids pointers altogether. Instead of following pointers, we compute the sequence of slots to be examined. The extra memory freed by not storing pointers provides the hash table with a larger number of slots for the sam amount of memory, potentially yielding fewer collisions and faster retrieval.
 
-### 线性探测（Linear Probing）方法
-1. 注意，为了遍历散列表，可能需要往回检查第一个槽。也就是说一直找到散列表最后一个仍然没有空位，则循环到头部再检测。
-2. 这个过程被称为开放定址法，它尝试在散列表中寻找下一个空槽或地址。由于是逐个访问槽，因此这个做法被称作线性探测。
-3. 线性探测有个缺点，那就是会使散列表中的元素出现聚集现象。也就是说，如果一个槽发生太多冲突，线性探测会填满其附近的槽，而这会影响到后续插入的元素，有时要越过数个槽位才能找到一个空槽。
-
-#### 扩展线性探测
-1. 要避免元素聚集，一种方法是扩展线性探测，不再依次顺序查找空槽，而是跳过一些槽，这样做能使引起冲突的元素分布得更均匀。
-2. 例如采用 “加3” 探测策略处理冲突后时，如果发生冲突时，为了找到空槽，该策略每次跳两个槽。
-3. **再散列** 泛指在发生冲突后寻找另一个槽的过程。
-4. 采用线性探测时，再散列函数是 `newhashvalue = rehash(oldhashvalue)`，并且 `rehash(pos) = (pos + 1)%sizeoftable`。“加3” 探测策略的再散列函数可以定义为 `rehash(pos) = (pos + 3)%sizeoftable`。
-5. 也就是说，可以将再散列函数定义为 `rehash(pos) = (pos + skip)%sizeoftable`。
-6. 注意，“跨步”（skip）的大小要能保证表中所有的槽最终都被访问到，否则就会浪费槽资源。要保证这一点，常常建议散列表的大小为素数 TODO 素数原理。
-
-#### 平方探测
-1. 平方探测是线性探测的一个变体，它不采用固定的跨步大小，而是通过再散列函数递增散列值。
-2. 如果第一个散列值是 $h$，后续的散列值就是 $h+1$、$h+4$、$h+9$、$h+16$，等等。换句话说，平方探测的跨步大小是一系列完全平方数。
-3. 例如集合 `[54, 26, 93, 17, 77, 31, 44, 55, 20]` 放入 11 槽位的散列表中：
-    1. 77 计算散列值 $h$ 为 0，会先占据槽位 0；
-    2. 之后 44 计算散列值 $h$ 也为 0，这时的 skip 为 1，所以占据槽位 1；
-    3. 最后 55 计算散列值 $h$ 也为 0，这时的 skip 为 4，所以占据槽位 4；
-
-
-## 链接法（Chaining）散列
+## 链接法
 1. 另一种处理冲突的方法是让每个槽有一个指向元素集合（比如链表）的引用。链接法允许散列表中的同一个位置上存在多个元素。发生冲突时，元素仍然被插入其散列值对应的槽中。
 2. 不过，随着同一个位置上的元素越来越多，搜索变得越来越困难。
 3. 搜索目标元素时，我们用散列函数算出它对应的槽编号。由于每个槽都有一个元素集合，因此需要再搜索一次，才能得知目标元素是否存在。
 4. 链接法的优点是，平均算来，每个槽的元素不多，因此搜索可能更高效。
-
-### 实现
-```cpp
-#include <stdio.h>
-#include <stdlib.h>
-
-#define SIZE 9
-
-typedef struct Node{
-    int key;
-    struct Node* prev;
-    struct Node* next;
-} Node;
-
-// 若干个散列函数
-int hash_fn_mod (int key);
-
-// 散列表是一个数组，每个数组项指向一个槽位链表的 head 节点
-Node* table[SIZE];
-void hash_init(void);
-void hash_put(int key);
-Node* hash_get(int key);
-void hash_delete(Node*);
-void print_list(int idx);
-void print_table(void);
-
-// 确定当前使用的散列函数
-int (*hash_fn)(int) = hash_fn_mod;
-
-
-int main(void) {
-
-    hash_init();
-    
-    hash_put(5);
-    hash_put(23);
-    hash_put(14);
-    hash_put(4);
-    hash_put(9);
-    hash_put(7);
-    print_table();
-
-    printf("--------------------\n");
-    hash_delete(hash_get(14));
-    print_table();
-
-    return 0;
-}
-
-int hash_fn_mod (int key) {
-    return key % SIZE;
-}
-void hash_init(void) {
-    for (int i=0; i<SIZE; i++) {
-        table[i] = NULL;
-    }
-}
-void hash_put (int key) {
-    int pos = hash_fn(key);
-    Node* head = table[pos];
-    Node* newNode = malloc(sizeof(Node));
-    if (newNode == NULL) {
-        printf("Create node fail.");
-        exit(EXIT_FAILURE);
-    }
-    newNode->key = key;
-    table[pos] = newNode;
-    newNode->next = head;
-    newNode->prev = NULL;
-    if (head != NULL) {
-        head->prev = newNode;
-    }
-}
-Node* hash_get (int key) {
-    int pos = hash_fn(key);
-    Node* curr = table[pos];
-    while (curr != NULL && curr->key != key) {
-        curr = curr->next;
-    }
-    return curr;
-}
-void hash_delete (Node* node) {
-    Node* prev = node->prev;
-    Node* next = node->next;
-
-    // 只要有 next，不管 prev 只不是 NULL 都可以
-    // 如果没有 next，说明 node 是 tail，删掉后后面也不会有受影响的节点
-    if (next != NULL) {
-        next->prev = prev;
-    }
-
-    // 只要有 prev，不管 next 是不是 NULL 都可以
-    // 但 prev 是 NULL 的话，还有一步要处理，因为此时 node 就是 head，
-    // 所以 table[idx] 还在引用 node，因此还必须要让 table[idx] 引用 next
-    if (prev != NULL) {
-        prev->next = next;
-    }
-    else {
-        int idx = hash_fn(node->key);
-        table[idx] = next;
-    }
-
-    free(node);
-}
-void print_list(int idx) {
-    Node* curr = table[idx];
-    while (curr != NULL) {
-        printf("%d->", curr->key);
-        curr = curr->next;
-    }
-    printf("\n");
-}
-void print_table(void) {
-    for (int i=0; i<SIZE; i++) {
-        printf("%d: ", i);
-        print_list(i);
-    }
-    printf("\n");
-}
-```
+5. 实现在 `./SeparateChaining.c`。
 
 ### 复杂度
-1. 给定一个存放 $n$ 个元素、拥有 $m$ 个槽位的散列表 $T$，定义 $T$ 的**装载因子**(load factor) $α$ 为 $n/m$, 也就是每个链表的平均存储元素数。
+1. 给定一个存放 $n$ 个元素、拥有 $m$ 个槽位的散列表 $T$，定义 $T$ 的**装载因子**(load factor) $α$ 为 $n/m$, 也就是每个链表的平均存储元质数。
 2. 我们的分析将基于 $α$ 值，它可能小于、等于或大于 1。
 3. 链接法最坏的情况是 $O(n)$ 级别的，也就是 $n$ 个元素都放到了同一个链表中。
 4. 平均的情况依赖于所选取的散列函数的性能，也就是该函数能在多大程度上将 $n$ 个元素均匀的分布在 $m$ 个槽位中。
@@ -299,7 +225,10 @@ void print_table(void) {
 #### 删除元素
 1. 通过直接指定待删除元素而不是待删除元素的 key，可以在 $O(1)$ 时间内从散列表中找到该元素。
 2. 如果使用的是双向链表，则可以直接删除该元素，所以删除操作的运行时间就是 $O(1)$。
-3. 如果是单向列表，因为没有 prev 指针，不能从待删除元素找到 prev 元素，所以必须从链表头部遍历找到 prev 元素，因此删除操作的运行时间和查找操作相同。
+3. 如果是单向列表，因为没有 prev 指针，不能从待删除元素找到 prev 元素，所以必须从链表头部遍历找到 prev 元素，因此删除操作的运行时间和查找操作相同
+
+
+
 
 
 ### 分析散列搜索算法
@@ -372,3 +301,5 @@ void print_table(void) {
 * [《Python数据结构与算法分析（第2版）》](https://book.douban.com/subject/34785178/)
 * [《算法图解》](https://book.douban.com/subject/26979890/)
 * [算法导论](https://book.douban.com/subject/20432061/)
+* [算法（第4版）](https://book.douban.com/subject/19952400/)
+* [stackoverflow](https://stackoverflow.com/a/3613423)
