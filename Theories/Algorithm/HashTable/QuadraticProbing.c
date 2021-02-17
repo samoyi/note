@@ -69,8 +69,10 @@ void hash_put (int key, int val) {
     }
 
     int pos = hash_fn_mod(key);
+    int rehash_times = 0;
     while (table[pos].node && table[pos].node->key != key) {
-        pos++;
+        rehash_times++;
+        pos += rehash_times * rehash_times;
         pos %= SIZE;
     }
 
@@ -93,11 +95,13 @@ void hash_put (int key, int val) {
 }
 Node* hash_get (int key) {
     int pos = hash_fn_mod(key);
+    int rehash_times = 0;
     // 如果全部都是有节点或者删除状态，那么查找一个不存在的节点时会无限循环
     // 使用 times 记录查找次数，如果找了一圈还没找到就跳出
     int times = 0;
     while ((table[pos].node && table[pos].node->key != key) || table[pos].deleted) {
-        pos++;
+        rehash_times++;
+        pos += rehash_times * rehash_times;
         pos %= SIZE;
         if (times++ == SIZE) {
             break;
@@ -112,9 +116,11 @@ Node* hash_get (int key) {
 }
 void hash_delete (int key) {
     int pos = hash_fn_mod(key);
+    int rehash_times = 0;
     int times = 0;
     while ((table[pos].node && table[pos].node->key != key) || table[pos].deleted) {
-        pos++;
+        rehash_times++;
+        pos += rehash_times * rehash_times;
         pos %= SIZE;
         if (times++ == SIZE) {
             break;

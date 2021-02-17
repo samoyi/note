@@ -20,12 +20,12 @@
         - [折叠法](#折叠法)
         - [平方取中法](#平方取中法)
     - [处理冲突（Collision）的两种方法简述](#处理冲突collision的两种方法简述)
-    - [链接法](#链接法)
+    - [处理冲突——链接法](#处理冲突链接法)
         - [复杂度](#复杂度)
             - [查找元素](#查找元素)
             - [插入元素](#插入元素)
             - [删除元素](#删除元素)
-    - [开放寻址法](#开放寻址法)
+    - [处理冲突——开放寻址法](#处理冲突开放寻址法)
         - [插入逻辑](#插入逻辑)
         - [查找逻辑](#查找逻辑)
         - [删除逻辑](#删除逻辑)
@@ -33,7 +33,9 @@
         - [线性探测（Linear Probing）方法](#线性探测linear-probing方法)
             - [扩展线性探测](#扩展线性探测)
         - [平方探测（Quadratic probing，也称为二次探查）方法](#平方探测quadratic-probing也称为二次探查方法)
-        - [分析散列搜索算法](#分析散列搜索算法)
+        - [双重散列（Double hashing）方法](#双重散列double-hashing方法)
+        - [开放寻址散列的分析](#开放寻址散列的分析)
+    - [分析散列搜索算法](#分析散列搜索算法)
     - [散列表的优势](#散列表的优势)
     - [References](#references)
 
@@ -208,7 +210,7 @@
 5. 因此在开发寻址法中，散列表可能被填满而不能再插入元素。同理，开放寻址法的装载因子 $α$ 也不会大于 1。
 6. The advantage of open addressing is that it avoids pointers altogether. Instead of following pointers, we compute the sequence of slots to be examined. The extra memory freed by not storing pointers provides the hash table with a larger number of slots for the sam amount of memory, potentially yielding fewer collisions and faster retrieval.
 
-## 链接法
+## 处理冲突——链接法
 1. 另一种处理冲突的方法是让每个槽有一个指向元素集合（比如链表）的引用。链接法允许散列表中的同一个位置上存在多个元素。发生冲突时，元素仍然被插入其散列值对应的槽中。
 2. 不过，随着同一个位置上的元素越来越多，搜索变得越来越困难。
 3. 搜索目标元素时，我们用散列函数算出它对应的槽编号。由于每个槽都有一个元素集合，因此需要再搜索一次，才能得知目标元素是否存在。
@@ -236,7 +238,7 @@
 3. 如果是单向列表，因为没有 prev 指针，不能从待删除元素找到 prev 元素，所以必须从链表头部遍历找到 prev 元素，因此删除操作的运行时间和查找操作相同
 
 
-## 开放寻址法
+## 处理冲突——开放寻址法
 ### 插入逻辑
 1. To perform insertion using open addressing, we successively examine, or **probe**, the hash table until we find an empty slot in which to put the key.
 2. 也就是说第一次散列出来的值可能被占用了，所以就要再尝试若干次的再散列，直到找到一个没有被占用的槽位。
@@ -283,12 +285,27 @@
     2. 之后 44 计算散列值 $h$ 也为 0，这时的 skip 为 1，所以占据槽位 1；
     3. 最后 55 计算散列值 $h$ 也为 0，这时的 skip 为 4，所以占据槽位 4；
 4. 如果两个关键字的初始探查位置相同，那么它们的探查序列也想通。这会导致一种轻度的群集，称为 **二次群集**（secondary clustering）。
-5. TODO 实现。
+5. 实现在 `./QuadraticProbing.c`。
 6. 虽然这里再散列改成了完全平方数，但因为也是确定的常数，所以探查可能性仍然是 $m$ 种。
 
+### 双重散列（Double hashing）方法
+1. Double hashing offers one of the best methods available for open addressing because the permutations produced have many of the characteristics of randomly chosen permutations. 
+2. 其实就是把线性探查再散列的那个常数变成了另一个散列函数 $h_1$。也就是再散列时加上的数不是提前确定的常数，而是通过另一个散列函数 $h_1$ 返回一个数。
+3. 线性探测中说到，skip 要和 m 互质才能保证遍历所有的槽位，那么这里就要求 $h_1$ 返回的数要和 m 互质。有两种简便方法可以实现这样的互质：
+    * m 取 2 的幂，$h_1$ 返回一个奇数。
+    * m 取质数，$h_1$ 返回一个比 m 小的正整数。TODO，m 取质数就已经保证了互质，那么 $h_1$ 要返回多少合适呢？
+4. 例如，可以让 $h_1$ 返回 $1 + (k \mod (m-1))$。假如 $k$ 为 123456，$m$ 为 701。第一次散列的结果为 80，再散列时 $h_1$ 返回 257，第一次再散列结果为 337，第二次再散列结果为 594…… 
+5. 首次散列会产生 $m$ 种可能性，再散列时 $h_1$ 也会产生 $m$ 种可能性，所以双重散列方法探查的可能性是 $m^2$ 种，非常接近理想的均匀散列的性能。
+6. 实现在 `DoubleHashing.c`。
+
+### 开放寻址散列的分析
+1. 给定一个装载因子为 $α$ 的开放寻址散列表，并假设是均匀散列的。
+2. 对于一次失败的查找，期望的探查次数至多为 $1/(1-α)$。证明 TODO。
+3. 平均情况下，插入一个元素之多需要 $1/(1-α)$ 探查。因为要插入就要先探查到一个空槽，这就相当于一次失败的查找。
+4. 对于一次成功的查找，探查次数至多为 $\frac{1}{α} \ln\frac{1}{1-α}$。证明 TODO。
 
 
-### 分析散列搜索算法
+## 分析散列搜索算法
 1. 在最好情况下，散列搜索算法的时间复杂度是 O(1)，即常数阶。然而，因为可能发生冲突，所以比较次数通常不会这么简单。
 2. 在分析散列表的使用情况时，最重要的信息就是载荷因子 $λ$。
 3. 从概念上来说，如果 $λ$ 很小，那么发生冲突的概率就很小，元素也就很有可能各就各位。如果 $λ$ 很大，则意味着散列表很拥挤，发生冲突的概率也就很大。
