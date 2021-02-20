@@ -31,8 +31,10 @@
         - [输入重定向和输出重定向](#输入重定向和输出重定向)
         - [运行方式](#运行方式)
     - [构建多文件程序](#构建多文件程序)
+        - [只编译不链接](#只编译不链接)
         - [makefile](#makefile)
-            - [makefile 逻辑](#makefile-逻辑)
+            - [规则](#规则)
+            - [用 makefile 向 make 描述代码](#用-makefile-向-make-描述代码)
             - [使用 makefile](#使用-makefile)
         - [链接期间的错误](#链接期间的错误)
         - [重新构建程序](#重新构建程序)
@@ -554,7 +556,7 @@ void flush_line(void)
 2. **编译**。
     * 必须对程序中的每个源文件分别进行编译。
     * 不需要编译头文件。编译包含头文件的源文件时会自动编译头文件的内容。
-    * 对于每个源文件，编译器会产生一个包含目标代码的文件。这些文件称为 **目标文件**（object file），在 UNIX 系统中的扩展名为 `.o`，在 Windows 系统中的扩展名为 `.obj`。
+    * 对于每个源文件，编译器会产生一个包含目标代码的文件。这些文件称为 **目标文件**（object file），在 UNIX 系统中的扩展名为 `.o`，在 Windows 系统中的扩展名为 `.obj`（我在 Windows 中看到也是 `.o`）。
 3. **链接**。
     * 链接器把上一步产生的目标文件和库函数的代码结合在一起生成可执行的程序。
     * 链接器的一个职责是要解决编译器遗留的外部引用问题。外部引用发生在一个文件中的函数调用另一个文件中定义的函数或者访问另一个文件中定义的变量时。
@@ -564,61 +566,150 @@ void flush_line(void)
     ```
     首先把三个源文件编译成目标代码，然后自动把这些目标文件传递给链接器，链接器会把它们结合成一个文件。选项 `-o` 表明我们希望可执行文件的名字是 `justify`。
 
+### 只编译不链接
+1. 每次都整体编译并链接的问题时，对于多文件系统，如果每次都只修改了一两个文件，整体编译并链接会把大多数没有改变的文件都重复的编译一遍，生成一模一样的目标文件。
+2. 理想的情况是保存之前编译生成的目标文件，如果某些源文件发生了改变，只重新编译修改的源文件并生成新的目标文件。然后重新链接所有的目标文件。
+3. 虽然每次修改都会链接所有的目标文件来创建程序，但只需要编译其中有修改的源文件。
+4. 为了得到所有源文件的目标代码，可以输入以下命令：
+    ```
+    gcc *.c -c
+    ```
+    `*.c` 会匹配当前目录下所有的 C 源文件， `-c` 告诉编译器你想为所有源文件创建目标文件，但不想把目标文件链接成完整的可执行程序。
+5. 既然你有了一批目标文件，就可以用一条简单的编译命令把它们链接起来。这次要把目标文件的名字给编译器，而不是 C 源文件的名字
+    ```
+    gcc *.o -o launch
+    ```
+    编译器能够识别这些文件是目标文件，而非源文件，因此它会跳过大部分编译步骤，直接把目标文件链接为一个叫 `launch` 的可执行程序。
+6. 和以前一样，现在你有了一个编译好的程序，同时你也得到了一批目标文件，可以在需要时随时把它们链接起来。如果要修改其中一个文件，只需要重新编译这一个文件，然后重新链接程序即可。
+7. 没错，局部的编译加快了，但你不得不三思而后行， 以确保该编译的文件都编译了。如果只改了一个源文件，没什么问题，但如果你改了很多文件，就很容易忘记重新编译其中的某些文件。使用下面的 makefile 工具可以实现自动化构建。
+
 ### makefile
-1. 把所有源文件的名字放在命令行中很快变得枯燥乏味。更糟糕的是，如果重新编译所有源文件而不仅仅是最近修改过的源文件，重新构建程序的过程中可能会浪费大量的时间。
-2. 为了更易于构建大型程序，UNIX 系统发明了 makefile 的概念，这个文件包含构建程序的必要信息。makefile 不仅列出了作为程序的一部分的那些文件，而且还描述了文件之间的依赖性。
+1. 想象有一个文件，这个文件是由另一个文件生成的，比如从源文件 `thruster.c` 编译过来的目标文件 `thruster.o`。怎么知道 `thruster.o` 文件是否需要重新编译呢？
+2. 只要看一下这两个文件的时间戳就行了，如果 `thruster.o` 文件比 `thruster.c` 文件旧，就需要重新创建 `thruster.o`；否则就说明 `thruster.o` 已经是最新的了。
+3. make 是一个可以替你运行编译命令的工具。它会检查源文件和目标文件的时间戳，如果目标文件过期，make 就会重新编译它。
 
-#### makefile 逻辑
-1. 假设文件 `foo.c` 包含文件 `bar.h`，那么就说 `foo.c` “依赖于” `bar.h`，因为修改 `bar.h` 之后将需要重新编译 `foo.c`。
-2. 下面是针对程序 `justify` 而设的 UNIX 系统的 makefile，它用 GCC 进行编译和链接：
-    ```
-    justify: justify.o word.o line.o
-            gcc -o justify justify.o word.o line.o
+#### 规则
+1. 但是做到所有这些事情前，需要告诉 make 源代码的一些情况。make 需要知道文件之间的依赖关系，同时还需要告诉它你具体想如何构建代码。
+2. make 编译的文件叫 **目标**（target）。严格意义上讲，make 不仅仅可以用来编译文件。目标可以是任何用其他文件生成的文件，也就是说目标可以是一批文件压缩而成的压缩文档。
+3. 对每个目标，makefile 需要知道两件事：
+    * 依赖项：生成目标需要用哪些文件。
+    * 生成方法：生成该文件时要用哪些指令。
+4. 依赖项和生成方法合在一起构成了一条 **规则**。有了规则，make 就知道如何生成目标。
+5. 假设你想要把 `thruster.c` 编译成目标代码 `thruster.o`，依赖项和生成方法分别是什么？
+    * `thruster.o` 就叫目标，因为你想生成这个文件。
+    * `thruster.c` 是依赖项，因为编译器在创建 `thruster.o` 时需要它。
+    * 生成方法就是将 `thruster.c` 转化为 `thruster.o` 的编译命令：`gcc -c thruster.c`。
+6. 你可以做得更多。一旦创建了 `thruster.o` 文件，接下来就要用它来创建 `launch` 程序，`launch` 文件也可以设为目标，因为你想生成它，`launch` 的依赖项是所有 `.o` 目标文件，生成方法如下：`gcc *.o -o launch`。
+7. 一旦 make 得到了所有的依赖项和生成方法，那么只要让它创建 `launch` 程序就行了，make 会处理细节。
+8. 虽然 make 一般用来编译代码，但你也可以用它充当命令行下的安装程序或源代码控制工具。事实上，任何可以在命令行中执行的任务，你都可以用 make 来做。
 
-    justify.o: justify.c word.h line.h
-            gcc -c justify.c
-
-    word.o: word.c word.h
-            gcc -c word.c
-
-    line.o: line.c line.h
-            gcc -c line.c
-    ```
-3. 这里有 4 组代码行，每组称为一条 **规则**。每条规则的第一行给出了 **目标** 文件，跟在后边的是它所依赖的文件。第二行是待执行的 **命令**，当目标文件所依赖的文件发生改变时，需要重新构建目标文件，此时执行第二行的命令。
-4. 下面看一下前两条规则，后两条类似。在第一条规则中，`justify`（可执行程序）是目标文件：
-    ```
-    justify: justify.o word.o line.o
-            gcc -o justify justify.o word.o line.o
-    ```
-    * 第一行说明 `justify` 依赖于 `justify.o`、`word.o` 和 `line.o` 这三个文件。在程序的上一次构建完成之后，只要这三个文件中有一个发生改变，`justify` 都需要重新构建。
-    * 下一行信息说明如何重新构建 `justify`：通过使用 `gcc` 命令链接三个目标文件。
-5. 在第二条规则中，`justify.o` 是目标文件：
-    ```
-    justify.o: justify.c word.h line.h
-            gcc -c justify.c
-    ```
-    * 第一行说明，如果 `justify.c`、`word.h` 或 `line.h` 文件发生改变，那么 `justify.o` 需要重新构建。
-    * 下一行信息说明如何更新 `justify.o`（通过重新编译 `justify.c`）。选项 `-c` 通知编译器把 `justify.c` 编译为目标文件，但是不要试图链接它。
+#### 用 makefile 向 make 描述代码
+1. 所有目标、依赖项和生成方法的细节信息需要保存在一个叫 makefile 或 Makefile 的文件中，为了弄明白它是怎么工作的，下面假设要用一对源文件创建 `launch` 程序
+    <img src="./images/25.png" width="600" style="display: block; margin: 5px 0 10px;" />
+2. 你将在 makefile 中这样描述构建过程
+    <img src="./images/26.png" width="600" style="display: block; margin: 5px 0 10px;" />
+    生成方法都必须以 tab 开头。如果尝试用空格缩进，就无法生成程序。
 
 #### 使用 makefile
-1. 一旦为程序创造了 makefile， 就能使用 `make`实用程序来构建（或重新构建）该程序了。
-2. 通过检查与程序中每个文件相关的时间和日期，`make` 可以确定哪个文件是过期的。然后，它会调用必要的命令来重新构建程序。
-3. 如果你想试试 `make`，下面是一些需要了解的细节。
-    * makefile 中的每个命令前面都必须有一个制表符，不是一串空格。
-    * makefile 通常存储在一个名为 `Makefile`（或 `makefile`）的文件中。使用 `make` 实用程序时，它会自动在当前目录下搜索具有这些名字的文件。
-    * 用下面的命令调用 `make`：
-        ```sh
-        make 目标
-        ```
-        其中目标是列在 makefile 中的目标文件之一。为了用我们的 makefile 构建 `justify` 可执行程序，可以使用命令
-        ```sh
-        make justify
-        ```
-    * 如果在调用 `make` 时没有指定目标文件，将构建第一条规则中的目标文件。例如，命令
-        ```sh
-        make
-        ```
-        将构建 `justify` 可执行程序，因为 `justify` 是我们的 makefile 中的第一个目标文件。除了第一条规则的这一特殊性质外， makefile 中规则的顺序是任意的。
+1. 我们使用如下测试代码
+    ```cpp
+    // launch.h
+    #ifndef LAUNCH_H
+    #define LAUNCH_H
+
+
+    void launch(void);
+
+
+    #endif
+    ```
+    ```cpp
+    // launch.c
+    #include <stdio.h>
+    #include "launch.h"
+    #include "thruster.h"
+
+
+    int main (int argc, char *argv[]) {
+        launch();
+        getchar();
+    }
+
+
+    void launch(void)
+    {   
+        fire("first stage");
+        fireThruster();
+        printf("Launch");
+    }
+    ```
+    ```cpp
+    // thruster.h
+    #ifndef THRUSTER_H
+    #define THRUSTER_H
+
+
+    void fire(char* unit);
+    void fireThruster(void);
+
+
+    #endif
+    ```
+    ```cpp
+    // thruster.c
+    #include <stdio.h>
+    #include "thruster.h"
+
+
+    void fire(char* unit)
+    {   
+        printf("Fire %s\n", unit);
+    }
+    void fireThruster()
+    {   
+        fire("thruster");
+    }
+    ```
+2. 在同一个目录项创建 makefile 并使用如下规则，注意和上面图片中不同，把最后一条规则移到了最前面
+    ```
+    launch: launch.o thruster.o 
+        gcc launch.o thruster.o -o launch
+        
+    launch.o: launch.c launch.h thruster.h
+        gcc -c launch.c
+
+    thruster.o: thruster.c thruster.h
+        gcc -c thruster.c
+    ```
+3. 用下面的命令调用 `make`：
+    ```sh
+    make 目标
+    ```
+    其中目标是列在 makefile 中的目标文件之一。为了用我们的 makefile 构建 `launch` 可执行程序，可以使用命令
+    ```sh
+    make launch
+    ```
+4. 注意在 windows 中，`make` 程序位于 MinGW/bin/mingw32-make.exe，所以可以使用命令
+    ```sh
+    mingw32-make launch
+    ```
+5. 第一次执行后，可以看到如下输出
+    ```sh
+    gcc -c launch.c
+    gcc -c thruster.c
+    gcc launch.o thruster.o -o launch
+    ```
+    make 编译了两个源文件，然后再进行了链接而创建了 launch 程序。
+6. 如果修改了 `thruster.c` 文件，再运行一次 `make launch`，输出如下
+    ```sh
+    gcc -c thruster.c
+    gcc launch.o thruster.o -o launch
+    ```
+    现在只编译了发生变化的 `thruster.c`。
+7. 如果在调用 `make` 时没有指定目标文件，将构建第一条规则中的目标文件。例如上面特别把目标 launch 的规则写在最前面，所以执行如下命令也可以得到同样的效果
+    ```sh
+    make
+    ```
 
 ### 链接期间的错误
 1. 一些在编译期间无法发现的错误将会在链接期间被发现。特别地，如果程序中丢失了函数定义或变量定义，那么链接器将无法解析外部引用，从而导致出现类似 “`undefined symbol`” 或 “`undefined reference`” 的消息。
@@ -763,3 +854,4 @@ void flush_line(void)
 ## References
 * [C语言程序设计](https://book.douban.com/subject/4279678/)
 * [What is the difference between a definition and a declaration?](https://stackoverflow.com/questions/1410563/what-is-the-difference-between-a-definition-and-a-declaration)
+* [嗨翻C语言](https://book.douban.com/subject/25703412/)

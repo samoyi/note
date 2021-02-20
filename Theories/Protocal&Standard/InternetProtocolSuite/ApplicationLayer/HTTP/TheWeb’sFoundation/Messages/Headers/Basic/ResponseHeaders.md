@@ -31,7 +31,9 @@ HTTP/1.1 provides servers and clients with the ability to negotiate for a resour
 2. 可指定的字段值有两种，可处理范围请求时指定其为 `bytes`，反之则指定其为 `none`。
 
 ### Vary 
-TODO 不懂
+1. A list of other headers that the server looks at and that may cause the response to vary; i.e., a list of
+headers the server looks at to pick which is the best version of a resource to send the client.
+2. 比如在跨域请求中，如果 `Access-Control-Allow-Origin` 返回的不是通配符而是某个具体的域的话，那还必须同时设置 `Vary` 头，值为 `Origin`。这告诉客户端：我并不是为所有的跨域请求都做出同样的响应，我可能会根据不同请求的域来做出不同的响应。
 
 
 ## Response security headers
