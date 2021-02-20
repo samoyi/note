@@ -36,7 +36,6 @@
         - [双重散列（Double hashing）方法](#双重散列double-hashing方法)
         - [开放寻址散列的分析](#开放寻址散列的分析)
     - [分析散列搜索算法](#分析散列搜索算法)
-    - [散列表的优势](#散列表的优势)
     - [References](#references)
 
 <!-- /TOC -->
@@ -279,14 +278,15 @@
 
 ### 平方探测（Quadratic probing，也称为二次探查）方法
 1. 平方探测是线性探测的一个变体，它不采用固定的跨步大小，而是通过再散列函数平方递增散列值。
-2. 如果第一个散列值是 $h$，后续的散列值就是 $h+1$、$h+4$、$h+9$、$h+16$，等等。换句话说，平方探测的跨步大小是一系列完全平方数。
+2. 一个简单的实现是：如果第一个散列值是 $h$，后续的散列值就是 $h+1$、$h+4$、$h+9$、$h+16$，等等。换句话说，平方探测的跨步大小是一系列完全平方数。
 3. 例如集合 `[54, 26, 93, 17, 77, 31, 44, 55, 20]` 放入 11 槽位的散列表中：
     1. 77 计算散列值 $h$ 为 0，会先占据槽位 0；
     2. 之后 44 计算散列值 $h$ 也为 0，这时的 skip 为 1，所以占据槽位 1；
     3. 最后 55 计算散列值 $h$ 也为 0，这时的 skip 为 4，所以占据槽位 4；
-4. 如果两个关键字的初始探查位置相同，那么它们的探查序列也想通。这会导致一种轻度的群集，称为 **二次群集**（secondary clustering）。
-5. 实现在 `./QuadraticProbing.c`。
-6. 虽然这里再散列改成了完全平方数，但因为也是确定的常数，所以探查可能性仍然是 $m$ 种。
+4. 《算法导论》上的实现更复杂一些，探查序列是 $初始散列值 + C_1 * i + C_2 * i^2$。$C_1$、$C_2$ 是常数，$i=0, 1, ..., m-1$。TODO，$C_1$、$C_2$ 的选择。
+5. 如果两个关键字的初始探查位置相同，那么它们的探查序列也想通。这会导致一种轻度的群集，称为 **二次群集**（secondary clustering）。
+6. 实现在 `./QuadraticProbing.c`。
+7. 虽然这里再散列改成了完全平方数，但因为也是确定的常数，所以探查可能性仍然是 $m$ 种。
 
 ### 双重散列（Double hashing）方法
 1. Double hashing offers one of the best methods available for open addressing because the permutations produced have many of the characteristics of randomly chosen permutations. 
@@ -306,69 +306,13 @@
 
 
 ## 分析散列搜索算法
-1. 在最好情况下，散列搜索算法的时间复杂度是 O(1)，即常数阶。然而，因为可能发生冲突，所以比较次数通常不会这么简单。
-2. 在分析散列表的使用情况时，最重要的信息就是载荷因子 $λ$。
-3. 从概念上来说，如果 $λ$ 很小，那么发生冲突的概率就很小，元素也就很有可能各就各位。如果 $λ$ 很大，则意味着散列表很拥挤，发生冲突的概率也就很大。
-4. 因此，冲突解决起来会更难，找到空槽所需的比较次数会更多。一个不错的经验规则是：一旦 $λ$ 大于 0.7，就调整散列表的长度。
+1. 在最好情况下，散列搜索算法的时间复杂度是 O(1)。然而，因为可能发生冲突，所以比较次数通常不会这么简单。
+2. 在分析散列表的使用情况时，最重要的信息就是载荷因子 $α$。
+3. 从概念上来说，如果 $α$ 很小，那么发生冲突的概率就很小，元素也就很有可能各就各位。如果 $α$ 很大，则意味着散列表很拥挤，发生冲突的概率也就很大。
+4. 因此，冲突解决起来会更难，找到空槽所需的比较次数会更多。一个不错的经验规则是：一旦 $α$ 大于 0.7，就调整散列表的长度。
 5. 若采用链接法，冲突越多，每条链上的元素也越多。
 6. 和之前一样，来看看搜索成功和搜索失败的情况 TODO
     <img src="./images/01.png" width="400" style="display: block; margin: 5px 0 10px;" />
-
-
-
-
-## 散列表的优势
-1. 假设我们要存储大量的映射数据。
-2. 因为必须要存储映射，所以不能使用速度快得多的数组结构。
-3. 基础的情况下，当我们想要查找一个元素时，只有一个一个的遍历，这时很耗时的。
-4. 散列表可以让我们根据一个 key 直接找到它对应的 value，而不需要遍历。通过散列函数，将每个 key 转换为一个数字值，然后就可以使用高效的数组来保存映射。
-5. 从很简单 lose lose hash function 可以看出原理：
-    ```js
-    function loseloseHashCode(key) {
-        let hash = 0;                          
-        for (let i = 0; i < key.length; i++) { 
-            hash += key.charCodeAt(i);         
-        }
-        let index = hash % 37;
-        console.log(key +' => '+ index);
-        return index;
-    }
-
-    let persons = {
-        Gandalf:  'gandalf@email.com',
-        John:     'johnsnow@email.com',
-        Tyrion:   'tyrion@email.com',
-        Aaron:    'aaron@email.com',
-        Donnie:   'donnie@email.com',
-        Ana:      'ana@email.com',
-        Jonathan: 'jonathan@email.com',
-        Jamie:    'jamie@email.com',
-        Sue:      'sue@email.com',
-        Mindy:    'mindy@email.com',
-        Paul:     'paul@email.com',
-        Nathan:   'nathan@email.com',
-    };
-
-
-    Object.keys(persons).forEach(key => {
-        loseloseHashCode(key);
-    });
-
-    // Gandalf  => 19
-    // John     => 29
-    // Tyrion   => 16
-    // Aaron    => 16
-    // Donnie   => 13
-    // Ana      => 13
-    // Jonathan => 5
-    // Jamie    => 5
-    // Sue      => 5
-    // Mindy    => 32
-    // Paul     => 32
-    // Nathan   => 10
-    ```
-6. 本来数据如果存储在对象`person`中，则每次查找都效率都比较低。现在把所有的 key 都转化为数值，则“字符串-字符串”的映射就变成了“数值-字符串”的映射，因此可以使用数组来保存。
-7. 但问题也很明显，就是很多 key 转换为的数值都是相同的。这一方面可以通过使用更好的散列函数来减少重复，但根本上还是要通过彻底的解决冲突的方法来保证不会有冲突。
 
 
 ## References

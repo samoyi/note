@@ -3,6 +3,8 @@
 #include <stdbool.h>
 
 #define SIZE 11
+#define C1 1
+#define C2 3
 
 typedef struct Node{
     int key;
@@ -68,11 +70,12 @@ void hash_put (int key, int val) {
         return;
     }
 
-    int pos = hash_fn_mod(key);
-    int rehash_times = 0;
+    int init_post = hash_fn_mod(key);
+    int pos = init_post;
+    int i = 0;
     while (table[pos].node && table[pos].node->key != key) {
-        rehash_times++;
-        pos += rehash_times * rehash_times;
+        i++;
+        pos = init_post + C1 * i + C2 * i * i;
         pos %= SIZE;
     }
 
@@ -94,14 +97,15 @@ void hash_put (int key, int val) {
     }
 }
 Node* hash_get (int key) {
-    int pos = hash_fn_mod(key);
-    int rehash_times = 0;
+    int init_post = hash_fn_mod(key);
+    int pos = init_post;
+    int i = 0;
     // 如果全部都是有节点或者删除状态，那么查找一个不存在的节点时会无限循环
     // 使用 times 记录查找次数，如果找了一圈还没找到就跳出
     int times = 0;
     while ((table[pos].node && table[pos].node->key != key) || table[pos].deleted) {
-        rehash_times++;
-        pos += rehash_times * rehash_times;
+        i++;
+        pos = init_post + C1 * i + C2 * i * i;
         pos %= SIZE;
         if (times++ == SIZE) {
             break;
@@ -115,12 +119,13 @@ Node* hash_get (int key) {
     }
 }
 void hash_delete (int key) {
-    int pos = hash_fn_mod(key);
-    int rehash_times = 0;
+    int init_post = hash_fn_mod(key);
+    int pos = init_post;
+    int i = 0;
     int times = 0;
     while ((table[pos].node && table[pos].node->key != key) || table[pos].deleted) {
-        rehash_times++;
-        pos += rehash_times * rehash_times;
+        i++;
+        pos = init_post + C1 * i + C2 * i * i;
         pos %= SIZE;
         if (times++ == SIZE) {
             break;
