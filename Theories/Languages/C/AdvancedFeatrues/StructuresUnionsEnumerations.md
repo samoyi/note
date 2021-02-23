@@ -4,6 +4,7 @@
 <!-- TOC -->
 
 - [Structures, Unions, and Enumerations](#structures-unions-and-enumerations)
+    - [TODO](#todo)
     - [结构变量](#结构变量)
         - [结构变量的声明](#结构变量的声明)
         - [结构变量的初始化](#结构变量的初始化)
@@ -37,6 +38,51 @@
 
 <!-- /TOC -->
 
+
+## TODO
+* 两次 `strlen` 不一样
+    ```cpp
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <string.h>
+
+
+    struct s {
+        char* name;
+    };
+
+
+    struct s* create(char *name)
+    {
+        char str[10];
+        strcpy(str, name);
+
+        struct s* p = malloc(sizeof(struct s));
+
+        if (str[strlen(str)-1] == '\n') {
+            str[strlen(str)-1] = '\0';
+        }
+
+        p->name = str;
+
+        return p;
+    }
+
+
+    int main()
+    {
+        char name[10];
+
+        fgets(name, 10, stdin);
+        struct s* s1 = create(name);
+
+        printf("%d\n", strlen(s1->name)); // 7
+        printf("%d\n", strlen(s1->name)); // 1
+
+
+        return 0;
+    }
+    ```
 
 
 ## 结构变量
