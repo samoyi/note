@@ -809,11 +809,9 @@ C 语言没有要求指针只能指向数据，它还允许指针指向函数。
     ```cpp
     int compare_parts(const void *p, const void *q)
     {
-    if (((struct part *) p)->number <
-        ((struct part *) q)->number)
+    if (((struct part *) p)->number < ((struct part *) q)->number)
         return -1;
-    else if (((struct part *) p)->number ==
-            ((struct part *) q)->number)
+    else if (((struct part *) p)->number == ((struct part *) q)->number)
         return 0;
     else
         return 1;
@@ -823,8 +821,7 @@ C 语言没有要求指针只能指向数据，它还允许指针指向函数。
     ```cpp
     int compare_parts(const void *p, const void *q)
     {
-    return ((struct part *) p)->number -
-            ((struct part *) q)->number;
+        return ((struct part *) p)->number - ((struct part *) q)->number;
     }
     ```
 13. 注意，整数相减是有风险的，因为有可能导致溢出。如果待排序的整数完全是任意给定的，那么使用 `if` 语句来比较两个整数的大小。
@@ -832,7 +829,7 @@ C 语言没有要求指针只能指向数据，它还允许指针指向函数。
 #### 对字符串数组进行排序
 1. 例如下面的排序调用
     ```cpp
-    char * strs[] = {"bbb", "aaa", "ccc"};
+    char* strs[] = {"bbb", "aaa", "ccc"};
 
     int size = sizeof(strs[0]);
     int len = sizeof(strs) / size;
@@ -844,10 +841,10 @@ C 语言没有要求指针只能指向数据，它还允许指针指向函数。
     ```
 2. `compare_strings` 应该怎么编写？如果是按照下面的方法编写，不会报错，但是看起来好像也并没有排序效果
     ```cpp
-    int compare_strings(const void *p, const void *q)
+    int compare_strings(const void* p, const void* q)
     {
-        const char *p1 = p;
-        const char *q1 = q;
+        const char* p1 = p;
+        const char* q1 = q;
         return strcmp(p1, q1);
     }
     ```
@@ -855,17 +852,19 @@ C 语言没有要求指针只能指向数据，它还允许指针指向函数。
 4. 而 `char *p1` 是指向字符串的指针，所以 `const char *p1 = p` 是在把 “指向字符串的指针的指针” 转换为 “指向字符串的指针”。
 5. 那么尝试转换为 “指向字符串的指针的指针”
     ```cpp
-    int compare_strings(const void *p, const void *q)
+    int compare_strings(const void* p, const void* q)
     {
-        const char * *p1 = p;
-        const char * *q1 = q;
+        const char** p1 = p;
+        const char** q1 = q;
         return strcmp(*p1, *q1);
     }
     ```
 6. 可以排序了，但是有 warning：`warning: initialization discards 'const' qualifier from pointer target type`。
 7. 形参中的 `const` 表示指针指向的数组项是不能修改的，而数组项是指向字符串的指针，所以就是说指向字符串的指针是不能修改的。
 8. 所以声明它的类型为 `char *`，因为 `char *` 声明的是指向字符串的指针，所以在声明 `const char * *p1 = p` 中，`*p1` 是指向字符串的指针，所以 `*p1` 应该是不能修改的。
-9. `const char * x` 的含义是，`x` 指向的内容不能改变，那么放到这里就是，`*p1` 指向的内容不能改变。但我们实际上是希望 `*p1` 本身不能改变，所以就要把 `const` 放到类型声明 `char *` 后面
+9. `const char * x` 的含义是 `*x` 不能变，也就是说 `x` 指向的内容不能改变；而 `char * const x` 的含义是 `x` 不能变，也就是说 `x` 不能指向其他地方。
+10. 所以，参数 `const void* p` 的意思就是 `p` 指向的数组项不能改变。那么放到这里的 `const char * *p1 = p` 就是，`**p1` 不能变，也就是 `*p1` 指向的对象不能改变。
+10. 但我们期望的是 `p1` 指向的对象不能改变。所以就要把 `const` 放到类型声明 `char *` 后面，变成 `char* const *p1`。现在的意思就是 `*p1` 不能变，也就是说 `p1` 指向的对象不能变，而 `p1` 指向的对象也就是数组项
     ```cpp
     int compare_strings(const void *p, const void *q)
     {
@@ -874,11 +873,11 @@ C 语言没有要求指针只能指向数据，它还允许指针指向函数。
         return strcmp(*p1, *q1);
     }
     ```
-10. 也可以使用强制类型转换的方法，因为 `p` 和 `q` 是指针的指针，所以要强制转换为 “指向字符串的指针的指针”
+11. 也可以使用强制类型转换的方法，因为 `p` 和 `q` 是指针的指针，所以要强制转换为 “指向字符串的指针的指针”
     ```cpp
     (char **)p
     ```
-11. 但是 `strcmp` 接受的参数是 “指向字符串的指针”，所以还要再用一个 `*`
+12. 但是 `strcmp` 接受的参数是 “指向字符串的指针”，所以还要再用一个 `*`
     ```cpp
     int compare_strings(const void *p, const void *q)
     {

@@ -619,6 +619,75 @@ TODO，八进制数和十六进制数的转义序列
     ```
 4. 因为 `strdup()` 把新字符串放在堆上，所以千万记得要用 `free()` 函数释放空间。
 5. 这里也能看出自字符数组和字符指针的区别。So if you want the string which you have copied to be used in another function (as it is created in heap section) you can use `strdup`, else `strcpy` is enough.
+6. 一个例子
+    ```cpp
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <string.h>
+
+
+    #define NAME_SIZE 20
+
+
+    typedef struct island {
+        char* name;
+        char* opens;
+        char* closes;
+        struct island *next;
+    } island;
+
+
+    island* create(char* name) {
+        island *i = malloc(sizeof(island));
+
+        if (name[strlen(name)-1] == '\n') {
+            name[strlen(name)-1] = '\0';
+        }
+
+        i->name = strdup(name);
+        i->opens = "09:00";
+        i->closes = "17:00";
+        i->next = NULL;
+
+        return i;
+    }
+
+    void release(island* start) {
+        island* currIsland = start;
+        island* nextIsland;
+        while (currIsland != NULL) {
+            nextIsland = currIsland->next;
+            free(currIsland->name);
+            free(currIsland);
+            currIsland = nextIsland;
+        }
+    }
+
+    int main()
+    {
+        char name[NAME_SIZE+1];
+
+        fgets(name, NAME_SIZE+1, stdin);
+        island* p_island0 = create(name);
+
+        fgets(name, NAME_SIZE+1, stdin);
+        island* p_island1 = create(name);
+        p_island0->next = p_island1;
+
+        fgets(name, NAME_SIZE+1, stdin);
+        island* p_island2 = create(name);
+        p_island1->next = p_island2;
+        
+        printf("\n");
+        printf("%s %s %s\n", p_island0->name, p_island0->opens, p_island0->closes);
+        printf("%s %s %s\n", p_island0->next->name, p_island0->next->opens, p_island0->next->closes);
+        printf("%s %s %s\n", p_island0->next->next->name, p_island0->next->next->opens, p_island0->next->next->closes);
+
+        release(p_island0);
+
+        return 0;
+    }
+    ```
 
 ### `strlen` 函数
 1. `strlen`函数的原型如下：
