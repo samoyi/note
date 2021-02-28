@@ -4,7 +4,18 @@
 <!-- TOC -->
 
 - [Binary Search Tree](#binary-search-tree)
-    - [思想](#思想)
+    - [TODO](#todo)
+    - [设计思想](#设计思想)
+        - [二叉搜索树和二叉堆](#二叉搜索树和二叉堆)
+        - [三种遍历](#三种遍历)
+            - [中序遍历](#中序遍历)
+            - [先序遍历](#先序遍历)
+            - [后序遍历](#后序遍历)
+        - [用栈实现非递归的中序遍历](#用栈实现非递归的中序遍历)
+        - [内层 `while` 改为 `if` 减少循环嵌套](#内层-while-改为-if-减少循环嵌套)
+    - [本质](#本质)
+    - [用途](#用途)
+        - [二叉搜索树和二叉堆](#二叉搜索树和二叉堆-1)
     - [概述](#概述)
         - [为什么要用二叉树做搜索](#为什么要用二叉树做搜索)
         - [与二叉堆的区别（以最大堆为例）](#与二叉堆的区别以最大堆为例)
@@ -21,6 +32,7 @@
         - [先序遍历（Pre Order）](#先序遍历pre-order)
         - [后序遍历（Post Order）](#后序遍历post-order)
         - [中序遍历（In Order）](#中序遍历in-order)
+        - [非递归实现中序遍历（使用栈）](#非递归实现中序遍历使用栈)
     - [平衡二叉搜索树](#平衡二叉搜索树)
         - [AVL 树的性能](#avl-树的性能)
         - [插入操作](#插入操作)
@@ -34,8 +46,36 @@
 
 <!-- /TOC -->
 
+## TODO
+本页 TODO
 
-## 思想
+
+## 设计思想
+### 二叉搜索树和二叉堆
+
+### 三种遍历
+#### 中序遍历
+1. 不考虑深入递归的情况的话，中序遍历就是先处理比当前节点小的，再处理当前节点，然后处理比当前节点大的。
+2. 然后再考虑递归，其实也就是对左右两个子节点分别进行上面的操作。这里和快速排序的逻辑有些像：选定一个父节点，左边都是比它小的，右边都是比它大的，然后再递归的处理两边。最终所有的节点都是按照升序处理的。
+3. 从因果关系上来说，中序遍历的场景是：要按照线性的顺序来操作一系列节点。
+
+#### 先序遍历
+1. 从因果关系上来说，先序遍历的场景是：一个节点要先完成某些操作，它的子节点才能进行对应的操作。
+
+#### 后序遍历
+1. 从因果关系上来说，后序遍历的场景是：一个节点的结果需要依赖它后代节点（后代很可能是子树）的结果，所以要先遍历访问它的后代再操作当前节点。
+
+### 用栈实现非递归的中序遍历
+1. 开始调用函数对应着入栈，调用结束对应着出栈。
+
+### 内层 `while` 改为 `if` 减少循环嵌套
+
+
+## 本质
+
+
+## 用途
+### 二叉搜索树和二叉堆
 
 
 
@@ -52,7 +92,9 @@
 ### 与二叉堆的区别（以最大堆为例）
 1. 二叉堆的父子节点更像是父子关系，也就是说父节点要大于等于子节点，而子节点之间谁大谁小无所谓；而二叉搜索树的父子节点则是一种从左到右的递增关系。
 2. 因此二叉搜索树可以保证一个节点的左子树的任意节点都小于右子树的任意节点；但二叉堆因为两个子节点大小关系不明确，所以没有这种性质。
-3. 二叉搜索树机构本身的有序性是很强的，所以按照中序遍历就可以以 $O(n)$ 复杂度实现按顺序输出；但是二叉堆的有序性比较弱，所以排序时只能不断的寻找合适并交换的堆顶节点，复杂度达到 $O(n \lg n)$。
+3. 二叉搜索树结构本身的有序性是很强的，所以按照中序遍历就可以以 $O(n)$ 复杂度实现按顺序输出；但是二叉堆的有序性比较弱，所以排序时只能不断的寻找合适并交换的堆顶节点，复杂度达到 $O(n \lg n)$。
+4. TODO，构建成本都是一样的？都是 $\lg 1 + \lg 2 +...+ \lg n$ ？
+
 
 ### 定义二叉树类和初始状态
 `root` 属性引用根节点，如果为 `null` 表示当前为空树
@@ -491,12 +533,11 @@ class BinarySearchTree {
 
 ## 树的遍历
 ### 先序遍历（Pre Order）
-1. 先访问根节点，然后递归地前序遍历左子树，最后递归地前序遍历右子树。
-2. 从因果关系上来说，先序遍历的场景是，一个节点要先完成某些操作，它的子节点才能进行对应的操作。
-3. 下图描绘了 `preOrderTraverseNode` 方法的访问路径：
+1. 先处理当前节点，再处理左子树，再处理右子树。
+2. 下图描绘了 `preOrderTraverseNode` 方法的访问路径：
     <img src="./images/Pre-Order.png" width="400" style="display: block; margin: 5px 0 10px;" /> 
     `callback` 所调用的节点依次为：11 7 5 3 6 9 8 10 15 13 12 14 20 18 25
-4. 实现
+3. 实现
     ```js
     function preOrderTraverseNode(node, callback) {
         if (node !== null) {
@@ -508,9 +549,7 @@ class BinarySearchTree {
     ```
 
 ### 后序遍历（Post Order）
-1. 后序遍历则是先访问节点的后代节点，再访问节点本身。上面讲到的解析树就应用了后序遍历。
-2. 从因果关系上来说，后序遍历的场景是，一个节点的结果需要依赖它后代节点（后代很可能是子树）的结果，所以要先遍历访问它的后代再操作当前节点。
-层层追溯原因
+1. 先处理左子树，再处理右子树，再处理当前节点。解析树就应用了后序遍历。
 3. 下图描绘了 `postOrderTraverse` 方法的访问路径：
     <img src="./images/Post-Order.png" width="400" style="display: block; margin: 5px 0 10px;" />  
     `callback` 所调用的节点依次为：3 6 5 8 10 9 7 12 14 13 18 25 20 15 11
@@ -526,19 +565,174 @@ class BinarySearchTree {
     ```
 
 ### 中序遍历（In Order）
-1. 先递归地中序遍历左子树，然后访问根节点，最后递归地中序遍历右子树。
-2. 前两种遍历的因果关系，要么是先完成父节点才能完成子节点，要么是先完成所有的子节点才能完成父节点。而中序遍历是先完成左侧子节点，然后再完成父节点，最后完成右侧子节点。
-3. 可以想到，这只是一种形式的中序遍历。也可能是先右侧子节点的，或者在两个以上子节点时还有其他的方式。
-4. 下图描绘了 `inOrderTraverseNode` 方法的访问路径：
+1. 先处理左子树，再处理当前节点，再处理右子树。
+2. 可以想到，这只是一种形式的中序遍历。也可能是先右侧子节点的，或者在两个以上子节点时还有其他的方式。
+3. 下图描绘了 `inOrderTraverseNode` 方法的访问路径：
     <img src="images/In-Order.png" width="400" style="display: block; margin: 5px 0 10px;" />
     `callback` 所调用的节点依次为：3 5 6 7 8 9 10 11 12 13 14 15 18 20 25
-5. 实现
+4. 实现
     ```js
     function inOrderTraverseNode(node, callback) {
         if (node !== null) {
             inOrderTraverseNode(node.left, callback); // 遍历左子树，先一路递归到左子树最小的一个节点
             callback(node.key);
             inOrderTraverseNode(node.right, callback); // 遍历右子树，先一路递归到右子树最小的一个节点
+        }
+    }
+    ```
+
+### 非递归实现中序遍历（使用栈）
+1. 递归本身在它内部就是通过栈来实现的。那么现在不使用递归，并且结合使用栈，本质上就是自己实现本来在内部的调用栈。
+2. 一次调用开始对应着入栈，一次调用结束对应着出栈。
+3. 那么对应着上面递归版本的逻辑来分析：
+    1. 从根节点开始，不断的对左侧子节点进行入栈，一直到没有左侧子节点；
+    2. 开始依次出栈并处理节点；
+    3. 每次出栈的节点如果有右侧子节点，从这个右侧子节点开始，重复第一步的操作。
+4. 按照这个思路，在纸上试一下发现没什么问题。编写代码的时候，像下面这么写时遇到了问题
+    ```cpp
+    void inorder_by_stack(Node* node) {
+        Stack* s = malloc(sizeof(Stack));
+        initStack(s);
+
+
+        // 一直入栈到没有左侧子节点
+        while (node != NULL) {
+            push(s, node);
+            node = node->left;
+        }
+
+        
+        while (!isEmpty(s)) { // 开始依次出栈
+            Node* popped = pop(s);
+            printf("%d\n", popped->key);
+            if (popped->right != NULL) {
+                node = popped->right;
+                while (node != NULL) { // 重复第一步的操作
+                    push(s, node);
+                    node = node->left;
+                }
+                // 到了这里会发现，似乎还是需要递归。
+                // 因为这里是写死的实现了一轮，但是缺少一个机制让它持续运行下去。
+            }
+        }
+    }
+    ```
+5. 不能使用递归，那就只有使用循环才能让它持续运行下去。
+6. 既然上面已经实现了一轮，那就可以通过循环让它一轮一轮的运行。大概是这么个逻辑
+    ```cpp
+    void inorder_by_stack(Node* node) {
+        Stack* s = malloc(sizeof(Stack));
+        initStack(s);
+
+
+        while (继续循环) {
+            while (node != NULL) {
+                push(s, node);
+                node = node->left;
+            }
+                
+            while (!isEmpty(s)) { // 开始依次出栈
+                Node* popped = pop(s);
+                printf("%d\n", popped->key);
+                if (popped->right != NULL) {
+                    node = popped->right;
+                    break; // 继续下一轮的最外层循环
+                }
+            }
+        }
+    }
+    ```
+7. 现在看看外层循环的停止条件。首先栈肯定要为空，然后还要保证此时最后一个出栈的节点没有右侧子节点
+    ```cpp
+    while (1) {
+        while (node != NULL) {
+            push(s, node);
+            node = node->left;
+        }
+            
+        Node* popped;
+        while (!isEmpty(s)) { // 开始依次出栈
+            popped = pop(s);
+            printf("%d\n", popped->key);
+            if (popped->right != NULL) {
+                node = popped->right;
+                break; // 继续下一轮的最外层循环
+            }
+        }
+
+        // 能走到这里有两种可能：栈为空，栈不为空但是 popped 有右侧子节点
+        // 也就是说如果此时 popped 没有右侧子节点，那么栈肯定也为空
+        if (popped->right == NULL) {
+            break;
+        }
+    }
+    ```
+8. 循环比较多，可以简化一下，考虑内层的循环逻辑可以使用外层的循环。也就是，内层 `while` 改为 `if`。
+9. 注意到，内层的第一个 `while` 判断为真时，循环后面的代码是不会进行的。所以可以改成下面的形式
+    ```cpp
+    while (1) {
+        if (node != NULL) {
+            push(s, node);
+            node = node->left;
+        }
+        else {
+            Node* popped;
+            while (!isEmpty(s)) { // 开始依次出栈
+                popped = pop(s);
+                printf("%d\n", popped->key);
+                if (popped->right != NULL) {
+                    node = popped->right;
+                    break; // 继续下一轮的最外层循环
+                }
+            }
+
+            if (popped->right == NULL) {
+                break;
+            }
+        }
+    }
+    ```
+10. 现在，看看能不能简化掉内层第二个循环。继续使用内层 `while` 改为 `if` 的方法，改写为
+    ```cpp
+    while (1) {
+        if (node != NULL) {
+            push(s, node);
+            node = node->left;
+        }
+        else {
+            Node* popped;
+            if (!isEmpty(s)) { // 开始依次出栈
+                popped = pop(s);
+                printf("%d\n", popped->key);
+                if (popped->right != NULL) {
+                    node = popped->right;
+                }
+            }
+            else if (popped->right == NULL) {
+                break;
+            }
+        }
+    }
+    ```
+11. 下面那一堆 `if` 还比较乱。注意在 `else` 里面的两个分支里面分别判断了 `popped->right` 是否 `NULL` 而且是相反判断，很有可能再被简化。
+12. 在回想出栈元素的后序处理：
+    * 如果有右侧节点：那么进入下一轮的入栈操作；
+    * 如果没有右侧节点：如果栈里还有就继续出栈，否则遍历结束
+    ```cpp
+    while (1) {
+        if (node != NULL) {
+            push(s, node);
+            node = node->left;
+        }
+        else {
+            Node* popped = pop(s);
+            printf("%d\n", popped->key);
+            if (popped->right != NULL) { // 开始依次出栈
+                node = popped->right;
+            }
+            else if (isEmpty(s)) {
+                break;
+            }
         }
     }
     ```
