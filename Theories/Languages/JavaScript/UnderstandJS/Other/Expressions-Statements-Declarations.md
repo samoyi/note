@@ -66,6 +66,15 @@
     function foo() { return console.log("abc") }() // 错误
     ```
     只有语句是以 `function` 开头才是函数声明，所以第一个是函数表达式。
+7. 5. 严格模式下，块级作用域中的函数声明只能在块内访问
+    ```js
+    {
+        function foo () {
+            console.log('fff');
+        }
+    }
+    foo(); // ReferenceError: foo is not defined
+    ```
 
 
 ## References
