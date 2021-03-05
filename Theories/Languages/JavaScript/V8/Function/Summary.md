@@ -13,7 +13,7 @@
 
 ## 函数是一种特殊的对象
 1. 函数虽然本质上是对象，但它的特殊之处在于可调用。为了实现可调用的特性，V8 为函数对象添加了两个隐藏属性，具体属性如下图所示
-    <img src="./images/04.jpg" width="800" style="display: block; margin: 5px 0 10px;" />
+    <img src="./images/08.jpg" width="800" style="display: block; margin: 5px 0 10px;" />
 2. 隐藏 `name` 属性的值就是函数名称，如果某个函数没有设置函数名，如下面这段函数
     ```js
     (function (){
