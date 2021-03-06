@@ -23,6 +23,12 @@
             - [定义节点类](#定义节点类)
     - [插入节点](#插入节点)
     - [搜索最小值和最大值](#搜索最小值和最大值)
+        - [复杂度](#复杂度)
+    - [搜索后继和前驱](#搜索后继和前驱)
+        - [复杂度](#复杂度-1)
+        - [相关性质](#相关性质)
+            - [《算法导论》12.2-5](#算法导论122-5)
+            - [《算法导论》12.2-6](#算法导论122-6)
     - [搜索一个特定的值](#搜索一个特定的值)
     - [移除一个节点](#移除一个节点)
         - [注意 `removeNode` 返回值赋值的必要](#注意-removenode-返回值赋值的必要)
@@ -32,7 +38,10 @@
         - [先序遍历（Pre Order）](#先序遍历pre-order)
         - [后序遍历（Post Order）](#后序遍历post-order)
         - [中序遍历（In Order）](#中序遍历in-order)
-        - [非递归实现中序遍历（使用栈）](#非递归实现中序遍历使用栈)
+        - [复杂度](#复杂度-2)
+            - [非递归实现中序遍历（使用栈）](#非递归实现中序遍历使用栈)
+            - [使用后继实现中序遍历](#使用后继实现中序遍历)
+        - [复杂度](#复杂度-3)
     - [平衡二叉搜索树](#平衡二叉搜索树)
         - [AVL 树的性能](#avl-树的性能)
         - [插入操作](#插入操作)
@@ -123,7 +132,6 @@ class BinarySearchTree {
 2. BST 本身并不需要 `parent` 作为父节点的引用，但之后实现子类 AVL 树的时候需要，所以直接在这里加上这个属性。
 
 
-
 ## 插入节点
 1. 要验证这个插入操作是否为一种特殊情况，也就是要插入的节点是树的第一个节点。如果是，就将根节点指向新节点；如果不是，就要把它插入到合适的位置
 2. `Node` 构造函数调用时要设置父节点的引用：如果当前是空树，那么父节点就是 `null`；如果当前树非空，则要在递归比较的到目标位置时才能确定父节点是谁，才能调用 `Node` 创建新的节点
@@ -160,6 +168,45 @@ class BinarySearchTree {
         }
     }
     ```
+4. C 实现
+```cpp
+void insert(int key) {
+    Node* node = malloc(sizeof(Node));
+    if (node == NULL) {
+        printf("Create node fail.");
+        exit(EXIT_FAILURE);
+    }
+    node->key = key;
+    node->left = NULL;
+    node->right = NULL;
+    if (root == NULL) {
+        root = node;
+        node->parent = NULL;
+    }
+    else {
+        Node* parent = NULL;
+        Node* curr = root;
+        int is_left = 1;
+        while (curr) {
+            parent = curr;
+            if (key < curr->key) {
+                curr = curr->left;
+                is_left = 1;
+            }
+            else {
+                curr = curr->right;
+                is_left = 0;
+            }
+        }
+        if (is_left) {
+            parent->left = node;
+        }
+        else {
+            parent->right = node;
+        }
+    }
+}
+```
 
 
 ## 搜索最小值和最大值
@@ -196,6 +243,97 @@ class BinarySearchTree {
         return null;
     }
     ```
+4. C 实现
+    ```cpp
+    Node* tree_minimun(Node* root) {
+        if (root == NULL) {
+            return NULL;
+        }
+        while (root->left != NULL) {
+            root = root->left;
+        }
+        return root;
+    }
+    Node* tree_maximun(Node* root) {
+        if (root == NULL) {
+            return NULL;
+        }
+        while (root->right != NULL) {
+            root = root->right;
+        }
+        return root;
+    }
+    ```
+
+### 复杂度
+可以直观的看出来是 $O(h)$
+
+
+## 搜索后继和前驱
+1. 根据节点左中右递增的关系，后继节点肯定是要比当前节点更 “右”。分为这么几种情况：
+    * 如果当前节点有右子树，则后继节点就是右子树的最小节点；
+    * 如果没有右子树：
+        * 当前节点如果是左侧子节点，则后继节点就是父节点；
+        * 当前节点是右侧子节点，那么它必须要位于某个节点的左子树上，它才能小于那个节点。因为如果它本身有没有比自己大的右子树，它还不位于一个小于某个节点的左子树上，那它就是整棵树的最大节点了，也就没有后继节点了。所以需要层层网上追溯父节点，如果某个祖先节点是左侧子节点了，则该祖先节点的父节点就是后继节点；如果追溯到 null 还不是，那就没有后继节点。
+2. 初步实现如下
+    ```cpp
+    Node* tree_successor(Node* node) {
+        if (node == NULL) {
+            return NULL;
+        }
+        if (node->right) {
+            return tree_minimun(node->right);
+        }
+        else if (node->parent && node->parent->left == node) {
+            return node->parent;
+        }
+        else {
+            Node* parent = node->parent;
+            while (parent && parent->right == node ) {
+                node = parent;
+                parent = parent->parent;
+            }
+            return parent;
+        }
+    }
+    ```
+3. 然后再看 `else if` 和 `while` 的判断比较相似，能不能合并一下。而且，从逻辑上来讲，这两者其实都是在找 “左侧子节点的父节点”。
+4. 对比一下就会发现，`else if` 为真而返回值的情况，其实就是 `while` 的退出条件之一，并且返回的也都是同样的节点。所以 `else if` 就是没必要了。而且从逻辑上来讲，`while` 的退出条件是 “父节点不存在或者当前节点是父节点的左侧子节点”，确实包括了 `else if` 为真是的条件 “当前节点是父节点的左侧子节点”。最终如下
+    ```cpp
+    Node* tree_successor(Node* node) {
+        if (node == NULL) {
+            return NULL;
+        }
+        if (node->right) {
+            return tree_minimun(node->right);
+        }
+        else {
+            Node* parent = node->parent;
+            while (parent && parent->right == node ) {
+                node = parent;
+                parent = parent->parent;
+            }
+            return parent;
+        }
+    }
+    ```
+
+### 复杂度
+`if` 里面的复杂度是 $O(h)$，`else` 里面的也是 $O(h)$。
+
+### 相关性质
+#### 《算法导论》12.2-5
+1. 如果一个节点 x 有两个子节点，那么它的后继没有左子节点，它的前驱没有右子节点
+2. 因为有右侧子节点，所以它的后继就是右子树的最小节点，再小的节点就是 x 了。
+3. 同理，前驱也没有右侧子节点。
+4. 如果 x 没有右侧子节点，那它要么是最大的而没有后继，如果它有后继的话，根据上面搜索后继的说明，后继肯定有左子节点。
+5. 同理，如果 x 没有左侧子节点，那它要么是是最小的，要么它的前驱一定有右子节点。
+
+#### 《算法导论》12.2-6
+1. 中文翻译的有问题，另外英文中的 lowest 是指最靠下，也就是最原理根节点。
+2. 如果 x 没有右子树，则它的后继 y 肯定是 x 的祖先节点。当然 x 很可能不止一个祖先节点，而且这些祖先节点中，有一些满足以下性质：这个祖先节点有左子节点且这个左子节点也是 x 的祖先节点。一点说明是，这里要认为一个节点本身也是它自己的祖先节点。
+3. 要证明：在满足上述性质的 x 的祖先节点中，y 是最靠下的那个。
+4. y 当然是最靠下的，如果不是，那就说明还有一个节点比 y 小但是比 x 大，那这个节点才是 x 的后继。
 
 
 ## 搜索一个特定的值
@@ -220,6 +358,35 @@ class BinarySearchTree {
         else {
             return node;
         }
+    }
+    ```
+3. C 实现
+    ```cpp
+    Node* tree_search(Node* root, int key) {
+        if (root == NULL || key == root->key) {
+            return root;
+        }
+
+        if (key < root->key) {
+            return tree_search(root->left, key);
+        }
+        else {
+            return tree_search(root->right, key);
+        }
+    }
+    ```
+4. 对于大多数计算机，迭代版本的效率要高得多
+    ```cpp
+    Node* interative_tree_search(Node* root, int key) {
+        while (root != NULL && key != root->key) {
+            if (key < root->key) {
+                root = root->left;
+            }
+            else {
+                root = root->right;
+            }
+        }
+        return root;
     }
     ```
 
@@ -581,7 +748,11 @@ class BinarySearchTree {
     }
     ```
 
-### 非递归实现中序遍历（使用栈）
+### 复杂度
+$Θ(n)$
+
+
+#### 非递归实现中序遍历（使用栈）
 1. 递归本身在它内部就是通过栈来实现的。那么现在不使用递归，并且结合使用栈，本质上就是自己实现本来在内部的调用栈。
 2. 一次调用开始对应着入栈，一次调用结束对应着出栈。
 3. 那么对应着上面递归版本的逻辑来分析：
@@ -736,6 +907,22 @@ class BinarySearchTree {
         }
     }
     ```
+
+#### 使用后继实现中序遍历
+1. 实现
+    ```cpp
+    void inorder_by_successor(Node* root) {
+        Node* node = tree_minimum(root);
+        while (node) {
+            printf("%d\n", node->key);
+            node = tree_successor(node);
+        }
+    }
+    ```
+
+### 复杂度
+tree_minimum
+tree_successor 的复杂度是 $O(h)$
 
 
 ## 平衡二叉搜索树
