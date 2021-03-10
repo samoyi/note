@@ -22,6 +22,15 @@ JavaScript Runtime:
         - [一个事件循环流程](#一个事件循环流程)
         - [`main()` 以及 `setTimeout` 的回调总是最后执行](#main-以及-settimeout-的回调总是最后执行)
     - [宏任务和微任务](#宏任务和微任务)
+        - [宏任务的执行过程](#宏任务的执行过程)
+        - [使用异步宏任务解决栈溢出](#使用异步宏任务解决栈溢出)
+        - [宏任务实现异步的问题](#宏任务实现异步的问题)
+        - [微任务的执行](#微任务的执行)
+        - [能否在微任务中循环地触发新的微任务](#能否在微任务中循环地触发新的微任务)
+        - [JS 中的宏任务和微任务](#js-中的宏任务和微任务)
+        - [再看一个更复杂的例子](#再看一个更复杂的例子)
+    - [Several runtimes communicating together](#several-runtimes-communicating-together)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -177,24 +186,37 @@ main();
 
 
 ## 宏任务和微任务
-判断一下下面的输出顺序：
-```js
-setTimeout(function(){
-    console.log(3)
-});
+1. 判断一下下面的输出顺序：
+    ```js
+    setTimeout(function(){
+        console.log(3)
+    });
 
-new Promise(function(resolve){
-    console.log(1);
-    for(var i = 0; i < 10000; i++){
-        i == 99 && resolve();
-    }
- }).then(function(){
-     console.log(4)
- });
+    new Promise(function(resolve){
+        console.log(1);
+        for(var i = 0; i < 10000; i++){
+            i == 99 && resolve();
+        }
+    }).then(function(){
+        console.log(4)
+    });
 
- console.log(2);
- ```
- 上面的输出顺序不是 1 2 3 4，而是 1 2 4 3。同样是异步操作，为什么在后面的反而比前面的更早执行。这就是 **宏任务**（Macrotask）和 **微任务**（Microtask）的区别。
+    console.log(2);
+    ```
+2. 上面的输出顺序不是 1 2 3 4，而是 1 2 4 3。同样是异步操作，为什么在后面的反而比前面的更早执行。这就是 **宏任务**（Macrotask）和 **微任务**（Microtask）的区别。
+3. 向任务队列加入的一个异步回调任务，称为一个宏任务。最初的主程序（不是异步回调中的执行的）也可以算作一个宏任务。
+4. 并不是所有的异步任务都会被加到任务队列，有些异步任务会被加入到另一个队列，加入这一队列的任务称为微任务。
+5. 在没有微任务队列时候，JS 的事件循环机制是：
+    ```
+    主程序 Macrotask —— Macrotask1 —— Macrotask2 —— ……
+    ```
+4. 有微任务队列时候，JS 的事件循环机制是：
+    ```
+    主程序 Macrotask —— 主程序的 Microtask —— 
+    Macrotask1 —— Macrotask 的 Microtask —— 
+    Macrotask2 —— Macrotask2 的 Microtask ——
+    ……
+    ```  
 
 ### 宏任务的执行过程
 1. 我们先从主线程和调用栈开始分析。我们知道，调用栈是一种数据结构，用来 **管理在主线程上执行的函数的调用关系**。
@@ -250,38 +272,98 @@ new Promise(function(resolve){
 务，再执行该回调函数 `foo`，这样就解决了栈溢出的问题。    
 
 ### 宏任务实现异步的问题
+1. 对于栈溢出问题，虽然我们可以通过将某些函数封装成宏任务的方式来解决，但是宏任务需要先被放到消息队列中，如果某些宏任务的执行时间过久，那么就会影响到消息队列后面的宏任务的执行，而且这个影响是不可控的，因为你无法知道前面的宏任务需要多久才能执行完成。
+2. 于是 JavaScript 中又引入了微任务，微任务会在当前的任务快要执行结束时执行。利用微任务，你就能比较精准地控制你的回调函数的执行时机。
+
+### 微任务的执行
+1. 通俗地理解，V8 会为每个宏任务维护一个微任务队列。当 V8 执行一段 JavaScript 时，会为这段代码创建一个环境对象，微任务队列就是存放在该环境对象中的。
+2. 当你生成一个微任务，该微任务会被 V8 自动添加进微任务队列，等整段代码快要执行结束时，在该环境对象销毁之前，也就是 **调用栈清空之前**，V8 会先处理微任务队列中的微任务。
+3. 关于微任务的执行时机：
+    * 和宏任务异步调用不同，微任务依然会在当前任务执行结束之前被执行。这也就意味着在当前微任务执行结束之前，消息队列中的其他任务是不可能被执行的。
+    * 但是，触发的微任务不会在当前的函数中被执行，所以执行微任务时，不会导致栈的无限扩张。
+4. 分析下面代码
+    ```js
+    function bar(){
+        console.log('bar')
+        Promise.resolve().then(
+            (str) =>console.log('micro-bar')
+        ) 
+        setTimeout((str) =>console.log('macro-bar'), 0)
+    }
 
 
-1. 向 Message Queue 加入的一个异步回调任务，称为一个 Macrotask。最初的主程序（不是异
-步回调中的执行的）也可以算作一个 Macrotask。
-2. 并不是所有的异步任务都会被加到 Message Queue，有些异步任务会被加入到另一个 queue，
-加入这一 queue 的任务称为 Microtask。
-3. 在没有 Microtask Queue 时候，JS 的事件循环机制是：
-    `主程序Macrotask —— Macrotask1 —— Macrotask2 —— ……`
-4. 有 Microtask Queue 时候，JS 的事件循环机制是：
+    function foo() {
+        console.log('foo')
+        Promise.resolve().then(
+            (str) =>console.log('micro-foo')
+        ) 
+        setTimeout((str) =>console.log('macro-foo'), 0)
+        
+        bar()
+    }
+
+    foo()
+
+    console.log('global')
+
+    Promise.resolve().then(
+        (str) =>console.log('micro-global')
+    ) 
+
+    setTimeout((str) =>console.log('macro-global'), 0)
     ```
-    主程序Macrotask —— 主程序的Microtask —— Macrotask1 —— Macrotask的Microtask
-    —— Macrotask2 —— Macrotask2的Microtask ——……
-    ```  
+5. 当 V8 执行这段代码时，会首先将全局执行上下文压入调用栈中，并在执行上下文中创建一个空的微任务队列。此时：
+    * 调用栈中只有全局执行上下文；
+    * 微任务队列为空。
+6. 然后，执行 `foo` 函数的调用，V8 会先创建 `foo` 函数的执行上下文，并将其压入到栈中；接着执行 `Promise.resolve`，这会生成一个 `micro-foo` 微任务，V8 会将该微任务添加进微任务队列；然后执行 `setTimeout` 方法，该方法会生成一个 `macro-foo` 宏任务，V8 会将该宏任务添加进消息队列。那么此时    
+    * 调用栈中包含了全局执行上下文、`foo` 函数的执行上下文；
+    * 微任务队列有了一个微任务，`micro-foo`；
+    * 消息队列中存放了一个通过 `setTimeout` 设置的宏任务，`macro-foo`。
+7. 接下来，`foo` 函数调用了 `bar` 函数，那么 V8 需要再创建 `bar` 函数的执行上下文，并将其压入栈中；接着执行 `Promise.resolve`，这会生成一个 `micro-bar` 微任务，该微任务会被添加进微任务队列。然后执行 `setTimeout` 方法，这也会生成一个 `macro-bar` 宏任务，宏任务同样也会被添加进消息队列。那么此时    
+    * 调用栈中包含了全局执行上下文、`foo` 函数的执行上下文、`bar` 的执行上下文；
+    * 微任务队列中的微任务是 `micro-foo`、`micro-bar`；
+    * 消息队列中，宏任务的状态是 `macro-foo`、`macro-bar`。
+8. 接下来，`bar` 函数执行结束并退出，`bar` 函数的执行上下文也会从栈中弹出；紧接着 `foo` 函数执行结束并退出，`foo` 函数的执行上下文也随之从栈中被弹出。那么此时：
+    * 调用栈中只包含了全局执行上下文；
+    * 微任务队列中的微任务同样还是 `micro-foo`、`micro-bar`；
+    * 消息队列中宏任务的状态同样还是 `macro-foo`、`macro-bar`。
+9. 主线程执行完了 `foo` 函数，但因为后面还有全局代码要执行，调用栈中的全局执行上下文要继续保留。所以微任务还不能执行。
+10. 然后执行全局环境中的代码 `Promise.resolve` 了，这会生成一个 `micro-global` 微任务，V8 会将该微任务添加进微任务队列；接着又执行 `setTimeout` 方法，该方法会生成了一个 `macro-global` 宏任务，V8 会将该宏任务添加进消息队列。那么此时：
+    * 调用栈中包含的是全局执行上下文；
+    * 微任务队列中的微任务是 `micro-foo`、`micro-bar`、`micro-global`；
+    * 消息队列中宏任务的状态是 `macro-foo`、`macro-bar`、`macro-global`。
+11. 现在，全部的代码都执行完了，准备要销毁全局执行上下文了。但在销毁之前要先依次执行掉微任务列表里面微任务。
+12. 微任务执行完后，销毁全局执行上下文。主线程事件循环进入下一个 tick，从消息队列里取出一个任务继续执行。
 
-**macrotasks 包括：**
+### 能否在微任务中循环地触发新的微任务
+1. 前面使用了异步宏任务解决了循环调用的问题，那么能不能用异步的微任务解决这个问题呢？比如，我们将代码改为    
+    ```js
+    function foo() {
+        return Promise.resolve().then(foo)
+    }
+    foo()
+    ```
+2. 执行函数 `foo` 会创建一个微任务，然后在本次宏任务结束之前会执行这个微任务，然而这个微任务的执行会再次创建一个微任务。
+3. 这就导致了本次宏任务无法结束，而是要不断的执行这个微任务。
+4. 虽然每次执行微任务的时候调用栈都会清空到只剩下全局执行上下文，所以并不会导致栈溢出。但是程序也干不了其他事情了。
+
+### JS 中的宏任务和微任务
+1. Macrotasks 包括：
     * `setTimeout`
     * `setInterval`
     * `setImmediate`
     * `MessageChannel`
     * `I/O`
     * `UI渲染`
-**microtasks 包括：**
+2. microtasks 包括：
     * `process.nextTick`
     * `promise`
     * `Object.observe`
     * `MutationObserver`
+3. 对于一些精度和实时性要求较高的异步场景，如果使用宏任务的话执行时机不可控，可能要等待的时间比较长，这样的任务就适合为设计为微任务。
+4. 注意 `setTimeout` 第二个参数的意义，是指在这么长时间之后回调任务放进任务队列，而任务本身还是要在队列里排队的。
 
-TODO 不懂：一个异步操作依据什么被定义为 Macrotask 或 Microtask？或者说，一个任务为什么被设计为 Macrotask 或者 Microtask。
-
-再分析上面的例子：`setTimeout` 的回调属于 Macrotask，相当于上面的 `Macrotask1`；而
-`promise` 的 `then` 回调属于 Microtask，相当于上面的 `主程序的Microtask`。  
-再看一个更复杂的例子：
+### 再看一个更复杂的例子
 ```js
 const interval = setInterval(() => {
     console.log('setInterval')
@@ -321,23 +403,18 @@ Promise.resolve()
     console.log('promise 2')
 })
 ```
-1. `setInterval`和`setTimeout` 都是 Macrotask，先后加入到 Macrotask Queue。
-2. `Promise`是 Microtask，所以先打印出`promise 1`和`promise 2`。
-3. 然后执行`setInterval`的 Macrotask，打印`setInterval`。
-4. `setInterval`会再次加入到 Macrotask Queue，但它前面还有之前的 `setTimeout`。注意，
-`setInterval`的这次推栈（以及之后的每一次推栈）都是在它回调刚执行完就进行的，而不需要等
-到调用栈清空才能推栈。
-5. 执行 `setTimeout`  的 Macrotask，打印 `setTimeout 1`。此时 Macrotask Queue 中
-只剩下 `setInterval`。
-6. 之后的 `Promise` 由于是 Microtask，所以会先执行其所有的 `then`，打印出
-`promise 3` 和 `promise 4`。
-7. 第三个 `then` 内部是 `setTimeout`，加入到 Macrotask Queue。
-8. 调用栈清空，此时 Macrotask Queue 排在最前面的是第二个 `setInterval`，
-打印 `setInterval`。
-9. `setInterval` 会第三次加入到 Macrotask Queue，但它前面还有一个的 `setTimeout`。
+
+1. 当前宏任务执行中，`setInterval` 和 `setTimeout` 都是宏任务，先后加入到宏任务队列。
+2. `Promise` 是微任务，所以先打印出 `promise 1` 和 `promise 2`。
+3. 然后执行 `setInterval` 的宏任务，打印 `setInterval`。
+4. `setInterval` 会再次加入到宏任务队列，但它前面还有之前的 `setTimeout`。
+5. 执行 `setTimeout`  的宏任务，打印 `setTimeout 1`。此时宏任务队列中只剩下 `setInterval`。
+6. 之后的 `Promise` 由于是微任务，所以会先执行其所有的 `then`，打印出 `promise 3` 和 `promise 4`。
+7. 第三个 `then` 内部是 `setTimeout`，加入到宏任务队列。
+8. 调用栈清空，此时宏任务队列排在最前面的是第二个 `setInterval`，打印 `setInterval`。
+9. `setInterval` 会第三次加入到宏任务队列，但它前面还有一个的 `setTimeout 2` 所在的 `setTimeout`。
 10. 执行 `setTimeout` 回调，打印 `setTimeout 2`。
-11. 之后又是 `Promise` 的 Microtask，打印出 `promise 5` 和 `promise 6`，并结束
-`interval`, Macrotask Queue 中现在唯一的任务 `setInterval` 回调没有机会执行。
+11. 之后又是 `Promise` 的微任务，打印出 `promise 5` 和 `promise 6`，并结束 `interval`。宏任务队列中现在唯一的任务 `setInterval` 回调没有机会执行。
 
 
 ```shell
@@ -355,11 +432,8 @@ promise 6
 
 
 ## Several runtimes communicating together
-1. A web worker or a cross-origin iframe has its own stack, heap, and message
-queue.
-2. Two distinct runtimes can only communicate through sending messages via the
-`postMessage` method.
-
+1. A web worker or a cross-origin iframe has its own stack, heap, and message queue.
+2. Two distinct runtimes can only communicate through sending messages via the `postMessage` method.
 
 
 ## References
@@ -370,3 +444,4 @@ queue.
 * [How JavaScript works: an overview of the engine, the runtime, and the call stack](https://blog.sessionstack.com/how-does-javascript-actually-work-part-1-b0bacc073cf)
 * [10分钟理解JS引擎的执行机制](https://segmentfault.com/a/1190000012806637)
 * [event loop js事件循环 microtask macrotask](https://blog.csdn.net/sjn0503/article/details/76087631)
+* [图解 Google V8](https://time.geekbang.org/column/intro/296)
