@@ -1,77 +1,115 @@
 # Memory Management
 
+
+<!-- TOC -->
+
+- [Memory Management](#memory-management)
+    - [JavaScript 内存使用概述](#javascript-内存使用概述)
+        - [变量在内存中的存储位置](#变量在内存中的存储位置)
+        - [Memory life cycle](#memory-life-cycle)
+            - [In high-level languages](#in-high-level-languages)
+        - [垃圾的产生](#垃圾的产生)
+    - [V8 的垃圾回收算法](#v8-的垃圾回收算法)
+        - [大致流程](#大致流程)
+            - [第一步，通过 GC Root 标记空间中活动对象和非活动对象。](#第一步通过-gc-root-标记空间中活动对象和非活动对象)
+            - [第二步，回收非活动对象所占据的内存](#第二步回收非活动对象所占据的内存)
+            - [第三步，内存整理](#第三步内存整理)
+        - [两个垃圾回收器](#两个垃圾回收器)
+        - [副垃圾回收器](#副垃圾回收器)
+        - [主垃圾回收器](#主垃圾回收器)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
 ## JavaScript 内存使用概述
 ### 变量在内存中的存储位置
 * 基本类型的值存储在栈内存中。
-* 引用类型的值存储在堆内存中，其在堆内存的中的地址（指针）存储在栈内存中，引用类型变量即
-为该地址。
+* 引用类型的值存储在堆内存中，其在堆内存的中的地址（指针）存储在栈内存中，引用类型变量即为该地址。
 
 ### Memory life cycle
-Regardless of the programming language, memory life cycle is pretty much always
-the same:
-1. **Allocate memory** — memory is allocated by the operating system which
-allows your program to use it. In low-level languages (e.g. C) this is an
-explicit operation that you as a developer should handle. In high-level
-languages, however, this is taken care of for you.
-2. **Use memory** — this is the time when your program actually makes use of the
-previously allocated memory. Read and write operations are taking place as
-you’re using the allocated variables in your code.
-3. **Release memory** — now is the time to release the entire memory that you
-don’t need so that it can become free and available again. As with the allocate
-memory operation, this one is explicit in low-level languages.
+Regardless of the programming language, memory life cycle is pretty much always the same:
+1. **Allocate memory** — memory is allocated by the operating system which allows your program to use it. In low-level languages (e.g. C) this is an explicit operation that you as a developer should handle. In high-level languages, however, this is taken care of for you.
+2. **Use memory** — this is the time when your program actually makes use of the previously allocated memory. Read and write operations are taking place as you’re using the allocated variables in your code.
+3. **Release memory** — now is the time to release the entire memory that you don’t need so that it can become free and available again. As with the allocate memory operation, this one is explicit in low-level languages.
 
 #### In high-level languages
-1. The second part is explicit in all languages. The first and last parts are
-explicit in low-level languages, but are mostly implicit in high-level languages
-like JavaScript.
-2. This seemingly “automatical” nature of freeing up resources is a source of
-confusion and gives JavaScript (and other high-level-language) developers the
-false impression they can choose not to care about memory management. **This is
+1. The second part is explicit in all languages. The first and last parts are explicit in low-level languages, but are mostly implicit in high-level languages like JavaScript.
+2. This seemingly “automatical” nature of freeing up resources is a source of confusion and gives JavaScript (and other high-level-language) developers the false impression they can choose not to care about memory management. **This is
 a big mistake**.
 
+### 垃圾的产生
+1. 以下面的代码为例
+    ```js
+    window.test = new Object()
+    window.test.a = new Uint16Array(100)
+    ```
+2. 当 JavaScript 执行这段代码的时候，会先为 `window` 对象添加一个 `test` 属性，并在堆中创建了一个空对象，`window.test` 属性指向该对象的地址；随后又创建一个大小为 100 的数组，`test.a` 属性指向数组的地址。此时的内存布局图如下所示
+    <img src="./images/01.jpg" width="600" style="display: block; margin: 5px 0 10px 0;" />
+3. 如果此时，我将另外一个对象赋给了 `a` 属性
+    ```js
+    window.test.a = new Object()
+    ```
+    那么此时的内存布局如下所示
+    <img src="./images/02.jpg" width="600" style="display: block; margin: 5px 0 10px 0;" />
+4. `a` 属性之前是指向堆中数组对象的，现在已经指向了另外一个空对象，那么此时堆中的数组对象就成为了垃圾数据，因为我们无法从一个根对象遍历到这个数组对象。
+5. 不过，不用担心这个数组对象会一直占用内存空间，因为垃圾回收器会自动清理。
 
-## Memory Management
-### Release when the memory is not needed anymore
-1. Most of memory management issues come at this phase.  
-2. The hardest task here is to find when "the allocated memory is not needed any
-longer".   
-3. It often requires the developer to determine where in the program such piece
-of memory is not needed anymore and free it.  
-4. High-level languages embed a piece of software called "garbage collector"
-whose job is to track memory allocation and use in order to find when a piece of
-allocated memory is not needed any longer in which case, it will automatically
-free it.  
-5. This process is an approximation since the general problem of knowing whether
-some piece of memory is needed is undecidable (can't be solved by an algorithm).
 
-### JavaScript 的垃圾回收算法： Mark-and-sweep
-This algorithm reduces the definition of "an object is not needed anymore" to
-"an object is unreachable".  
+## V8 的垃圾回收算法
+### 大致流程
+#### 第一步，通过 GC Root 标记空间中活动对象和非活动对象。
+1. 目前 V8 采用的 **可访问性**（reachability）算法来判断堆中的对象是否是活动对象。
+2. 具体地讲，这个算法是将一些 GC Root 作为初始存活的对象的集合，从 GC Roots 对象出发，遍历 GC Root 中的所有对象：通过 GC Root 遍历到的对象，我们就认为该对象是 **可访问的**（reachable），那么必须保证这些对象应该在内存中保留，我们也称可访问的对象为 **活动对象**；通过 GC Roots 没有遍历到的对象，则是 **不可访问的**（unreachable），那么这些不可访问的对象就可能被回收，我们称不可访问的对象为 **非活动对象**。
+3. 在浏览器环境中，GC Root 有很多，通常包括但不限于以下几种：
+    * 全局的 window 对象（位于每个 iframe 中）；
+    * 文档 DOM 树，由可以通过遍历文档到达的所有原生 DOM 节点组成；
+    * 存放栈上变量。
 
-1. When a variable comes into context, such as when a variable is declared
-inside a function, it is flagged as being in context.
-2. Variables that are in context, logically, should never have their memory
-freed, because they may be used as long as execution continues in that context.
-3. When a variable goes out of context, it is also flagged as being out of
-context.
-4. Variables can be flagged in any number of ways. There may be a specific bit
-that is flipped when a variable is in context, or there may be an “in-context”
-variable list and an “out-of-context” variable list between which variables are
-moved. The implementation of the flagging is unimportant; it’s really the theory
-that is key.
-5. When the garbage collector runs, it marks all variables stored in memory
-(once again, in any number of ways).
-6. It then clears its mark off of variables that are in context and variables
-that are referenced by in-context variables.
-7. The variables that are marked after that are considered ready for deletion,
-because they can’t be reached by any in-context variables.
-8. The garbage collector then does a memory sweep, destroying each of the marked
- values and reclaiming the memory associated with them.
+#### 第二步，回收非活动对象所占据的内存
+在所有的标记完成之后，统一清理内存中所有被标记为可回收的对象。
+
+#### 第三步，内存整理
+1. 一般来说，频繁回收对象后，内存中就会存在大量不连续空间，我们把这些不连续的内存空间称为 **内存碎片**。
+2. 当内存中出现了大量的内存碎片之后，如果需要分配较大的连续内存时，就有可能出现内存不足的情况，所以最后一步需要整理这些内存碎片。
+3. 但这步其实是可选的，因为有的垃圾回收器不会产生内存碎片，比如接下来我们要介绍的副垃圾回收器。
+
+### 两个垃圾回收器
+1. 目前 V8 采用了两个垃圾回收器，**主垃圾回收器（Major GC）和 **副垃圾回收器**（Minor GC (Scavenger)）。
+2. V8 之所以使用了两个垃圾回收器，主要是受到了 **代际假设**（The Generational Hypothesis）的影响。代际假设是垃圾回收领域中一个重要的概念，它有以下两个假设：
+    * **大部分对象都是 “朝生夕死” 的**。也就是说大部分对象在内存中存活的时间很短，比如函数内部声明的变量，或者块级作用域中的变量，当函数或者代码块执行结束时，作用域中定义的变量就会被销毁。因此这一类对象一经分配内存，很快就变得不可访问。
+    * **不死的对象，会活得更久**。比如全局的 window、DOM、Web API 等对象。
+3. 其实这两个特点不仅仅适用于 JavaScript，同样适用于大多数的编程语言，如 Java、Python 等。V8 的垃圾回收策略，就是建立在该假设的基础之上的。
+4. 如果我们只使用一个垃圾回收器，在优化大多数新对象的同时，就很难优化到那些老对象，因此你需要权衡各种场景，根据对象生存周期的不同，而使用不同的算法，以便达到最好的效果。
+5. 所以，在 V8 中，会把堆分为新生代和老生代两个区域，新生代中存放的是生存时间短的对象，老生代中存放生存时间久的对象。新生代通常只支持 1～8M 的容量，而老生代支持的容量就大很多了。
+6. 对于这两块区域，V8 分别使用两个不同的垃圾回收器，以便更高效地实施垃圾回收。副垃圾回收器主要负责新生代的垃圾回收。主垃圾回收器主要负责老生代的垃圾回收。
+
+### 副垃圾回收器
+1. 副垃圾回收器主要负责新生代的垃圾回收。通常情况下，大多数小的对象都会被分配到新生代，所以说这个区域虽然不大，但是垃圾回收还是比较频繁的。
+2. 新生代中的垃圾数据用 **Scavenge 算法** 来处理。所谓 Scavenge 算法，是把新生代空间对半划分为两个区域，一半是 **对象区域**（from-space），一半是 **空闲区域**（to-space），如下图所示
+    <img src="./images/03.jpg" width="600" style="display: block; margin: 5px 0 10px 0;" />
+3. 新加入的对象都会存放到对象区域，当对象区域快被写满时，就需要执行一次垃圾清理操作。在垃圾回收过程中，首先要对对象区域中的垃圾做标记；标记完成之后，就进入垃圾清理阶段。
+4. 副垃圾回收器会把这些存活的对象（非垃圾）复制到空闲区域中，同时它还会把这些对象有序地排列起来。所以这个复制过程，也就相当于完成了内存整理操作，复制后空闲区域就没有内存碎片了
+    <img src="./images/04.jpg" width="600" style="display: block; margin: 5px 0 10px 0;" />
+5. 完成复制后，对象区域与空闲区域进行角色翻转，也就是原来的对象区域变成空闲区域，原来的空闲区域变成了对象区域。这样就完成了垃圾对象的回收操作。这种角色翻转的操作还能让新生代中的这两块区域无限重复使用下去。    
+    <img src="./images/05.jpg" width="600" style="display: block; margin: 5px 0 10px 0;" />
+6. 不过，副垃圾回收器每次执行清理操作时，都需要将存活的对象从对象区域复制到空闲区域，复制操作需要时间成本，如果新生区空间设置得太大了，那么每次清理的时间就会过久，所以为了执行效率，一般新生区的空间会被设置得比较小。
+7. 同时，副垃圾回收器还会采用 **对象晋升策略**，也就是移动那些经过两次垃圾回收依然还存活的对象到老生代中。
+
+### 主垃圾回收器
+1. 主垃圾回收器主要负责老生代中的垃圾回收。除了新生代中晋升的对象，一些大的对象会直接被分配到老生代里。因此，老生代中的对象有两个特点：一个是对象占用空间大；另一个是对象存活时间长。
+2. 由于老生代的对象比较大，若要在老生代中使用 Scavenge 算法进行垃圾回收，复制这些大的对象将会花费比较多的时间，从而导致回收执行效率不高，同时还会浪费一半的空间。所以，主垃圾回收器是采用 **标记-清除**（Mark-Sweep）的算法进行垃圾回收的。
+3. 首先是标记过程阶段。标记阶段就是从一组根元素开始，递归遍历这组根元素，在这个遍历过程中，能到达的元素称为活动对象，没有到达的元素就可以判断为垃圾数据。
+4. 接下来就是垃圾的清除过程。它和副垃圾回收器的垃圾清除过程完全不同，主垃圾回收器会直接将标记为垃圾的数据清理掉
+    <img src="./images/06.jpg" width="600" style="display: block; margin: 5px 0 10px 0;" />
+5. 对垃圾数据进行标记，然后清除，这就是标记-清除算法。不过对一块内存多次执行标记-清除算法后，会产生大量不连续的内存碎片。而碎片过多会导致大对象无法分配到足够的连续内存，于是又引入了另外一种算法——**标记-整理**（Mark-Compact）。
+6. 这个算法的标记过程仍然与标记-清除算法里的是一样的，先标记可回收对象，但后续步骤不是直接对可回收对象进行清理，而是让所有存活的对象都向一端移动，然后直接清理掉这一端之外的内存
+    <img src="./images/07.jpg" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    
 
 
 ## References
 * [Memory Management MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management)
-* [ECMAScript 原始值和引用值](http://www.w3school.com.cn/js/pro_js_value.asp)
 * [《Professional JavaScript for Web Developers》](https://book.douban.com/subject/7157249/)
 * [How JavaScript works: memory management + how to handle 4 common memory leaks](https://blog.sessionstack.com/how-javascript-works-memory-management-how-to-handle-4-common-memory-leaks-3f28b94cfbec)
 * [上面引用的翻译](https://juejin.im/post/5a2559ae6fb9a044fe4634ba)
