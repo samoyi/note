@@ -1,60 +1,50 @@
-#String
+# String
 
 
-## String in JS
-1. JavaScript uses the USC-2 encoding of the Unicode character set, and JS
-strings are sequences of unsigned 16-bit values.（之前有过疑问“为什么大部分汉字的
-UTF-8 编码是3字节，但 `length` 却是 `1`？”，就是因为这些汉字会先被 JS 引擎解码为
-Unicode 再使用 USC-2 编码，根据 USC-2 的编码规则，编码结果就是两个字节）
-2. The most commonly used Unicode characters (those from the “basic multilingual
- plane”) have codepoints that fit in 16 bits and can be represented by a single
- element of a string. Unicode characters whose codepoints do not fit in 16 bits
- are encoded following the rules of USC-2 as a sequence (known as a “surrogate
-pair”) of two 16-bit values. This means that a JS string of `length` 2 (two
-16-bit values) might represent only a single Unicode character
-```js
-let p = "π"; // π is 1 character with 16-bit codepoint 0x03c0
-let e = "𝑒"; // 𝑒 is 1 character with 17-bit codepoint 0x1d452
-p.length // => 1: p consists of 1 16-bit element
-e.length // => 2: USC-2 encoding of 𝑒 is 2 16-bit values: "\ud835\udc52"
-```
-这也证明了 JS 是使用 UCS-2 编码而非 UTF-16 编码，因为 UTF-16 编码可以用两字节表示 BMP
-以外的字符，而 USC-2 只能表示 BMP 的字符。
-3. [这篇文章](https://mathiasbynens.be/notes/javascript-encoding)说到，JS 引擎大多
-使用 UTF-8，但 JS 语言本身是 UCS-2。
-4. The `length` of a string is the number of 16-bit values it contains, not the
-number of characters.
-5. The various string-manipulation methods defined by JavaScript operate on
-16-bit values, not on characters. They do not treat surrogate pairs specially,
-perform no normalization of the string, and do not even ensure that a string is
-well-formed USC-2.
-6. ECMAScript strings are immutable.
-    * You can access the text at any index of a string, but JavaScript provides
-    no way to alter the text of an existing string.
-    ```js
-    let str = 'abc';
-    console.log( str[1] ); // 'b'
-    str[1] = 'd'; // TypeError: Cannot assign to read only property '1' of string 'abc'
-    ```
-    * 要改变某个变量保存的字符串，首先要销毁原来的字符串，然后再用另一个包含新值的字
-    符串充填该变量。
-    ```js
-    let lang = "Java";
-    lang = lang + "Script";
-    ```
-    实现这个操作的过程如下：首先创建一个能容纳10个字符的新字符串，然后在这个字符串中填
-    充"Java"和"Script"，最后一步是销毁原来的字符串"Java"和字符串"Script"。   
-    * All string methods that appear to return a modified string are, in fact,
-    returning a new string value.
-7. In ECMAScript 5, you can break a string literal across multiple lines by
-ending each line but the last with a backslash (\\).
-```js
-let str = "hello \
-world \
-!";
-console.log( str ); // hello world !
-```
-8. ==不懂ES6对字符unicode表示法的扩展== http://es6.ruanyifeng.com/#docs/string
+<!-- TOC -->
+
+- [String](#string)
+    - [Escape Sequences in String Literals](#escape-sequences-in-string-literals)
+    - [字符的 Unicode 表示法](#字符的-unicode-表示法)
+    - [模板字符串](#模板字符串)
+        - [基本用法](#基本用法)
+        - [TODO](#todo)
+    - [四字节字符的处理方法](#四字节字符的处理方法)
+    - [字符方法](#字符方法)
+        - [`charAt()`](#charat)
+        - [`codePointAt()`](#codepointat)
+        - [`String.fromCodePoint()`](#stringfromcodepoint)
+    - [拼接和延长字符串](#拼接和延长字符串)
+        - [`concat()`](#concat)
+        - [`padStart()`和`padEnd()`](#padstart和padend)
+            - [Syntax](#syntax)
+            - [`targetLength`参数](#targetlength参数)
+            - [可选的`padString`参数](#可选的padstring参数)
+        - [`repeat()`](#repeat)
+            - [Syntax](#syntax-1)
+            - [`count`参数](#count参数)
+            - [不规范参数](#不规范参数)
+    - [字符串转数组](#字符串转数组)
+        - [`split`](#split)
+            - [Syntax](#syntax-2)
+            - [可选的`separator`参数](#可选的separator参数)
+            - [可选的`limit`参数](#可选的limit参数)
+    - [确定/查找子字符串](#确定查找子字符串)
+        - [`includes()`](#includes)
+        - [`indexOf()` `lastIndexOf()`](#indexof-lastindexof)
+        - [`startsWidth` `endsWidth`](#startswidth-endswidth)
+        - [`match()`](#match)
+        - [`search()`](#search)
+    - [获取、删除和替换子字符串](#获取删除和替换子字符串)
+        - [获取子字符串](#获取子字符串)
+        - [替换和删除子字符串](#替换和删除子字符串)
+            - [`str.replace(regexp|substr, newSubstr|function)`](#strreplaceregexpsubstr-newsubstrfunction)
+    - [格式化字符串](#格式化字符串)
+    - [大小写转换的`Locale`的问题](#大小写转换的locale的问题)
+        - [`trim()`](#trim)
+    - [字符串比较](#字符串比较)
+
+<!-- /TOC -->
 
 
 ## Escape Sequences in String Literals
