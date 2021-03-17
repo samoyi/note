@@ -1,13 +1,28 @@
 # Loops
 
 
+<!-- TOC -->
+
+- [Loops](#loops)
+    - [Types of Loops](#types-of-loops)
+    - [`for-in` 的性能最差](#for-in-的性能最差)
+    - [Function-Based Iteration 相比于基本数组遍历也要明显慢](#function-based-iteration-相比于基本数组遍历也要明显慢)
+    - [三种基本数组遍历方法的性能优化](#三种基本数组遍历方法的性能优化)
+        - [Decreasing the work per iteration](#decreasing-the-work-per-iteration)
+        - [Decreasing the number of iterations](#decreasing-the-number-of-iterations)
+            - [Duff’s Device](#duffs-device)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
 ## Types of Loops
 * 属性遍历：`for-in`
-* Function-Based Iteration：`forEach`等
+* Function-Based Iteration：`forEach` 等
 * 基本数组遍历：`for`，`while`，`do-while`
 
 
-## `for-in`的性能最差
+## `for-in` 的性能最差
 1. Since each iteration through the loop results in a property lookup either on the instance or on a prototype, the `for-in` loop has considerably more overhead per iteration and is therefore slower than the other loops. 
 2. For the same number of loop iterations, a `for-in` loop can end up as much as seven times slower than the other loop types. 
     ```js
@@ -46,7 +61,7 @@
 ## Function-Based Iteration 相比于基本数组遍历也要明显慢
 1. Even though function-based iteration represents a more convenient method of iteration, it is also quite a bit slower than loop-based iteration. 
 2. The slowdown can be accounted for by the overhead associated with an extra method being called on each array
-item. In all cases, function-based iteration takes up to eight times as long as loop-based iteration and therefore isn’t a suitable approach when execution time is a significant concern.
+item. In all cases, function-based iteration takes up to eight times as long as loop-based iteration and therefore isn’t a suitable approach when execution time is a significant concern
 
 ```js
 let arr = [];
@@ -78,12 +93,12 @@ console.timeEnd('forEach loop'); // 117ms左右
     * Work done per iteration
     * Number of iterations
 4. By decreasing either or both of these, you can positively impact the overall performance of the loop.
-5. Decreasing the work done per iteration is most effective when the loop has a complexity of O(n). When the loop is more complex than O(n), it is advisable to focus your attention on decreasing the number of iterations.
+5. Decreasing the work done per iteration is most effective when the loop has a complexity of $O(n)$. When the loop is more complex than $O(n)$, it is advisable to focus your attention on decreasing the number of iterations.
 
 ### Decreasing the work per iteration
 1. It stands to reason that if a single pass through a loop takes a long time to execute, then multiple passes through the loop will take even longer. 
 2. Limiting the number of expensive operations done in the loop body is a good way to speed up the entire loop.
-3. 例如仅仅是避免每次循环的`length`查询，在数组比较大的情况下，就有着显著的性能提升：
+3. 例如仅仅是避免每次循环的 `length` 查询，在数组比较大的情况下，就有着显著的性能提升（2021 年再测试发现没有区别了）：
     ```js
     let arr = [];
     for (let i=0; i<9999999; i++){

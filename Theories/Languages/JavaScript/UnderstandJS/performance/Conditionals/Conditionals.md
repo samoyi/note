@@ -1,12 +1,23 @@
 # Conditionals
 
 
+<!-- TOC -->
+
+- [Conditionals](#conditionals)
+    - [`if-else` versus `switch`：基本只需要考虑可读性](#if-else-versus-switch基本只需要考虑可读性)
+    - [Optimizing `if-else`：尽快命中](#optimizing-if-else尽快命中)
+    - [Lookup Tables](#lookup-tables)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
 ## `if-else` versus `switch`：基本只需要考虑可读性
 1. The traditional argument of whether to use `if-else` statements or a `switch` statement applies to JavaScript just as it does to other languages. Since different browsers have implemented different flow control optimizations, it is not always clear which technique to use.
 2. The prevailing theory on using `if-else` versus `switch` is based on the number of conditions being tested: the larger the number of conditions, the more inclined you are to use a `switch` instead of `if-else`. This typically comes down to which code is easier to read.
 3. As it turns out, the `switch` statement is faster in most cases when compared to `if-else`, but significantly faster only when the number of conditions is large. 
 4. The primary difference in performance between the two is that the incremental cost of an additional condition is larger for `if-else` than it is for `switch`. 
-5. 大多数的语言对`switch`语句的实现都采用了 branch table 索引来进行优化。另外，在 JavaScript 中，`switch`语句比较值时使用全等操作符，不会有类型转换的损耗。
+5. 大多数的语言对 `switch` 语句的实现都采用了 branch table 索引来进行优化。另外，在 JavaScript 中，`switch` 语句比较值时使用全等操作符，不会有类型转换的损耗。
 6. Therefore, our natural inclination to use `if-else` for a small number of conditions and a `switch` statement for a larger number of conditions is exactly the right advice when considering performance.
 
 
@@ -160,7 +171,7 @@
 ## Lookup Tables
 1. Sometimes the best approach to conditionals is to avoid using `if-else` and `switch` altogether. When there are a large number of discrete values for which to test, both `if-else` and `switch` are significantly slower than using a lookup table. 
 2. Lookup tables can be created using arrays or regular objects in JavaScript, and accessing data from a lookup table is much faster than using `if-else` or `switch`, especially when the number of conditions is large.
-3. Lookup tables are not only very fast in comparison to if-else and switch, but they also help to make code more readable when there are a large number of discrete values for which to test. For example, switch statements start to get unwieldy when large, such as:
+3. Lookup tables are not only very fast in comparison to `if-else` and `switch`, but they also help to make code more readable when there are a large number of discrete values for which to test. For example, switch statements start to get unwieldy when large, such as:
     ```js
     switch(value){
         case 0:

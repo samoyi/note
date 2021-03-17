@@ -2,37 +2,17 @@
 
 1. String concatenation can be surprisingly performance intensive. 
 2. For starters, there is more than one way to merge strings
-    <table>
-        <thead>
-            <tr>
-                <th>Method</th>
-                <th>Example</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>The + operator</td>
-                <td>str = "a" + "b" + "c";</td>
-            </tr>
-            <tr>
-                <td>The += operator</td>
-                <td>str = "a"; <br /> str += "b"; <br /> str += "c";</td>
-            </tr>
-            <tr>
-                <td>array.join()</td>
-                <td>str = ["a", "b", "c"].join("");</td>
-            </tr>
-            <tr>
-                <td>string.concat()</td>
-                <td>str = "a"; <br /> str = str.concat("b", "c");</td>
-            </tr>
-        </tbody>
-    </table>
+    Method | Example
+    --|--
+    The `+` operator | `str = "a" + "b" + "c";`
+    The `+=` operator | `str = "a";` <br /> `str += "b";` <br /> `str += "c";`
+    `array.join()` | `str = ["a", "b", "c"].join("");`
+    `string.concat()` | `str = "a";` <br /> `str = str.concat("b", "c");`
 3. All of these methods are fast when concatenating a few strings here and there, so for casual use, you should go with whatever is the most practical. As the length and number of strings that must be merged increases, however, some methods start to show their strength.
 
 
 ## `+` and `+=` Operators
-1. 《High Performance JavaScript》说`str = str + 'one' + 'two'`比`str += 'one' + 'two'`更快，但实测相反：
+1. 《High Performance JavaScript》说 `str = str + 'one' + 'two'` 比 `str += 'one' + 'two'` 更快，但实测相反：
     ```js
     let str = '';
     console.time('+=');

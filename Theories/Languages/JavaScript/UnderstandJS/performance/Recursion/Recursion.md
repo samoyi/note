@@ -1,6 +1,17 @@
 # Recursion
 
 
+<!-- TOC -->
+
+- [Recursion](#recursion)
+    - [Recursion Patterns](#recursion-patterns)
+    - [用循环代替递归来节省性能开销](#用循环代替递归来节省性能开销)
+        - [merge sort 递归转循环](#merge-sort-递归转循环)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
 ## Recursion Patterns
 1. When you run into a call stack size limit, your first step should be to identify any instances of recursion in the code. 
 2. To that end, there are two recursive patterns to be aware of:
@@ -93,7 +104,7 @@ and should be changed to use iteration, memoization, or both. 看一下下面例
 2. Iterative algorithms typically consist of several different loops performing different aspects of the process, and thus introduce their own performance issues. However, using optimized loops in place of long-running recursive functions can result in performance improvements due to the lower overhead of loops versus that of executing a function.
 
 ### merge sort 递归转循环
-1. he merge sort algorithm is most frequently implemented using recursion. A simple JavaScript implementation of merge sort is as follows:
+1. The merge sort algorithm is most frequently implemented using recursion. A simple JavaScript implementation of merge sort is as follows:
     ```js
     let count = 0;
 
@@ -127,9 +138,11 @@ and should be changed to use iteration, memoization, or both. 看一下下面例
         arr.push(Math.round(Math.random()*100));
     }
 
+    mergeSort(arr);
+    
     console.log('count', count); // 39
     ```
-2. The code for this merge sort is fairly simple and straightforward, but the `mergeSort()` function itself ends up getting called very frequently, an array of n items ends up calling `mergeSort()` *2\*n –1* times.
+2. The code for this merge sort is fairly simple and straightforward, but the `mergeSort()` function itself ends up getting called very frequently, an array of $n$ items ends up calling `mergeSort()` $2*n –1$ times.
 3. Running into the stack overflow error doesn’t necessarily mean the entire algorithm has to change; it simply means that recursion isn’t the best implementation. The merge sort algorithm can also be implemented using iteration, such as:
     ```js
     function mergeSort(items) {
