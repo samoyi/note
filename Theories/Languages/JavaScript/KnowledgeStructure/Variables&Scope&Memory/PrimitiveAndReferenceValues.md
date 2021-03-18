@@ -227,9 +227,7 @@
 ## `instanceof`
 `object instanceof constructor`
 
-1. This operator tests whether the `prototype` property of a constructor appears
-anywhere in the prototype chain of an object. 即，`object`的原型链中是否有一节是
-`constructor.prototype`
+1. This operator tests whether the `prototype` property of a constructor appears **anywhere in the prototype chain** of an object. 即，`object` 的原型链中是否有一节是 `constructor.prototype`
 2. 注意是根据构造函数的原型链而不是根据构造函数来判断
     ```js
     function Foo(){}
@@ -239,10 +237,8 @@ anywhere in the prototype chain of an object. 即，`object`的原型链中是�
     // foo 的原型链里有 proto1 但没有 proto2，所以 Foo.prototype 不在 foo 的原型链里
     console.log(foo instanceof Foo); // false
     ```
-3. 所有引用类型的值都是`Object`的实例。因此在检测一个引用类型值和`Object`构造函数时，
-`instanceof`操作符始终会返回`true`。
-4. 当然，使用`instanceof`操作符检测基本类型的值，始终会返回`false`，因为基本类型不是
-对象实例。
+3. 所有引用类型的值都是 `Object` 的实例。因此在检测一个引用类型值和 `Object` 构造函数时，`instanceof` 操作符始终会返回 `true`。
+4. 当然，使用 `instanceof` 操作符检测基本类型的值，始终会返回 `false`，因为基本类型不是对象实例。
 5. 不懂。下面这种情况要怎么解释
     ```js
     function Foo(){}
@@ -254,10 +250,7 @@ anywhere in the prototype chain of an object. 即，`object`的原型链中是�
     console.log(obj_Foo.prototype); // undefined
     console.log(instance instanceof obj_Foo); // true
     ```
-    《Javascript - The Definitive Guide 6th》也只是对这个做了事实陈述，也没有在其他
-    地方看到原因。但给人的感觉是，如果调用构造函数创建的实例在这种情况下返回`false`会比
-    较违和，所以就让`instanceof`在这种情况下做出了妥协。
-
+    《Javascript - The Definitive Guide 6th》也只是对这个做了事实陈述，也没有在其他地方看到原因。但给人的感觉是，如果调用构造函数创建的实例在这种情况下返回 `false` 会比较违和，所以就让 `instanceof` 在这种情况下做出了妥协。
 
 
 ## 解构（Destructuring）赋值

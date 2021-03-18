@@ -71,14 +71,29 @@ slot 是一个指针，指向构造函数的原型对象。
 
 
 ## 检测原型
-`isPrototypeOf()`检测一个对象是否在另一个对象的原型链上
+### 三种方法
+* `Object.prototype.isPrototypeOf()`: checks if an object exists in another object's prototype chain.
+* `instanceof` operator : tests to see if the prototype property of a constructor appears anywhere in the prototype chain of an object.
+* `Object.getPrototypeOf()`: returns the prototype (i.e. the value of the internal `[[Prototype]]` property) of the specified object.
+
+### 区别
+前两个是在整个原型链上检测，而最后一个是获取对象的直接原型
 ```js
-let proto = {};
-let subProto = Object.create(proto);
-let obj = Object.create(subProto);
-console.log( subProto.isPrototypeOf(obj) ); // true
-console.log( proto.isPrototypeOf(obj) ); // true
+let obj1 = {};
+let obj2 = Object.create(obj1);
+let obj3 = Object.create(obj2);
+
+console.log(obj1.isPrototypeOf(obj2)); // true
+console.log(obj1.isPrototypeOf(obj3)); // true
+
+console.log(obj2 instanceof obj1.constructor); // true
+console.log(obj3 instanceof obj1.constructor); // true
+
+console.log(Object.getPrototypeOf(obj2)=== obj1); // true
+console.log(Object.getPrototypeOf(obj3)=== obj1); // false
+console.log(Object.getPrototypeOf(obj3)=== obj2); // true
 ```
+
 
 ## 改变实例原型
 1. `Object.setPrototypeOf(instance, prototype)`。
