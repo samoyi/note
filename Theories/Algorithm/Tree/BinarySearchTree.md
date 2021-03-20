@@ -29,19 +29,18 @@
         - [相关性质](#相关性质)
             - [《算法导论》12.2-5](#算法导论122-5)
             - [《算法导论》12.2-6](#算法导论122-6)
+            - [《算法导论》12.2-8](#算法导论122-8)
     - [搜索一个特定的值](#搜索一个特定的值)
     - [移除一个节点](#移除一个节点)
-        - [注意 `removeNode` 返回值赋值的必要](#注意-removenode-返回值赋值的必要)
-        - [`removeNode` 实现](#removenode-实现)
-    - [完整实现（包括了下面讲到的遍历）](#完整实现包括了下面讲到的遍历)
+        - [复杂度](#复杂度-2)
     - [树的遍历](#树的遍历)
         - [先序遍历（Pre Order）](#先序遍历pre-order)
         - [后序遍历（Post Order）](#后序遍历post-order)
         - [中序遍历（In Order）](#中序遍历in-order)
-        - [复杂度](#复杂度-2)
+        - [复杂度](#复杂度-3)
             - [非递归实现中序遍历（使用栈）](#非递归实现中序遍历使用栈)
             - [使用后继实现中序遍历](#使用后继实现中序遍历)
-        - [复杂度](#复杂度-3)
+                - [复杂度为 $Θ(n)$](#复杂度为-θn)
     - [平衡二叉搜索树](#平衡二叉搜索树)
         - [AVL 树的性能](#avl-树的性能)
         - [插入操作](#插入操作)
@@ -168,45 +167,70 @@ class BinarySearchTree {
         }
     }
     ```
-4. C 实现
-```cpp
-void insert(int key) {
-    Node* node = malloc(sizeof(Node));
-    if (node == NULL) {
-        printf("Create node fail.");
-        exit(EXIT_FAILURE);
-    }
-    node->key = key;
-    node->left = NULL;
-    node->right = NULL;
-    if (root == NULL) {
-        root = node;
-        node->parent = NULL;
-    }
-    else {
-        Node* parent = NULL;
+4. C 迭代实现
+    ```cpp
+    void insert(int key) {
+        Node* node = createNode(key);
+
+        // 从根开始比较，找到新节点合适的位置
         Node* curr = root;
-        int is_left = 1;
-        while (curr) {
+        Node* parent = NULL; // 用来追踪新节点要作为谁的子节点
+        while (curr) { // 新节点最终会被添加为一个叶节点
             parent = curr;
             if (key < curr->key) {
                 curr = curr->left;
-                is_left = 1;
             }
             else {
                 curr = curr->right;
-                is_left = 0;
             }
         }
-        if (is_left) {
+
+        // 设置新节点和父节点的关系
+        node->parent = parent;
+        if (parent == NULL) {
+            root = node;
+        }
+        else if (key < parent->key) {
             parent->left = node;
         }
         else {
             parent->right = node;
         }
     }
-}
-```
+    ```
+5. C 递归实现
+    ```cpp
+    static void insert_recursive(Node* node, Node* parent) {
+        if (node->key < parent->key) {
+            if (parent->left == NULL) {
+                parent->left = node;
+                node->parent = parent;
+            }
+            else {
+                insert_recursive(node, parent->left);
+            }
+        }
+        else {
+            if (parent->right == NULL) {
+                parent->right = node;
+                node->parent = parent;
+            }
+            else {
+                insert_recursive(node, parent->right);
+            }
+        }
+    }
+    void recursive_insert(int key) {
+        Node* node = createNode(key);
+
+        if (root == NULL) {
+            root = node;
+        }
+        else {
+            insert_recursive(node, root);
+        }
+    }
+    ```
 
 
 ## 搜索最小值和最大值
@@ -335,6 +359,9 @@ void insert(int key) {
 3. 要证明：在满足上述性质的 x 的祖先节点中，y 是最靠下的那个。
 4. y 当然是最靠下的，如果不是，那就说明还有一个节点比 y 小但是比 x 大，那这个节点才是 x 的后继。
 
+#### 《算法导论》12.2-8
+TODO
+
 
 ## 搜索一个特定的值
 1. 类似于二分搜索的逻辑。
@@ -392,310 +419,95 @@ void insert(int key) {
 
 
 ## 移除一个节点
-1. 仍然是实例方法调用一个实际负责删除的函数
-    ```js
-    remove (key) {
-        // 其实大多数情况下，这个赋值都是没用的。但如果移除的正好是根节点：
-        //     如果整棵树只有根节点，那么 root 就要被重新赋值为 null；
-        //     如果整棵树不止根节点，则 root 就要改为引用其他节点。
-        this.root = removeNode(this.root, key);
-    }
-    ```
-2. `removeNode` 函数的逻辑仍然要从搜索待删除的节点开始，指定一个起始搜索节点，通过值的比较，找到待删除的节点
-    ```js
-    function removeNode(node, key) {
-        if (node === null) {
-            return null;
+1. 因为一个节点有着它的父子关系连接，所以删除后连接断裂，要考虑怎么重建关系。
+2. 从删除后的处理工作来看，待删除的节点 y 分为三种类型：
+    * y 是叶节点：因为没有子节点，所以删除很方便，就相当于删除数组末尾的元素一样，只需要清空它的父节点对它的引用。
+    * y 有单侧子树：也比较简单，相当于删除链表的中间节点，移动子树让子节点替换 y 即可。
+    * y 有双侧子树：这个比较麻烦，因为删除后导致一棵树断裂为两棵子树。
+3. 第三种情况中，由谁来连接两棵子树？肯定要由两棵子树的中间值，而中间值有两个：左子树的最大值和右子树的最小值，也就是 y 的前驱和后继。看到的实现都是使用后继来连接，但好像使用前驱也没什么不行。
+4. 另外，前两种其实可以算是一种情况，因为都是通过移动子树把 y 的子节点连接到 y 的父节点上，只不过第一种情况中 y 的子节点是 null。
+5. 而且，第三种情况中，如果后继正好是 y 的右侧子节点，那么同样只需要简单的移动右子树就可以实现。、
+6. 最复杂的就是第三种情况中后继不是 y 的右侧子节点。这时要用后继替换 y。而且该后继可能还有右子树，所以替换之前还要先把右子树移到 y 的位置。
+7. 因为三种情况下都有移动子树的操作，所以单独实现这个方法。用 `z` 节点替换 `y` 节点，替换的过程其实就是重新处理父子关系的过程
+    ```cpp
+    void transplant(Node* y, Node* z) {
+        if (y->parent == NULL) { // y 是根节点
+            root = z;
         }
-
-        if (key < node.key) { // 比 node 的 key 小
-            node.left = removeNode(node.left, key); // 递归左子树 【1】
-            return node;
-        } 
-        else if (key > node.key) { // 比 node 的 key 大
-            node.right = removeNode(node.right, key); // 递归右子树 【2】
-            return node;
-        } 
-        else { // 找到了待删除的节点
-            
+        else if (y->parent->left == y) { // y 是左侧子节点
+            y->parent->left = z;
         }
-    }
-    ```
-3. 找到了待删除的节点后，要分为三种情况：
-    * 最简单的情况是该节点是一个叶节点，直接删除即可。
-    * 稍复杂一点点的是该节点只有单侧子节点（子树），那么只要让该节点直接引用这个子节点就行，“儿子篡了父亲的位”。
-    * 最复杂的情况是，该节点有双侧子节点（子树）。
-4. 如果该有双侧子节点（子树），那么该节点现在的值，大于其左子树所有节点的值，小于其右子树所有节点的值。也就是说，其左子树所有的节点都要小于等于其右子树中最小的节点。
-5. 那么，有一个看起来合理但不好的方法是，就是将该节点的整个左子树设为该节点右子树中最小值节点的 `left`，然后让该节点的父节点的 `right` 引用该节点的右子树。也就是把整棵左子树移到右边，然后再删除待删除的节点。
-6. 但这种移动整棵树的方法会让某个分支明显长于其他的，在遍历时就可能带来性能损失。
-7. 既然待删除节点的值是处于左右子树的中间值，那么在个节点被删除后，也可以在左右子树中找一个这样的节点来代替它的位置，也就是左子树的最大值或右子树的最小值。这里选择的是右子树的最小值。
-8. 只需要找到右子树的最小节点，然后把待删除的节点的值设置为该最小节点的值，再删除掉这个最小节点，效果就相当于删除了待删除的节点
-    ```js
-    let aux = findMinNode(node.right); // 找到右子树的最小值
-    node.key = aux.key; // 其实并没有删除该节点，真正删除的是右子树的最小值节点
-    ```
-9. 找到右子树最小节点使用了如下函数，因为是从右子树里寻找，所以参数要传右子树的根节点
-    ```js
-    function findMinNode (node) {
-        while ( node && node.left !== null ) {
-            node = node.left;
-        }
-
-        return node;
-    }
-    ```
-9. 删除最小节点的方法，这里是嵌套的使用 `removeNode` 方法，从右子树里查找并删除
-    ```js
-    node.right = removeNode(node.right, aux.key);
-    ```
-
-### 注意 `removeNode` 返回值赋值的必要 
-1. 可以看到所有的 `removeNode` 调用的返回值都被赋给了 `removeNode` 第一个参数的节点。也就是说，`removeNode` 从哪个节点开始遍历删除，返回值就要赋值给那个节点。
-2. 首先要明确的一点是，参数是按值传递的，`removeNode` 的第一个参数是对节点的引用，也就是指针，也是按值传递的。
-3. 也就是说，函数调用时，函数外部的实参指针和函数内部的实参指针是指向同一个节点但相互两个独立的指针。
-4. 如果你在 `removeNode` 里面修改了指针所指对象的属性，那外面的实参指针指向的节点可以同步改变；但如果你直接改了指针的指向，那外面的实参指针还是维持不变的。
-5. 现在分 A、B 两种情况讨论：情况 A 是 `removeNode` 调用传参的节点就是要被删除的节点，情况 B 是被删除的节点是传参节点的后代节点。
-6. 情况 A 时，就是直接到了下面【3】的分支，其中又分为三种情况：
-    * 情况一，形参指针指向 `null`，所以需要返回 `null` 让实参指针也指向 `null`，从而让待删除节点失去这两个指针的引用。
-    * 情况二，形参指针指向待删除节点的子节点，然后返回这个子节点，让实参指针也指向这个子节点，从而让待删除节点失去这两个指针的引用。
-    * 情况三，形参指针并没有发生改变，只是节点的属性（`key` 和 `right`）发生了改变。所以这种情况下外部实参指针实际上不需要被赋值，但是前面两个情况都要赋值，完全没有必要函数返回的时候判断是不是第三种情况然后要不要赋值，所以也原样返回。
-7. 情况 B 时，走【1】或【2】，继续对子节点递归调用 `removeNode`。根据情况 A 的分析，这两个递归调用的返回也应该分别进行赋值。
-
-### `removeNode` 实现
-```js
-function removeNode(node, key) {
-    if (node === null) return null;
-
-    if (key < node.key) { // 比 node 的 key 小
-        node.left = removeNode(node.left, key); // 递归左侧子节点 【1】
-        return node;
-    } 
-    else if (key > node.key) { // 比 node 的 key 大
-        node.right = removeNode(node.right, key); // 递归右侧子节点 【2】
-        return node;
-    } 
-    else { // 【3】
-        // 第一种情况，key 所在的节点是叶节点
-        if (node.left === null && node.right === null) {
-            node = null;
-            return node;
-        }
-
-        // 第二种情况，key 所在的节点是只有一个子节点
-        if (node.left === null) {
-            node = node.right;
-            return node;
-        } 
-        else if (node.right === null) {
-            node = node.left;
-            return node;
-        }
-
-        // 第三种情况，key 所在的节点有两个子节点
-        let aux = findMinNode(node.right); // 找到右子树的最小值
-        node.key = aux.key; // 其实并没有删除该节点，真正删除的是右子树的最小值节点
-        node.right = removeNode(node.right, aux.key);
-        return node;
-    }
-}
-```
-
-
-## 完整实现（包括了下面讲到的遍历）
-```js
-class Node {
-    constructor (key, parent=null) {
-        this.key = key;
-        this.left = null;
-        this.right = null;
-        this.parent = parent;
-    }
-}
-
-function insertNode(node, key) {
-    if ( key < node.key ) {
-        if ( node.left === null ) {
-            node.left = new Node(key, node);
-        } 
         else {
-            insertNode( node.left, key );
+            y->parent->right = z; // y 是左侧子节点
         }
-    } 
-    else {
-        if ( node.right === null ) {
-            node.right = new Node(key, node);
-        } 
+        // 如果 z 等于 NULL，则是第一种情况，用 NULL 来替换 y
+        if (z != NULL) {
+            z->parent = y->parent;
+        }
+    }
+    ```
+8. 注意 `transplant` 并不负责更新 `z` 和它新的子节点的关系。
+9. 按照上面的思路实现移除
+    ```cpp
+    void tree_delete(Node* node) {
+        if (node->left == NULL) { // 这条分支包括两第一种情况以及第二种情况中只有右侧子节点的部分
+            transplant(node, node->right);
+        }
+        else if (node->right == NULL) { // 这条分支处理第二种情况中有左侧子节点的部分
+            transplant(node, node->left);
+        }
+        else { // 这条分支处理第三种情况
+            // 《算法导论》这里直接用的 tree_minimum，其实两者是一样的，不过我觉得写成后继的形式更好理解
+            Node* successor = tree_successor(node);
+            if (node->right == successor) {
+                transplant(node, successor);
+                // 这里在 transplant 之后，successor 的子节点发生了变化
+                successor->left = node->left;
+                node->left->parent = successor;
+            }
+            else {
+                // successor 要去替换 node，那这里要让 successor 的后继接任它的位置
+                // 因为 successor 不可能有左侧子节点，所以 successor->right 接任后不需要更新子节点
+                transplant(successor, successor->right);
+
+                // successor 替换 node，并和 node 的子节点建立关系
+                transplant(node, successor);
+                successor->left = node->left;
+                node->left->parent = successor;
+                successor->right = node->right;
+                node->right->parent = successor;
+            }
+        }
+        free(node);
+    }
+    ```
+10. 整理合并一下
+    ```cpp
+    void tree_delete(Node* node) {
+        if (node->left == NULL) {
+            transplant(node, node->right);
+        }
+        else if (node->right == NULL) {
+            transplant(node, node->left);
+        }
         else {
-            insertNode( node.right, key );
+            Node* successor = tree_successor(node);
+            if (node->right != successor) {
+                transplant(successor, successor->right);
+                successor->right = node->right;
+                node->right->parent = successor;
+            }
+            transplant(node, successor);
+            successor->left = node->left;
+            node->left->parent = successor;
         }
+        free(node);
     }
-}
+    ```
 
-function inOrderTraverseNode(node, callback) {
-    if ( node !== null ) {
-        inOrderTraverseNode(node.left, callback);
-        callback(node.key);
-        inOrderTraverseNode(node.right, callback);
-    }
-}
-
-function preOrderTraverseNode(node, callback) {
-    if ( node !== null ) {
-        callback(node.key);
-        preOrderTraverseNode(node.left, callback);
-        preOrderTraverseNode(node.right, callback);
-    }
-}
-
-function postOrderTraverseNode(node, callback) {
-    if ( node !== null ) {
-        postOrderTraverseNode(node.left, callback);
-        postOrderTraverseNode(node.right, callback);
-        callback(node.key);
-    }
-}
-
-function minNode (node) {
-    if (node) {
-        while ( node && node.left !== null ) {
-            node = node.left;               
-        }
-        return node.key;
-    }
-    return null;
-}
-
-function maxNode (node) {
-    if (node) {
-        while ( node && node.right !== null ) {
-            node = node.right;
-        }
-        return node.key;
-    }
-    return null;
-}
-
-function searchNode(node, key, parent = null) {
-    if (node === null) return null;
-
-    if ( node.key > key ) {
-        return searchNode(node.left, key, node);
-    } 
-    else if ( node.key < key ) {
-        return searchNode(node.right, key, node);
-    } 
-    else {
-        return node;
-    }
-}
-
-function findMinNode (node) {
-    while ( node && node.left !== null ) {
-        node = node.left;
-    }
-
-    return node;
-}
-
-function removeNode(node, key) {
-    if (node === null) {
-        return null;
-    }
-
-    if (key < node.key) {
-        node.left = removeNode(node.left, key);
-        return node;
-    } 
-    else if (key > node.key) {
-        node.right = removeNode(node.right, key);
-        return node;
-    } 
-    else {
-        if (node.left === null && node.right === null) {
-            node = null;
-            return node;
-        }
-        if (node.left === null) {
-            node = node.right;
-            return node;
-
-        } 
-        else if (node.right === null) {
-            node = node.left;
-            return node;
-        }
-        let aux = findMinNode(node.right);
-        node.key = aux.key;
-        node.right = removeNode(node.right, aux.key);
-        return node;
-    }
-}
-
-
-class BinarySearchTree {
-
-    constructor(){
-        this.root = null;
-    }
-
-    insert (key) {
-        if ( this.root === null ) {
-            this.root = new Node(key);
-        } 
-        else {
-            insertNode(this.root, key);
-        }
-    }
-
-    inOrderTraverse (callback) {
-        inOrderTraverseNode(this.root, callback);
-    }
-
-    preOrderTraverse (callback) {
-        preOrderTraverseNode(this.root, callback);
-    }
-
-    postOrderTraverse (callback) {
-        postOrderTraverseNode(this.root, callback);
-    }
-
-    min () {
-        return minNode(this.root);
-    }
-
-    max () {
-        return maxNode(this.root);
-    }
-
-    search (key) {
-        return searchNode(this.root, key);
-    }
-
-    check (key, node = this.root) {
-        if (node === null) {
-            return false;
-        }
-
-        if ( node.key > key ) {
-            return this.check(key, node.left);
-        } 
-        else if ( node.key < key ) {
-            return this.check(key, node.right);
-        } 
-        else {
-            return true;
-        }
-    }
-
-    remove (key) {
-        this.root = removeNode(this.root, key);
-    }
-
-    getRoot () {
-        return this.root;
-    }
-}
-```
+### 复杂度
+1. `transplant` 是 $O(1)$，`tree_successor` 是 $O(h)$，剩下其他几行都是简单的 $O(1)$。
+2. 所以删除操作的时间复杂度是 $O(h)$。
 
 
 ## 树的遍历
@@ -909,20 +721,25 @@ $Θ(n)$
     ```
 
 #### 使用后继实现中序遍历
-1. 实现
-    ```cpp
-    void inorder_by_successor(Node* root) {
-        Node* node = tree_minimum(root);
-        while (node) {
-            printf("%d\n", node->key);
-            node = tree_successor(node);
-        }
+```cpp
+void inorder_by_successor(Node* root) {
+    Node* node = tree_minimum(root);
+    while (node) {
+        printf("%d\n", node->key);
+        node = tree_successor(node);
     }
-    ```
+}
+```
 
-### 复杂度
-tree_minimum
-tree_successor 的复杂度是 $O(h)$
+##### 复杂度为 $Θ(n)$
+1. 可以从节点和边的角度来分别分析。
+2. 从节点的角度：
+    1. 对于叶节点，遍历操作只会经过一次；
+    2. 对于有单侧子树的节点，遍历操作会经过它两次；
+    3. 对于有双侧子树的节点，遍历操作会经过它三次。例如《算法导论》图 12-2 的节点 3，寻找最小节点 2 的时候会经过它一次，寻找 2 后继的时候会经过（到达）它一次，寻找 4 后继的时候会第三次经过它。
+    4. 所以对于任意节点最多经过它三次，那遍历复杂度上界就是 $O(n)$ 级别。
+3. 从边的角度，和上面的思路差不多，不过每条边最多会经过两次，而二叉树边的数量比节点的数量少一个，因为一个节点有且只有和另一个节点相连。所以上界也是 $O(n)$ 级别。
+4. 下界因为要遍历 $n$ 个节点，所以是 $Ω(n)$。
 
 
 ## 平衡二叉搜索树

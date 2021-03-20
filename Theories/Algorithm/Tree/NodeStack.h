@@ -17,7 +17,7 @@ typedef struct {
 void initStack(Stack* s);
 bool isEmpty(Stack*);
 void push(Stack*, Node*);
-Node*  pop(Stack*);
+Node* pop(Stack*);
 void printStack(Stack*);
 
 #endif
