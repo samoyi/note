@@ -47,24 +47,22 @@ void insert(int key) {
     }
 }
 
-static void insert_recursive(Node* node, Node* parent) {
-    if (node->key < parent->key) {
-        if (parent->left == NULL) {
+static void insert_recursive(Node* node, Node* compared, Node* parent) {
+    if (compared == NULL) {
+        if (node->key < parent->key) {
             parent->left = node;
-            node->parent = parent;
         }
         else {
-            insert_recursive(node, parent->left);
+            parent->right = node;
         }
+        node->parent = parent;
+        return;
+    }
+    if (node->key < compared->key) {
+        insert_recursive(node, compared->left, compared);
     }
     else {
-        if (parent->right == NULL) {
-            parent->right = node;
-            node->parent = parent;
-        }
-        else {
-            insert_recursive(node, parent->right);
-        }
+        insert_recursive(node, compared->right, compared);
     }
 }
 void recursive_insert(int key) {
@@ -73,7 +71,7 @@ void recursive_insert(int key) {
         root = node;
     }
     else {
-        insert_recursive(node, root);
+        insert_recursive(node, root, NULL);
     }
 }
 

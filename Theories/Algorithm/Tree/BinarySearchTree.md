@@ -33,6 +33,7 @@
     - [搜索一个特定的值](#搜索一个特定的值)
     - [移除一个节点](#移除一个节点)
         - [复杂度](#复杂度-2)
+        - [删除操作不可交换（12.3-4）](#删除操作不可交换123-4)
     - [树的遍历](#树的遍历)
         - [先序遍历（Pre Order）](#先序遍历pre-order)
         - [后序遍历（Post Order）](#后序遍历post-order)
@@ -48,14 +49,15 @@
             - [新平衡因子的计算](#新平衡因子的计算)
             - [完善再平衡](#完善再平衡)
     - [映射实现复杂度比较](#映射实现复杂度比较)
-    - [关系](#关系)
-        - [二叉树](#二叉树)
     - [References](#references)
 
 <!-- /TOC -->
 
 ## TODO
-本页 TODO
+* 12.1-5
+* 12.3-3
+* 12.3-5
+* 12.3-6
 
 
 ## 设计思想
@@ -200,34 +202,31 @@ class BinarySearchTree {
     ```
 5. C 递归实现
     ```cpp
-    static void insert_recursive(Node* node, Node* parent) {
-        if (node->key < parent->key) {
-            if (parent->left == NULL) {
+    static void insert_recursive(Node* node, Node* compared, Node* parent) {
+        if (compared == NULL) {
+            if (node->key < parent->key) {
                 parent->left = node;
-                node->parent = parent;
             }
             else {
-                insert_recursive(node, parent->left);
+                parent->right = node;
             }
+            node->parent = parent;
+            return;
+        }
+        if (node->key < compared->key) {
+            insert_recursive(node, compared->left, compared);
         }
         else {
-            if (parent->right == NULL) {
-                parent->right = node;
-                node->parent = parent;
-            }
-            else {
-                insert_recursive(node, parent->right);
-            }
+            insert_recursive(node, compared->right, compared);
         }
     }
     void recursive_insert(int key) {
         Node* node = createNode(key);
-
         if (root == NULL) {
             root = node;
         }
         else {
-            insert_recursive(node, root);
+            insert_recursive(node, root, NULL);
         }
     }
     ```
@@ -509,6 +508,14 @@ TODO
 1. `transplant` 是 $O(1)$，`tree_successor` 是 $O(h)$，剩下其他几行都是简单的 $O(1)$。
 2. 所以删除操作的时间复杂度是 $O(h)$。
 
+### 删除操作不可交换（12.3-4）
+1. 注意到删除操作最后一种情况中有右子树节点顺序变化的情况，比如说《算法导论》图 12-2 如果删除 15，那么 17 就会变到 18 上面。
+2. 但如果如果删除 7，它的右子树节点顺序并不会发生变化，因为 7 没有左子树，所以直接让它的右侧子节点接上来就行了。
+3. 但其实删除 7 的时候，也是可以让 9 来替代它而发生顺序变化的，只不过没有这种必要。
+4. 也就是说，一个具有右子树的待删除节点，它是否有左子树这件事，可能会影响到它删除后右子树是否有节点会发生变化。
+5. 换一种说法就是，如果先删除一个节点的左子树再删除该节点，或者是先删除该节点再删除它之前的左子树，这两种情况下被删除节点原来的右子树可能会发生变化，也就是说这种情况下删除操作是不可交换的
+    <img src="images/24.png" width="300" style="display: block; margin: 5px 0 10px;" />
+
 
 ## 树的遍历
 ### 先序遍历（Pre Order）
@@ -742,6 +749,21 @@ void inorder_by_successor(Node* root) {
 4. 下界因为要遍历 $n$ 个节点，所以是 $Ω(n)$。
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 平衡二叉搜索树
 1. 我们已经知道，当二叉搜索树不平衡时，查询和插入等操作的性能可能降到 $O(n)$。本节将介绍一种特殊的二叉搜索树，它能自动维持平衡。这种树叫作 **AVL树**。
 2. AVL 树实现映射抽象数据类型的方式与普通的二叉搜索树一样，唯一的差别就是性能。实现 AVL 树时，要记录每个节点的 **平衡因子**。
@@ -930,51 +952,6 @@ TODO
 读取 | $O(\log_2n)$ | $O(1)$ | $O(n)$ | $O(\log_2n)$
 查询 | $O(\log_2n)$ | $O(1)$ | $O(n)$ | $O(\log_2n)$
 删除 | $O(n)$       | $O(1)$ | $O(n)$ | $O(\log_2n)$
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-## 关系
-### 二叉树
-1. 对于一个二叉树，每一层的最大节点数都是 $2^n$，其中 $n$ 等于 0, 1, 2...
-2. 第 $n$ 层的最大节点数是 $2^n$，又根据等比数列求和公式，第 $0$ 层到第 $n-1$ 层所有的节点数是 $2^n - 1$。因此，一个完全层的节点正好比它上面所有层的节点多一个。神奇！
-3. 由下图可以看出来，如果按照图中的编号，那么每一层的最左边节点的序号正是 $2^n$。因为一个完全层的节点数是 $2^n$，而它上面所有的节点的数量是 $2^n - 1$，所以该完全层的第一个节点的序号就是 $2^n$。
-    <img src="./images/12.png" width="400" style="display: block; margin: 5px 0 10px;" />
-4. 既然上层的第一个节点序号是下层第一个节点的一半，也就是说上层第一个节点的序号是其左侧子节点的一半，那么上层第二个节点的需要也是它的左侧子节点的一半。因为一个节点对应两个子节点，所以上层序号加一，下层对应的就要序号就要加二。进一步的可以说，对于一个完全二叉树，序号 $k$ 的节点的两个子节点的序号分别是 $2k$ 和 $2k+1$。
-5. 第 $2^n$ 个元素是第 $n$ 层的第一个，第 $2^{n+1} - 1$ 个元素是第 $n$ 层的最后一个。所以，对于节点数量在 $[2^n, 2^{n+1})$ 区间内的完全二叉树来说，它的高度（不包括根节点所在层）是 $n$。
-6. 基于上一条变换一下，对于一个 $N$ 个节点的完全二叉树，它的高度（不包括根节点所在层）是 $\left\lfloor\log N\right\rfloor$。理解起来有点绕。假设 $N$ 正好是某行的第一个节点，那显然这棵树的高度是 $log N$；而如果 $N$ 是在该行的其他位置，此时的 $N$ 就比行首的序号要大，但还达不到行首序号的两倍，因为两倍的话就是下一行的行首了，所以此时的 $log N$ 不是一个整数，向下取整就是当前的行高，向上取整就是下一行的行高。
 
 
 ## References

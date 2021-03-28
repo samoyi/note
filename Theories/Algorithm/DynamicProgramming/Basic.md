@@ -8,18 +8,26 @@
         - [递归和动态规划](#递归和动态规划)
         - [缓存就挺好，为啥要之前之前每一种找零方案？](#缓存就挺好为啥要之前之前每一种找零方案)
     - [本质](#本质)
+    - [用途](#用途)
     - [思路](#思路)
+        - [分治与动态规划](#分治与动态规划)
+        - [整体步骤](#整体步骤)
         - [因果链起点的寻找](#因果链起点的寻找)
         - [从起点开始推导每一种情况（如果需要，寻找每种情况最优解）](#从起点开始推导每一种情况如果需要寻找每种情况最优解)
         - [一种情况的可以依赖之前情况的结果](#一种情况的可以依赖之前情况的结果)
+    - [以钢条切割问题为例](#以钢条切割问题为例)
+        - [自顶向下的递归实现](#自顶向下的递归实现)
+        - [使用动态规划的解决思路](#使用动态规划的解决思路)
+        - [带备忘的自顶向下方法](#带备忘的自顶向下方法)
+    - [最少硬币找零问题](#最少硬币找零问题)
+        - [思路](#思路-1)
+        - [自顶向下的递归求解](#自顶向下的递归求解)
+        - [不严格的动态规划实现](#不严格的动态规划实现)
+        - [严格的动态规划实现](#严格的动态规划实现)
     - [从斐波那契数列来看](#从斐波那契数列来看)
         - [最直白的递归求解](#最直白的递归求解)
         - [使用缓存来解决重复接计算的问题](#使用缓存来解决重复接计算的问题)
         - [使用动态规划来避免调用栈堆积的问题](#使用动态规划来避免调用栈堆积的问题)
-    - [最少硬币找零问题](#最少硬币找零问题)
-        - [思路](#思路-1)
-        - [不严格的动态规划实现](#不严格的动态规划实现)
-        - [严格的动态规划实现](#严格的动态规划实现)
     - [Referecens](#referecens)
 
 <!-- /TOC -->
@@ -48,6 +56,22 @@
 1. 动态规划是一种解决问题的思想。这种思想的本质是，一个规模比较大的问题，是通过规模比较小的若干问题的结果来得到的。
 2. 例如递归求解斐波那契数列的思路就是很明确的动态规划思想。该数列的定义就已经明确的说出了算法，5 的结果 `f(5)` 就是用 4 的结果 `f(4)` 加 3 的结果 `f(3)`。通过逐步求解小的问题，最终解得大的问题。
 
+### 分治与动态规划
+1. 动态规划和分治算法相似，都是通过组合子问题的解来求解原问题。
+2. 分治算法将问题划分为 **互不相交** 的子问题，递归的求解子问题，再将它们的解组合起来求出原问题；而动态规划应用于 **子问题重叠** 的情况，即不同的子问题具有公共的子子问题。 
+3. 在子问题重叠的情况下，分治算法会做很多不必要的工作，反复地求解公共子子问题。而动态规划算法对于每个子子问题只求解一次。
+4. 动态规划通常用来求解 **最优化问题**（optimization problems）。这类问题可以有很多可行解法，每个解法都有一个值，我们希望寻找具有最优值的解法。
+5. 我们称这样的解法为问题的一个 **最优解**（optimal solution）。一个问题可能有不止一个最优解。
+
+### 整体步骤
+1. When developing a dynamic-programming algorithm, we follow a sequence of four steps:
+    1. Characterize the structure of an optimal solution.描述最优解的结构。
+    2. Recursively define the value of an optimal solution.
+    3. Compute the value of an optimal solution, typically in a bottom-up fashion.
+    4. Construct an optimal solution from computed information.
+2. Steps 1–3 form the basis of a dynamic-programming solution to a problem. If we need only the value of an optimal solution, and not the solution itself, then we can omit step 4. 
+3. When we do perform step 4, we sometimes maintain additional information during step 3 so that we can easily construct an optimal solution
+
 ### 因果链起点的寻找
 1. 不管是递归还是动态规划，其实都是要寻找因果链的起点。寻找的方法，其实也都是找到自变量的初始条件。
 2. 除了单变量的情况，也会有双变量甚至多变量的情况。例如背包问题的变量就是物品和容量两个。那么这时的起点就是所有自变量都为初始值的情况。比如背包问题中，起点就是只有一个物品和容量只有一个单位。
@@ -63,98 +87,134 @@
 2. 多变量的情况也是一样，
 
 
-## 从斐波那契数列来看
-### 最直白的递归求解
-1. 实现
-    ```js
-    function fibonacci( n ) {
-        if( n<3 ){
-            return 1;
+## 以钢条切割问题为例
+1. 这个问题针对某一个给定的钢条有很多个解，而我们现在需要寻找一个最优解。
+2. 现在假设要切割一块 4 英寸的钢条，想象最优解的情况。钢条会被切成一段或者好几段。
+3. 思路和阶乘类似：一个数的阶乘，是当前数乘以前一个数的阶乘。对于一定长度的钢条有若干种切割方案，每种方案都是先从左边切下来一段，然后剩下的部分再进行若干次。
+4. 那么根据先切下来一段的长度进行分类，如果是 4 英寸的钢条，那就有 4 种切法：
+    * 先切掉 1 英寸，再对剩下的 3 英寸进行若干次切割
+    * 先切掉 2 英寸，再对剩下的 2 英寸进行若干次切割
+    * 先切掉 3 英寸，再对剩下的 1 英寸进行若干次切割（不用切割了）
+    * 先切掉 4 英寸，也就是不用切割，直接出售这个 4 英寸的
+5. 所以这里解的结构就是 4 种先切一段的长度再加上对剩下部分的递归求解。我们只要比较这四种解中的最大值，就能获得最优解的值。进而也可以获得最优解。可以看看《算法导论》公式 15.2。
+
+### 自顶向下的递归实现
+1. 实现如下
+    ```cpp
+    #define PRICE_COUNT 10
+
+    int prices[PRICE_COUNT+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
+
+    int cut_rod(int rod_len) {
+        if (rod_len == 0) {
+            return 0;
         }
-        return fibonacci( n-1 ) + fibonacci( n-2 );
+
+        int max = 0;
+        int p;
+
+        for (int i=1; i<=rod_len; i++) {
+            p = prices[i] + cut_rod(rod_len - i);
+            if (p > max) {
+                max = p;
+            }
+        }
+
+        return max;
     }
     ```
-2. 问题就是性能太差，会进行巨量的重复计算。
+2. 这个实现的问题是，一旦输入规模稍微变大，程序运行时间就会变得很长。实际上，每当将数组增加 1，程序运行时间差不多就会增加 1 倍
+    ```cpp
+    #define PRICE_COUNT 10
+    int prices[PRICE_COUNT+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
 
-### 使用缓存来解决重复接计算的问题
-1. 实现
-    ```js
-    const cache = [null, 1, 1];
+    int times = 0;
 
-    function fibonacci( n ) {
-        if ( cache[n] ) {
-            return cache[n];
+    int cut_rod(int rod_len) {
+        times++;
+        if (rod_len == 0) {
+            return 0;
         }
 
-        if( n < 3 ){
-            return 1;
+        int max = 0;
+        int p;
+
+        for (int i=1; i<=rod_len; i++) {
+            p = prices[i] + cut_rod(rod_len - i);
+            if (p > max) {
+                max = p;
+            }
         }
 
-        let re = fibonacci( n-1 ) + fibonacci( n-2 ); 
-        return cache[n] = re;
+        return max;
+    }
+
+    int main(void) {
+        int n; 
+
+
+        times = 0;
+        cut_rod(4);
+        printf("%d\n", times); // 16
+
+        times = 0;
+        cut_rod(5);
+        printf("%d\n", times); // 32
+
+        times = 0;
+        cut_rod(6);
+        printf("%d\n", times); // 64
+
     }
     ```
-2. 性能问题解决了。而且其实就是个很好的方案。但是在极端的情况下，因为还是使用递归，所以会出现栈溢出
-    ```js
-    fibonacci(20000); // Uncaught RangeError: Maximum call stack size exceeded
-    ```
+3. 因为自顶向下的实现会反复的使用相同的参数进行递归调用，也就是反复的求解相同的子问题。下图显示了 `cut_rod(4)` 的调用过程
+    <img src="images/01.png" width="400" style="display: block; margin: 5px 0 10px;" />
+4. 从父节点到子节点的表表示从钢条左边切下一段，再往下就是递归的对剩下的部分进行切割。从根节点到叶节点的一条路径对应长度为 $n$ 的钢条的的 $2^{n-1}$ 中切割方案中的一种。
 
-### 使用动态规划来避免调用栈堆积的问题
-1. 递归的思路是，想知道一个结果，就要一层层的反推原因，就是递归的求解原因的原因。
-2. 要知道一个结果，就要知道它之前嵌套的所有原因。也就是说，必须等待要一直逆推到最初的原因，才能知道并返回最终的结果。这就是调用栈的堆积。
-3. 可以看到，递归的逻辑是：要知道 C，就要 **先** 求 B；要知道 B，就要 **先** 求 A。
-4. 而动态规划则是相反，它不从问题出发，它其实并不在乎问题是什么，而是直接按照因果关系去推导整个因果链，只是在问题的那个环节停止推导而已。
-5. 比如不管是求 `fibonacci(20000)` 还是 `fibonacci(20)`，动态规划都是按照 `fibonacci(2)`、`fibonacci(3)`、`fibonacci(4)`、`fibonacci(5)` 这样的顺序推导完整的斐波那契数列，只是最后停止在问题的那个数。
-6. 实现
-    ```js
-    function fibonacci_DP( n ) {
+### 使用动态规划的解决思路
+1. 动态规划方法对每个子问题值求解一次，并将结果保存下来，之后再求解时就不用重复计算。
+2. Dynamic programming thus uses additional memory to save computation time; it serves an example of a **time-memory trade-off**. 
+3. The savings may be dramatic: an exponential-time solution may be transformed into a polynomial-time solution. A dynamic-programming approach runs in polynomial time when the number of distinct subproblems involved is polynomial in the input size and we can solve each such subproblem in polynomial time.
+4. 动态规划有两种实现方法：一种是带备忘（memoization）的自顶向下方法，一种是自底向上方法。
 
-        if( n < 3 ){
-            return 1;
-        }
+### 带备忘的自顶向下方法
+其实就是给自顶向下的方法加上备忘缓存
+```cpp
+#define PRICE_COUNT 10
+int prices[PRICE_COUNT+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
+int memo[PRICE_COUNT+1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-        let result = [null, 1, 1];
-        let i = 3
-
-        while ( i <= n) {
-            result[i] = result[i-1] + result[i-2];
-            i++;
-        }
-
-        return result[n];
+int cut_rod(int rod_len) {
+    if (memo[rod_len] > 0) {
+        return memo[rod_len];
     }
-    ```
-7. 递归需要等待所有的前因才能知道（返回）后果，而动态规划每一步都是一个前因推导出一个后果，所以不存在嵌套的调用栈。
-8. 实际应用时，动态规划也是要加上缓存。但这个缓存是为了避免下次计算时的重复计算，而不是当次计算时大量的重复
-    ```js
-    const cache = [null, 1, 1];
 
-    function fibonacci_DP( n ) {
-
-        if ( cache[n] ) {
-            return cache[n];
-        }
-
-        if( n < 3 ){
-            return 1;
-        }
-
-        let i = cache.length;
-
-        while ( i <= n ) {
-            cache[i] = cache[i-1] + cache[i-2];
-            i++;
-        }
-
-        return cache[n];
+    if (rod_len == 0) {
+        return 0;
     }
-    ```
+
+    int max = 0;
+    int p;
+
+    for (int i=1; i<=rod_len; i++) {
+        p = prices[i] + cut_rod(rod_len - i);
+        if (p > max) {
+            max = p;
+        }
+    }
+
+    memo[rod_len] = max;
+    return max;
+}
+```
 
 
 ## 最少硬币找零问题
 ### 思路
-1. 思路和阶乘类似：一个数的阶乘，是当前数乘以前一个数的阶乘。对于一定金额 $sum$ 有若干种找零方案，每种方案都是一种硬币加上其他若干枚硬币。
-2. 那么，想知道最少找零硬币数，我只要找到 $sum$ 分别减去一种硬币面值之后的额度的最少找零硬币数。即如下思路（假定硬币面额为 `[1, 5, 10, 25]`）
+1. 给定一定的金额，找零方案可能有若干种，其中至少存在一个最优解。
+2. 我们现在需要描述出可能的解的结构，然后从其中找出最优解。
+3. 思路和阶乘类似：一个数的阶乘，是当前数乘以前一个数的阶乘。对于一定金额 $sum$ 有若干种找零方案，每种方案都是一种硬币加上其他若干枚硬币。这就是解的结构，其中存在着最优解。
+4. 那么，想知道最少找零硬币数，我只要找到 $sum$ 分别减去一种硬币面值之后的额度的最少找零硬币数。即如下思路（假定硬币面额为 `[1, 5, 10, 25]`）
     * 钱数为 0 时，找零硬币数为 0 个，即 $f(0) = 0$
     * 钱数为 1 时，找零硬币数为 1 个，即 $f(1) = 1 + f(0)$
     * 钱数为 $sum$ 时，找零方案最多有以下四种：
@@ -162,6 +222,33 @@
         * $5$ 元硬币加上 $f(sum-5)$，即 $f(sum) = 1 + f(sum-5)$
         * $10$ 元硬币加上 $f(sum-10)$，即 $f(sum) = 1 + f(sum-10)$
         * $25$ 元硬币加上 $f(sum-25)$，即 $f(sum) = 1 + f(sum-25)$
+5. 上面四种递归方案对应着四种解法，我们找到里面结果最小，结果值就是最优解。
+
+### 自顶向下的递归求解
+1. 实现
+    ```cpp
+    int coins[4] = {1, 5, 10, 25};
+
+    int makeChange(int sum) {
+        if (sum < coins[0]) {
+            return 0;
+        }
+
+        int min = sum;
+        int re;
+        for (int i=0; i<sizeof(coins)/sizeof(coins[0]); i++) {
+            if (sum < coins[i]) {
+                break;
+            }
+            re = 1 + makeChange(sum - coins[i]);
+            if (re < min) {
+                min = re;
+            }
+        }
+        return min;
+    }
+    ```
+
 
 ### 不严格的动态规划实现
 ```js
@@ -325,6 +412,98 @@ console.log(minCoinChange_4.cache);
     console.log(minCoinChange_3.makeChange(6)); // 2
     console.log(minCoinChange_3.printCoins(6)); // [3, 3]
     ```
+
+
+
+## 从斐波那契数列来看
+### 最直白的递归求解
+1. 实现
+    ```js
+    function fibonacci( n ) {
+        if( n<3 ){
+            return 1;
+        }
+        return fibonacci( n-1 ) + fibonacci( n-2 );
+    }
+    ```
+2. 问题就是性能太差，会进行巨量的重复计算。
+
+### 使用缓存来解决重复接计算的问题
+1. 实现
+    ```js
+    const cache = [null, 1, 1];
+
+    function fibonacci( n ) {
+        if ( cache[n] ) {
+            return cache[n];
+        }
+
+        if( n < 3 ){
+            return 1;
+        }
+
+        let re = fibonacci( n-1 ) + fibonacci( n-2 ); 
+        return cache[n] = re;
+    }
+    ```
+2. 性能问题解决了。而且其实就是个很好的方案。但是在极端的情况下，因为还是使用递归，所以会出现栈溢出
+    ```js
+    fibonacci(20000); // Uncaught RangeError: Maximum call stack size exceeded
+    ```
+
+### 使用动态规划来避免调用栈堆积的问题
+1. 递归的思路是，想知道一个结果，就要一层层的反推原因，就是递归的求解原因的原因。
+2. 要知道一个结果，就要知道它之前嵌套的所有原因。也就是说，必须等待要一直逆推到最初的原因，才能知道并返回最终的结果。这就是调用栈的堆积。
+3. 可以看到，递归的逻辑是：要知道 C，就要 **先** 求 B；要知道 B，就要 **先** 求 A。
+4. 而动态规划则是相反，它不从问题出发，它其实并不在乎问题是什么，而是直接按照因果关系去推导整个因果链，只是在问题的那个环节停止推导而已。
+5. 比如不管是求 `fibonacci(20000)` 还是 `fibonacci(20)`，动态规划都是按照 `fibonacci(2)`、`fibonacci(3)`、`fibonacci(4)`、`fibonacci(5)` 这样的顺序推导完整的斐波那契数列，只是最后停止在问题的那个数。
+6. 实现
+    ```js
+    function fibonacci_DP( n ) {
+
+        if( n < 3 ){
+            return 1;
+        }
+
+        let result = [null, 1, 1];
+        let i = 3
+
+        while ( i <= n) {
+            result[i] = result[i-1] + result[i-2];
+            i++;
+        }
+
+        return result[n];
+    }
+    ```
+7. 递归需要等待所有的前因才能知道（返回）后果，而动态规划每一步都是一个前因推导出一个后果，所以不存在嵌套的调用栈。
+8. 实际应用时，动态规划也是要加上缓存。但这个缓存是为了避免下次计算时的重复计算，而不是当次计算时大量的重复
+    ```js
+    const cache = [null, 1, 1];
+
+    function fibonacci_DP( n ) {
+
+        if ( cache[n] ) {
+            return cache[n];
+        }
+
+        if( n < 3 ){
+            return 1;
+        }
+
+        let i = cache.length;
+
+        while ( i <= n ) {
+            cache[i] = cache[i-1] + cache[i-2];
+            i++;
+        }
+
+        return cache[n];
+    }
+    ```
+
+
+
 
 
 ## Referecens
