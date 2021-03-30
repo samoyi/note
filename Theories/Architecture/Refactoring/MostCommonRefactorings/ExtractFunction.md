@@ -182,7 +182,7 @@ Any code used more than once should be put in its own function, but code only us
 ### 变量作用域
 
 ### 错误 return
-1. 提取出去作为独立函数的代码中如果包含原函数的提前`return`，则要注意处理
+1. 提取出去作为独立函数的代码中如果包含原函数的提前 `return`，则要注意处理
 2. 重构前
     ```js
     function getRes () {

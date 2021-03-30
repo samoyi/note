@@ -5,6 +5,10 @@
 
 - [Mysterious Name](#mysterious-name)
     - [思想](#思想)
+    - [类型](#类型)
+        - [拼写错误](#拼写错误)
+        - [命名没有区分度](#命名没有区分度)
+        - [单词语法错误](#单词语法错误)
     - [重构方法参考](#重构方法参考)
     - [References](#references)
 
@@ -12,8 +16,20 @@
 
 
 ## 思想
-1. Renaming is not just an exercise in changing names. When you can’t think of a good name for something, it’s often a sign of a deeper design malaise. 
-2. 好的命名可以准确的传达出它所指代的事物的本质。而坏的命名则很容易让人引起误解，或者让人花更多的时间去重新认识事物并努力更新之前错误的第一印象。
+1. 好的命名可以准确的传达出它所指代的事物的本质。而坏的命名则很容易让人引起误解，或者让人花更多的时间去重新认识事物并努力更新之前错误的第一印象。
+2. 而且，如果你命名不准确，常常还意味着你没有准确理解被命名的对象。没有准确的理解，就更谈不上准确的设计了。
+
+
+## 类型
+### 拼写错误
+
+### 命名没有区分度
+几个类似的对象命名相似，只体现出了它们的共性，但看不出区别。
+
+### 单词语法错误
+* 比如引用被删除对象的变量名，应该使用 `deletedItem`，但写成了 `deleteItem`。
+* 比如变量表示的一个数组，但是却没有用复数形式。例如 `seletedPhotos` 写成了 `seletedPhoto`。当然这时写成 `seletedPhotoList` 更明确。
+
 
 
 ## 重构方法参考
