@@ -5,6 +5,7 @@
 
 - [Mutable Data](#mutable-data)
     - [思想](#思想)
+        - [OCP](#ocp)
     - [重构方法参考](#重构方法参考)
     - [References](#references)
 
