@@ -1,11 +1,11 @@
-# Single responsibility principle
+# Open-Closed Principle
 
 Software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification.
 
 
 <!-- TOC -->
 
-- [Single responsibility principle](#single-responsibility-principle)
+- [Open-Closed Principle](#open-closed-principle)
     - [设计思想](#设计思想)
         - [分离经常变动和不常变动](#分离经常变动和不常变动)
     - [应用](#应用)
