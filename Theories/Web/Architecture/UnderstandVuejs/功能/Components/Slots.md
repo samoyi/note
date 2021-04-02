@@ -350,4 +350,4 @@ new Vue({
 
 
 ## References
-* [模板语法](https://v3.cn.vuejs.org/guide/template-syntax.html)
+* [插槽](https://v3.cn.vuejs.org/guide/component-slots.html)

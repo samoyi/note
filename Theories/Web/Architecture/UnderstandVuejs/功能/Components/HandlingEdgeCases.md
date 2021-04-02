@@ -274,57 +274,56 @@
 4. 这是就需要用到 Dependency Injection。
 
 #### 前辈组件使用依赖注入明确表示将哪些数据和方法继承给后辈组件
-1. 前辈组件使用 `provide` 表明要把哪些数据和方法提供给后辈组件
-2. 后辈组件使用 `inject` 选择接受前辈组件提供的哪些数据和方法
-
-```html
-<div id="components-demo">
-    <middle-component></middle-component>
-</div>
-```
-```js
-const childComponent = {
-    template: '<div @click="showAge">child-component</div>',
-    inject: ['age', 'consoleAge'],
-    methods: {
-        showAge(){
-            this.consoleAge(this.age);
+1. 前辈组件使用 `provide` 表明要把哪些数据和方法提供给后辈组件，后辈组件使用 `inject` 选择接受前辈组件提供的哪些数据和方法。不论组件层次有多深，并在其上下游关系成立的时间里始终生效。
+2. `provide` 选项应该是一个对象或返回一个对象的函数。该对象包含可注入其子孙的 property。
+    ```html
+    <div id="components-demo">
+        <middle-component></middle-component>
+    </div>
+    ```
+    ```js
+    const childComponent = {
+        template: '<div @click="showAge">child-component</div>',
+        inject: ['age', 'consoleAge'],
+        methods: {
+            showAge(){
+                this.consoleAge(this.age);
+            },
         },
-    },
-};
+    };
 
-const middleComponent = {
-    components: {
-        'child-component': childComponent,
-    },
-    template: `<div>
-                    middle-component
-                    <child-component></child-component>
-                </div>`,
-};
-
-new Vue({
-    el: '#components-demo',
-    components: {
-        'middle-component': middleComponent,
-    },
-    data: {
-        age: 22,
-    },
-    methods: {
-        consoleAge(age){
-            console.log(age);
+    const middleComponent = {
+        components: {
+            'child-component': childComponent,
         },
-    },
-    provide(){
-        return {
-            age: this.age,
-            consoleAge: this.consoleAge,
-        };
-    },
-});
-```
+        template: `<div>
+                        middle-component
+                        <child-component></child-component>
+                    </div>`,
+    };
 
+    new Vue({
+        el: '#components-demo',
+        components: {
+            'middle-component': middleComponent,
+        },
+        data: {
+            age: 22,
+        },
+        methods: {
+            consoleAge(age){
+                console.log(age);
+            },
+        },
+        provide(){
+            return {
+                age: this.age,
+                consoleAge: this.consoleAge,
+            };
+        },
+    });
+    ```
+2.  
 3. 你可以把依赖注入看作一部分 “大范围有效的 prop”
 4. 但依赖注入是非响应的
     ```html

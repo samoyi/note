@@ -240,9 +240,9 @@
 4. 但有时不得已的情况下，组件使用者想在组件上监听原生的事件，而使用者又不能在组件内部添加对该事件的监听，就需要在组件标签上使用 `.native` 修饰符来监听原生事件。
     ```html
     <!-- 出于某些原因，不能在组件内部监听 click 的时候 -->
-    <child-components @click.native="clickP"></child-components>
+    <child-components @click.native="foo"></child-components>
     ```
-5. 但下面这种情况中，却无法预期监听到期望的原生事件。公共组件 `base-input` 类似于 `input`，所以你可能想在上面添加 `focus` 事件。但是该组件最外层其实是 `<p>`，所以绑定在上面的 `focus` 事件不会被触发
+5. 但下面这种情况中，却无法预期监听到期望的原生事件。例如公共组件 `base-input` 类似于 `input`，所以你可能想在上面添加 `focus` 事件。但是该组件最外层其实是 `<p>`，`focus` 的事件监听绑定到了 `<p>` 而不是 `<input>` 上
     ```html
     <div id="components-demo">
         <base-input @focus.native="focusEvent"></base-input>
@@ -266,9 +266,7 @@
         },
     });
     ```
-6. 针对这种情况，Vue 提供的解决方法是 `vm.$listeners`。该属性的定义是：
-    >包含了父作用域中的（不含 `.native` 修饰器的）`v-on` 事件监听器。它可以通过 `v-on="$listeners"` 传入内部组件——在创建更高层次的组件时非常有用。
-7. 下面例子中，`vm.$listeners` 只能获得父组件的、没有 `.native` 的事件监听器
+6. 针对这种情况，Vue 提供的解决方法是 `vm.$listeners`。该属性的定义是：包含了父作用域中的（不含 `.native` 修饰器的）`v-on` 事件监听器
     ```html
     <div id="components-demo">
         <base-input @focus="focusEvent" @custom-event @click.native></base-input>
@@ -295,7 +293,7 @@
         },
     });
     ```
-8. 因此通过 `$listeners` 把 `focus` 事件的监听拷贝到组件内部的 `<input>` 上
+7. 现在，组件内部就可以通过 `$listeners` 把需要的事件监听放到合适的元素上
     ```js
     new Vue({
         el: '#components-demo',
@@ -319,7 +317,7 @@
         },
     });
     ```
-9. 上一步的例子会把组件上绑定的所有事件都拷贝到真正的 `input` 元素上。如果你只允许拷贝部分事件，那可以直接设定指定的事件类型，例如
+8. 上一步的例子会把组件上绑定的所有事件都拷贝到真正的 `input` 元素上。如果你只允许拷贝部分事件，那可以直接设定指定的事件类型，例如
     ```html
     <input type="text" @focus="$listeners.focus" />
     ```
