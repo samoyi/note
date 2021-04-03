@@ -19,15 +19,15 @@
         - [自顶向下的递归实现](#自顶向下的递归实现)
         - [使用动态规划的解决思路](#使用动态规划的解决思路)
         - [带备忘的自顶向下方法](#带备忘的自顶向下方法)
+        - [自底向上方法](#自底向上方法)
+    - [时间复杂度](#时间复杂度)
+    - [子问题图](#子问题图)
+    - [计算最优解](#计算最优解)
     - [最少硬币找零问题](#最少硬币找零问题)
         - [思路](#思路-1)
         - [自顶向下的递归求解](#自顶向下的递归求解)
         - [不严格的动态规划实现](#不严格的动态规划实现)
         - [严格的动态规划实现](#严格的动态规划实现)
-    - [从斐波那契数列来看](#从斐波那契数列来看)
-        - [最直白的递归求解](#最直白的递归求解)
-        - [使用缓存来解决重复接计算的问题](#使用缓存来解决重复接计算的问题)
-        - [使用动态规划来避免调用栈堆积的问题](#使用动态规划来避免调用栈堆积的问题)
     - [Referecens](#referecens)
 
 <!-- /TOC -->
@@ -65,10 +65,10 @@
 
 ### 整体步骤
 1. When developing a dynamic-programming algorithm, we follow a sequence of four steps:
-    1. Characterize the structure of an optimal solution.描述最优解的结构。
-    2. Recursively define the value of an optimal solution.
-    3. Compute the value of an optimal solution, typically in a bottom-up fashion.
-    4. Construct an optimal solution from computed information.
+    1. 描述最优解的结构。
+    2. 递归的定义最优解的值。
+    3. 计算最优解的值，通常使用自底向上方法。
+    4. 利用计算的信息构造一个最优解。
 2. Steps 1–3 form the basis of a dynamic-programming solution to a problem. If we need only the value of an optimal solution, and not the solution itself, then we can omit step 4. 
 3. When we do perform step 4, we sometimes maintain additional information during step 3 so that we can easily construct an optimal solution
 
@@ -169,7 +169,7 @@
     ```
 3. 因为自顶向下的实现会反复的使用相同的参数进行递归调用，也就是反复的求解相同的子问题。下图显示了 `cut_rod(4)` 的调用过程
     <img src="images/01.png" width="400" style="display: block; margin: 5px 0 10px;" />
-4. 从父节点到子节点的表表示从钢条左边切下一段，再往下就是递归的对剩下的部分进行切割。从根节点到叶节点的一条路径对应长度为 $n$ 的钢条的的 $2^{n-1}$ 中切割方案中的一种。
+4. 从父节点到子节点的表表示从钢条左边切下一段，再往下就是递归的对剩下的部分进行切割。从根节点到叶节点的一条路径对应长度为 $n$ 的钢条的的 $2^{n-1}$ 中切割方案中的一种。TODO，证明。
 
 ### 使用动态规划的解决思路
 1. 动态规划方法对每个子问题值求解一次，并将结果保存下来，之后再求解时就不用重复计算。
@@ -184,7 +184,7 @@
 int prices[PRICE_COUNT+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
 int memo[PRICE_COUNT+1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-int cut_rod(int rod_len) {
+int memoized_cut_rod(int rod_len) {
     if (memo[rod_len] > 0) {
         return memo[rod_len];
     }
@@ -207,6 +207,126 @@ int cut_rod(int rod_len) {
     return max;
 }
 ```
+
+### 自底向上方法
+1. 这个方法需要定义子问题 “规模” 的大小，任何子问题的求解都要依赖于规模更小的子问题的求解。
+2. 我们将所有的子问题按照规模从小到大的顺序依次求解。这样，当解决一个子问题时，它所依赖的更小的子问题都已经求解完成并保存了结果。
+3. 对于钢条切割问题来说，子问题的规模就是钢条的长度。为了求解长度为 $n$ 的钢条的最优解，我们依次计算长度为 $1, 2, ..., n$ 的钢条的最优解。实现如下
+    ```cpp
+    int bottom_up_cut_rod(int rod_len) {
+        if (rod_len == 0) {
+            return 0;
+        }
+        int p;
+
+        for (int i=1; i<=rod_len; i++) {
+            // 求解长度为 i 的钢条的最优解。
+            // 这里的求解思路和自顶向下的一样，都是先切一刀的价格，然后再加上剩余部分的最优价格。
+            // 只不过剩余部分的最优价格不用再递归求解了，因为它的规模（$i-j$）小于 $i$，
+            // 而此时任何规模小于 $i$ 的子问题都已经求解并保存过了。
+            int max = 0;
+            for (int j=1; j<=i; j++) {
+                p = prices[j] + memo[i - j];
+                if (p > max) {
+                    max = p;
+                }
+            }
+            memo[i] = max;
+        }
+
+        return memo[rod_len];
+    }
+    ```
+
+
+## 时间复杂度
+1. 自底向上方法和自顶向下方法拥有相同的渐进运行时间。区别在于，在某些特殊的情况下，自顶向下的方法不会递归的求解所有子问题。由于没有频繁的递归函数调用的开销，自底向上的方法的时间复杂性函数通常具有更小的系数。
+2. 自底向上方法的内部是一个嵌套的循环，不难看出运行时间为 $Θ(n^2)$。
+3. 自顶向下方法的分析稍微麻烦一下：
+    1. 当求解一个之前已经计算过的子问题时，函数会立刻返回备忘的结果，所以 `memoized_cut_rod` 对每个子问题只会求解依次；
+    2. 它同样一共求解了 $1, 2, ..., n$ 一共 $n$ 个子问题；
+    3. 而在求解每个规模为 $m$ 的子问题时，`memoized_cut_rod` 中的 `for` 循环也会迭代 `m` 次，所以也是 $Θ(n^2)$。
+
+
+## 子问题图
+1. When we think about a dynamic-programming problem, we should understand the set of subproblems involved and how subproblems depend on one another.
+2. The **subproblem graph** for the problem embodies exactly this information. Figure below shows the subproblem graph for the rod-cutting problem with $n=4$。It is a directed graph, containing one vertex for each distinct subproblem
+    <img src="images/02.png" width="100" style="display: block; margin: 5px 0 10px;" />
+3. The sub-problem graph has a directed edge from the vertex for subproblem `x` to the vertex for subproblem `y` if determining an optimal solution for subproblem `x` involves directly considering an optimal solution for subproblem `y`. 
+4. For example, the subproblem graph contains an edge from `x` to `y` if a top-down recursive procedure for solving `x` directly calls itself to solve `y`. 
+5. We can think of the subproblem graph as a “reduced” or “collapsed” version of the recursion tree for the top-down recursive method, in which we coalesce all nodes for the same subproblem into a single vertex and direct all edges from parent to child.
+6. The bottom-up method for dynamic programming considers the vertices of the subproblem graph in such an order that we solve the subproblems `y` adjacent to a given subproblem `x` before we solve subproblem `x`. In a bottom-up dynamic-programming algorithm, we consider the vertices of the subproblem graph in an order that is a “reverse topological sort,” or a “topological sort of the transpose” of the subproblem graph. In other words, no subproblem is considered until all of the subproblems it depends upon have been solved. 
+7. Similarly, we can view the top-down method (with memoization) for dynamic programming as a “depth-first search” of the subproblem graph.
+
+
+## 计算最优解
+1. 上面的动态规划算法返回了最优解的收益值，但并未返回解本身。我们可以扩展算法，使之对每个子问题不仅保存最优解。
+2. 不过其实并不需要对每个子问题都保存完整的最优解（完整的切割方案列表），因为每个子问题的最优解都是一个最左侧的切割方法加上剩下的更小规模的最优解，所以对每个子问题只要记录最优解的最左侧切割长度，至于剩下的更小规模的最优解可以可以依次查看之前的结果。例如 5 的最优解是 2+3，那其实只要保存 2，然后剩下的部分长度为 3 就去查 3 的最优解。
+3. 实现如下
+    ```cpp
+    #define PRICE_COUNT 10
+    int times = 0;
+    int prices[PRICE_COUNT+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
+    int memo[PRICE_COUNT+1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    int solutions[PRICE_COUNT+1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // 记录最优解是左侧一段的长度
+
+    int bottom_up_cut_rod(int rod_len) {
+        if (rod_len == 0) {
+            return 0;
+        }
+        int p;
+
+        for (int i=1; i<=rod_len; i++) {
+            int max = 0;
+            int n = 0;
+            for (int j=1; j<=i; j++) {
+                p = prices[j] + memo[i - j];
+                if (p > max) {
+                    max = p;
+                    n = j; // 最优解时左侧一段的长度
+                }
+            }
+            memo[i] = max;
+            solutions[i] = n;
+        }
+
+        return memo[rod_len];
+    }
+    ```
+4. 对长度为 10 钢条进行计算，得到的 `memo` 和 `solutions` 如下
+    ```
+    1   5   8   10  13  17  18  22  25  30  
+    1   2   3   2   2   6   1   2   3   10
+    ```
+5. 自顶向上方法的情况
+    ```cpp
+    int memoized_cut_rod(int rod_len) {
+        if (memo[rod_len] > 0) {
+            return memo[rod_len];
+        }
+        if (rod_len == 0) {
+            return 0;
+        }
+
+        int max = 0;
+        int p;
+        int n = 0;
+        for (int i=1; i<=rod_len; i++) {
+            p = prices[i] + memoized_cut_rod(rod_len - i);
+            if (p > max) {
+                max = p;
+                n = i; // 最优解时左侧一段的长度
+            }
+        }
+
+        memo[rod_len] = max;
+        solutions[rod_len] = n;
+        
+        return max;
+    }
+    ```
+
+
 
 
 ## 最少硬币找零问题
@@ -414,99 +534,9 @@ console.log(minCoinChange_4.cache);
     ```
 
 
-
-## 从斐波那契数列来看
-### 最直白的递归求解
-1. 实现
-    ```js
-    function fibonacci( n ) {
-        if( n<3 ){
-            return 1;
-        }
-        return fibonacci( n-1 ) + fibonacci( n-2 );
-    }
-    ```
-2. 问题就是性能太差，会进行巨量的重复计算。
-
-### 使用缓存来解决重复接计算的问题
-1. 实现
-    ```js
-    const cache = [null, 1, 1];
-
-    function fibonacci( n ) {
-        if ( cache[n] ) {
-            return cache[n];
-        }
-
-        if( n < 3 ){
-            return 1;
-        }
-
-        let re = fibonacci( n-1 ) + fibonacci( n-2 ); 
-        return cache[n] = re;
-    }
-    ```
-2. 性能问题解决了。而且其实就是个很好的方案。但是在极端的情况下，因为还是使用递归，所以会出现栈溢出
-    ```js
-    fibonacci(20000); // Uncaught RangeError: Maximum call stack size exceeded
-    ```
-
-### 使用动态规划来避免调用栈堆积的问题
-1. 递归的思路是，想知道一个结果，就要一层层的反推原因，就是递归的求解原因的原因。
-2. 要知道一个结果，就要知道它之前嵌套的所有原因。也就是说，必须等待要一直逆推到最初的原因，才能知道并返回最终的结果。这就是调用栈的堆积。
-3. 可以看到，递归的逻辑是：要知道 C，就要 **先** 求 B；要知道 B，就要 **先** 求 A。
-4. 而动态规划则是相反，它不从问题出发，它其实并不在乎问题是什么，而是直接按照因果关系去推导整个因果链，只是在问题的那个环节停止推导而已。
-5. 比如不管是求 `fibonacci(20000)` 还是 `fibonacci(20)`，动态规划都是按照 `fibonacci(2)`、`fibonacci(3)`、`fibonacci(4)`、`fibonacci(5)` 这样的顺序推导完整的斐波那契数列，只是最后停止在问题的那个数。
-6. 实现
-    ```js
-    function fibonacci_DP( n ) {
-
-        if( n < 3 ){
-            return 1;
-        }
-
-        let result = [null, 1, 1];
-        let i = 3
-
-        while ( i <= n) {
-            result[i] = result[i-1] + result[i-2];
-            i++;
-        }
-
-        return result[n];
-    }
-    ```
-7. 递归需要等待所有的前因才能知道（返回）后果，而动态规划每一步都是一个前因推导出一个后果，所以不存在嵌套的调用栈。
-8. 实际应用时，动态规划也是要加上缓存。但这个缓存是为了避免下次计算时的重复计算，而不是当次计算时大量的重复
-    ```js
-    const cache = [null, 1, 1];
-
-    function fibonacci_DP( n ) {
-
-        if ( cache[n] ) {
-            return cache[n];
-        }
-
-        if( n < 3 ){
-            return 1;
-        }
-
-        let i = cache.length;
-
-        while ( i <= n ) {
-            cache[i] = cache[i-1] + cache[i-2];
-            i++;
-        }
-
-        return cache[n];
-    }
-    ```
-
-
-
-
-
 ## Referecens
+* [算法导论](https://book.douban.com/subject/20432061/)
 * [从最简单的斐波那契数列来学习动态规划（JavaScript版本）](https://developer.51cto.com/art/202005/616273.htm)
 * [动态规划系列（2）——找零钱问题](https://www.jianshu.com/p/9ea65dd9e792)
 * [《Python数据结构与算法分析（第2版）》第四章](https://book.douban.com/subject/34785178/)
+* [CLRS Solutions](https://walkccc.me/CLRS/Chap15/15.1/)
