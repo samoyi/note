@@ -23,6 +23,7 @@
     - [时间复杂度](#时间复杂度)
     - [子问题图](#子问题图)
     - [计算最优解](#计算最优解)
+    - [如果切割有成本](#如果切割有成本)
     - [最少硬币找零问题](#最少硬币找零问题)
         - [思路](#思路-1)
         - [自顶向下的递归求解](#自顶向下的递归求解)
@@ -249,14 +250,12 @@ int memoized_cut_rod(int rod_len) {
 
 
 ## 子问题图
-1. When we think about a dynamic-programming problem, we should understand the set of subproblems involved and how subproblems depend on one another.
-2. The **subproblem graph** for the problem embodies exactly this information. Figure below shows the subproblem graph for the rod-cutting problem with $n=4$。It is a directed graph, containing one vertex for each distinct subproblem
+1. 当思考一个动态规划问题时，我们应该弄清楚所涉及的子问题以及子问题之间的依赖关系。
+2. **子问题图**（subproblem graph）表达了这一信息。下图是 $n=4$ 时钢条切割问题的子问题图
     <img src="images/02.png" width="100" style="display: block; margin: 5px 0 10px;" />
-3. The sub-problem graph has a directed edge from the vertex for subproblem `x` to the vertex for subproblem `y` if determining an optimal solution for subproblem `x` involves directly considering an optimal solution for subproblem `y`. 
-4. For example, the subproblem graph contains an edge from `x` to `y` if a top-down recursive procedure for solving `x` directly calls itself to solve `y`. 
-5. We can think of the subproblem graph as a “reduced” or “collapsed” version of the recursion tree for the top-down recursive method, in which we coalesce all nodes for the same subproblem into a single vertex and direct all edges from parent to child.
-6. The bottom-up method for dynamic programming considers the vertices of the subproblem graph in such an order that we solve the subproblems `y` adjacent to a given subproblem `x` before we solve subproblem `x`. In a bottom-up dynamic-programming algorithm, we consider the vertices of the subproblem graph in an order that is a “reverse topological sort,” or a “topological sort of the transpose” of the subproblem graph. In other words, no subproblem is considered until all of the subproblems it depends upon have been solved. 
-7. Similarly, we can view the top-down method (with memoization) for dynamic programming as a “depth-first search” of the subproblem graph.
+3. 它是一个有向图，每个节点唯一的对应一个子问题。
+4. 如果要求子问题 x 的最优解时，需要用到子问题 y 的最优解，那么在子问题图中就会有一条从 x 到 y 的有向边。
+5. 我们可以将子问题图看作是自顶向下递归调用树的简化版或收缩版，因为树中所有对应相同子问题的节点都合并为子问题图中的单一节点。
 
 
 ## 计算最优解
@@ -327,7 +326,42 @@ int memoized_cut_rod(int rod_len) {
     ```
 
 
+## 如果切割有成本
+1. 练习 15.1-3。每次切割成本为 `c`。
+2. 每次切割时减去切割成本
+    ```cpp
+    int bottom_up_cut_rod(int rod_len) {
+        if (rod_len == 0) {
+            return 0;
+        }
+        int p;
 
+        for (int i=1; i<=rod_len; i++) {
+            int max = 0;
+            int n = 0;
+            for (int j=1; j<=i; j++) {
+                p = prices[j] + memo[i - j];
+                if (i != j) { // i 等于 j 时没有发生切割
+                    p -= c;
+                }
+                if (p > max) {
+                    max = p;
+                    n = j;
+                }
+            }
+            memo[i] = max;
+            solutions[i] = n;
+        }
+
+        return memo[rod_len];
+    }
+    ```
+3. 现在对长度为 10 钢条进行计算，当 `c` 等于 1 时，得到的 `memo` 和 `solutions` 如下
+    ```
+    1   5   8   9   12  17  17  21  24  30
+    1   2   3   2   2   6   1   2   3   10
+    ```
+    
 
 ## 最少硬币找零问题
 ### 思路
