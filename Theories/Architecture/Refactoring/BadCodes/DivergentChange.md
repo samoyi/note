@@ -5,6 +5,8 @@
 
 - [Divergent Change](#divergent-change)
     - [思想](#思想)
+        - [SRP](#srp)
+    - [表现](#表现)
     - [重构方法参考](#重构方法参考)
     - [References](#references)
 
@@ -12,14 +14,18 @@
 
 
 ## 思想
-1. Open–closed principle：software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification。
-2. 一个设计良好的实体应该提供一个稳固的 API，用来应对外界的变化，这样外部的改变不会导致实体本身的变动。
-3. 稍差一点的，实体外部的各种变化，实体内部都只需要进行一种改变。
-4. 而最差的情况，就是这里所说的 Divergent Change：外部发生了变化甲，实体内部要进行 A 改变；外部发生了变化乙，实体内部要进行 B 改变；外部发生了变化丙，实体内部要进行 C 改变。实体应对外部的不同变化，内部需要进行不同种类的改变。
+### SRP
+
+
+## 表现
+1. 一个对象实体最好的设计就是 OCP，可以应对外界的变化。不过时常还有有些变化不得不改变实体内部的逻辑。
+2. 但是，如果一个实体内部的逻辑会因为不同类型的需求而变化时，那可能就说明这个实体负责了不止一种类型的功能。
+3. 因为如果一个实体的设计符合 SRP，只负责一种功能，那就应该只有在这一种功能变化时才发生变化。
 
 
 ## 重构方法参考
-* Extract Class
+* Extract Class：分成若干个 SRP 的类
+* Split Phase：划分为若干个 SRP 的处理实体
 
 
 ## References

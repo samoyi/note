@@ -3,18 +3,15 @@
 <!-- TOC -->
 
 - [Lazy Element](#lazy-element)
-    - [思想](#思想)
+    - [现象](#现象)
     - [重构方法参考](#重构方法参考)
     - [References](#references)
 
 <!-- /TOC -->
 
 
-## 思想
-1. We like using program elements to add structure — providing opportunities for variation, reuse, or just having more helpful names. 
-2. But sometimes the structure isn’t needed. It may be a function that’s named the same as its body code reads, or a class that is essentially one simple function. 
-3. Sometimes, this reflects a function that was expected to grow and be popular later, but never realized its dreams. Sometimes, it’s a class that used to pay its way, but has been downsized with refactoring. 
-4. Either way, such program elements need to die with dignity.
+## 现象
+就是本来创建了函数、类或者模块，但是之后发现它们没必要单独存在，可以和其他的函数、类或模块合并。
 
 
 ## 重构方法参考
