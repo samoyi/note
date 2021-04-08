@@ -20,7 +20,6 @@
 When you feel the need to write a comment, first try to refactor the code so that any comment becomes superfluous.
 
 
-
 ## 重构方法参考
 * Extract Function：将比较复杂需要注释的一段代码封装为一个函数，起一个好理解的名字
 * Extract Variable：给一行复杂的计算赋值一个名字有意义的函数，就不需要注释说明这一长串是计算什么了
@@ -29,6 +28,7 @@ When you feel the need to write a comment, first try to refactor the code so tha
 * Consolidate Conditional Expression：如果要为一组复杂的串并联条件表达式写注释，不如封装为一个函数
 * Introduce Assertion
 * Remove Flag Argument
+
 
 ## References
 * [《重构（第2版）》](https://book.douban.com/subject/33400354/)

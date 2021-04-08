@@ -8,7 +8,7 @@
 
 
 ## 重构方法参考
-* Hide Delegate：内幕交易是客户端直接通过委托关系来访问数据，现在用代理封装委托关系，只返回给客户端需要的数据
+* Hide Delegate：内幕交易是客户端直接通过一层层的委托关系（`groups.top.leader.info.basic.name`）来访问数据，现在用代理封装委托关系，只返回给客户端需要的数据
 * Encapsulate Record：通过明确的读写函数来操作数据
 * Encapsulate Collection：明确的修改
 * Replace Subclass with Delegate：不期望而继承了一个类的特征

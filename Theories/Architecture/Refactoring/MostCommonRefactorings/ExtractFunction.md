@@ -5,14 +5,12 @@ inverse of: Inline Function
 <!-- TOC -->
 
 - [Extract Function](#extract-function)
+    - [Bad codes](#bad-codes)
     - [Motivations](#motivations)
         - [单纯的长度缩减](#单纯的长度缩减)
         - [SRP](#srp)
         - [复用](#复用)
-        - [黑箱封装 —— Speration between intention and implementation](#黑箱封装--speration-between-intention-and-implementation)
-            - [意图和实现分离](#意图和实现分离)
-            - [性能担忧？](#性能担忧)
-            - [命名的重要性](#命名的重要性)
+        - [意图和实现分离](#意图和实现分离)
             - [例1](#例1)
             - [例2](#例2)
     - [Mechanics](#mechanics)
@@ -24,33 +22,27 @@ inverse of: Inline Function
 <!-- /TOC -->
 
 
+## Bad codes
+* Comments
+* Duplicated Code
+* Long Function and Long Module
+* Message Chains
+
+
 ## Motivations
 ### 单纯的长度缩减
-1. Functions should be no larger than fit on a screen. 
-2. 其实我觉得 10 行就已经看起来比较累了。
+有人认为函数的长度不应该超过一屏。其实我觉得 10 行就已经看起来比较累了。
 
 ### SRP
-一个函数不要做两件事，这样会两个逻辑耦合
+1. 一个函数不要做两件事，这样会两个逻辑耦合。
+2. 或者只要一段代码有一个独立的整体逻辑，那就可以考虑提取为函数。
 
 ### 复用
-Any code used more than once should be put in its own function, but code only used once should be left inline. 
 
-### 黑箱封装 —— Speration between intention and implementation
-#### 意图和实现分离
+### 意图和实现分离
 1. 当我们看代码的时候，很多时候是只关心一个部分做了什么，而不关心它是怎么实现的。
 2. 那在我们看的时候，最好就是在这个部分只告诉我做了什么，而不要告诉我是怎么做的。
-3. If you have to spend effort looking at a fragment of code and figuring out what it’s doing, then you should extract it into a function and name the function after the "what". 
-4. Then, when you read it again, the purpose of the function leaps right out at you, and most of the time you won’t need to care about how the function fulfills its purpose (which is the body of the function).
-5. 一段代码既不封装为函数，又不写注释，真的要从头看到尾才能知道是在干什么……
-
-#### 性能担忧？
-1. Some people are concerned about short functions because they worry about the performance cost of a function call, but that’s very rare now. 
-2. Optimizing compilers often work better with shorter functions which can be cached more easily. 
-3. 相比于极少的性能损失，可维护性提升的更多。
-
-#### 命名的重要性
-1. Small functions like this only work if the names are good, so you need to pay good attention to naming. 
-2. Often, I see fragments of code in a larger function that start with a comment to say what they do. The comment is often a good hint for the name of the function when I extract that fragment.
+3. 如果我们在行内实现了一段代码，而且要花点儿事件才能看明白这段代码在干什么，或者你要在这段代码上面写一行简介的注释来说明这段代码的意图，那这段代码就可以考虑提取为一个独立的函数，并起一个表明其意图的名字。
 
 #### 例1
 1. 这个 `$watch` 内部的逻辑看起来也不复杂，也是容易看懂的
@@ -157,25 +149,11 @@ Any code used more than once should be put in its own function, but code only us
 
 
 ## Mechanics
-1. Create a new function, and name it after the intent of the function (name it by what it does, not by how it does it).
-    1. If the code I want to extract is very simple, such as a single function call, I still extract it if the name of the new function will reveal the intent of the code in a better way. 
-    2. If I can’t come up with a more meaningful name, that’s a sign that I shouldn’t extract the code. However, I don’t have to come up with the best name right away; sometimes a good name only appears as I work with the extraction. 
-    3. It’s OK to extract a function, try to work with it, realize it isn’t helping, and then inline it back again. As long as I’ve learned something, my time wasn’t wasted.
-    4. If the language supports nested functions, nest the extracted function inside the source function. That will reduce the amount of out­of­scope variables to deal with after the next couple of steps. 如果外层被多次调用，内层被嵌套的函数会反复被创建？
-    5. I can always use **Move Function (198)** later. 
-2. Copy the extracted code from the source function into the new target function.
-3. Scan the extracted code for references to any variables that are local in scope to the source function and will not be in scope for the extracted function. Pass them as parameters.
-    1. If I extract into a nested function of the source function, I don’t run into these problems.
-    2. Usually, these are local variables and parameters to the function. The most general approach is to pass all such parameters in as arguments. There are usually no difficulties for variables that are used but not assigned to.
-    3. If a variable is only used inside the extracted code but is declared outside, move the declaration into the extracted code.
-    4. Any variables that are assigned to need more care if they are passed by value. If there’s only one of them, I try to treat the extracted code as a query and assign the result to the variable concerned.
-    5. Sometimes, I find that too many local variables are being assigned by the extracted code. It’s better to abandon the extraction at this point. When this happens, I consider other refactorings such as **Split Variable (240)** or **Replace Temp with Query (178)** to simplify variable usage and revisit the extraction later.
-4. Compile after all variables are dealt with.
-    * Once all the variables are dealt with, it can be useful to compile if the language environment does compile­time checks. Often, this will help find any variables that haven’t been dealt with properly.
-5. Replace the extracted code in the source function with a call to the target function.
-6. Test.
-7. Look for other code that’s the same or similar to the code just extracted, and consider using **Replace Inline Code with Function Call (222)** to call the new function.
-    * Some refactoring tools support this directly. Otherwise, it can be worth doing some quick searches to see if duplicate code exists elsewhere.
+1. 创建一个函数，命名表明其意图，而非实现
+    * 如果想不出一个合适的名字，也许就表明了这一次的提炼并不合理。
+2. 将待提炼的代码从原函数搬移到新函数。
+3. 搬移过来之后可能会发现有些变量无法访问了，那就考虑将这些变量作为参数
+    如果参数按值传递并且在内部修改了值，那就要把修改的值返回给原函数。
 
 
 ## 注意点

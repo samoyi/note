@@ -22,9 +22,8 @@
 
 
 ## 现象
-1. Sometimes you see a class in which a field is set only in certain circumstances. 
-2. Such code is difficult to understand, because you expect an object to need all of its fields.
-3. Trying to understand why a field is there when it doesn’t seem to be used can drive you nuts.
+1. 一个实体在处理一类功能时，有时会遇到该功能的例外情况，所以在实体内部会有处理该例外情况的代码。
+2. 但是在一般情况下，并不会遇到例外，因此在阅读实体内部的逻辑时，这个处理例外情况的代码就会显得不符合逻辑，不能很容易的理解。
 
 
 ## 重构方法参考

@@ -5,6 +5,7 @@
 
 - [Data Class](#data-class)
     - [思想](#思想)
+        - [控制写权限](#控制写权限)
     - [现象](#现象)
     - [重构方法参考](#重构方法参考)
     - [References](#references)
@@ -13,14 +14,12 @@
 
 
 ## 思想
+### 控制写权限
 
 
 ## 现象
-1. hese are classes that have fields, getting and setting methods for the fields, and nothing else. 
-2. Such classes are dumb data holders and are often being manipulated in far too much detail by other classes. 
-3. Data classes are often a sign of behavior in the wrong place, which means you can make
-big progress by moving it from the client into the data class itself.
-4. 说起来，纯数据类本身并没有什么问题。但实际中，纯数据出现的场景可能是一些本来应该放在这个类里面的行为放在了外部。
+1. 这里说的纯数据类是指只有数据但类自身没有访问和修改数据的方法，然后数据被公开的暴露给客户，可以被随意的修改。
+2. 在这种情况下，对数据的访问和修改就是不可监听和控制的，所以应该把数据设为隐藏的，然后在类里面添加访问和修改属性的方法，供给客户使用。
 
 
 ## 重构方法参考
