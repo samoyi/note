@@ -8,8 +8,9 @@
         - [约束数据共享的范围](#约束数据共享的范围)
         - [广义的 class](#广义的-class)
     - [Motivation](#motivation)
-        - [Class 是程序的一个基础结构](#class-是程序的一个基础结构)
-        - [使用 class 的好处](#使用-class-的好处)
+        - [语义化](#语义化)
+        - [共享环境](#共享环境)
+        - [复用](#复用)
         - [其他类似的方法](#其他类似的方法)
             - [*Combine Functions into Transform*](#combine-functions-into-transform)
             - [Nested function](#nested-function)
@@ -39,16 +40,16 @@
 
 
 ## Motivation
-### Class 是程序的一个基础结构
-1. Classes are a fundamental construct in most modern programming languages. 
-2. They bind together data and functions into a shared environment, exposing some of that data and function to other program elements for collaboration. 
-3. They are the primary construct in object­oriented languages, but are also useful with other approaches too.
-4. When I see a group of functions that operate closely together on a common body of data (usually passed as arguments to the function call), I see an opportunity to form a class.
+### 语义化
+1. 如果若干个函数在逻辑上属于一个对象的行为，并且操作着同样的一组数据，那么在形式上就应该组成为一个整体的对象。
+2. 语义上，将若干个函数组合为一个类可以明确的表示出它们在逻辑上是一个整体。
 
-### 使用 class 的好处
-* **隔离**：Makes the common environment that these functions share more explicit.
-* **共享**：Allows me to simplify function calls inside the object by removing many of the arguments. 
-* **复用**：Provides a reference to pass such an object to other parts of the system.
+### 共享环境
+1. 之前这些函数之间处理公共数据时，需要有外部的公开数据，或者函数之间明确的通过参数传递。
+2. 封装为一个类之后，公共的数据就只能让类的方法来访问，而且页不需要在相互传参。
+
+### 复用
+复用一个封装好的类比复用一组函数和数据要简单得多。
 
 ### 其他类似的方法
 Which one to use depends more on the broader context of the program. 

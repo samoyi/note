@@ -8,23 +8,13 @@ inverse of *Split Parameter Object*
 
 
 ## Motivation
-1. I often see groups of data items that regularly travel together, appearing in function after function. 
-2. Such a group is a data clump, and I like to replace it with a single data structure.
-
-### 形式上的好处
-* It reduces the size of parameter lists for any function that uses the new structure. 
-* It helps consistency since all functions that use the structure will use the same names to get at its elements. 
-
-### 逻辑上的好处
-1. It makes explicit the relationship between the data items. 
+1. 如果这些参数项在语义上属于一个整体，那就可以考虑把它们组成一个整体。
 2. 本来它们只是作为分散的若干数据来对待，但当你尝试将他们组成为一个对象，它们就有了作为一个整体的意义。
 3. 形式上，你组织了数据。但是内在的逻辑是，你收纳整理了数据背后的逻辑。
 
 
 ## 过度优化
-1. 不要为了图方便而传整个对象。如果接收方实际上只需要对象中的少部分属性，那传整个对象就没有必要。
-2. 
-
+不要为了图方便而传整个对象。如果接收方实际上只需要对象中的少部分属性，那传整个对象就没有必要。
 
 
 ## Mechanics

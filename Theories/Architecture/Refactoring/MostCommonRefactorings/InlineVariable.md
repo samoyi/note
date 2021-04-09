@@ -1,11 +1,10 @@
 # Inline Variable
 
+inverse of: *Extract Variable*
+
 
 ## Motivation
-1. Variables provide names for expressions within a function, and as such they are usually a Good Thing. 
-2. But sometimes, the name doesn’t really communicate more than the expression itself. 
-3. At other times, you may find that a variable gets in the way of refactoring the neighboring code. 
-4. In these cases, it can be useful to inline the variable.
+表达式已经足够简明
 
 
 ## Mechanics

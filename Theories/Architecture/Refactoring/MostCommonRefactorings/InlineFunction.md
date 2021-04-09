@@ -1,5 +1,6 @@
 # Inline Function
-inverse of: Extract Function
+
+inverse of: *Extract Function*
 
 
 ## Motivation
@@ -22,37 +23,6 @@ inverse of: Extract Function
 4. Test after each replacement.
     * The entire inlining doesn’t have to be done all at once. If some parts of the inline are tricky, they can be done gradually as opportunity permits.
 5. Remove the function definition.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ## References
