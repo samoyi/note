@@ -65,13 +65,12 @@
 5. 我们称这样的解法为问题的一个 **最优解**（optimal solution）。一个问题可能有不止一个最优解。
 
 ### 整体步骤
-1. When developing a dynamic-programming algorithm, we follow a sequence of four steps:
-    1. 描述最优解的结构。
+1. 我们通常按如下 4 个步骤来设计一个动态规划算法
+    1. 描绘最优解的结构。
     2. 递归的定义最优解的值。
     3. 计算最优解的值，通常使用自底向上方法。
     4. 利用计算的信息构造一个最优解。
-2. Steps 1–3 form the basis of a dynamic-programming solution to a problem. If we need only the value of an optimal solution, and not the solution itself, then we can omit step 4. 
-3. When we do perform step 4, we sometimes maintain additional information during step 3 so that we can easily construct an optimal solution
+2. 步骤 1~3 是动态规划算法求解问题的基础，可以求出问题的 **最优解的值**。但如果要得出 **最优解本身**，则有时需要在步骤 3 的过程中维护一些信息，以便来构造一个最优解。
 
 ### 因果链起点的寻找
 1. 不管是递归还是动态规划，其实都是要寻找因果链的起点。寻找的方法，其实也都是找到自变量的初始条件。
@@ -297,7 +296,7 @@ int memoized_cut_rod(int rod_len) {
     1   5   8   10  13  17  18  22  25  30  
     1   2   3   2   2   6   1   2   3   10
     ```
-5. 自顶向上方法的情况
+5. 自顶向下方法的情况
     ```cpp
     int memoized_cut_rod(int rod_len) {
         if (memo[rod_len] > 0) {
