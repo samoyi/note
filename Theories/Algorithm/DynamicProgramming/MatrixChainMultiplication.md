@@ -20,6 +20,9 @@
         - [复杂度](#复杂度)
         - [构造最优解](#构造最优解)
         - [实际计算矩阵链乘积](#实际计算矩阵链乘积)
+    - [自顶向下带备忘](#自顶向下带备忘)
+        - [实现](#实现)
+        - [时间复杂度](#时间复杂度)
     - [Referecens](#referecens)
 
 <!-- /TOC -->
@@ -123,8 +126,6 @@
         let _chain = chain.slice(0);
         _chain.unshift({});
 
-        initTables(len, costs, splitPoints);
-
         for (let count = 2; count <= len; count++) { // 遍历每种子链长度
             for (let i = 1; i <= len-count+1; i++) { // 遍历当前子链中所有的矩阵组合
                 let j = i + count - 1;
@@ -187,6 +188,8 @@
         {r: 10, c: 20},
         {r: 20, c: 25},
     ];
+
+    initTables(chain.length, costs, splitPoints);
     matrix_chain_order(chain);
     ```
 9. 下图展示了对于上面示例的矩阵链，每个子矩阵链的相乘最优代价和对应的分割位置
@@ -231,10 +234,8 @@
 
 
 ### 复杂度
-* 时间复杂度为  $O(n^3)$
+* 时间复杂度为 $O(n^3)$
 * 存储表的空间复杂度为 $Θ(n^2)$
-
- $O$、大 $Θ$ 和大 $Ω$
 
 ### 构造最优解
 1. 根据分割位置的表格来递归的构造一个最优解
@@ -289,6 +290,54 @@ function matrix_chain_multiply (chain, splitPoints, i, j) {
     return chain[i];
 }
 ```
+
+
+## 自顶向下带备忘
+### 实现
+```js
+function memoized_matrix_chain (chain, i, j) {
+    if (i === j) {
+        return 0;
+    }
+    else if (costs[i][j]) {
+        return costs[i][j];
+    }
+
+    let min = Number.POSITIVE_INFINITY;
+    let cost = 0;
+    for (let k=i; k<=j-1; k++) {
+        cost = memoized_matrix_chain(chain, i, k)
+                + memoized_matrix_chain(chain, k+1, j)
+                + subchainMultiplyCost(chain, i, k, j);
+        if (cost < min) {
+            min = cost;
+        }
+    }
+    return costs[i][j] = min;
+}
+
+
+const chain = [
+    {r: 30, c: 35},
+    {r: 35, c: 15},
+    {r: 15, c: 5 },
+    {r: 5,  c: 10},
+    {r: 10, c: 20},
+    {r: 20, c: 25},
+];
+
+initTables(chain.length, costs, splitPoints);
+let _chain = chain.slice(0);
+_chain.unshift({});
+console.log(memoized_matrix_chain(_chain, 1, 6)); // 15125
+```
+
+### 时间复杂度
+1. `memoized_matrix_chain` 的调用分为两种：一种是没有命中缓存然后发生后面的递归调用，一种是命中缓存直接返回。
+2. 第一种没有命中缓存的次数是 $Θ(n^2)$，因为每个表项对应一次。
+3. 第二种命中缓存的调用，都是第一种所产生的递归，因为要递归已有的结果来获得未知的结果。
+4. 第一种每次调用时，循环会从 `i` 到 `j-1`，$O(n)$ 次，所以产生的递归调用也是 $O(n)$ 次。也就是说，每次第一种的 `memoized_matrix_chain` 调用都会发生 $O(n)$ 的第二种 `memoized_matrix_chain` 调用。因此第二种的调用次数是 $O(n^3)$。
+5. 综合起来，时间复杂度是 $O(n^3)$ 级别。
 
 
 ## Referecens
