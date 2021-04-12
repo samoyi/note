@@ -7,6 +7,7 @@
     - [原则](#原则)
     - [场景](#场景)
         - [getter 和 setter](#getter-和-setter)
+        - [Vuex store state 封装为 getter 和 mutation](#vuex-store-state-封装为-getter-和-mutation)
     - [过度优化](#过度优化)
     - [References](#references)
 
@@ -22,6 +23,8 @@
 
 ## 场景
 ### getter 和 setter
+
+### Vuex store state 封装为 getter 和 mutation
 
 
 ## 过度优化

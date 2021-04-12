@@ -24,7 +24,6 @@
     if ((rootGetters['common/isWeixin'] && !urlParams.token && (!urlParams.code && !sessionStorage.getItem('last_code'))) || rootGetters['common/isWeixinWork']) {
                 return true;
             }
-
     ```
 2. 整理为
     ```js

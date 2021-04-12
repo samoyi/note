@@ -6,6 +6,7 @@
 - [Combine Functions into Transform](#combine-functions-into-transform)
     - [原则](#原则)
     - [场景](#场景)
+        - [Vue 计算属性](#vue-计算属性)
     - [过度优化](#过度优化)
 
 <!-- /TOC -->
@@ -16,6 +17,8 @@
 
 
 ## 场景
+### Vue 计算属性
+Vue 组件中使用计算属性对 store 中的原始数据进行加工，转换为组件需要的形式。
 
 
 ## 过度优化
