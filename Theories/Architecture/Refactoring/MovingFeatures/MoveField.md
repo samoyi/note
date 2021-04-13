@@ -7,11 +7,11 @@ inverse of: Extract Class
 
 - [Move Field](#move-field)
     - [思想](#思想)
+        - [模型准确的重要性](#模型准确的重要性)
+        - [语义化](#语义化)
     - [Motivation](#motivation)
         - [数据结构的重要性——模型越准确，使用越简单](#数据结构的重要性模型越准确使用越简单)
-        - [应该及时修正错误的模型，及时降低模型的理解和使用成本](#应该及时修正错误的模型及时降低模型的理解和使用成本)
         - [具体移动动机——字段放错了地方，可能就会出现非正常耦合](#具体移动动机字段放错了地方可能就会出现非正常耦合)
-        - [搬移可能是其他重构的相关操作](#搬移可能是其他重构的相关操作)
         - [封装良好的对象中的字段搬移起来更容易](#封装良好的对象中的字段搬移起来更容易)
     - [Mechanics](#mechanics)
     - [References](#references)
@@ -20,8 +20,13 @@ inverse of: Extract Class
 
 
 ## 思想
-1. 首先，组织的混乱带来理解的混乱，就和命名带来的混乱一样。一个不应该出现在这里的东西出现了，就会增加理解负担。
-2. 更重要的是，你的组织结构和你要解决的问题不匹配。可能是少了一些功能，或者是多了一些副作用。结构的混乱也会带来交流的错乱和低效。
+### 模型准确的重要性
+1. 数据结构是现实对象的抽象模型，数据结构的组织结构应该反映出现实对象的组织结构。
+2. 数据结构组织的混乱带来理解的混乱，就和命名带来的混乱一样（命名也可以看成是对被命名对象的一种高度抽象）。一个不应该出现在这里的东西出现了，就会增加理解负担。
+3. 更重要的是，你的组织结构和你要解决的问题不匹配。可能是少了一些功能，或者是多了一些副作用。结构的混乱也会带来交流的错乱和低效。
+
+### 语义化
+字段在语义上应该放在哪那就放在哪，不要为了图方便就乱放。
 
 
 ## Motivation
@@ -30,29 +35,14 @@ inverse of: Extract Class
 2. 数据结构是现实事物的模型。模型越准确，就越可以方便准确的描述现实事物，对数据的操作也就可以更准确的对应现实事物的变化。
 3. 不准确的建模，就导致系统要花很多功夫来打补丁，弥合模型和现实的差距。
 4. 这样，系统复杂度增加，理解和修改都变得更难，到最后甚至会看不出来这个模型到底是干什么用的。
-
-### 应该及时修正错误的模型，及时降低模型的理解和使用成本
-1. So, data structures are important — but like most aspects of programming they are hard to get right. 
-2. In the process of programming, I learn more about the problem domain and my data structures. A design decision that is reasonable and correct one week can become wrong in another.
-3. As soon as I realize that a data structure isn’t right, it’s vital to change it. 
-4. If I leave my data structures with their blemishes, those blemishes will confuse my thinking and complicate my code far into the future.
+5. 因此，应该及时修正错误的模型，及时降低模型的理解和使用成本
 
 ### 具体移动动机——字段放错了地方，可能就会出现非正常耦合
-1. I may seek to move data because I find I always need to pass a field from one record whenever I pass another record to a function. Pieces of data that are always passed to functions together are usually best put in a single record in order to clarify their relationship. 
-2. Change is also a factor： if a change in one record causes a field in another record to change too, that’s a sign of a field in the wrong place. 
-3. If I have to update the same field in multiple structures, that’s a sign that it should move to another place where it only needs to be updated once.
-
-### 搬移可能是其他重构的相关操作
-1. I usually do Move Field in the context of a broader set of changes. 
-2. Once I’ve moved a field, I find that many of the users of the field are better off accessing that data through the target object rather than the original source. I then change these with later refactorings. 
-3. Similarly, I may find that I can’t do Move Field at the moment due to the way the data is used. I need to refactor some usage patterns first, then do the move.
+1. 两个字段虽然没有放在一个地方，但是在使用某些功能时，这两个字段却经常出现，那就说明它们可能应该放在一起。
+2. 或者我修改某些功能的时候，总是要修改不同地方的不同字段，那也说明这些字段可能在逻辑上属于一个地方。
 
 ### 封装良好的对象中的字段搬移起来更容易
-1. In my description so far, I’m saying “record,” but all this is true of classes and objects too. 
-2. A class is a record type with attached functions — and these need to be kept healthy just as much as any other data. 
-3. The attached functions do make it easier to move data around, since the data is encapsulated behind accessor methods. 
-4. I can move the data, change the accessors, and clients of the accessors will still work. So, this is a refactoring that’s easier to do if you have classes.
-5. If I’m using bare records that don’t support encapsulation, I can still make a change like this, but it is more tricky.
+如果数据已经用函数进行了封装，或者直接是作为对象的属性，那搬移起来就会更方便，因为访问者并不关心数据实际放在哪里，只要封装的函数对使用者来说还表现的和以前一样就行。
 
 
 ## Mechanics

@@ -5,6 +5,7 @@
 
 - [Encapsulate Collection](#encapsulate-collection)
     - [思想](#思想)
+    - [涉及的 bad codes](#涉及的-bad-codes)
     - [Motivation](#motivation)
     - [实现方法](#实现方法)
         - [使用 setter 返回副本的方法](#使用-setter-返回副本的方法)
@@ -15,6 +16,10 @@
 
 
 ## 思想
+
+
+## 涉及的 bad codes
+* Mutable Data
 
 
 ## Motivation

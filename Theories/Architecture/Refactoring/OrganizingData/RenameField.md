@@ -18,9 +18,6 @@
 
 
 ## Motivation
-1. Names are important, and field names in record structures can be especially important when those record structures are widely used across a program. 
-2. Data structures are the key to understanding what’s going on, it’s essential to keep them clear. 
-3. You may want to rename a field in a record structure, but the idea also applies to classes. Getter and setter methods form an effective field for users of the class. Renaming them is just as important as with bare record structures.
 
 
 ## Mechanics

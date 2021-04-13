@@ -22,13 +22,12 @@
 
 ## Motivation
 ### 相关的代码收纳到一起
-1. Code is easier to understand when things that are related to each other appear together. 
-2. If several lines of code access the same data structure, it’s best for them to be together rather than intermingled with code accessing other data structures.
-3. A very common case of this is declaring and using variables. Some people like to declare all their variables at the top of a function. I prefer to declare the variable just before I first use it.
-4. Putting related code into a clearly separated function is a better separation than just moving a set of lines together, but I can’t do the Extract Function unless the code is together in the first place.
+如果一段代码里有若干个子逻辑，但这几段子逻辑又没有独立到需要提取函数，那就应该把代码按照它们的子逻辑排版：
+* 同一个子逻辑的代码放到一起
+* 不同的子逻辑之间可以加一个空行
 
 ### 按照逻辑顺序放置代码
-1. 除了把相关的代码放在一起方便查看以外，我还喜欢按照逻辑顺序放置代码。
+1. 除了把相关的代码放在一起方便查看以外，我还喜欢按照逻辑顺序放置代码。若干个变量或函数的定义即使并不要求顺序，那最好也按照舒服的逻辑书写它们的顺序。
 2. 比如一个方法是获取手机号 `getPhone`，获取手机号之后要调用发送手机号的方法 `sendPhone`。那么，我喜欢把这两个方法写在一起，且 `getPhone` 在上面，`sendPhone` 在下面。
     ```js
     // 其他方法

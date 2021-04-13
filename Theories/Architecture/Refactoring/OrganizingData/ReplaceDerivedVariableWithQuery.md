@@ -6,8 +6,10 @@
 
 - [Replace Derived Variable with Query](#replace-derived-variable-with-query)
     - [思想](#思想)
+        - [消除非必要的可变性](#消除非必要的可变性)
+        - [涉及的 bad codes](#涉及的-bad-codes)
     - [Motivation](#motivation)
-        - [用计算属性替代不应该被修改的变量](#用计算属性替代不应该被修改的变量)
+        - [用取值函数替代不应该被修改的变量](#用取值函数替代不应该被修改的变量)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -15,15 +17,19 @@
 
 
 ## 思想
-如果一个数据不应该被修改，那就让它不能被修改
+### 消除非必要的可变性
+如果一个数据不应该被修改，那就让它不能被修改。
+
+
+### 涉及的 bad codes
+* Mutable Data
 
 
 ## Motivation
-### 用计算属性替代不应该被修改的变量
-1. One of the biggest sources of problems in software is mutable data. 
-2. Data changes can often couple together parts of code in awkward ways, with changes in one part leading to knock-­on effects that are hard to spot. 
-3. One way I can make a big impact is by removing any variables that I could just as easily calculate. 
-4. It is also protected from being corrupted when you fail to update the variable as the source data changes.       
+### 用取值函数替代不应该被修改的变量
+1. 如果某个被计算出来的数据是不应该改变的，那你如果把计算结果保存进变量，说不定就会有什么误操作会给这个变量赋值。
+2. 一个方法就是定义一个取值函数，通过该函数来计算结果并返回，这样就降低了结果被修改的可能。Vue 的计算属性就可以实现这个需求。
+3. 不过这种情况，还是定义为常量更好吧。如果语言可以很方便的使用常量的话。
 
 
 ## Mechanics

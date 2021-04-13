@@ -5,16 +5,25 @@
 
 - [Replace Primitive with Object](#replace-primitive-with-object)
     - [思想](#思想)
+    - [涉及的 bad codes](#涉及的-bad-codes)
+    - [Motivation](#motivation)
         - [基本类型和对象的区别](#基本类型和对象的区别)
         - [封装的边界](#封装的边界)
-    - [Motivation](#motivation)
-        - [基础类型的数据随着演进可能会变得越来越复杂，越来越适合封装为对象](#基础类型的数据随着演进可能会变得越来越复杂越来越适合封装为对象)
     - [References](#references)
 
 <!-- /TOC -->
 
 
 ## 思想
+
+
+## 涉及的 bad codes
+* Primitive Obsession
+
+
+## Motivation
+基础类型的数据随着演进可能会变得越来越复杂，越来越适合封装为对象
+
 ### 基本类型和对象的区别
 1. 任意数是基本类型还是对象？既然任意了，那就很基本了。即使你封装为对象也是毫无意义的。
 2. 人类年龄呢？年龄应该是非负整数，而且不能太大。这就有了两个属性了。虽然依然可以用基本类型保存年龄，但在某些地方就要根据这两个属性对年龄范围进行约束了。
@@ -29,18 +38,6 @@
 1. 上面的例子中，从任意数到手机号码，数据在最基本的情况下，属性维度逐渐增加。
 2. 当数据的维度越来越多，数据就越适合被封装为对象。不封装与封装的边界，是要具体问题具体分析的。
 3. 如果有好几个地方都要对数据做相同的处理，并且这里处理有些复杂，或者是业务性的（不是可以显而易见的明确为什么要这么处理），那么就可以考虑封装了。
-
-
-## Motivation
-### 基础类型的数据随着演进可能会变得越来越复杂，越来越适合封装为对象
-1. Often, in early stages of development you make decisions about representing simple facts as simple data items, such as numbers or strings. 
-2. As development proceeds, those simple items aren’t so simple anymore. A telephone number may be represented as a
-string for a while, but later it will need special behavior for formatting, extracting the area code, and the like. 
-3. This kind of logic can quickly end up being duplicated around the code base, increasing the effort whenever it needs to be used.
-4. As soon as I realize I want to do something other than simple printing, I like to create a new class for that bit of data. 
-5. At first, such a class does little more than wrap the primitive — but once I have that class, I have a place to put behavior specific to its needs.
-6. These little values start very humble, but once nurtured they can grow into useful tools. They may not look like much, but I find their effects on a code base can be surprisingly large. 
-7. Indeed many experienced developers consider this to be one of the most valuable refactorings in the toolkit — even though it often seems counterintuitive to a new programmer.
 
 
 ## References

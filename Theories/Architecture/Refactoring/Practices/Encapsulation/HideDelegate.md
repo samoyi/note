@@ -6,6 +6,7 @@
 - [Hide Delegate](#hide-delegate)
     - [原则](#原则)
     - [场景](#场景)
+        - [Vue 中多用计算属性和 getter](#vue-中多用计算属性和-getter)
         - [当一个组件多个计算属性引用同一个 store 模块的数据时](#当一个组件多个计算属性引用同一个-store-模块的数据时)
     - [过度优化](#过度优化)
     - [References](#references)
@@ -19,6 +20,8 @@
 
 
 ## 场景
+### Vue 中多用计算属性和 getter
+
 ### 当一个组件多个计算属性引用同一个 store 模块的数据时
 1. 比如这种情况
     ```js
