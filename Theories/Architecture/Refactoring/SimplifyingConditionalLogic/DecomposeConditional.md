@@ -8,7 +8,6 @@ inverse of: Change Value to Reference
 - [Decompose Conditional](#decompose-conditional)
     - [思想](#思想)
     - [Motivation](#motivation)
-        - [复杂的条件分支理解起来很复杂，而且会增加函数长度](#复杂的条件分支理解起来很复杂而且会增加函数长度)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -18,23 +17,28 @@ inverse of: Change Value to Reference
 ## 思想
 1. 其实也是意图和实现分离。
 2. 判断一个条件可以逻辑比较复杂，但我阅读分支流程的时候不需要关心具体是怎么判断的，我只需要知道判断的内容和结果即可。
-3. 同样，一个条件分支内部的执行也是一样，我不需要看它执行的实现是什么、是怎么干的，只需要知道它干了什么就行。
-4. 当我需要了解具体的判断逻辑和执行逻辑时，再去看封装的函数。
+3. 当我需要了解具体的判断逻辑和执行逻辑时，再去看封装的函数或表达式。
 
 
 ## Motivation
-### 复杂的条件分支理解起来很复杂，而且会增加函数长度
-1. One of the most common sources of complexity in a program is complex conditional logic. 
-2. As I write code to do various things depending on various conditions, I can quickly end up with a pretty long function. 
-3. Length of a function is in itself a factor that makes it harder to read, but conditions increase the difficulty. 
-
+1. 应该叫封装条件表达式。
+2. 有些条件表达式会写的很复杂，不仅长，关键里面还包含各种 `&&`、`||` 、`!` 之类的，要看明白很费劲，特别是 `!` 还需要大脑的逻辑反转一下。
+3. 封装为变量或者函数，起一个表明意图的名字，就会清晰得多。
+4. 而且并不一定只封装最后的结果，中间的临时结果如果复杂也可以进行封装。总之就是不能很快看出意图就封装。
+4. 之前有一个条件判断是这样的，完全眼花，很难看明白要干什么
+    ```js
+    return rootGetters['common/isWeixin'] && (!urlParams.token) && (!urlParams.code && !sessionStorage.getItem('last_code'));
+    ```
+5. 重构成下面的样子，很容易就看懂要判断什么了
+    ```js
+    const isWeixin = rootGetters['common/isWeixin'];
+    const noParamToken = !urlParams.token;
+    const noCode = !urlParams.code && !sessionStorage.getItem('last_code');
+    return isWeixin && noParamToken && noCode;
+    ```
+    
 
 ## Mechanics
-1. As with any large block of code, I can make my intention clearer by decomposing it and replacing each chunk of code with a function call named after the intention of that chunk. 
-2. With conditions, I particularly like doing this for the conditional part and each of the alternatives. 
-3. This way, I highlight the condition and make it clear what I’m branching on. I also highlight the reason for the branching.
-4. This is really just a particular case of applying *Extract Function* to my code, but I like to highlight this case as one where I’ve often found a remarkably good value for the exercise.
-5. 如果条件判断比较复杂，就把条件判断封装为函数；如果判断后的执行很复杂，也封装为函数。
 
 
 ## References
