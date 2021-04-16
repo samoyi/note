@@ -1,15 +1,12 @@
 # Pull Up Method
 
-inverse of: Push Down Method
+inverse of: *Push Down Method*
 
 <!-- TOC -->
 
 - [Pull Up Method](#pull-up-method)
     - [思想](#思想)
     - [Motivation](#motivation)
-        - [重复方法的危害](#重复方法的危害)
-        - [重复的方法提升到共同的超类](#重复的方法提升到共同的超类)
-        - [重构注意点——引用了当前环境的东西或者本身有些差异](#重构注意点引用了当前环境的东西或者本身有些差异)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -21,21 +18,10 @@ inverse of: Push Down Method
 
 
 ## Motivation
-### 重复方法的危害
-1. Eliminating duplicate code is important. Two duplicate methods may work fine as they are, but they are nothing but a breeding ground for bugs in the future. 
-2. Whenever there is duplication, there is risk that an alteration to one copy will not be made to the other. 
-
-### 重复的方法提升到共同的超类
-1. Usually, it is difficult to find the duplicates. The easiest case of using *Pull Up Method* is when the methods have the same body, implying there’s been a copy and paste. 
-2. Of course it’s not always as obvious as that. I could just do the refactoring and see if the tests croak — but that puts a lot of reliance on my tests. 
-3. I usually find it valuable to look for the differences — often, they show up behavior that I forgot to test for. 
-4. Often, *Pull Up Method* comes after other steps. I see two methods in different classes that can be parameterized in such a way that they end up as essentially the same method. 
-4. In that case, the smallest step is for me to apply *Parameterize Function* separately and then *Pull Up Method*.
-
-### 重构注意点——引用了当前环境的东西或者本身有些差异
-1. The most awkward complication with *Pull Up Method* is if the body of the method refers to features that are on the subclass but not on the superclass. 
-2. When that happens, I need to use Pull Up Field  and *Pull Up Method* on those elements first. 
-3. If I have two methods with a similar overall flow, but differing in details, I’ll consider the Form Template Method [mf­-ft].
+1. 多个子类或者子模块中有相同或者相似的方法，那就可以考虑把它们提取到公共的父级。
+2. 有些情况可能并没有父级，而是类似于 Vue 那样，多个组件可以引用同一个 mixin，那就可以提取到 mixin 这样的对象中。
+3. 如果这个方法在某些子类中会引用该子类特有的数据，那就可以考虑把这个数据也移到公共的父级。
+4. 再复杂的一些的情况是，这些方法有着共同的执行步骤，但数据各有差别，那么可以使用模板方法设计模式，构造出相同的模板方法并提升。
 
 
 ## Mechanics

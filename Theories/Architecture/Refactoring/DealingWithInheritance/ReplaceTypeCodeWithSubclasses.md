@@ -1,11 +1,12 @@
 # Replace Type Code with Subclasses
 
-inverse of: Remove Subclass
+inverse of: *Remove Subclass*
 
 <!-- TOC -->
 
 - [Replace Type Code with Subclasses](#replace-type-code-with-subclasses)
     - [思想](#思想)
+        - [SRP](#srp)
     - [Motivation](#motivation)
         - [相比于单个类兼容多类型，创建多个子类可以将一个类里复杂的逻辑判断拆分为清晰简单的子类](#相比于单个类兼容多类型创建多个子类可以将一个类里复杂的逻辑判断拆分为清晰简单的子类)
         - [两种重构方式  TODO 不懂](#两种重构方式--todo-不懂)
@@ -16,6 +17,7 @@ inverse of: Remove Subclass
 
 
 ## 思想
+### SRP
 和 Replace Conditional with Polymorphism 的思想一样的。如果条件分支里要处理的逻辑比较复杂，不如直接抽出为独立的类。
 
 

@@ -1,6 +1,6 @@
 # Push Down Field
 
-inverse of: Pull Up Field
+inverse of: *Pull Up Field*
 
 <!-- TOC -->
 
@@ -17,8 +17,7 @@ inverse of: Pull Up Field
 
 
 ## Motivation
-If a field is only used by one subclass (or a small proportion of subclasses), I move it to
-those subclasses.
+和 *Pull Up Field* 相反。
 
 
 ## Mechanics

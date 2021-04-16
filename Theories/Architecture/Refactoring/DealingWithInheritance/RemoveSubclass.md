@@ -1,6 +1,6 @@
 # Remove Subclass
 
-inverse of: Replace Type Code with Subclasses
+inverse of: *Replace Type Code with Subclasses*
 
 <!-- TOC -->
 
@@ -18,10 +18,8 @@ inverse of: Replace Type Code with Subclasses
 
 
 ## Motivation
-1. Subclasses are useful. They support variations in data structure and polymorphic behavior. They are a good way to program by difference. 
-2. But as a software system evolves, subclasses can lose their value as the variations they support are moved to other places or removed altogether. 
-3. Sometimes, subclasses are added in anticipation of features that never end up being built, or end up being built in a way that doesn’t need the subclasses. 
-4. A subclass that does too little incurs a cost in understanding that is no longer worthwhile. When that time comes, it’s best to remove the subclass, replacing it with a field on its superclass.
+1. 和 *Replace Type Code with Subclasses* 相反。
+2. 构建子类是有成本，如果存在的意义已经不大，那就可以直接在父类里处理相关的逻辑了。
 
 
 ## Mechanics
