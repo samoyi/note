@@ -7,6 +7,7 @@ inverse of: *Change Value to Reference*
 
 - [Change Reference to Value](#change-reference-to-value)
     - [思想](#思想)
+        - [消除非必要的可变性](#消除非必要的可变性)
     - [Motivation](#motivation)
     - [Mechanics](#mechanics)
     - [References](#references)
@@ -15,6 +16,7 @@ inverse of: *Change Value to Reference*
 
 
 ## 思想
+### 消除非必要的可变性
 1. 如果你不希望其他人共同修改一份数据，那你分发对数据的引用（修改权限），就可能导致该数据被意外修改。
 2. 这时你就应该分发数据的副本，供他们自己折腾，而不会影响到自己。
 

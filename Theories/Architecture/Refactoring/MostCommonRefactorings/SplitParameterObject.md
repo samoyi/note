@@ -4,6 +4,7 @@ inverse of *Introduce Parameter Object*
 
 
 ## 思想
+### LKP
 东西越多，需要处理的就越多，副作用就越多。
 
 

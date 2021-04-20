@@ -6,6 +6,8 @@
     - [思想](#思想)
     - [涉及的 bad codes](#涉及的-bad-codes)
     - [涉及的重构](#涉及的重构)
+        - [Moving Features](#moving-features)
+        - [Dealing with Inheritance](#dealing-with-inheritance)
     - [References](#references)
 
 <!-- /TOC -->
@@ -15,16 +17,23 @@
 
 
 ## 涉及的 bad codes
-* Global Data
-* Mutable Data
+* Large Class Large Record
+* Long Function and Long Module
 
 
 ## 涉及的重构
 * Replace Derived Variable with Query
-* Encapsulate Collection
-* Change Reference to Value
-* Replace Derived Variable with Query
-* Remove Setting Method
+* Extract Function
+* Split Phase
+* Extract Class
+* Remove Flag Argument
+* Separate Query from Modifier
+
+### Moving Features
+* Split Loop
+
+### Dealing with Inheritance
+* Replace Type Code with Subclasses
 
 
 ## References

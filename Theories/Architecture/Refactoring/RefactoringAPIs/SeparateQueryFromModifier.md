@@ -4,7 +4,7 @@
 
 - [Separate Query from Modifier](#separate-query-from-modifier)
     - [思想](#思想)
-        - [Command-Query Separation](#command-query-separation)
+        - [Command-Query Separation，也算是 SRP 的一种](#command-query-separation也算是-srp-的一种)
     - [Motivation —— Command-Query Separation](#motivation--command-query-separation)
         - [“纯函数” 的好处](#纯函数-的好处)
     - [Mechanics](#mechanics)
@@ -14,7 +14,7 @@
 
 
 ## 思想
-### Command-Query Separation
+### Command-Query Separation，也算是 SRP 的一种
 1. 纯函数很好，尽量使用纯函数。
 2. 如果一个函数不是纯函数，那就不要让它看起来像纯函数。
 3. 能纯化的部分就单独提取出来作为纯函数，不要把它混在不纯的操作里面。
