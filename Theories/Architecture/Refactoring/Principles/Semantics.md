@@ -50,7 +50,7 @@
 ### Dealing with Inheritance
 * Replace Subclass with Delegate
 * Replace Superclass with Delegate
-
+* Replace Type Code with Subclasses
 
 
 ## References
