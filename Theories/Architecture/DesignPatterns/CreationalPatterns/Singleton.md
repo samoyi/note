@@ -44,34 +44,61 @@
 
 
 ## 基本实现
-```js
-const Singleton = function( name ){
-    this.name = name;
-    this.instance = null;
-};
+1. ES5 实现
+    ```js
+    const Singleton = function( name ){
+        this.name = name;
+        // this.instance = null; // 不需要这个
+    };
 
-Singleton.prototype.getName = function(){
-    return this.name;
-};
+    Singleton.prototype.getName = function(){
+        return this.name;
+    };
 
-Singleton.getInstance = function( name ){
-    if (!this.instance){
-        this.instance = new Singleton( name );
+    Singleton.getInstance = function( name ){
+        // this 指向 Singleton 对象
+        if (!this.instance){ 
+            this.instance = new Singleton( name ); // 创建的实例（单例）保存为 Singleton 的属性，也就是静态属性
+        }
+        return this.instance;
+    };
+
+    let a = Singleton.getInstance( 'sven1' );
+    let b = Singleton.getInstance( 'sven2' );
+
+    console.log( a === b );   // true
+    console.log(a.getName()); // "sven1"
+    console.log(b.getName()); // "sven1"
+    ```
+2. `name` 保存为实例属性，`getName` 是原型方法，`getInstance` 是静态方法。
+3. 调用静态方法，内部的 `this` 指向 `Singleton` 对象，而非实例。
+4. `new Singleton( name )` 创建实例，并把实例保存为 `Singleton` 对象的静态属性，并返回该实例。
+5. 使用 ES6 来实现
+    ```js
+    class Singleton {
+        constructor (name) {
+            this.name = name;
+        }
+
+        static getInstance(name) {
+            // 这里的 this 是类而非实例
+            if (this.instance) {
+                return this.instance;
+            }
+            else {
+                return this.instance = new this(name);
+            }
+        }
+
+        getName () {
+            return this.name;
+        }
     }
-    return this.instance;
-};
-
-let a = Singleton.getInstance( 'sven1' );
-let b = Singleton.getInstance( 'sven2' );
-
-console.log( a === b );   // true
-console.log(a.getName()); // "sven1"
-console.log(b.getName()); // "sven1"
-```
+    ```
 
 
 ## 透明的单例模式
-1. 上面的方法，在创建单例的时候，必须要通过 `getInstance` 方法而不是 `new`，因此使用者必须要知道这个类是单例模式，不能直接`new`。
+1. 上面的方法，在创建单例的时候，必须要通过 `getInstance` 方法而不是 `new`，因此使用者必须要知道这个类是单例模式，不能直接 `new`。
 2. 透明性的实现，就是让用户不需要知道该类是否是单例模式还是普通类，只要按照普通的 `new` 方法创建实例即可。
 3. 也就是说，使用 `new` 方法调用构造函数，但是每次调用都应该返回同一个实例
     ```js
@@ -116,7 +143,7 @@ console.log(b.getName()); // "sven1"
 ## 用代理实现单例模式
 1. 上面的逻辑中，构造函数的逻辑和单例管理的逻辑是混合在一起的，统一为一个单例构造函数。
 2. 这有些违背单一职责原则，`User.js` 实际上做了两件事：定义一个 `User` 类，把这个类改造为单例模式。
-3. 其实可以把这两个逻辑拆解耦，变成一个普通的构造函数和一个单例代理。需要使用单例 User 的时候就加上代理，不需要就还可以继续使用原有的普通 `User` 类。
+3. 其实可以把这两个逻辑解耦，变成一个普通的构造函数和一个单例代理。需要使用单例 User 的时候就加上代理，不需要就还可以继续使用原有的普通 `User` 类。
 4. **单一职责原则** 的 **代理模式** 提高了灵活性。
 
 ```js

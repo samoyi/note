@@ -68,9 +68,9 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
 
 
 ## 2. 实现原理
-1. 将各个环境的行为抽出为单独的节点对象，每个对象都要有一个方法来执行职责链的下一个节点。
-2. 每个节点的处理逻辑中，进行实际的处理，如果处理不了或者还有后续逻辑，则再把信息传递给下一个个节点。
-3. 将若干个节点通过设置下一个节点的方法组成一个职责链。
+1. 和链表类似，每个节点包括两部分内容：节点本身的处理逻辑，指向后继节点的方法。
+2. 具体的业务逻辑包括两个分支：可以处理则处理，不能处理则表明要传递给后继节点。
+3. 每种具体的业务逻辑作为处理逻辑传给对应的节点，并设置后继节点。
 
 
 ## 3. 适用场景
@@ -89,13 +89,17 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
 1. 假设我们负责一个售卖手机的电商网站，经过分别交纳 500 元定金或 200 元定金的两轮预定后（订单已在此时生成），现在已经到了正式购买的阶段。
 2. 公司针对支付过定金的用户有一定的优惠政策。在正式购买后，已经支付过 500 元定金的用户会收到 100 元的商城优惠券，200 元定金的用户可以收到 50 元的优惠券，而之前没有支付定金的用户只能进入普通购买模式，也就是没有优惠券，且在库存有限的情况下不一定保证能买到。
 3. 后端返回包含以下三个字段：
-    * `orderType`：表示订单类型（定金用户或者普通购买用户），值为 `1` 的时候是 500 元定金用户，为 `2` 的时候是 200 元定金用户，为 `3` 的时候是普通购买用户。
+    * `orderType`：表示订单类型（定金用户或者普通购买用户），值为 `Order500` 的时候是 500 元定金用户，为 `Order200` 的时候是 200 元定金用户，为 `OrderNormal` 的时候是普通购买用户。
     * `pay`：表示用户是否已经支付定金，值为 `true` 或者 `false`， 虽然用户已经下过交定金的订单，但如果他一直没有支付定金，现在只能降级进入普通购买模式。
     * `stock`：表示当前用于普通购买的手机库存数量，已经支付过 500 元或者 200 元定金的用户不受此限制。
 4. 根据后端返回计算订单结果
     ```js
+    const Order500 = 1;
+    const Order200 = 2;
+    const OrderNormal = 3;
+    
     function orderResult ( orderType, isPaid, stock ){
-        if ( orderType === 1 ) {      
+        if ( orderType === Order500 ) {      
             if ( isPaid === true ) { 
                 return '500 元定金预购, 得到 100 优惠券';
             }
@@ -108,7 +112,7 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
                 }
             }
         }
-        else if ( orderType === 2 ) {     
+        else if ( orderType === Order200 ) {     
             if ( isPaid === true ) {
                 return '200 元定金预购, 得到 50 优惠券';
             }
@@ -121,7 +125,7 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
                 }
             }
         }
-        else if ( orderType === 3 ) {
+        else if ( orderType === OrderNormal ) {
             if ( stock > 0 ) {
                 return '普通购买, 无优惠券';
             }
@@ -134,46 +138,18 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
     console.log( orderResult( 1 , true, 500) ); // 500元定金预购, 得到100优惠券
     ```
 5. 这无疑也是广义上的职责链，需求在 `if-else` 链上传递，直到被应该处理它的一个节点捕获，并进行处理。
-6. 但缺点也是很明显的，意图和实现没有分离，导致函数过大难以理解，而且严重违反了 OCP：
+6. 但缺点也是很明显的，但里面的三种处理逻辑没有进行意图和实现的分离，导致函数过大难以理解，而且严重违反了 OCP：
     * 增加减少节点需要修改整个链的函数
     * 修改某个节点也需要修改整个链的函数
     * 调整节点的链接顺序仍然需要修改整个链的函数
 
 ### 解耦职责链
-1. 抽出每个节点作为单独的函数。该方法如果能处理则处理，处理不了则返回`'nextSuccessor'`，等待请求被传递。
-    ```js
-    const order500 = function ( orderType, isPaid, stock ) {
-        if ( orderType === 1 && isPaid === true ) {
-            return '500 元定金预购，得到 100 优惠券';
-        }
-        else {
-            return 'nextSuccessor'; // 我不知道下一个节点是谁，反正把请求往后面传递
-        }
-    };
-
-    const order200 = function ( orderType, isPaid, stock ) {
-        if ( orderType === 2 && isPaid === true ) {
-            return '200 元定金预购，得到 50 优惠券';
-        }
-        else{
-            return 'nextSuccessor'; // 我不知道下一个节点是谁，反正把请求往后面传递
-        }
-    };
-
-    const orderNormal = function ( orderType, isPaid, stock ) {
-        if ( stock > 0 ){
-            return '普通购买，无优惠券';
-        }
-        else {
-            return '手机库存不足';
-        }
-    };
-    ```
-2. 创建一个节点类，生成节点实例时接受该节点的处理函数。方法 `setNextSuccessor` 设置如果该节点处理不了要传递到哪里，方法`receiveRequest` 用来接受请求并尝试进行处理
+1. 职责链上的每个节点有两部分要素：对于需求的处理函数 `handler`；如果处理不了，把需求传递给继任节点 `successor`。
+2. 因此节点类实现如下
     ```js
     class ChainNode {
-        constructor ( fn ) {
-            this.fn = fn;
+        constructor ( handler ) {
+            this.handler = handler;
             this.successor = null;
         }
 
@@ -182,9 +158,10 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
         }
 
         receiveRequest ( ...args ) {
-            let ret = this.fn( ...args );
-
-            if ( ret === 'nextSuccessor' ) { // 如果处理不了，需要传递给下一个节点
+            let ret = this.handler( ...args );
+            // 如果 handler 实现不了，会返回常量 TO_NEXT
+            if ( ret === TO_NEXT ) {
+                // 将需求传递给继任节点
                 return this.successor && this.successor.receiveRequest( ...args );
             }
 
@@ -192,27 +169,58 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
         }
     }
     ```
-3. 试着创建三个链条节点，并设置传递关系
+3. 现在就可以把三种订单逻辑抽出单独的函数。每个函数在接收到处理数据后，如果能处理则处理，处理不了则返回 `TO_NEXT`，将需求转发给后继节点
     ```js
-    const chainOrder500 = new ChainNode( order500 );
-    const chainOrder200 = new ChainNode( order200 );
-    const chainOrderNormal = new ChainNode( orderNormal );
+    const order500Handler = function ( orderType, isPaid, stock ) {
+        if ( orderType === Order500 && isPaid === true ) {
+            return '500 元定金预购，得到 100 优惠券';
+        }
+        else {
+            return TO_NEXT; // 我不知道下一个节点是谁，反正把请求往后面传递
+        }
+    };
 
-    chainOrder500.setNextSuccessor( chainOrder200 );
-    chainOrder200.setNextSuccessor( chainOrderNormal );
+    const order200Handler = function ( orderType, isPaid, stock ) {
+        if ( orderType === Order200 && isPaid === true ) {
+            return '200 元定金预购，得到 50 优惠券';
+        }
+        else{
+            return TO_NEXT; // 我不知道下一个节点是谁，反正把请求往后面传递
+        }
+    };
+
+    const orderNormalHandler = function ( orderType, isPaid, stock ) {
+        if ( stock > 0 ){
+            return '普通购买，无优惠券';
+        }
+        else {
+            return '手机库存不足';
+        }
+    };
     ```
-4. 让链条的不同节点接受请求。有的能直接处理，有的需要向后传递
+4. 现在使用节点类和三个处理函数，就可以创建三个节点
     ```js
-    console.log(chainOrder500.receiveRequest( 1, true, 500 ));    // 500 元定金预购，得到 100 优惠券
-    console.log(chainOrder500.receiveRequest( 2, true, 500 ));    // 200 元定金预购，得到 50 优惠券
-    console.log(chainOrder500.receiveRequest( 3, true, 500 ));    // 普通购买，无优惠券
-    console.log(chainOrder500.receiveRequest( 1, false, 0 ));     // 手机库存不足
+    const chainNodeOrder500 = new ChainNode( order500Handler );
+    const chainNodeOrder200 = new ChainNode( order200Handler );
+    const chainNodeOrderNormal = new ChainNode( orderNormalHandler );
+    ```
+5. 将三个节点设置为链
+    ```js
+    chainNodeOrder500.setNextSuccessor( chainNodeOrder200 );
+    chainNodeOrder200.setNextSuccessor( chainNodeOrderNormal );
+    ```    
+6. 让职责链的起点接受不同的数据，根据数据的不同，会在职责链不同节点进行处理
+    ```js
+    console.log(chainNodeOrder500.receiveRequest( Order500, true, 500 ));    // 500 元定金预购，得到 100 优惠券
+    console.log(chainNodeOrder500.receiveRequest( Order200, true, 500 ));    // 200 元定金预购，得到 50 优惠券
+    console.log(chainNodeOrder500.receiveRequest( OrderNormal, true, 500 )); // 普通购买，无优惠券
+    console.log(chainNodeOrder500.receiveRequest( Order500, false, 0 ));     // 手机库存不足
     ```
 
 
 ## 异步的职责链
-1. 链节点返回 `'nextSuccessor'` 可以立即同步地把职责传递给下一个节点。但往往也存在节点处理中包含异步的情况，例如在请求接口后才能决定能否处理。
-2. 可以再定义一个原型方法，在异步操作结束后通知下一个节点接收任务
+1. 链节点返回 `TO_NEXT` 可以立即同步地把职责传递给下一个节点。但往往也存在节点处理中包含异步的情况，例如在请求接口后才能决定能否处理。
+2. 因为这时 `handler` 函数已经返回，所以无法通过上面返回 `TO_NEXT` 的方式传递给后继。可以再定义一个原型方法 `next`，在异步操作结束后手动调用来通知下一个节点接收任务
     ```js
     class ChainNode {
         constructor (fn) {
@@ -224,30 +232,31 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
             return this.successor = successor;
         }
 
+        next ( ...args ) {
+            return this.successor && this.successor.receiveRequest( ...args );
+        }
+
         receiveRequest ( ...args ) {
             let ret = this.fn( ...args );
 
-            if ( ret === 'nextSuccessor' ){
-                return this.successor && this.successor.receiveRequest( ...args );
+            if ( ret === TO_NEXT ){
+                // 这里可以改为直接调用 next
+                return this.next( ...args );
             }
 
             return ret;
-        }
-
-        next ( ...args ) {
-            return this.successor && this.successor.receiveRequest( ...args );
         }
     }
 
 
     const fn1 = new ChainNode( function () {
         console.log( 1 );
-        return 'nextSuccessor';
+        return TO_NEXT; // 通过返回值传递给后继
     });
     const fn2 = new ChainNode( function () {
         console.log( 2 );
         setTimeout(()=>{
-            this.next();
+            this.next(); // 通过 next 方法手动传递给后继
         }, 3000 );
     });
     const fn3 = new ChainNode( function () {
@@ -267,7 +276,7 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
 Function.prototype.after = function( fn ){
     return (...args)=>{
         let re = this(...args);
-        if ( re === 'nextSuccessor' ){
+        if ( re === TO_NEXT ){
             // 初始函数返回了字符串 nextSuccessor，表示没解决问题，请求转给后续节点函数 fn
             return fn(...args);
         }
@@ -282,7 +291,7 @@ const order500 = function( orderType, pay, stock ){
         console.log( '500元定金预购，得到100优惠券' );
     }
     else{
-        return 'nextSuccessor';
+        return TO_NEXT;
     }
 };
 
@@ -292,7 +301,7 @@ const order200 = function( orderType, pay, stock ){
         console.log( '200元定金预购，得到50优惠券' );
     }
     else{
-        return 'nextSuccessor';
+        return TO_NEXT;
     }
 };
 
