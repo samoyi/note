@@ -38,7 +38,7 @@
 3. 这样不管遍历对象是什么功能，只要提供了标准的接口，就能放在这个遍历逻辑之中。
 
 ### OCP
-1. 对于这种组合结构，我们的期望是：随意的添加、删除或者修改元素，只要这些元素遵循相同的结构和接口（比如在下面宾利文件夹的例子中，都有 `add` 和 `scan` 接口），那么对组合结构遍历的逻辑都不需要改变。
+1. 对于这种组合结构，我们的期望是：随意的添加、组合、删除或者修改对象，只要这些对象遵循相同的结构和接口（比如在下面遍历文件夹的例子中，都有 `add` 和 `scan` 接口），那么对组合结构遍历的逻辑都不需要改变。
 2. 但严格来说，如果这些对象不遵循统一的规则，只要遍历逻辑能兼容这些规则，其实也是可以做到 OCP 的。
 3. 那这里就是谁做出让步的问题。如果我们就是要有几种不同规则的对象，那看起来只能遍历规则做出让步；但一般这种时候，遍历规则作为更基础的通用逻辑，并不应该让步。
 4. 如果我们期望应对不同的业务规则，更合理的方法还是指定不同的遍历逻辑，而不是在同一种逻辑里面做兼容。这也是符合 SRP 原则的。
@@ -86,7 +86,6 @@
 ## 缺点
 It might be difficult to provide a common interface for classes whose functionality differs too much. In certain scenarios, you’d need to overgeneralize the component interface, making it harder to comprehend.
 对于功能差异较大的类， 提供公共接口或许会有困难。 在特定情况下， 你需要过度一般化组件接口， 使其变得令人难以理解。
-
 
 
 ## 实现更强大的宏命令
@@ -425,3 +424,4 @@ It might be difficult to provide a common interface for classes whose functional
 * [《JavaScript设计模式与开发实践》](https://book.douban.com/subject/26382780/)
 * [Refactoring.Guru](https://refactoring.guru/design-patterns/composite)
 * [Refactoring.Guru 中文](https://refactoringguru.cn/design-patterns/composite)
+* [《设计模式》](https://book.douban.com/subject/1052241/)

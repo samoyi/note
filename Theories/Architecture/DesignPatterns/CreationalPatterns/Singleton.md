@@ -40,7 +40,7 @@
 
 
 ## 什么时候用单例模式
-唯一的数据源，统一管理，统筹规划。就像 Vuex 的设计。
+唯一的数据源，统一的状态管理，统一进行行为管理，统筹规划。就像 Vuex 的设计。
 
 
 ## 基本实现
@@ -351,3 +351,5 @@ console.log(Queen1 === Queen2);  // true
 ## References
 * [JavaScript设计模式与开发实践](https://book.douban.com/subject/26382780/)
 * [Head First 设计模式（中文版）](https://book.douban.com/subject/2243615/)
+* [Refactoring.Guru](https://refactoringguru.cn/design-patterns/singleton)
+* [《设计模式》](https://book.douban.com/subject/1052241/)

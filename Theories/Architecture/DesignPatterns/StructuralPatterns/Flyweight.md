@@ -371,3 +371,4 @@ maleModel.color = 'black'; // TypeError: Cannot set property color of #<Model> w
 ## References
 * [《JavaScript设计模式与开发实践》](https://book.douban.com/subject/26382780/)
 * [Refactoring.Guru](https://refactoring.guru/design-patterns/flyweight)
+* [《设计模式》](https://book.douban.com/subject/1052241/)

@@ -32,7 +32,8 @@ Decorator is a structural design pattern that lets you attach new behaviors to o
             - [动态改变函数的参数](#动态改变函数的参数)
             - [插件式的表单验证](#插件式的表单验证)
         - [AOP 的缺点](#aop-的缺点)
-    - [Relations with Other Patterns](#relations-with-other-patterns)
+    - [和其他模式的关系](#和其他模式的关系)
+        - [适配器模式](#适配器模式)
         - [Chain of Responsibility](#chain-of-responsibility)
         - [Composite](#composite)
         - [Proxy](#proxy)
@@ -95,6 +96,7 @@ Decorator is a structural design pattern that lets you attach new behaviors to o
 ### 非耦合的为对象增加功能
 1. 旧对象功能维持不变。
 2. 通过一个装饰器把新旧功能包装为一个新的对象。
+3. 如果这个增加的功能在之后可能还会取消掉，那就更合适了。
 
 ### 为一个对象增加多个功能
 通过嵌套装饰，可以为一个对象增加任意数量的功能。
@@ -642,7 +644,10 @@ obj.foo(); // 两个 obj
     ```
 
 
-## Relations with Other Patterns
+## 和其他模式的关系
+### 适配器模式
+装饰器模式是修改功能但不改变接口，而适配器模式是改变接口但不改变功能。
+
 ### Chain of Responsibility 
 1. 两者在结构上很相似，但意图是不同的。
 2. 职责链是在链式结构中转移任务给负责的某一个节点，某个节点不负责它就传给后续节点，一个负责的节点在处理完任务后，在链式结构上的传播就终止了，不需要再往后传播。
@@ -661,3 +666,4 @@ obj.foo(); // 两个 obj
 ## References
 * [《JavaScript设计模式与开发实践》](https://book.douban.com/subject/26382780/)
 * [Refactoring.Guru](https://refactoring.guru/design-patterns/decorator)
+* [《设计模式》](https://book.douban.com/subject/1052241/)

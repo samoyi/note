@@ -12,13 +12,12 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
     - [1. 本质](#1-本质)
         - [1.1 两种链式逻辑结构](#11-两种链式逻辑结构)
             - [1.1.1 转移责任式的链式逻辑结构](#111-转移责任式的链式逻辑结构)
-                - [1.1.1.1 递进式的链式逻辑结构](#1111-递进式的链式逻辑结构)
             - [1.1.2 流水线式的链式逻辑结构](#112-流水线式的链式逻辑结构)
         - [1.2 链条组合的本质——信息的有序传递](#12-链条组合的本质信息的有序传递)
     - [2. 实现原理](#2-实现原理)
     - [3. 适用场景](#3-适用场景)
+        - [在处理请求前不确定由哪个对象来处理](#在处理请求前不确定由哪个对象来处理)
         - [链式处理](#链式处理)
-        - [需要灵活的调整顺序或灵活的增删改处理节点的情况](#需要灵活的调整顺序或灵活的增删改处理节点的情况)
     - [4. 缺点](#4-缺点)
     - [从粗放职责链到解耦职责链](#从粗放职责链到解耦职责链)
         - [粗放职责链](#粗放职责链)
@@ -33,8 +32,8 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
 ## 0. 设计思想
 ### 0.1 OCP
 1. 职责链核心的思想不是链，因为即使是疯狂的 `if...else` 也是链式结构。
-2. 核心思想仍然是解耦，是对链的解耦。疯狂的 `if...else` 只写死的职责链，而这里的职责链则是解耦的链，或者说是可以任意拆开组合的链。
-3. 链式处理的结构不需要因为具体处理节点的增删改而修改。
+2. 核心思想仍然是解耦，是对链的解耦。疯狂的 `if...else` 只写死的职责链，而这里的职责链则是解耦的链，或者说是可以任意拆开、组合、删减和修改节点的链。
+3. 链式处理的结构不需要因为上述修改而修改。
 
 ### 0.2 SRP
 1. 每个节点都独立且完整的负责自己的工作。
@@ -44,26 +43,24 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
 
 ## 1. 本质
 ### 1.1 两种链式逻辑结构
-链条组合好之后进行的工作，本质都是遍历。不过遍历可能中途退出。
+转移责任式和流水线式。
 
 #### 1.1.1 转移责任式的链式逻辑结构
 1. 就像 DOM 的事件处理一样，一个节点如果不负责处理这个事件，那就转义给相邻的节点。
-2. 为什么不能直接定位哪一层负责呢？ 从链表到哈希表！
-3. 如果链条的节点足够的时候，是可以考虑哈希表的方式实现。但实际上这种产品级别的逻辑结构都是很少的，所以根本用不到相对来说很复杂的实现。
-
-##### 1.1.1.1 递进式的链式逻辑结构
-1. 转移责任式的链式逻辑结构中，各个节点是可以是平级的，也可以是渐进式的。
-2. 比如你想打听个人，你就问甲，甲不知道，就再帮你问乙，乙也不知道的话就帮你问丙。这里的甲乙丙就是平级的。
-3. 而比如你在饭馆想投诉，你就问服务员。服务员无权解决，就找大堂经理，大堂经理如果也满足不了你，那就只能找老板。这里显然就是一种渐进式的链式逻辑结构。
-4. 作用域链、原型链、DOM 事件传播都算是这种类型的链式逻辑结构。
+2. 为什么不能直接定位哪一个节点负责呢？ 从链表到哈希表。
+3. 不能直接定位而需要顺着链一个一个尝试的情况，就是那种在处理之前不能确定由谁来负责的，必须要让节点处理着试一下才知道能不能处理。
+4. 转移责任式的链式逻辑结构中，各个节点是可以是平级的，也可以是渐进式的。
+5. 比如你想打听个人，你就问甲，甲不知道，就再帮你问乙，乙也不知道的话就帮你问丙。这里的甲乙丙就是平级的。
+6. 而比如你在饭馆想投诉，你就问服务员。服务员无权解决，就找大堂经理，大堂经理如果也满足不了你，那就只能找老板。这里显然就是一种渐进式的链式逻辑结构。
+7. 作用域链、原型链、DOM 事件传播都算是这种渐进式的链式逻辑结构。
 
 #### 1.1.2 流水线式的链式逻辑结构
 1. 流水线上工人或机器，都分别对产品进行一部分的处理。
 2. 程序中比如说有表单验证：比如可能有负责验证电话格式的，验证通过传给下一个验证函数；下一个可能是负责验证邮箱格式的等等，通过了再传给下一个验证函数。若干个验证步骤都依次通过了才是最终通过。
 
 ### 1.2 链条组合的本质——信息的有序传递
-1. 不管是上面说的转移责任式的还是传递被处理对象的链式逻辑结构，都是在有序的进行信息传递。
-2. 或者，即使我们不适用职责链模式，直接使用 `if-else` 之类的，依然是一种有序的信息传递。
+1. 不管是上面说的转移责任式的还是流水线式的链式逻辑结构，都是在有序的进行信息传递。
+2. 或者，即使我们不使用职责链模式，直接使用 `if-else` 之类的，依然是一种有序的信息传递。
 3. 不同之处在于，职责链可以在运行时更灵活的组织顺序。`if-else` 之类的也可以实现运行时组织顺序，但就很麻烦了。
 
 
@@ -74,10 +71,13 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
 
 
 ## 3. 适用场景
-### 链式处理
-可以从链结构的任何一个节点开始处理
+### 在处理请求前不确定由哪个对象来处理
+1. 请求在处理前不能知道到底由哪个对象来处理，而是必须要让各个对象依次尝试，不行再转交给其他对象。
+2. 前者是哈希表的结构，后者是链表的结构。
 
-### 需要灵活的调整顺序或灵活的增删改处理节点的情况
+### 链式处理
+1. 请求需要在若干个节点间传递，然后选择一个可以处理请求的节点。
+2. 如果这些节点的顺序还可能发生变化，或者增加删除节点，或者修改某些节点的逻辑，就更适合职责链。
 
 
 ## 4. 缺点
@@ -223,8 +223,8 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
 2. 因为这时 `handler` 函数已经返回，所以无法通过上面返回 `TO_NEXT` 的方式传递给后继。可以再定义一个原型方法 `next`，在异步操作结束后手动调用来通知下一个节点接收任务
     ```js
     class ChainNode {
-        constructor (fn) {
-            this.fn = fn;
+        constructor (handler) {
+            this.handler = handler;
             this.successor = null;
         }
 
@@ -237,7 +237,7 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
         }
 
         receiveRequest ( ...args ) {
-            let ret = this.fn( ...args );
+            let ret = this.handler( ...args );
 
             if ( ret === TO_NEXT ){
                 // 这里可以改为直接调用 next
@@ -249,43 +249,43 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
     }
 
 
-    const fn1 = new ChainNode( function () {
+    const handler1 = new ChainNode( function () {
         console.log( 1 );
         return TO_NEXT; // 通过返回值传递给后继
     });
-    const fn2 = new ChainNode( function () {
+    const handler2 = new ChainNode( function () {
         console.log( 2 );
         setTimeout(()=>{
             this.next(); // 通过 next 方法手动传递给后继
         }, 3000 );
     });
-    const fn3 = new ChainNode( function () {
+    const handler3 = new ChainNode( function () {
         console.log( 3 );
     });
 
 
-    fn1.setNextSuccessor( fn2 ).setNextSuccessor( fn3 );
-    fn1.receiveRequest();
+    handler1.setNextSuccessor( handler2 ).setNextSuccessor( handler3 );
+    handler1.receiveRequest();
     ```
 
 
 ## 用 AOP 实现职责链
 ```js
-// 初始函数调用 after 并传入函数 fn 后，会返回另一个函数，被返回的函数在调用时会先执行初始函数
-// 如果初始函数解决了问题，则返回初始函数的返回值；如果初始函数没解决，则调用参数函数 fn
-Function.prototype.after = function( fn ){
+// 初始函数调用 after 并传入函数 handler 后，会返回另一个函数，被返回的函数在调用时会先执行初始函数
+// 如果初始函数解决了问题，则返回初始函数的返回值；如果初始函数没解决，则调用参数函数 handler
+Function.prototype.after = function( handler ){
     return (...args)=>{
         let re = this(...args);
         if ( re === TO_NEXT ){
-            // 初始函数返回了字符串 nextSuccessor，表示没解决问题，请求转给后续节点函数 fn
-            return fn(...args);
+            // 初始函数返回了字符串 nextSuccessor，表示没解决问题，请求转给后续节点函数 handler
+            return handler(...args);
         }
         return re;
     };
 };
 
 
-const order500 = function( orderType, pay, stock ){
+const order500Handler = function( orderType, pay, stock ){
     console.log(1);
     if ( orderType === 1 && pay === true ){
         console.log( '500元定金预购，得到100优惠券' );
@@ -295,7 +295,7 @@ const order500 = function( orderType, pay, stock ){
     }
 };
 
-const order200 = function( orderType, pay, stock ){
+const order200Handler = function( orderType, pay, stock ){
     console.log(2);
     if ( orderType === 2 && pay === true ){
         console.log( '200元定金预购，得到50优惠券' );
@@ -305,7 +305,7 @@ const order200 = function( orderType, pay, stock ){
     }
 };
 
-const orderNormal = function( orderType, pay, stock ){
+const orderNormalHandler = function( orderType, pay, stock ){
     console.log(3);
     if ( stock > 0 ){
         console.log( '普通购买，无优惠券' );
@@ -316,7 +316,7 @@ const orderNormal = function( orderType, pay, stock ){
 };
 
 
-let order = order500.after( order200 ).after( orderNormal );
+let order = order500Handler.after( order200Handler ).after( orderNormalHandler );
 order( 1, false, 500 );   // 输出：普通购买，无优惠券
 ```
 
