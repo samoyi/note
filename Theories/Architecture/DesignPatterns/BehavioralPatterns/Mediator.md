@@ -1,6 +1,6 @@
 # Mediator
 
-Mediator is a behavioral design pattern that lets you reduce chaotic dependencies between objects. The pattern restricts direct communications between the objects and forces them to collaborate only via a mediator object.
+中介者模式是一种行为设计模式， 能让你减少对象之间混乱无序的依赖关系。 该模式会限制对象之间的直接交互， 迫使它们通过一个中介者对象进行合作。
 
 
 <!-- TOC -->
@@ -84,9 +84,9 @@ Mediator is a behavioral design pattern that lets you reduce chaotic dependencie
 
 ## 2. 实现原理
 从各个对象直接各自直接通信
-<img src="./images/04.png" width="400" style="display: block; margin: 5px 0 10px 0;" />
+<img src="../images/04.png" width="200" style="display: block; margin: 5px 0 10px 0;" />
 到使用一个中介者统一调度
-<img src="./images/05.png" width="400" style="display: block; margin: 5px 0 10px 0;" />
+<img src="../images/05.png" width="200" style="display: block; margin: 5px 0 10px 0;" />
 
 
 ## 3. 适用场景
@@ -110,39 +110,44 @@ Over time a mediator can evolve into a God Object.
 
 ### JavaScript 实现
 ```js
+const REQUEST_FORCE_LANDING = "申请迫降";
+const AVOIDANCE = "避让";
+
 class ATC {
-    constructor (name) {
-        this.name = name;
+    constructor (id) {
+        this.id = id;
         this.aircraftList = {};
     }
 
     // 将一个飞机和该空管建立连接，之后可以发送或接收消息。
     // 飞机调用这个方法和空管建立连接
     link ( aircraft ) {
-        this.aircraftList[aircraft.name] = aircraft;
+        this.aircraftList[aircraft.id] = aircraft;
     }
 
-    // 飞机调用这个方法向空管发送消息
-    notify ( sender, message ) {
-        console.log( `【${sender.name}】：${message}, ${sender.name}` );
+    // 飞机调用这个方法向空管发送请求
+    listen ( sender, message ) {
+        console.log( `【${sender.id}】：${message}` );
 
-        if ( message === '请求返航' ) {
-            this.handleAvoidance();
+        if ( message === REQUEST_FORCE_LANDING ) {
+            this.handleAvoidance(sender.id);
         }
     }
 
-    // 作为例子，空管处理有飞机返航其他飞机避让的一个方法
-    handleAvoidance () {
-        this.aircraftList[aircraft2.name].listen('避让');
-        this.aircraftList[aircraft3.name].listen('避让');
+    // 作为例子，空管处理有飞机迫降其他飞机避让的一个方法
+    handleAvoidance (avoidanceName) {
+        for (let id in this.aircraftList) {
+            if (id !== avoidanceName) {
+                this.aircraftList[id].listenATC(AVOIDANCE + " " + avoidanceName);
+            }
+        }
     }
 }
 
 class Aircraft {
-    constructor ( name ) {
+    constructor ( id ) {
         this.atc = null;
-        this.name = name;
-        
+        this.id = id;
     }
 
     // 和空管建立连接
@@ -152,25 +157,24 @@ class Aircraft {
     }
 
     // 向空管发送消息
-    speak ( message ) {
-        this.atc.notify( this, message );
+    speakToATC ( message ) {
+        this.atc.listen( this, message );
     }
 
-    // 空管调用这个方法想该飞机发送消息
-    listen ( message ) {
-        console.log( `【${this.atc.name}】：${this.name}, ${message}` );
+    // 空管调用这个方法向该飞机发送消息
+    listenATC ( message ) {
+        console.log( `【${this.atc.id}】：${message}` );
         this.handleMessage(message);
     }
 
     // 处理消息的方法
     handleMessage (message) {
-        this.speak( message );
+        this.speakToATC( message );
     }
 }
 
 
-
-let atc1 = new ATC ('airport1');
+let atc1 = new ATC ('atc1');
 
 let aircraft1 = new Aircraft('aircraft1');
 aircraft1.linkAtc( atc1 );
@@ -182,7 +186,13 @@ let aircraft3 = new Aircraft('aircraft3');
 aircraft3.linkAtc( atc1 );
 
 
-aircraft1.speak('请求返航');
+aircraft1.speakToATC(REQUEST_FORCE_LANDING);
+
+// 【aircraft1】：申请迫降
+// 【atc1】：避让 aircraft1
+// 【aircraft2】：避让 aircraft1
+// 【atc1】：避让 aircraft1
+// 【aircraft3】：避让 aircraft1
 ```
 
 
