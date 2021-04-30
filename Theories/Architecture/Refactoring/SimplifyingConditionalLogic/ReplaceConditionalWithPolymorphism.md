@@ -20,6 +20,7 @@ TODO
 
 
 ## Mechanics
+* 策略模式
 
 
 ## References
