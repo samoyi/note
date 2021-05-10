@@ -8,16 +8,19 @@ Template Method is a behavioral design pattern that defines the skeleton of an a
 - [Template Method](#template-method)
     - [设计思想](#设计思想)
         - [便利与自由，安全与自由](#便利与自由安全与自由)
+        - [SRP](#srp)
         - [OCP](#ocp)
+            - [环境和数据分离](#环境和数据分离)
     - [本质](#本质)
-        - [对若干相同类型的对象提供公共模板](#对若干相同类型的对象提供公共模板)
-        - [对若干相同类型的对象提供约束模板](#对若干相同类型的对象提供约束模板)
+        - [对若干相同类型的算法提供公共模板](#对若干相同类型的算法提供公共模板)
+        - [对若干相同类型的算法提供约束模板](#对若干相同类型的算法提供约束模板)
     - [实现原理](#实现原理)
         - [抽象的负责约束步骤](#抽象的负责约束步骤)
         - [现实的具体实现行为](#现实的具体实现行为)
     - [适用场景](#适用场景)
-        - [多个行为有相同逻辑，但有不同实现](#多个行为有相同逻辑但有不同实现)
-        - [一个特定的逻辑想根据不同的实现进行不同的调整或扩展](#一个特定的逻辑想根据不同的实现进行不同的调整或扩展)
+        - [多个算法有相同逻辑，但有不同实现](#多个算法有相同逻辑但有不同实现)
+        - [一个算法的某些步骤有多种实现](#一个算法的某些步骤有多种实现)
+        - [约束一类相似算法的公共执行步骤](#约束一类相似算法的公共执行步骤)
     - [缺点](#缺点)
     - [例子 —— Coffee or Tea](#例子--coffee-or-tea)
     - [抽象类](#抽象类)
@@ -28,7 +31,7 @@ Template Method is a behavioral design pattern that defines the skeleton of an a
             - [缺点](#缺点-1)
             - [解决方案](#解决方案)
                 - [接口检查](#接口检查)
-                - [模拟抽象类](#模拟抽象类)
+                - [禁止抽象类实例化](#禁止抽象类实例化)
     - [模板方法模式的使用场景](#模板方法模式的使用场景)
         - [例1](#例1)
         - [例2](#例2)
@@ -47,23 +50,33 @@ Template Method is a behavioral design pattern that defines the skeleton of an a
 3. 模板方法的设计思想，除了提供便利以外，应该说同等重要的还是提供了一种约束，约束了现实对象应该有的行为。这样，只要现实对象使用这个抽象类型，那它一定就符合该类型的规则的，也就是说，是符合该类型的标准的。这就是抽象类型的约束所带来的安全性。
 4. 同样，这种安全性的约束，一样是以牺牲了自由为代价的。
 
+### SRP
+1. 算法分为若干个步骤，如果步骤复杂性不是很低的话，就值得提取出来单独管理。
+2. 这样不管是后期维护还是进行复用都更方便。
+
 ### OCP
 1. 一个运用了模板方法模式的程序中，子类的方法种类和执行顺序都是不变的，所以我们把这部分逻辑抽象到父类的模板方法里面。
 2. 而子类的方法具体怎么实现则是可变的，于是我们把这部分变化的逻辑封装到子类中。
 3. 通过增加新的子类，我们便能给系统增加新的功能，并不需要改动抽象父类以及其他子类。
 
+#### 环境和数据分离
+通过实现 SRP 和 OCP，就实现了环境和数据的分离。环境（算法步骤）保持稳定，数据（具体步骤的实现）根据需求灵活变化。
+
 
 ## 本质
-### 对若干相同类型的对象提供公共模板
-1. 对若干相同类型的对象抽出相同的可复用的部分作为基础通用的内容。
+### 对若干相同类型的算法提供公共模板
+1. 对若干相同类型的算法抽出相同的可复用的部分作为基础通用的内容。
 2. 在具体执行时，每种情况在通用的基础上，使用个性化的内容覆盖通用的某些部分。
 
-### 对若干相同类型的对象提供约束模板
-1. 但要注意，具体的情况执行时，只能覆盖，而不能增加或减少通用的设计。
+### 对若干相同类型的算法提供约束模板
+1. 具体的情况执行时，只能覆盖，而不能增加或减少通用的设计。
 2. 也就是说，通用的部分不仅仅提供了通用的内容，还约束了具体执行时必须要按照自己的逻辑执行。
 
 
 ## 实现原理
+1. 模板方法模式建议将算法分解为一系列步骤，然后将这些步骤改写为方法，最后在 “模板方法” 中依次调用这些方法。步骤可以是抽象的，也可以有一些默认的实现。
+2. 为了能够使用算法，客户端需要自行提供子类并实现所有的抽象步骤。 如有必要还需重写一些步骤 （但这一步中不包括模板方法自身）。
+
 ### 抽象的负责约束步骤
 1. 当我们需要制定某一类行为的时候，可以根据这一类的共同特点，抽象出一个基础的类型。
 2. 抽象类及其模板方法规定了该类应该具有哪些行为，以及这些行为的执行顺序，继承该基础类型的现实类都应该具体实现每个行为。
@@ -74,17 +87,22 @@ Template Method is a behavioral design pattern that defines the skeleton of an a
 
  
 ## 适用场景
-### 多个行为有相同逻辑，但有不同实现
-1. 多个行为具有相同的逻辑步骤或结构，但具体步骤的实现各不相同的情况。
-2. 父类通过定义公共方法和模板方法，确定了应该有哪些方法，以及方法的执行步骤。
-3. 这个应用场景是把多个实现抽象出一个共同的逻辑模板。
+### 多个算法有相同逻辑，但有不同实现
+1. 多个算法具有相同的逻辑步骤或结构，但具体步骤的实现各不相同的情况。
+2. 创建共同的父类，该父类通过定义公共方法和模板方法，确定了应该有哪些方法，以及方法的执行步骤。
+3. 这个应用场景是把多个算法抽象出一个共同的逻辑模板。
 
-### 一个特定的逻辑想根据不同的实现进行不同的调整或扩展
-和上面的场景相对应，这个应用场景是把一个逻辑扩展为不同的实现
+### 一个算法的某些步骤有多种实现
+1. 当你只希望客户端扩展某个特定算法步骤， 而不是整个算法或其结构时， 可使用模板方法模式。
+2. 模板方法将整个算法转换为一系列独立的步骤， 以便子类能对其进行扩展， 同时还可让超类中所定义的结构保持完整。
+3. 和上面的场景相对应，这个应用场景是把一个算法扩展为不同的实现。
+
+### 约束一类相似算法的公共执行步骤
+父类约束所有子类应该具有算法步骤以及步骤的执行顺序，但具体步骤的实现由子类自己决定。
 
 
 ## 缺点
-* 就像上面提到的，具体的某些实现可能会失去自由度
+* 就像上面提到的，具体的某些实现可能会失去自由度。
 * You might violate the Liskov Substitution Principle by suppressing a default step implementation via a subclass. TODO 这里违反里氏替换原则有什么危害？
 
 
@@ -224,7 +242,7 @@ Template Method is a behavioral design pattern that defines the skeleton of an a
     let tea = new Tea();
     tea.init();
     ```
-7. 这里的 `Beverage.prototype.init` 就是所谓的 **模板方法(Template Method)**，该方法中封装了子类的算法框架，它作为一个算法的模板，指导子类以何种顺序去执行哪些方法。
+7. 这里的 `Beverage.prototype.init` 就是所谓的 **模板方法**(Template Method)，该方法中封装了子类的算法框架，它作为一个算法的模板，指导子类以何种顺序去执行哪些方法。
 
 
 ## 抽象类
@@ -368,7 +386,7 @@ public class Test {
             // 检查父类要求的接口子类是否都实现了
             this.requiredSubclassMethods.every((key) => {
                 if ( !methods.includes(key) ) {
-                    throw new Error(`子类必须重写 ${key} 方法`);
+                    throw new Error(`子类 ${prototype.constructor.name} 必须重写 ${key} 方法`);
                 }
                 return true;
             });
@@ -404,10 +422,11 @@ public class Test {
     ```
 3. 第一种方案在实例化子类的时候就可以抛出错误，第二种方案要在执行模板方法的时候才抛出错误
 
-##### 模拟抽象类
+##### 禁止抽象类实例化
+使用 `new.target`
 ```js
 class Beverage_Abstract {
-    constructor(){
+    constructor () {
         if (new.target === Beverage_Abstract) {
             throw new Error('Beverage_Abstract 作为抽象类不能被实例化');
         }
@@ -415,59 +434,13 @@ class Beverage_Abstract {
         this.checkAPI(this);
     }
 
-    boilWater(){
-        console.log( '把水煮沸' );
-    }
-
-    brew(){}
-
-    pourInCup(){}
-
-    addCondiments(){}
-
-    init(){
-        this.boilWater();
-        this.brew();
-        this.pourInCup();
-        this.addCondiments();
-    }
-
-    checkAPI (instance) {
-        let prototype = Object.getPrototypeOf(instance);
-        let methods = Object.getOwnPropertyNames(prototype);
-        this.requiredSubclassMethods.every((key) => {
-            if ( !methods.includes(key) ) {
-                throw new Error(`子类必须重写 ${key} 方法`);
-            }
-            return true;
-        });
-    }
+    // 省略其他代码
 }
-
-class Coffee extends Beverage_Abstract {
-
-    brew(){
-        console.log( '用沸水冲泡咖啡' );
-    }
-
-    pourInCup () {
-        console.log( '把咖啡倒进杯子' );
-    }
-
-    addCondiments () {
-        console.log( '加糖和牛奶' );
-    }
-}
-
-let coffee = new Coffee();
-coffee.init();
-
-new Beverage_Abstract(); // Error: Beverage_Abstract 作为抽象类不能被实例化
 ```
 
 
 ## 模板方法模式的使用场景
-**多个行为具有相同的逻辑步骤或结构，但具体步骤的实现各不相同的情况**
+**多个功能具有相同的逻辑步骤或结构，但具体步骤的实现各不相同的情况**
 
 ### 例1
 1. 从大的方面来讲，模板方法模式常被架构师用于搭建项目的框架，架构师定好了框架的骨架，程序员继承框架的结构之后，负责往里面填空。
@@ -520,7 +493,6 @@ new Beverage_Abstract(); // Error: Beverage_Abstract 作为抽象类不能被实
         pourInCup(){}
 
         addCondiments(){}
-
 
         init(){
             this.boilWater();
@@ -577,21 +549,21 @@ new Beverage_Abstract(); // Error: Beverage_Abstract 作为抽象类不能被实
 1. 只要有必要步骤约束和步骤顺序约束，就可以算作是模板方法模式。
 2. 比如在 JavaScript 中，我们很多时候也不一定要用面向对象的方法实现模版方法模式，高阶函数也是一个选择。下面用非面向对象的方法来实现
     ```js
-    const Beverage = function( param ) {
+    const Beverage = function( methods ) {
 
         const boilWater = function () {
             console.log( '把水煮沸' );
         };
 
-        const brew = param.brew || function () {
+        const brew = methods.brew || function () {
             throw new Error( '必须传递 brew 方法' );
         };
 
-        const pourInCup = param.pourInCup || function () {
+        const pourInCup = methods.pourInCup || function () {
             throw new Error( '必须传递 pourInCup 方法' );
         };
 
-        const addCondiments = param.addCondiments || function () {
+        const addCondiments = methods.addCondiments || function () {
             throw new Error( '必须传递 addCondiments 方法' );
         };
 

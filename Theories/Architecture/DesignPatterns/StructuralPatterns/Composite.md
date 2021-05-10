@@ -25,7 +25,8 @@
     - [透明性带来的安全问题](#透明性带来的安全问题)
     - [扫描文件夹的例子](#扫描文件夹的例子)
     - [引用父对象](#引用父对象)
-    - [Relations with Other Patterns](#relations-with-other-patterns)
+    - [和其他模式的关系](#和其他模式的关系)
+        - [装饰模式](#装饰模式)
     - [References](#references)
 
 <!-- /TOC -->
@@ -417,7 +418,10 @@ It might be difficult to provide a common interface for classes whose functional
     ```
 
 
-## Relations with Other Patterns
+## 和其他模式的关系
+### 装饰模式
+1. 组合和装饰模式的结构图很相似，因为两者都依赖递归组合来组织无限数量的对象。
+2. 装饰类似于组合，但其只有一个子组件。此外还有一个明显不同：装饰为被封装对象添加了额外的职责，组合仅对其子节点的结果进行了 “求和”。
 
 
 ## References

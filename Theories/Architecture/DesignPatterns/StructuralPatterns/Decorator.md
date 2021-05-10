@@ -34,9 +34,9 @@ Decorator is a structural design pattern that lets you attach new behaviors to o
         - [AOP 的缺点](#aop-的缺点)
     - [和其他模式的关系](#和其他模式的关系)
         - [适配器模式](#适配器模式)
-        - [Chain of Responsibility](#chain-of-responsibility)
-        - [Composite](#composite)
-        - [Proxy](#proxy)
+        - [职责链](#职责链)
+        - [组合模式](#组合模式)
+        - [代理模式](#代理模式)
     - [References](#references)
 
 <!-- /TOC -->
@@ -648,19 +648,17 @@ obj.foo(); // 两个 obj
 ### 适配器模式
 装饰器模式是修改功能但不改变接口，而适配器模式是改变接口但不改变功能。
 
-### Chain of Responsibility 
-1. 两者在结构上很相似，但意图是不同的。
+### 职责链
+1. 两者在结构上很相似，都依赖递归组合将需要执行的操作传递给一系列对象。
 2. 职责链是在链式结构中转移任务给负责的某一个节点，某个节点不负责它就传给后续节点，一个负责的节点在处理完任务后，在链式结构上的传播就终止了，不需要再往后传播。
-3. 装饰器模式的链式结构是每个节点都要进行处理的，而不只是某个单独的节点。所以也不存在中止传播的情况。
+3. 而装饰器模式的链式结构是每个节点都要进行处理的，不只是某个单独的节点。所以也不存在终止传播的情况。
 4. 对于一个任务，职责链只是某一个节点来处理，而装饰器模式是整个链一起处理。
 
-### Composite
-1. 首先是结构不同：一个是树状结构，一个是链式结构。
-2. 其次是意图不同：Decorator adds additional responsibilities to the wrapped object, while Composite just “sums up” its children’s results.
+### 组合模式
+见组合模式
 
-### Proxy 
-1. 原则相同：both patterns are built on the composition principle, where one object is supposed to delegate some of the work to another. 
-2. 对组合方式的管理不同：a Proxy usually manages the life cycle of its service object on its own, whereas the composition of Decorators is always controlled by the client.
+### 代理模式
+见代理模式
 
 
 ## References
