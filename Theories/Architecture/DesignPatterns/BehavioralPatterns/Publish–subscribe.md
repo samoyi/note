@@ -27,6 +27,8 @@
         - [比较一下两者的调用栈](#比较一下两者的调用栈)
     - [离线事件](#离线事件)
     - [书上的离线事件和命名空间的实现](#书上的离线事件和命名空间的实现)
+    - [与其他模式的关系](#与其他模式的关系)
+        - [中介者模式](#中介者模式)
     - [References](#references)
 
 <!-- /TOC -->
@@ -843,6 +845,11 @@ Event.create( 'namespace2' ).listen( 'click', function( a ){
 
 Event.create( 'namespace2' ).trigger( 'click', 2 );
 ```
+
+
+## 与其他模式的关系
+### 中介者模式
+见中介者模式
 
 
 ## References

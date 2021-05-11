@@ -38,6 +38,8 @@ Template Method is a behavioral design pattern that defines the skeleton of an a
     - [钩子方法](#钩子方法)
     - [好莱坞原则](#好莱坞原则)
     - [抓住设计思想，不要拘泥于形式](#抓住设计思想不要拘泥于形式)
+    - [和其他模式的关系](#和其他模式的关系)
+        - [策略模式](#策略模式)
     - [References](#references)
 
 <!-- /TOC -->
@@ -608,6 +610,11 @@ class Beverage_Abstract {
     let tea = new Tea();
     tea.init();
     ```
+
+
+## 和其他模式的关系
+### 策略模式
+见策略模式
 
 
 ## References
