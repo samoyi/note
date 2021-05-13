@@ -25,13 +25,13 @@ function initCompile (node, vm) {
  *     通过给 v-model 节点添加 input 事件实现从 view 到 model 的绑定
  *     将文本节点中 “Mustache” syntax 中的变量替换为 model 中相应的数据
  */
-function compile(node, vm) {
+function compile (node, vm) {
 
     // 节点类型为元素
     if (node.nodeType === 1) {
         // 解析节点属性
         const aAttr = [...node.attributes];
-        aAttr.forEach(attr=>{
+        aAttr.forEach(attr => {
             if (attr.nodeName === 'v-model') {
                  // 获取 v-model 绑定的 data 属性名
                 const sPropName = attr.nodeValue;
@@ -54,7 +54,7 @@ function compile(node, vm) {
         });
 
         // 编译子节点
-        node.childNodes.forEach(child=>{
+        node.childNodes.forEach(child => {
             compile(child, vm);
         });
     }
@@ -79,7 +79,7 @@ function compile(node, vm) {
 /*
  * 遍历所有属性，通过 defineReactive 将每个属性转化为访问器属性
  */
-function observe(data) {
+function observe (data) {
     if (!data || typeof data !== 'object') {
         return;
     }
@@ -92,7 +92,7 @@ function observe(data) {
 /*
  * 将 data 的 key 属性转化为访问器属性
  */
-function defineReactive(data, key, val) {
+function defineReactive (data, key, val) {
     const publisher = new Publisher();
     Publisher.pubs[key] = publisher;
 
@@ -124,7 +124,7 @@ class Publisher {
     }
 
     notify (newVal) {
-        this.subscribers.forEach(sub=>{
+        this.subscribers.forEach(sub => {
             sub.update(newVal);
         });
     }
@@ -136,24 +136,25 @@ class Subscriber {
     constructor (node, updateType) {
         this.node = node;
         this.updateType = updateType;
+
         this.updateFns = {
-            text(newVal) {
+            text (newVal) {
                 this.node.textContent = typeof newVal === 'undefined' ? '' : newVal;
             },
     
-            model(newVal) {
+            model (newVal) {
                 this.node.value = typeof newVal === 'undefined' ? '' : newVal;
             }
         };
     }
 
-    update(newVal) {
+    update (newVal) {
         this.updateFns[this.updateType].call(this, newVal);
     }
 }
 
 
-// MVVM构造函数
+// MVVM 构造函数
 class MVVM {
     constructor (options) {
         this.data = options.data;

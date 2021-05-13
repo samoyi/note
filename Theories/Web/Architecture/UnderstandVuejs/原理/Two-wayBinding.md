@@ -52,10 +52,10 @@ Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过 `Obje
 ### 初始编译模板
 1. 从 model 到 view 的初始化赋值。  
 2. 保证网页打开后，在不交互的情况下，页面正常显示。包括但不限于：
-  * HTML 中的文本变量已经替换为具体的数据
-  * `v-model` 的表单使用了 model 中的值
-  * `v-for` 的节点循环渲染
-  * `v-if="false"` 的节点不渲染
+    * HTML 中的文本变量已经替换为具体的数据
+    * `v-model` 的表单使用了 model 中的值
+    * `v-for` 的节点循环渲染
+    * `v-if="false"` 的节点不渲染
 3. 本例只实现前两个功能
 
 ### 从 view 到 model 的绑定
@@ -92,8 +92,8 @@ Compiler 模块
     ```
     ```js
     /*
-    * 初始编译模板
-    */
+     * 初始编译模板
+     */
     function initCompile (node, vm) {
         // 将子节点剪切到 DocumentFragment，编译完成后一次性添加进 DOM
         // TODO 在哪里看到过 Vuejs 不是使用 `DocumentFragment`，而且在源代码里也没有找到
@@ -109,11 +109,11 @@ Compiler 模块
     }
 
     /*
-    * 编译节点
-    * 实现以下功能：
-    *     对 v-model 节点的 value 属性进行从 model 到 view 的初始化赋值
-    *     将文本节点中 mustache syntax 中的变量替换为 model 中相应的数据
-    */
+     * 编译节点
+     * 实现以下功能：
+     *     对 v-model 节点的 value 属性进行从 model 到 view 的初始化赋值
+     *     将文本节点中 mustache syntax 中的变量替换为 model 中相应的数据
+     */
     function compile (node, vm) {
 
         // 节点类型为元素
@@ -152,7 +152,7 @@ Compiler 模块
         }
     }
 
-    // MVVM构造函数
+    // MVVM 构造函数
     function MVVM (options) {
         this.data = options.data;
         const node = document.querySelector(options.el);
@@ -199,8 +199,8 @@ Compiler 模块
 3. Observer 由以下两个函数组成：
     ```js
     /*
-    * 遍历所有属性，通过 defineReactive 将每个属性转化为访问器属性
-    */
+     * 遍历所有属性，通过 defineReactive 将每个属性转化为访问器属性
+     */
     function observe(data) {
         Object.keys(data).forEach(function(key) {
             defineReactive(data, key, data[key]);
@@ -208,8 +208,8 @@ Compiler 模块
     };
 
     /*
-    * 将 data 的 key 属性转化为访问器属性
-    */
+     * 将 data 的 key 属性转化为访问器属性
+     */
     function defineReactive(data, key, val) {
         Object.defineProperty(data, key, {
             enumerable: true,
@@ -219,8 +219,8 @@ Compiler 模块
             set(newVal) {
                 val = newVal;
 
-                // 之后在这里将添加更新虚拟 DOM 的操作，该操作是由
-                // Publisher & Subscriber 模式来实现的，因此这里之后会调用该模式的 API
+                // 之后在这里将添加更新虚拟 DOM 的操作，该操作是由 Publisher & Subscriber 模式来实现的，
+                // 因此这里之后会调用该模式的 API。
             },
         });
 
@@ -241,24 +241,22 @@ Publisher 对象要有以下功能：
 * 向所有的 subscriber 发布通知，告知新的数据值
 
 ```js
-function Publisher(){
-    this.subscribers = [];
-}
-
-Publisher.prototype = {
-    constructor: Publisher,
+class Publisher {
+    constructor () {
+        this.subscribers = [];
+    }
 
     addSubscriber(sub){
         this.subscribers.push(sub)
-    },
+    }
 
     notify(newVal){
-        this.subscribers.forEach(sub=>{
+        this.subscribers.forEach(sub => {
             // 每个 subscriber 实例都有一个 update 方法，调用该方法就可以更新节点
             sub.update(newVal);
         });
-    },
-};
+    }
+}
 ```
 
 #### Subscriber 对象
@@ -269,31 +267,32 @@ Subscriber 对象要有以下功能：在接收到 Publisher 发布的数据的�
  * 实例化时候，需要指明该 subscriber 负责更新哪个节点；
  * 并指明更新类型。比如是更新 textContent、更新表单 value、更新 class 属性等
  */
-function Subscriber (node, updateType) {
-    this.node = node;
-    this.updateType = updateType;
-}
-Subscriber.prototype = {
+class Subscriber {
+    constructor (node, updateType) {
+        this.node = node;
+        this.updateType = updateType;
+
+        // 这里只实现了两种更新类型。即更新文本和更新表单 value
+        this.updateFns = {
+            text (newVal) {
+                this.node.textContent = typeof newVal === 'undefined' ? '' : newVal;
+            },
+    
+            model (newVal) {
+                this.node.value = typeof newVal === 'undefined' ? '' : newVal;
+            }
+        };
+    }
+
     // 调用指定的更新类型函数更新节点
     update(newVal) {
         this.updateFns[this.updateType](newVal);
-    },
-
-    // 这里只实现了两种更新类型。即更新文本和更新表单 value
-    updateFns = {
-        text(newVal) {
-            this.node.textContent = typeof newVal === 'undefined' ? '' : newVal;
-        },
-
-        model(newVal) {
-            this.node.value = typeof newVal === 'undefined' ? '' : newVal;
-        }
-    },
+    }
 }
 ```
 
 #### 使用 Publisher
-1. 因为一个 publisher 对应一个数据属性，所以应该在 `defineReactive` 函数中实例化 `Publisher`
+1. 因为一个 publisher 对应一个数据属性，所以应该在 `defineReactive` 函数中实例化 `Publisher`。
 2. 因为要在数据更新后通知 subscribers，所以应该在数据属性的 `setter` 里调用 `Publisher` 实例的通知方法 `notify`。
 3. `defineReactive` 函数添加代码后变成如下：
     ```js
@@ -376,7 +375,7 @@ function compile (node, vm) {
     publisher.addSubscriber(subscriber);
     ```
 3. 但是 `Publisher` 实例和 `subscriber` 不在相同的作用域，没办法直接添加。那就想办法把 `Publisher` 实例传到 `subscriber` 的作用域。
-4. 为 `Publisher` 定义一个静态属性，`pubs`，用来保存所有的 publisher，每一条记录是一个 publisher 属性名到 `Publisher` 实例的映射
+4. 为 `Publisher` 定义一个静态属性 `pubs`，用来保存所有的 publisher，每一条记录是一个 publisher 属性名到 `Publisher` 实例的映射
     ```js
     Publisher.pubs = {};
     ```

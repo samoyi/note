@@ -1,8 +1,8 @@
-# Combine Variables Into Record
+# Combine Functions Into Class
 
 <!-- TOC -->
 
-- [Combine Variables Into Record](#combine-variables-into-record)
+- [Combine Functions Into Class](#combine-functions-into-class)
     - [思想](#思想)
         - [收纳整理](#收纳整理)
         - [语义化](#语义化)

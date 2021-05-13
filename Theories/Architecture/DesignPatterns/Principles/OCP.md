@@ -7,7 +7,6 @@ Software entities (classes, modules, functions, etc.) should be open for extensi
 
 - [Open-Closed Principle](#open-closed-principle)
     - [设计思想](#设计思想)
-        - [SRP 是 OCP 的前提](#srp-是-ocp-的前提)
         - [分离经常变动和不常变动](#分离经常变动和不常变动)
     - [应用](#应用)
         - [用对象的多态性消除条件分支](#用对象的多态性消除条件分支)
@@ -26,10 +25,6 @@ Software entities (classes, modules, functions, etc.) should be open for extensi
 
 
 ## 设计思想
-### SRP 是 OCP 的前提
-1. 通过 SRP 原则把经常变动的和不经常变动的分离，才能更好的实现 OCP。
-2. 越是容易变动的地方就越要 SRP，只有 SRP 了才能更好的应对变化，每次修改时只对紧密相关的独立的一小部分做修改，而不需要对整体进行修改。
-
 ### 分离经常变动和不常变动
 1. 理解系统、维护系统和改变系统功能需要成本。
 2. 系统内部的逻辑越复杂，则理解和维护起来越困难，改变的成本也越大。

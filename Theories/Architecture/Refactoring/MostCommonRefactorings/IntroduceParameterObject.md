@@ -4,11 +4,7 @@ inverse of *Split Parameter Object*
 
 
 ## 思想
-### 语义化
 收纳的意义不仅仅是把东西整理到一起，更重要的意义是理清事物之间的关系。
-
-### 高内聚
-相同的东西整理到一起
 
 
 ## Motivation

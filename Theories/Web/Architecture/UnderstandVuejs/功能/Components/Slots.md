@@ -262,10 +262,9 @@ new Vue({
                 </ul>`
     ```
     这里添加了一个默认插槽，而且设置了 `myname`（不能用 `name`，否则成了具名插槽了，`:name` 是 `v-name`）和 `age` 两个特性。有些类似于传递 prop，将插槽内部的 `person.name` 和 `person.age` 通过 `myname` 和 `age` 传递到组件外部的标签之间。
-8. 插值的部分，要设置一个拥有 `slot-scope` 特性的节点，该特性会暴露插槽作用域（slot scope），该特性的值会被作为一个对象，该对象包含插槽暴露出来的若干个类似于 prop 的值。如果不想让这个节点被渲染，那就是用 `<template>`。
-9. 在插值的地方，我们可以 `v-slot` 指令设定一个值，这个值会是一个对象，对象属性是对应插槽暴露出来的值。
-10. 例如下面的例子，指示默认插槽的指令 `v-slot:default="slotProps"` 被设置了值 `slotProps`，那么 `slotProps.myname` 的就是插槽作用域中通过 `myname` 暴露出来的 `person.name`。
-11. 现在就可以根据读取到的插槽作用域的值来插入自定义的 DOM 节点了
+8. 在插值的地方，我们可以 `v-slot` 指令设定一个值，这个值会是一个对象，对象属性是对应插槽暴露出来的值。
+9. 例如下面的例子，指示默认插槽的指令 `v-slot:default="slotProps"` 被设置了值 `slotProps`，那么 `slotProps.myname` 的就是插槽作用域中通过 `myname` 暴露出来的 `person.name`。
+10. 现在就可以根据读取到的插槽作用域的值来插入自定义的 DOM 节点了
     ```html
     <div id="components-demo">
         <self-introduction :persons="persons">

@@ -1,6 +1,6 @@
 # Replace Parameter with Query
 
-inverse of: *Replace Query with Parameter*
+inverse of: Replace Query with Parameter
 
 
 <!-- TOC -->
@@ -9,6 +9,10 @@ inverse of: *Replace Query with Parameter*
     - [思想](#思想)
         - [API 设计要做人民公仆](#api-设计要做人民公仆)
     - [Motivation](#motivation)
+        - [函数形参的意义——指明函数可能的功能变化](#函数形参的意义指明函数可能的功能变化)
+        - [如果一个值是功能提供者很容易获得的，那就考虑不要把它设为参数](#如果一个值是功能提供者很容易获得的那就考虑不要把它设为参数)
+        - [权衡耦合度](#权衡耦合度)
+        - [保持引用透明是最好的](#保持引用透明是最好的)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -23,16 +27,24 @@ inverse of: *Replace Query with Parameter*
 
 
 ## Motivation
-1. 如果调用函数是传入了一个值，而这个值由函数自己来获得也基本同样容易，那这个参数就是重复的
-    ```js
-    let key = getKey();
-    function foo (obj, key) {
-        // let key = getKey(); // 这里可以自己获得
-    }
-    ```
-2. 函数的提供者作为服务方，应该尽可能的为使用方创造方便。因为你编写虽然可能麻烦了一点，但写好也就不用管了，而调用方很可能不止一个，很可能多大成千上万个，每个调用方都要麻烦的加上一个不必要的参数。
-3. 但是需要权衡的是，让函数自己去获取某个值可能会带来耦合。在上面的例子中，函数 `foo` 如果使用参数 `key`，那么就和 `getKey` 耦合了。
-4. 如果想要去除的参数是可以直接从另一个参数哪里获取的，那去除它就是安全的。比如说上面的例子中要去除的某个参数可以从 `obj` 那里获取。
+### 函数形参的意义——指明函数可能的功能变化
+The parameter list to a function should summarize the points of variability of that function, indicating the primary ways in which that function may behave differently. 
+
+### 如果一个值是功能提供者很容易获得的，那就考虑不要把它设为参数
+1. As with any statement in code, it’s good to avoid any duplication, and it’s easier to understand if the parameter list is short. 
+2. If a call passes in a value that the function can just as easily determine for itself, that’s a form of duplication — one that unnecessarily complicates the caller which has to determine the value of a parameter when it could be freed from that work.
+
+### 权衡耦合度
+1. The limit on this is suggested by the phrase “just as easily.” By removing the parameter, I’m shifting the responsibility for determining the parameter value.
+2.  When the parameter is present, determining its value is the caller’s responsibility; otherwise, that responsibility shifts to the function body. 
+3. My usual habit is to simplify life for callers, which implies moving responsibility to the function body — but only if that responsibility is appropriate there.
+4. The most common reason to avoid *Replace Parameter with Query* is if removing the parameter adds an unwanted dependency to the function body — forcing it to access a program element that I’d rather it remained ignorant of. 
+
+### 保持引用透明是最好的
+1. The safest case for *Replace Parameter with Query* is when the value of the parameter I want to remove is determined merely by querying another parameter in the list. 
+2. There’s rarely any point in passing two parameters if one can be determined from the other. 
+3. One thing to watch out for is if the function I’m looking at has **referential transparency** — that is, if I can be sure that it will behave the same way whenever it’s called with the same parameter values. 
+4. Such functions are much easier to reason about and test, and I don’t want to alter them to lose that property. So I wouldn’t replace a parameter with an access to a mutable global variable.
 
 
 ## Mechanics

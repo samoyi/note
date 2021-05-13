@@ -1,6 +1,6 @@
 # Pull Up Field
 
-inverse of: *Push Down Field*
+inverse of: Push Down Field
 
 <!-- TOC -->
 
@@ -18,7 +18,11 @@ inverse of: *Push Down Field*
 
 
 ## Motivation
-和 *Push Down Method* 同样的思路。
+1. If subclasses are developed independently, or combined through refactoring, I often find that they duplicate features. In particular, certain fields can be duplicates. 
+2. Such fields sometimes have similar names — but not always. The only way I can tell what is going on is by looking at the fields and examining how they are used. 
+3. If they are being used in a similar way, I can pull them up into the superclass. 
+4. By doing this, I reduce duplication in two ways. I remove the duplicate data declaration and I can then move behavior that uses the field from the subclasses to the superclass.
+5. Many dynamic languages do not define fields as part of their class definition — instead, fields appear when they are first assigned to. In this case, pulling up a field is essentially a consequence of *Pull Up Constructor Body*.
 
 
 ## Mechanics

@@ -1,6 +1,6 @@
 # Pull Up Constructor Body
 
-inverse of: *Push Down Field*
+inverse of: Push Down Field
 
 <!-- TOC -->
 
@@ -18,9 +18,10 @@ inverse of: *Push Down Field*
 
 
 ## Motivation
-1. 也是把子类相同的逻辑提取到父类，只不过这里要提取的时候子类构造函数里面的逻辑。
-2. 但是构造函数相比于普通函数本身会有一些限制，所以提取起来可能有些麻烦。
-3. 如果提取起来比较麻烦，可以考虑使用 *Replace Constructor with Factory Function*，然后再进行提取。
+1. Constructors are tricky things. They aren’t quite normal methods — so I’m more restricted in what I can do with them. 
+2. If I see subclass methods with common behavior, my first thought is to use *Extract Function* followed by *Pull Up Method*, which will move it nicely into the superclass. 
+3. Constructors tangle that — because they have special rules about what can be done in what order, so I need a slightly different approach.
+4. If this refactoring starts getting messy, I reach for *Replace Constructor with Factory Function*.
 
 
 ## Mechanics

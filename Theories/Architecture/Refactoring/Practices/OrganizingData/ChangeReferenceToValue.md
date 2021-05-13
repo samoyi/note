@@ -1,13 +1,13 @@
-# Pull Up Method
+# Change Reference to Value
 
-inverse of: Push Down Method
+inverse of: *Change Value to Reference*
+
 
 <!-- TOC -->
 
-- [Pull Up Method](#pull-up-method)
+- [Change Reference to Value](#change-reference-to-value)
     - [原则](#原则)
     - [场景](#场景)
-        - [Vue 中同级组件相同的方法放入 mixin](#vue-中同级组件相同的方法放入-mixin)
     - [过度优化](#过度优化)
     - [References](#references)
 
@@ -18,7 +18,7 @@ inverse of: Push Down Method
 
 
 ## 场景
-### Vue 中同级组件相同的方法放入 mixin
+
 
 
 ## 过度优化
@@ -26,3 +26,4 @@ inverse of: Push Down Method
 
 ## References
 * [《重构（第2版）》](https://book.douban.com/subject/33400354/)
+

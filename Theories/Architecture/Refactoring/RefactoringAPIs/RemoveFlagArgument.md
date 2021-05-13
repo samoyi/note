@@ -7,8 +7,8 @@
         - [SRP](#srp)
         - [参数的语义](#参数的语义)
     - [Motivation](#motivation)
+        - [Flag Argument 增加单一函数复杂性](#flag-argument-增加单一函数复杂性)
         - [Flag Argument 意义不明](#flag-argument-意义不明)
-        - [Flag 参数增加单一函数复杂性](#flag-参数增加单一函数复杂性)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -27,55 +27,29 @@
 
 
 ## Motivation
+### Flag Argument 增加单一函数复杂性
+1. A flag argument is a function argument that the caller uses to indicate which logic the called function should execute. 
+2. I may call a function that looks like this:
+    ```js
+    function bookConcert(aCustomer, isPremium) {
+        if (isPremium) {
+            // logic for premium booking
+        } else {
+            // logic for regular booking
+        }
+    }
+    ```
+3. To book a premium concert, I issue the call like so:
+    ```js
+    bookConcert(aCustomer, true);
+    ```
+4. I dislike flag arguments because they complicate the process of understanding what function calls are available and how to call them. 
+
 ### Flag Argument 意义不明
-1. 工作中对接后端接口时，有些接口就会有这样的 flag 参数。有时丧心病狂的一个 flag 字段有 1、2、3、4 四个选项，对应请求不同的东西。
-2. 而且在编写函数逻辑的时候，需要为这样的参数编写条件分支。因为这种参数值是完全没有语义的，所以这时常常还要加上注释才行
-    ```js
-    if (flag == 1) { // 等于 1 时表示……
-
-    }
-    else if (flag == 2) { // 等于 2 时表示……
-        
-    }
-    else if (flag == 3) { // 等于 3 时表示……
-
-    }
-    else if (flag == 4) { // 等于 4 时表示……
-
-    }
-    ```
-3. 在使用函数的时候，我也必须要看函数体里面的注释才能知道要怎么传，只看形参看不出来应该怎么用
-    ```js
-    function getPhotoList (flat) { // 完全不知道应该传什么
-
-    }
-    ```
-4. 然后在看一个函数调用时，我从函数传递的参数依然看不出来是要干什么，必须看函数体的逻辑才能知道每个值对应什么意思
-    ```js
-    getPhotoList(2); // 根本不知道 2 是要干啥
-    ```
-5. 所以还是拆分为若干个函数比较好。并不会有什么性能损耗，但是逻辑上就清晰多了。
-6. 如果接口就是这么设计，那我也应该再封装为四个函数，并使用有意义的命名
-    ```js
-    function getPhotoList_typeFoo () {
-        getPhotoList(1);
-    }
-    function getPhotoList_typeBar () {
-        getPhotoList(2);
-    }
-    function getPhotoList_typeBaz () {
-        getPhotoList(3);
-    }
-    function getPhotoList_typeQux () {
-        getPhotoList(4);
-    }
-    ```
-    
-### Flag 参数增加单一函数复杂性
-1. 函数应该 SRP，不应该一个函数处理好几个功能，如果有不同的功能，那就拆分为不同的函数。
-2. 而且就算是像上面的 `getPhotoList` 处理同一个大功能的不同类别，也会因为复杂的条件分支而让函数内部的逻辑变得复杂。
-3. 即使你的 `getPhotoList` 的实现也是像上面那样进行了封装，但是对于调用者来说，还是很难理解和使用。
-
+1. Once I select a function, I have to figure out what values are available for the flag arguments. 
+2. 工作中对接后端接口时，有些接口就会有这样的 flag。有时丧心病狂的一个 flag 字段有 1、2、3、4 四个选项，对应请求不同的东西。我必须要用注释记下来四个值的意义，其他人看到这个请求的时候也需要去查看文档或者问相关的人才能知道意义。
+3. Boolean flags are even worse since they don’t convey their meaning to the reader — in a function call, I can’t figure out what `true` means. 
+4. It’s clearer to provide an explicit function for the task I want to do. 所以还是拆分为若干个函数比较好。并不会有什么性能损耗，但是逻辑上就清晰多了。
 
 
 ## Mechanics
