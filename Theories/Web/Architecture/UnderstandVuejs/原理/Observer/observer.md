@@ -1,7 +1,7 @@
 # observer
 
 
-<img src="./pattern.png" style="display: block;" />
+<img src="../../images/pattern.png" style="display: block; margin: 5px 0 10px;" />
 
 
 <!-- TOC -->
@@ -24,14 +24,13 @@
     - [实现](#实现)
         - [第一步：实现数据响应式](#第一步实现数据响应式)
             - [初始化](#初始化)
-            - [为实例 data 对象创建 `Observer` 实例，](#为实例-data-对象创建-observer-实例)
-            - [`Observer` 实例的实际创建过程](#observer-实例的实际创建过程)
-                - [被 observe 的对象是数组的情况](#被-observe-的对象是数组的情况)
-            - [`defineReactive` 实现依赖订阅](#definereactive-实现依赖订阅)
-        - [第二步：依赖收集](#第二步依赖收集)
-        - [第一步：使用 `Dep` 类把 data 属性改造为 publisher，设置 getter 和 setter](#第一步使用-dep-类把-data-属性改造为-publisher设置-getter-和-setter)
-        - [第三步：data 属性的 getter 中，`Dep` 获取当前 `Watcher`，并传递自己](#第三步data-属性的-getter-中dep-获取当前-watcher并传递自己)
-        - [第四步： `Watch` 判断如果需要订阅，就调用 `Dep` 的 `addSub` 方法，让自己订阅 `Dep` 的更新](#第四步-watch-判断如果需要订阅就调用-dep-的-addsub-方法让自己订阅-dep-的更新)
+                - [对 `data` 的属性和 `prop` 的属性的访问代理](#对-data-的属性和-prop-的属性的访问代理)
+            - [为实例 data 对象创建 `Observer` 实例](#为实例-data-对象创建-observer-实例)
+                - [被 observe 的属性是数组的情况](#被-observe-的属性是数组的情况)
+            - [`defineReactive` 函数实际实现订阅者和响应式](#definereactive-函数实际实现订阅者和响应式)
+        - [第二步：实际的依赖收集](#第二步实际的依赖收集)
+        - [第三步：通知更新](#第三步通知更新)
+        - [Watcher 的实现](#watcher-的实现)
     - [References](#references)
 
 <!-- /TOC -->
@@ -43,7 +42,6 @@
 
 ## TODO
 对于一个被观察的对象来说，看起来是在 Observe 建立的的过程中建立的 Dep，那 Watcher 是在之前建立的？
-
 
 
 ## 设计思想
@@ -75,17 +73,17 @@
 
 ## 主要模块
 ### `Observer`
-1. 位于 `core/observer/index.js` 中的 `Observer` 类。
-2. Observe 一个 vue 实例，也就是将它的 data 对象里面的属性转换为访问器属性。
+1. 位于 `/src/core/observer/index.js` 中的 `Observer` 类。
+2. Observe 一个 vue 实例，也就是将它的 data 对象里面的属性转换为访问器属性（递归的）。
 3. 通过使用 Dep 模块，将每一个属性设置为 publisher，从而实现在其值更新的时候通知依赖，也就是实现响应式。
 
 ### `Dep`
-1. 位于 `core/observer/dep.js`
+1. 位于 `/src/core/observer/dep.js`
 2. 相当于 Publisher & Subscriber 模式的 Publisher。
 3. 每一个被依赖的属性都有一个对应的 `Dep` 实例，管理着订阅者们（`Watcher`）对该属性的订阅操作和属性值更新后通知订阅者。
 
 ### `Watcher`
-1. 位于 `core/observer/watcher.js`
+1. 位于 `/src/core/observer/watcher.js`
 2. 相当于 Publisher & Subscriber 模式的 Subscriber。
 3. 管理一个表达式，确定它依赖哪些 `Dep` 并结合相应的 `Dep` 进行订阅。
 
@@ -107,10 +105,10 @@
 
 ### 第一步：实现数据响应式
 #### 初始化
-1. 最初通过 `src/core/instance/state.js` 中的 `initState` 方法调用，`initState` 进一步调用 `initData` 方法。
-2. `initData` 会对实例的 `data` 进行一些处理，然后交给 `Observer` 进行响应式化并订阅依赖
+1. 最初调用 `/src/core/instance/index.js` 中的 `Vue` 构造函数并传入 options 对象，创建 Vue 根实例。然后通过实例方法 `_init` 调用 `/src/core/instance/state.js` 中的 `initState` 方法调用，`initState` 进一步调用 `initData` 方法。
+2. `initData` 会对实例的 `data` 进行一些处理，然后交给 `observe` 函数对其属性进行响应式化，以便在之后进行依赖订阅
     ```js
-    // src/core/instance/state.js
+    // /src/core/instance/state.js
 
     function initData(vm: Component) {
         // 获取实例的 data 属性
@@ -161,7 +159,7 @@
             } 
             // 属性名不能使保留字
             else if (!isReserved(key)) {
-                // 将 _data 上面的属性代理到了 vm 实例上
+                // 将 vm._data 上面的属性代理到了 vm 实例上
                 proxy(vm, `_data`, key);
             }
         }
@@ -169,9 +167,18 @@
         observe(data, true /* asRootData */);
     }
     ```
-3. `data` 的属性和 `prop` 的属性实际上是保存在实例的 `_data` 和 `_props` 属性上的，但是用户访问的时候并不是通过 `this._data.name` 和 `this._props.age`，而是直接通过 `this.name` 和 `this.age`。就是因为使用了 `proxy` 函数让实例对这两中属性的访问进行了代理
+
+##### 对 `data` 的属性和 `prop` 的属性的访问代理
+1. `data` 的属性和 `prop` 的属性实际上是保存在实例的 `_data` 和 `_props` 属性上的，但是用户访问的时候并不是通过 `this._data.name` 和 `this._props.age`，而是直接通过 `this.name` 和 `this.age`。就是因为使用了 `proxy` 函数让实例对这两中属性的访问进行了代理
     ```js   
-    // src/core/instance/state.js
+    // /src/core/instance/state.js
+
+    const sharedPropertyDefinition = {
+        enumerable: true,
+        configurable: true,
+        get: noop,
+        set: noop
+    };
 
     export function proxy(target: Object, sourceKey: string, key: string) {
         sharedPropertyDefinition.get = function proxyGetter() {
@@ -183,120 +190,119 @@
         Object.defineProperty(target, key, sharedPropertyDefinition);
     }
     ```
+2. 现在，访问 `vm[key]` 的时候，实际返回的是 `vm[_data][key]`，设置 `vm[key]` 的时候，实际设置的是 `vm[_data][key]`。
 
-#### 为实例 data 对象创建 `Observer` 实例，
-`Observer` 实例用于实现数据对象的响应式，创建好之后会被数据对象的 `__ob__` 属性引用
-```js
-// src/core/observer/index.js
+#### 为实例 data 对象创建 `Observer` 实例
+1. `observe` 自己并不会处理 data 对象，而是通过创建 `Observer` 实例来实现
+    ```js
+    // /src/core/observer/index.js
 
-/**
- * Attempt to create an observer instance for a value,
- * returns the new observer if successfully observed,
- * or the existing observer if the value already has one.
- */
-export function observe(value: any, asRootData: ?boolean): Observer | void {
-    // TODO
-    if ( !isObject(value) || value instanceof VNode ) {
-        return;
-    }
-
-    let ob: Observer | void;
-    // 如果该 data 对象已经有了 Ovserver 实例（会保存在 __ob__ 属性上），则不需要新创建，之后直接返回
-    if ( hasOwn(value, "__ob__") && value.__ob__ instanceof Observer ) {
-        ob = value.__ob__;
-    } 
-    // 如果没有了 Ovserver 实例
-    else if (
+    /**
+     * Attempt to create an observer instance for a value,
+     * returns the new observer if successfully observed,
+     * or the existing observer if the value already has one.
+     */
+    export function observe(value: any, asRootData: ?boolean): Observer | void {
         // TODO
-        shouldObserve &&
-        !isServerRendering() &&
-        ( Array.isArray(value) || isPlainObject(value) ) &&
-        Object.isExtensible(value) &&
-        !value._isVue ) 
-    {
-        ob = new Observer(value); // 为该 data 对象创建 Observer 实例
+        if ( !isObject(value) || value instanceof VNode ) {
+            return;
+        }
+
+        let ob: Observer | void;
+        // 如果该 data 对象已经有了 Observer 实例（会保存在 `__ob__` 属性上），则不需要新创建，之后直接返回
+        if ( hasOwn(value, "__ob__") && value.__ob__ instanceof Observer ) {
+            ob = value.__ob__;
+        } 
+        // 如果没有 Ovserver 实例
+        else if (
+            // TODO
+            shouldObserve &&
+            !isServerRendering() &&
+            ( Array.isArray(value) || isPlainObject(value) ) &&
+            Object.isExtensible(value) &&
+            !value._isVue ) 
+        {
+            ob = new Observer(value); // 为该 data 对象创建 Observer 实例
+        }
+
+        // TODO
+        if ( asRootData && ob ) {
+            ob.vmCount++;
+        }
+        return ob;
     }
+    ```
+2. `Observer` 实例化时会为 data 对象的每个属性通过 `defineReactive` 函数创建发布者实例（`Dep` 实例）并实现对象的响应式
+    ```js
+    // /src/core/observer/index.js
 
-    // TODO
-    if ( asRootData && ob ) {
-        ob.vmCount++;
-    }
-    return ob;
-}
-```
+    // Observe 一个 vue 实例，将它的 data 对象里面的属性转换为访问器属性。
+    // 将每一个属性设置为 publisher，从而实现在其值更新的时候通知依赖，也就是实现响应式
+    /**
+     * Observer class that is attached to each observed
+     * object. Once attached, the observer converts the target
+     * object's property keys into getter/setters that
+     * collect dependencies and dispatch updates.
+     */
+    export class Observer {
+        value: any;
+        dep: Dep;
+        vmCount: number; // number of vms that have this object as root $data
 
-#### `Observer` 实例的实际创建过程
-```js
-// src/core/observer/index.js
+        constructor(value: any) {
+            this.value = value;
 
-// Observe 一个 vue 实例，将它的 data 对象里面的属性转换为访问器属性。
-// 将每一个属性设置为 publisher，从而实现在其值更新的时候通知依赖，也就是实现响应式
-/**
- * Observer class that is attached to each observed
- * object. Once attached, the observer converts the target
- * object's property keys into getter/setters that
- * collect dependencies and dispatch updates.
- */
-export class Observer {
-    value: any;
-    dep: Dep;
-    vmCount: number; // number of vms that have this object as root $data
+            // 为整个 data 对象创建一个 publisher，之后还会遍历为每个子属性创建对应的 publisher
+            this.dep = new Dep();
+            this.vmCount = 0;
 
-    constructor(value: any) {
-        this.value = value;
+            // def 函数出自 src/core/util/lang.js
+            // 为 data 对象添加名为 `__ob__` 的属性，指向这里被构建的 Observer 实例，用来标志该 data 对象已经 observed
+            def(value, "__ob__", this);
+            
+            if ( Array.isArray(value) ) {
+                if ( hasProto ) {
+                    protoAugment(value, arrayMethods);
+                } 
+                else {
+                    copyAugment(value, arrayMethods, arrayKeys);
+                }
 
-        // 为整个 data 对象创建一个 publisher，之后还会遍历为每个子属性创建对应的 publisher
-        this.dep = new Dep();
-        this.vmCount = 0;
-
-        // def 函数出自 src/core/util/lang.js
-        // 为 data 对象添加名为 __ob__ 的属性，指向这里被构建的 Observer 实例，用来标志该 data 对象已经 observed
-        def(value, "__ob__", this);
-        
-        if ( Array.isArray(value) ) {
-            // 
-            if ( hasProto ) {
-                protoAugment(value, arrayMethods);
+                // 需要遍历数组的每一个成员进行 observe
+                this.observeArray(value);
             } 
             else {
-                copyAugment(value, arrayMethods, arrayKeys);
+                // 遍历 data 对象的每个属性，将其定义为访问器属性
+                this.walk(value);
             }
+        }
 
-            // 需要遍历数组的每一个成员进行 observe
-            this.observeArray(value);
-        } 
-        else {
-            // 遍历 data 对象的每个属性，将其定义为访问器属性
-            this.walk(value);
+        /**
+         * Walk through all properties and convert them into
+         * getter/setters. This method should only be called when
+         * value type is Object.
+         */
+        walk(obj: Object) {
+            const keys = Object.keys(obj);
+            for (let i = 0; i < keys.length; i++) {
+                // defineReactive 会实际的把属性转换为访问器属性
+                defineReactive(obj, keys[i]);
+            }
+        }
+
+        /**
+         * Observe a list of Array items.
+         */
+        observeArray(items: Array<any>) {
+            for (let i = 0, l = items.length; i < l; i++) {
+                observe(items[i]);
+            }
         }
     }
+    ```
 
-    /**
-     * Walk through all properties and convert them into
-     * getter/setters. This method should only be called when
-     * value type is Object.
-     */
-    walk(obj: Object) {
-        const keys = Object.keys(obj);
-        for (let i = 0; i < keys.length; i++) {
-            // defineReactive 会实际的把属性转换为访问器属性
-            defineReactive(obj, keys[i]);
-        }
-    }
-
-    /**
-     * Observe a list of Array items.
-     */
-    observeArray(items: Array<any>) {
-        for (let i = 0, l = items.length; i < l; i++) {
-            observe(items[i]);
-        }
-    }
-}
-```
-
-##### 被 observe 的对象是数组的情况
-1. 如果是修改一个数组的成员，该成员是一个对象，那只需要递归对数组的成员进行双向绑定即可。但这时候出现了一个问题：如果我们进行 `pop`、`push` 等操作的时候，`push` 进去的对象根本没有进行过双向绑定，更别说 `pop` 了，那么我们如何监听数组的这些变化呢？ 
+##### 被 observe 的属性是数组的情况
+1. 对数组属性设置的响应式之后，只有直接改变数组才能触发 setter，而数组的 `pop`、`push` 等方法都是无法触发的。那么我们如何监听数组的这些变化呢？ 
 2. Vue.js 提供的方法是重写 `push`、`pop`、`shift`、`unshift`、`splice`、`sort`、`reverse` 这七个数组方法
     ```js
     /*
@@ -323,12 +329,13 @@ export class Observer {
     ];
 
     /**
-    * Intercept mutating methods and emit events
-    */
+     * Intercept mutating methods and emit events
+     */
     // 截获数组的成员发生的变化，执行原生数组操作的同时通过 dep 发布变化给订阅者
     methodsToPatch.forEach(function(method) {
         // cache original method
         const original = arrayProto[method]; // 基本的数组操作还是要用原始的方法来执行
+        // 把 `arrayMethods[method]` 这个数组方法重写为 `mutator` 函数
         def(arrayMethods, method, function mutator(...args) {
             const result = original.apply(this, args);
             const ob = this.__ob__;
@@ -353,7 +360,7 @@ export class Observer {
     ```
 3. 并通过 `protoAugment` 和 `copyAugment` 两个方法调用来作用在被 observe 的数组上
     ```js
-    // src/core/observer/index.js
+    // /src/core/observer/index.js
     
     /**
      * Augment a target Object or Array by intercepting
@@ -379,10 +386,12 @@ export class Observer {
     ```
 4. 但是修改了数组的原生方法以后，直接通过数组的下标或者设置 `length` 来修改数组依然不会实现响应式。
 
-#### `defineReactive` 实现依赖订阅
-1. 源码
+#### `defineReactive` 函数实际实现订阅者和响应式
+1. `defineReactive` 函数为每个属性创建一个发布者对象——`Dep` 实例，并且把属性转化为访问器属性，来为之后的依赖收集和响应式做好准备。
+2. 源码
     ```js
-    // observer/index.js
+    // /src/core/observer/index.js
+    
     /**
      * Define a reactive property on an Object.
      */
@@ -424,12 +433,13 @@ export class Observer {
             // 在编译阶段，会对模板、计算属性之类的求值，求值的过程就会对其依赖属性求值，进而触发这里的 get 函数，完成依赖订阅。
             // 这样也保证了，只有真正被依赖的数据才会被响应式化，那些没人依赖的数据就不会被 observe。
             get: function reactiveGetter() {
-            // 如果属性已经有 getter，则使用本身 getter 返回值
+                // 如果属性已经有 getter，则使用本身 getter 返回值
                 const value = getter ? getter.call(obj) : val;
-                // TODO target
                 // Dep.target 如果有对象，就说明当前有一个 watcher 正在求值
+                // 而求值过程中访问了当前属性 `obj[key]`，就证明它依赖 `obj[key]`，所以它就是 `obj[key]` 的订阅者
                 if ( Dep.target ) {
-                    // 当前 watcher 订阅依赖
+                    // 当前 watcher 订阅依赖，把 watcher 添加到 `obj[key]` 的订阅者列表里
+                    // 但是这个添加的方法并不是定义在 Dep 上的，而是定义在 Watcher 上的
                     // dep.depend 方法会通过 Dep.target 引用当前 watcher，将其添加到 dep 的订阅列表里，代码如下：
                     // depend() {
                     //     if (Dep.target) {
@@ -458,28 +468,28 @@ export class Observer {
     }
     ```
 2. 在编译阶段，会对模板、计算属性之类的求值，求值的过程就会对其依赖属性求值，进而触发这里的 `get` 函数，完成依赖订阅。
-3. 这样也保证了，只有真正被依赖的数据才会被响应式化，那些没人依赖的数据就不会被 observe。
+3. 而依赖的属性变化后，会触发 `set` 函数，函数内部会根据之前收集的依赖 watcher 列表，使用新的值来通知他们。
+4. 这样收集依赖的方式保证了只有真正被依赖的数据才会被响应式化，那些没人依赖的数据就不会被 observe。
 
-
-### 第二步：依赖收集   
- `Watcher` 求值，触发 data 属性的 getter
-1. 初次对模板中的变量或计算属性之类进行求值，就会访问到里面依赖的 `data` 属性，进而触发 `data` 属性的 getter，也就是上面 `defineReactive` 中的 `get` 函数。
-
-譬如说现在的的data中可能有a、b、c三个数据，getter渲染需要依赖a跟c，
-      那么在执行getter的时候就会触发a跟c两个数据的getter函数，
-      在getter函数中即可判断Dep.target是否存在然后完成依赖收集，
-      将该观察者对象放入闭包中的Dep的subs中去。
-
-      
-2. 看一下 `Watcher` 的求值函数
+### 第二步：实际的依赖收集   
+1. 整体思路为：watcher 求值，触发依赖属性的 getter 函数，在函数内进行依赖收集。
+2. 初次对模板中的变量或计算属性之类进行求值，就会访问到里面依赖的属性，进而触发该属性的 getter，也就是上面 `defineReactive` 中的 `get` 函数。
+3. 譬如说现在的 data 中有 `a`、`b`、`c` 三个数据，一个计算属性的值要被渲染，该计算属性依赖 `a` 和 `c`。
+4. 那么在对计算属性求值的时候，会读取里面的 `a` 和 `c` 两个属性，进而触发 `a` 和 `c` 的 getter 函数。
+5. 同时，在对计算属性求值的时候，全局的 `Dep.target` 会被设置为该计算属性的 watcher 对象。
+6. 因此，在触发 `a` 和 `c` 的 getter 函数的时候，就可以通过 `Dep.target` 得知是哪个 watcher 谁在依赖自己，然后把这个 watcher 添加到自己的依赖列表 `subs` 中。
+7. 看一下 `Watcher` 的求值函数
     ```js
-    // watcher.js
+    // /src/core/observer/watcher.js
 
     get () {
+        // `pushTarget` 会把当前 watcher 设为全局可以见的 `Dep.target`
         pushTarget(this)
         let value
         const vm = this.vm
         try {
+            // 调用 watch 的表达式的 getter 函数进行求值
+            // 这个过程就会访问到依赖的属性，进而完成依赖收集
             value = this.getter.call(vm, vm)
         }
         catch (e) {
@@ -500,157 +510,59 @@ export class Observer {
         return value
     }
     ```
-3. 注意第一步的 `pushTarget`，会把当前 `Watcher` 设为全局可以见的 `Dep.target`。那么前面 getter 里面你的 `if (Dep.target)` 就会判定为真。
-4. 同时，`Dep.target` 还会告诉它依赖的两个 `Dep`，当前是哪个 `Watcher` 在求值。这样，两个 `Dep` 就会知道要让哪个 `Watcher` 订阅自己。在下面的第三步可以看，`Dep` 会通过 `Dep.target` 获得当前是哪个 `Watcher` 在求值。
-5. 接下来，`this.getter.call(vm, vm)` 会对该 `Watcher` 的表达式求值，在这个过程中就会触发两个 `Dep` 的 getter。
+
+### 第三步：通知更新
+1. 因为 `defineReactive` 将一个属性转化为了访问器属性，所以属性值发生变化时会触发 setter，也就是上面的 `reactiveSetter` 函数。源码如下
     ```js
-    // observer/index.js
-    Object.defineProperty(obj, key, {
-        enumerable: true,
-        configurable: true,
-        get: function reactiveGetter () {
-            const value = getter ? getter.call(obj) : val
-            // 此时 Dep.target 已经有值
-            if (Dep.target) {
-                dep.depend()
-                if (childOb) {
-                    childOb.dep.depend()
-                    if (Array.isArray(value)) {
-                        dependArray(value)
-                    }
-                }
-            }
-            return value
-        },
-        set: function reactiveSetter (newVal) {
-            // 省略
+    // /src/core/observer/index.js
+    
+    set: function reactiveSetter(newVal) {
+        const value = getter ? getter.call(obj) : val;
+        /* eslint-disable no-self-compare */
+        // 试图设置相同的值时不更新。|| 前面不能排除 NaN，|| 后面排除掉 NaN = NaN 这样的赋值
+        if (newVal === value || (newVal !== newVal && value !== value)) {
+            return;
         }
-    })
+        /* eslint-enable no-self-compare */
+        // 什么时候会传自定义性 setter
+        if (process.env.NODE_ENV !== "production" && customSetter) {
+            customSetter();
+        }
+        // #7981: for accessor properties without setter
+        if (getter && !setter) return;
+        if (setter) {
+            setter.call(obj, newVal);
+        } else {
+            val = newVal;
+        }
+        // TODO
+        childOb = !shallow && observe(newVal);
+        // 通知 subscriber
+        dep.notify();
+    }
     ```
-6. getter 里面关键操作，就是 `dep.depend()`。它会开始这时依赖绑定关系，进入第三步的行为。
-
-
-
-
-
-
-
-### 第一步：使用 `Dep` 类把 data 属性改造为 publisher，设置 getter 和 setter
-1. Vue 响应式系统的 publisher 是通过 `Dep` 类实现的，因此在编译 `data` 时，会为每一个属性实例化一个 `Dep`。
-2. 将该 data 属性改造为访问器属性，getter 里负责绑定和 `Watcher` 的依赖关系，setter 负责在值变化时通知依赖该属性的 `Watcher`。
-3. 应该是只在一个 data 属性初始化的时候才会执行绑定，而不是每次访问该属性都绑定。不过目前还没看到这个判断逻辑。
-
-```js
-// observer/index.js
-
-export function defineReactive (
-    obj: Object,
-    key: string,
-    val: any,
-    customSetter?: ?Function,
-    shallow?: boolean)
-{
-    // 为每个数据属性创建一个 publisher，所有依赖该数据属性的 subscriber 都会订阅这个 publisher
-    const dep = new Dep()
-
-    const property = Object.getOwnPropertyDescriptor(obj, key)
-    if (property && property.configurable === false) {
-        return
-    }
-
-    const getter = property && property.get
-
-    if (!getter && arguments.length === 2) {
-        val = obj[key]
-    }
-
-    const setter = property && property.set
-
-    let childOb = !shallow && observe(val)
-
-    Object.defineProperty(obj, key, {
-        enumerable: true,
-        configurable: true,
-        get: function reactiveGetter () {
-            const value = getter ? getter.call(obj) : val
-            // Dep.target 如果有对象，就说明当前有一个 watcher 正在求值。应该是可以通过这个判断只在初始化时进行绑定
-            if (Dep.target) {
-                // 绑定和 watcher 的依赖关系
-                dep.depend()
-                if (childOb) {
-                    childOb.dep.depend()
-                    if (Array.isArray(value)) {
-                        dependArray(value)
-                    }
-                }
-            }
-            return value
-        },
-        set: function reactiveSetter (newVal) {
-            const value = getter ? getter.call(obj) : val
-            /* eslint-disable no-self-compare */
-            if (newVal === value || (newVal !== newVal && value !== value)) {
-                return
-            }
-            /* eslint-enable no-self-compare */
-            if (process.env.NODE_ENV !== 'production' && customSetter) {
-                customSetter()
-            }
-            if (setter) {
-                setter.call(obj, newVal)
-            }
-            else {
-                val = newVal
-            }
-            childOb = !shallow && observe(newVal)
-
-            // 值变化时通知依赖该属性的 watcher
-            dep.notify()
-        }
-    })
-}
-```
-
-
-
-### 第三步：data 属性的 getter 中，`Dep` 获取当前 `Watcher`，并传递自己
-1. 作为 Publisher 的 `Dep` 对象调用 `depend` 方法。
-2. `depend` 方法通过 `Dep.target` 找到当前需要进行绑定 `Watcher` 对象。
-3. 调用该 `Watcher` 的 `addDep` 方法，并传递自己（`Dep` 对象）。
-
-```js
-// dep.js
-depend () {
-    if (Dep.target) {
-        Dep.target.addDep(this)
-    }
-}
-```
-
-### 第四步： `Watch` 判断如果需要订阅，就调用 `Dep` 的 `addSub` 方法，让自己订阅 `Dep` 的更新
-1. 上一步，`Dep` 通过 `Watcher` 的 `addDep` 方法把自己传递给了 `Watcher`。
-2. `Watcher` 在自己的 `addDep` 方法中获得了该 `Dep`，它再调用该 `Dep` 的 `addSub` 并传递自己，让 `Dep` 把自己加入到 subscriber 列表里。
+2. 最后的 `dep.notify()` 的通知依赖该属性的 watcher。是 `Dep` 的方法，实现如下
     ```js
-    // watcher.js
-    addDep (dep: Dep) {
-        const id = dep.id
-        if (!this.newDepIds.has(id)) {
-            this.newDepIds.add(id)
-            this.newDeps.push(dep)
-            if (!this.depIds.has(id)) {
-                dep.addSub(this)
-            }
+    // /src/core/observer/dep.js
+    
+    notify() {
+        // stabilize the subscriber list first
+        const subs = this.subs.slice();
+        if (process.env.NODE_ENV !== "production" && !config.async) {
+            // subs aren't sorted in scheduler if not running async
+            // we need to sort them now to make sure they fire in correct
+            // order
+            subs.sort((a, b) => a.id - b.id);
+        }
+        for (let i = 0, l = subs.length; i < l; i++) {
+            subs[i].update();
         }
     }
     ```
-3. 具体的订阅方法
-    ```js
-    // dep.js
-    addSub (sub: Watcher) {
-        this.subs.push(sub)
-    }
-    ```
-4. 注意到，其实第三步的时候，`Dep` 就已经获得了当前的 `Watcher`，但它并没有直接 `addSub`，而是先把自己传给 `Watcher`，再让 `Watcher` 调用自己的 `addSub` 方法。虽然还不知道具体的原理，但这样折腾一下，应该就是因为要进行 `addDep` 里面的两层判断。虽然获得了 `Watcher`，但也不能直接添加，还是要在 `Watcher` 里判断一下是否满足添加的条件。
+3. `Watcher` 类实现了 `update` 方法，用来接受依赖的更新，所以 `notify` 中会依次调用每个 watcher 的 `update` 方法。
+4. 注意到调用 `notify` 时并没有传 `newVal` 进去，也就是说并没有把依赖的更新值传给 watcher。这是因为在调用 watcher 的 `update` 方法之后，watcher 会直接调用自己的 getter 重新求值。
+
+### Watcher 的实现
 
 
 ## References

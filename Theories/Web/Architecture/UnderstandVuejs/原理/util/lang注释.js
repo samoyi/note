@@ -15,7 +15,6 @@ export function isReserved (str: string): boolean {
 /**
 * Define a property.
 */
-// 定义可写可配置的访问器属性
 export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
     Object.defineProperty(obj, key, {
         value: val,

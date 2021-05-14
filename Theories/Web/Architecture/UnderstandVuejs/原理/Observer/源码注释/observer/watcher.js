@@ -26,20 +26,20 @@ let uid = 0;
 * This is used for both the $watch() api and directives.
 */
 /**
-* 相当于 Publisher & Subscriber 模式的 Subscriber。
-* watcher 将一个表达式变成一个 subscriber，让它订阅若干个依赖的 dep。
-* watcher 负责解析表达式然后收集表达式的依赖，构造函数中的 expOrFn 就是这个表达式。
-* 当这个表达式的依赖发生变化时，watcher 会收到通知。
-* 如果依赖的变化让表达式的值发生了变化，watcher 就会调用针对该表达式的变化回调函数，即构造函数中的 cb。
-*
-* 如果是计算属性：expOrFn 就是这个计算属性函数，watcher 会收集函数内部依赖；cb 是空函数 ƒ noop (a, b, c) {}，因为计算属性变化
-*     完后没有直接要做的事情。
-* 如果是侦听器属性，expOrFn 就是这个属性名字符串，watcher 会找到被侦听属性的依赖；cb 就是侦听回调。
-* 除了上述两种情况，即使什么属性都没有，也至少会有一个 watcher，expOrFn 是一个看起来是更新渲染函数的东西
-*     ƒ () { vm._update(vm._render(), hydrating) }；而 cb 是空函数 ƒ noop (a, b, c) {}
-*
-* 没有被用到的计算属性也会生成 Watcher 实例，但不会被添加到它所依赖的数据的依赖列表里
-*/
+ * 相当于 Publisher & Subscriber 模式的 Subscriber。
+ * watcher 将一个表达式变成一个 subscriber，让它订阅若干个依赖的 dep。
+ * watcher 负责解析表达式然后收集表达式的依赖，构造函数中的 expOrFn 就是这个表达式。
+ * 当这个表达式的依赖发生变化时，watcher 会收到通知。
+ * 如果依赖的变化让表达式的值发生了变化，watcher 就会调用针对该表达式的变化回调函数，即构造函数中的 cb。
+ *
+ * 如果是计算属性：expOrFn 就是这个计算属性函数，watcher 会收集函数内部依赖；cb 是空函数 ƒ noop (a, b, c) {}，因为计算属性变化
+ *     完后没有直接要做的事情。
+ * 如果是侦听器属性，expOrFn 就是这个属性名字符串，watcher 会找到被侦听属性的依赖；cb 就是侦听回调。
+ * 除了上述两种情况，即使什么属性都没有，也至少会有一个 watcher，expOrFn 是一个看起来是更新渲染函数的东西
+ *     ƒ () { vm._update(vm._render(), hydrating) }；而 cb 是空函数 ƒ noop (a, b, c) {}
+ *
+ * 没有被用到的计算属性也会生成 Watcher 实例，但不会被添加到它所依赖的数据的依赖列表里
+ */
 export default class Watcher {
     vm: Component;
     expression: string;
@@ -142,6 +142,7 @@ export default class Watcher {
         const vm = this.vm;
         try {
             // 调用 watch 的表达式的 getter 函数进行求值
+            // 这个过程就会访问到依赖的属性，进而完成依赖收集
             value = this.getter.call(vm, vm);
         } 
         catch (e) {

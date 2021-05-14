@@ -28,6 +28,7 @@ const methodsToPatch = [
 methodsToPatch.forEach(function(method) {
     // cache original method
     const original = arrayProto[method]; // 基本的数组操作还是要用原始的方法来执行
+    // 把 `arrayMethods[method]` 这个数组方法重写为 `mutator` 函数
     def(arrayMethods, method, function mutator(...args) {
         const result = original.apply(this, args);
         const ob = this.__ob__;

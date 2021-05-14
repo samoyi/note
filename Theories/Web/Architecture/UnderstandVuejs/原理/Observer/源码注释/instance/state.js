@@ -44,9 +44,11 @@ const sharedPropertyDefinition = {
  */
  
 export function proxy(target: Object, sourceKey: string, key: string) {
+    // 访问 `target[key]` 的时候，实际返回的是 `target[sourceKey][key]`
     sharedPropertyDefinition.get = function proxyGetter() {
         return this[sourceKey][key];
     };
+    // 设置 `target[key]` 的时候，实际设置的是 `target[sourceKey][key]`
     sharedPropertyDefinition.set = function proxySetter(val) {
         this[sourceKey][key] = val;
     };

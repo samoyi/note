@@ -23,7 +23,7 @@
 1. 当你把一个普通的 JavaScript 对象传入 Vue 实例作为 `data` 选项，Vue 将遍历此对象所有的 property，并使用 `Object.defineProperty` 把这些 property 全部转为 getter/setter。 Vue 实例将代理对这些属性的访问和设置。
 2. 这些 getter/setter 对用户来说是不可见的，但是在内部它们让 Vue 能够追踪依赖，在 property 被访问和修改时通知变更。
 3. 每个组件实例都对应一个 watcher 实例，它会在组件渲染的过程中把 “接触” 过的数据 property 记录为依赖。之后当依赖项的 setter 触发时，会通知 watcher，从而使它关联的组件重新渲染。
-    <img src="../images/ReactivitySystem.png" width="600" style="display: block; margin: 5px 0 10px;" />
+    <img src="../../../images/ReactivitySystem.png" width="600" style="display: block; margin: 5px 0 10px;" />
 4. 这里看起来，watcher 相当于管理订阅者的一个对象，订阅者希望监听若干个依赖的变化，watcher 会负责把这个订阅者的变化监听回调函数注册到响应的 `data` 属性或计算属性名下。
 5. 被依赖的 `data` 属性或者计算属性的 setter 被调用时，该属性之前名下订阅者注册的监听回调就会被调用。
 

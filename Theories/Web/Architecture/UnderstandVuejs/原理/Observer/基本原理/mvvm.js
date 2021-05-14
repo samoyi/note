@@ -26,51 +26,57 @@ function initCompile (node, vm) {
  *     将文本节点中 “Mustache” syntax 中的变量替换为 model 中相应的数据
  */
 function compile (node, vm) {
-
     // 节点类型为元素
     if (node.nodeType === 1) {
-        // 解析节点属性
-        const aAttr = [...node.attributes];
-        aAttr.forEach(attr => {
-            if (attr.nodeName === 'v-model') {
-                 // 获取 v-model 绑定的 data 属性名
-                const sPropName = attr.nodeValue;
-
-                // 对 v-model 节点进行初始化赋值
-                // 根据获得的 data 属性名将 model 中该属性的值赋给该节点
-                node.value = vm.data[sPropName];
-
-                // 编译后的节点不应该再出现 v-model 属性
-                node.removeAttribute('v-model');
-
-                // 通过 input 事件实现从 view 到 model 的绑定
-                node.addEventListener('input', function (ev) {
-                    vm.data[sPropName] = ev.target.value;
-                });
-
-                const subscriber = new Subscriber(node, 'model');
-                Publisher.pubs[sPropName].addSubscriber(subscriber);
-            }
-        });
-
-        // 编译子节点
-        node.childNodes.forEach(child => {
-            compile(child, vm);
-        });
+        compileElementNode (node, vm);
     }
 
     // 节点类型为 text
     if (node.nodeType === 3) {
-        // 将 “Mustache” syntax 中的变量替换为 model 中相应的数据
-        const reg = /\{\{(.*)\}\}/;
-        const aMatch = node.nodeValue.match(reg);
-        if (aMatch) {
-            const sPropName = aMatch[1].trim();
-            node.nodeValue = vm.data[sPropName];
+        compileTextNode (node, vm);
+    }
+}
 
-            const subscriber = new Subscriber(node, 'text');
+function compileElementNode (node, vm) {
+    // 解析节点属性
+    const aAttr = [...node.attributes];
+    aAttr.forEach(attr => {
+        if (attr.nodeName === 'v-model') {
+                // 获取 v-model 绑定的 data 属性名
+            const sPropName = attr.nodeValue;
+
+            // 对 v-model 节点进行初始化赋值
+            // 根据获得的 data 属性名将 model 中该属性的值赋给该节点
+            node.value = vm.data[sPropName];
+
+            // 编译后的节点不应该再出现 v-model 属性
+            node.removeAttribute('v-model');
+
+            // 通过 input 事件实现从 view 到 model 的绑定
+            node.addEventListener('input', function (ev) {
+                vm.data[sPropName] = ev.target.value;
+            });
+
+            const subscriber = new Subscriber(node, 'model');
             Publisher.pubs[sPropName].addSubscriber(subscriber);
         }
+    });
+
+    // 编译子节点
+    node.childNodes.forEach(child => {
+        compile(child, vm);
+    });
+}
+function compileTextNode (node, vm) {
+    // 将 “Mustache” syntax 中的变量替换为 model 中相应的数据
+    const reg = /\{\{(.*)\}\}/;
+    const aMatch = node.nodeValue.match(reg);
+    if (aMatch) {
+        const sPropName = aMatch[1].trim();
+        node.nodeValue = vm.data[sPropName];
+
+        const subscriber = new Subscriber(node, 'text');
+        Publisher.pubs[sPropName].addSubscriber(subscriber);
     }
 }
 

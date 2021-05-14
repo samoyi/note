@@ -17,7 +17,7 @@
 <!-- /TOC -->
 
 
-<img src="../images/VueMVVM.png" width="600" style="display: block;" />
+<img src="../images/VueMVVM.png" width="600" style="display: block; margin: 5px 0 10px;" />
 
 
 ## 引用说明
@@ -39,7 +39,7 @@
 2. 从名字和 Vue.js 实际使用上的感受来看，ViewModel 是 Model 化了的 View。也就是说，把 View 用数据表现出来，将 View 数据化。
 3. 例如，页面的文本转化为某个变量的值，页面节点的隐藏和显示转化为某个布尔值变量，一个列表转化为数据中的数组。
 4. 这样，就和 MVC 的架构感觉上是不同的。MVC 的 Controller 就如同它的名字一样，有着明显的 “操控” 的感觉，要按照业务逻辑去操控数据。而 MVVM 中的 ViewModel，在使用 Vuejs 的过程中，并没有那种明显的操控感。
-5. 直白的翻译，就是 “视图模型”。Model 的数据是抽象的，View 是具象的，没办法直接把 Model 的数据应用到 View 上。但一旦对 View 进行抽象建模，将其转换为数据模型 ViewModel 之后，就可以很方便的把 Model 的各种数据作为变量插入到。
+5. 直白的翻译，就是 “视图模型”。Model 的数据是抽象的，View 是具象的，没办法直接把 Model 的数据应用到 View 上。但一旦对 View 进行抽象建模，将其转换为数据模型 ViewModel 之后，就可以很方便的把 Model 的各种数据作为变量插入到 View。
 6. 这中间是不需要控制的！ViewModel 是 View 抽象化之后的模型，但它同时也是 Model 眼里的模板，所以才可以很方便的把数据作为变量插入。ViewModel 既是 View 层的 model，也是 Model 层的 view。
 7. 所以 VM 其实和 DOM 的功能有些类似，都是根据 HTML（View）建立一个可供 JS 操作的 Model。只不过 DOM 这个模型体现的仍然是 HTML 的结构逻辑，而 VM 体现的则是 HTML 的数据逻辑。所以 VM 可以直接作为数据层的 View，而 DOM 则不行。
 
@@ -61,7 +61,7 @@
 6. Vue instances proxy all properties on data objects they observe. So once an object `{ a: 1 }` has been observed, both `vm.$data.a` and `vm.a` will return the same value, and setting `vm.a = 2` will modify `vm.$data`. 即 ViewModel 和
 Model 的数据保持一致。
 7. The data objects are mutated in place, so modifying it by reference has the same effects as modifying `vm.$data`. This makes it possible for multiple Vue instances to observe the same piece of data.
-8. In larger applications it is also recommended to treat Vue instances as pure views, and externalize the data manipulation logic into a more discrete store layer. 这里的意思可能就是上面在解释 ViewModel 说的那样，把 ViewModel 当做 Model 层的 view。尽量只是往里面插入变量，至于数据层面的各种计算，不要放到 ViewModel 里面来进行。因为 ViewModel 只是 Model 层的 view，虽然它比 View 层更数据，但它本质上还是属于 Model层的模板，显然不应该在模板里进行复杂的运算。
+8. In larger applications it is also recommended to treat Vue instances as pure views, and externalize the data manipulation logic into a more discrete store layer. 这里的意思可能就是上面在解释 ViewModel 说的那样，把 ViewModel 当做 Model 层的 view。尽量只是往里面插入变量，至于数据层面的各种计算，不要放到 ViewModel 里面来进行。因为 ViewModel 只是 Model 层的 view，虽然它比 View 层更数据，但它本质上还是属于 Model 层的模板，显然不应该在模板里进行复杂的运算。
 
 
 ## Directives

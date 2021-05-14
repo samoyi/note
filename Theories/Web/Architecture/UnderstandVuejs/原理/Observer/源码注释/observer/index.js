@@ -51,13 +51,13 @@ export class Observer {
         this.vmCount = 0;
 
         // def 函数出自 src/core/util/lang.js
-        // 为 data 对象添加名为 __ob__ 的属性，指向这里被构建的 Observer 实例，用来标志该 data 对象已经被 observed
+        // 为 data 对象添加名为 `__ob__` 的属性，指向这里被构建的 Observer 实例，用来标志该 data 对象已经被 observed
         def(value, "__ob__", this);
-        // TODO 这里什么时候会出现是数组的情况？
-        
+
+        // 刚开始的 data 是平对象类型，递归进去的话有可能遇到数组类型的属性
         if ( Array.isArray(value) ) {
             // 改进若干数组方法，让这些方法也变成响应式的
-            // 如果当前浏览器支持 __proto__ 属性的话就可以直接覆盖该属性则使数组对象具有了重写后的数组方法。
+            // 如果当前浏览器支持 `__proto__` 属性的话就可以直接覆盖该属性则使数组对象具有了重写后的数组方法。
             // 如果没有该属性的浏览器，则必须通过遍历 def 所有需要重写的数组方法，这种方法效率较低，所以优先使用第一种。
             if ( hasProto ) {
                 protoAugment(value, arrayMethods);
@@ -133,11 +133,11 @@ export function observe(value: any, asRootData: ?boolean): Observer | void {
     }
 
     let ob: Observer | void;
-    // 如果该 data 对象已经有了 Ovserver 实例（会保存在 __ob__ 属性上），则不需要新创建，之后直接返回
+    // 如果该 data 对象已经有了 Ovserver 实例（会保存在 `__ob__` 属性上），则不需要新创建，之后直接返回
     if ( hasOwn(value, "__ob__") && value.__ob__ instanceof Observer ) {
         ob = value.__ob__;
     } 
-    // 如果没有了 Ovserver 实例
+    // 如果没有 Ovserver 实例
     else if (
         // TODO
         shouldObserve &&
@@ -167,7 +167,7 @@ export function defineReactive(
     shallow?: boolean
 ) {
     // 为每个数据属性创建一个 publisher，所有依赖该数据属性的 subscriber 都会订阅这个 publisher
-    // 这里是闭包里的 dep 实例，上面 Observer 中的 dep 是在实例属性上的，下面 childOb.dep 的也是在实例属性上的，怎么联系上的？
+    // 这里是闭包里的 dep 实例，上面 Observer 中的 dep 是在实例属性上的，下面 childOb.dep 的也是在实例属性上的 TODO
     const dep = new Dep();
 
     // 跳过不可配置的属性
@@ -189,7 +189,7 @@ export function defineReactive(
         val = obj[key];
     }
 
-    // TODO
+    // 默认情况下，obj[key] 的子属性发生变化时，也要通过依赖 obj 的 watcher
     let childOb = !shallow && observe(val);
 
     Object.defineProperty(obj, key, {
@@ -199,12 +199,13 @@ export function defineReactive(
         // 在编译阶段，会对模板、计算属性之类的求值，求值的过程就会对其依赖属性求值，进而触发这里的 get 函数，完成依赖订阅。
         // 这样也保证了，只有真正被依赖的数据才会被响应式化，那些没人依赖的数据就不会被 observe。
         get: function reactiveGetter() {
-          // 如果属性已经有 getter，则使用本身 getter 返回值
+            // 如果属性已经有 getter，则使用本身 getter 返回值
             const value = getter ? getter.call(obj) : val;
-            // TODO target
             // Dep.target 如果有对象，就说明当前有一个 watcher 正在求值
+            // 而求值过程中访问了当前属性 `obj[key]`，就证明它依赖 `obj[key]`，所以它就是 `obj[key]` 的订阅者
             if ( Dep.target ) {
-                // 当前 watcher 订阅依赖
+                // 当前 watcher 订阅依赖，把 watcher 添加到 `obj[key]` 的订阅者列表里
+                // 但是这个添加的方法并不是定义在 Dep 上的，而是定义在 Watcher 上的
                 // dep.depend 方法会通过 Dep.target 引用当前 watcher，将其添加到 dep 的订阅列表里，代码如下：
                 // depend() {
                 //     if (Dep.target) {
@@ -214,7 +215,8 @@ export function defineReactive(
                 dep.depend();
 
                 // 如果该对象的子属性对象也被 observe 了，那么子属性对象也会作为其父对象 watcher 的依赖
-                // 例如一个计算属性依赖了对象 outer: {inner: {age: 22}}，那么对象 inner: {age: 22} 也会被设置为该计算属性的依赖
+                // 例如一个计算属性依赖了对象 outer: {inner: {age: 22}}，
+                // 那么对象 inner: {age: 22} 也会被设置为该计算属性的依赖
                 if ( childOb ) {
                     childOb.dep.depend();
                     if ( Array.isArray(value) ) {
