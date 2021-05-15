@@ -8,9 +8,14 @@
         - [因果递推关系](#因果递推关系)
     - [本质](#本质)
     - [思路](#思路)
-        - [1. 找到问题的变量](#1-找到问题的变量)
-        - [2. 寻找初始状态](#2-寻找初始状态)
-        - [3. 遍历从初始状态到求解状态的所有状态的最优解](#3-遍历从初始状态到求解状态的所有状态的最优解)
+    - [适合使用动态规划](#适合使用动态规划)
+        - [最优子结构](#最优子结构)
+        - [重叠子问题](#重叠子问题)
+    - [第一步：描绘最优解的结构](#第一步描绘最优解的结构)
+    - [第二步：递归的定义最优解的值](#第二步递归的定义最优解的值)
+    - [第三步：自底向上求解](#第三步自底向上求解)
+    - [第四步：计算最优解的值](#第四步计算最优解的值)
+    - [《图解算法》中的思路](#图解算法中的思路)
     - [最长公共子串](#最长公共子串)
         - [思路](#思路-1)
         - [实现](#实现)
@@ -19,6 +24,7 @@
         - [长度值的单调性](#长度值的单调性)
         - [长度值的计算](#长度值的计算)
         - [实现](#实现-1)
+    - [Referecens](#referecens)
 
 <!-- /TOC -->
 
@@ -35,28 +41,345 @@
 
 
 ## 思路
-### 1. 找到问题的变量
-* 物品种类
-* 背包容量
 
-### 2. 寻找初始状态
-只有一种物品并且背包容量为 1。
+## 适合使用动态规划
+### 最优子结构
+看下面最优解的结构的描述，两个序列的 LCS 是基于它们前缀序列的 LCS。
 
-### 3. 遍历从初始状态到求解状态的所有状态的最优解
-1. 两个变量所有可能的状态会组成一个二维数组，即 `[[物品种类][背包容量]]`。
-2. 求解二维数组每一项对应的状态 `dp[物品种类][背包容量]`。
-3. 寻找最优解的情况，在硬币找零问题中比较明显，也就是每种金额有不同的找零方案，然后比较每种方案即可。
-4. 但在背包问题中，有哪些方案不是很直观。在指定的物品种类和背包容量下，最优解是什么概念？有哪些可选方案可供比较？
-5. 最优解的概念是当前物品当前容量下可装的最大价值。可选方案有哪些？
-6. 比如说 3 个物品 4 磅容量，容量是固定的，那可变的就是不同物品的组合。可以 3 个都放，可以放其中 2 个，可以放其中 1 个，一共有 6 中方案。排除掉其中放不下的方案后，剩下方案的比较就能得出最优解。
-7. 但这是单独思考某一种状态时的方案选择，实际上不需要遍历所有可能的方案。因为当前的计算可以依赖之前计算的结果。
-8. 在 4 磅的情况下，是存在一个曾经的最优解的，就是只有前两个物品的情况下得出的最优解。而这个最优解，在有了第三个物品时，也是作为当前一种可选方案，即：不放第三个物品的方案。
-9. 那么，于此对应的就还有另一种方案：放第三个物品的方案。
-10. 从放不放第三个物品的维度，可以获得两个方案，这两个方案就是该维度下所有的方案。我们只需要选出这两种方案里面的最优解即可。
-11. 不放第三个物品方案的最大价值之前已经算出来，现在就需要算放第三个物品的最大价值。
-12. 放第三个物品的最大价值就是，第三个物品的价值加上剩余容量的最大价值。而剩余容量的最大价值也是之前算出来的。
+### 重叠子问题
+求任何一个公共子序列时，都要求比它更小的所有的公共子序列。
 
 
+## 第一步：描绘最优解的结构
+1. 描述一下《算法导论》定义 15.1。
+2. 如果 Z 是 X 和 Y 的一个 LCS，那么：
+    * 如果 X 和 Y 的最后一个元素相等：
+        1. 那么显然这个元素肯定会出现在 Z 中，而且是 Z 的最后一个元素；
+        2. 同时，Z 除去这最后一个元素的序列，也是 X 和 Y 的 CS；
+        3. 而且，Z 除去这最后一个元素的序列，也是 X 和 Y 分别除去最有一个元素的序列的 LCS。
+    * 即使 X 和 Y 的最后一个元素不相等，Z 的最后一个元素也可能是 X 的最后一个元素 **或者** Y 的最后一个元素。例如 $<A, B, C, B , D, A, B>$ 和 $<B, D, C, A, B, A>$ 的 LCS 是 $<B, D, A, B>$。
+    * 如果 X 和 Y 的最后一个元素不相等，并且 Z 和 X 的最后一个元素不相等：
+        1. 那么可以更严格的说，Z 是 X 除去最有一个元素的序列的 LCS；
+        2. 同时因为 Z 和 Y 的最后一个元素可能相等；
+        3. 所以 Z 是 X 除去最有一个元素的序列和 Y 的 LCS。
+    * 如果 X 和 Y 的最后一个元素不相等，并且 Z 和 Y 的最后一个元素不相等：
+        * 同理，Z 是 X 和 Y 除去最有一个元素的序列的 LCS。
+3. 这个定理告诉我们，两个序列的 LCS 包含两个序列的前缀的 LCS。因此，LCS 问题具有最优子结构性质。
+
+
+## 第二步：递归的定义最优解的值
+1. 直接看《算法导论》392 页。
+
+
+## 第三步：自底向上求解
+1. 书上的伪代码中序列的序号从 1 开始，然后把表格中序号包含 0 的值都设定为 0，作为下溢出的值，所以它可以放心的使用 `csl[i-1][j-1]`。
+2. 但下面实际实现中，序列的序号从 0 开始，因此表格中序号包含 0 的值就是实际的解的值，不存在作为下溢出的值，所以使用 `csl[i-1][j-1]` 必须要先判断，以免序号出现 -1。
+3. 实现如下
+    ```cpp
+    #include <stdio.h>
+
+    #define M 7
+    #define N 6
+
+    char c1[M] = {'A', 'B', 'C', 'B', 'D', 'A', 'B'};
+    char c2[N] = {'B', 'D', 'C', 'A', 'B', 'A'};
+
+    int csl[M][N] = {}; 
+
+    int LCS_length (char c1[], char c2[]) {
+        for (int i=0; i<M; i++) {
+            for (int j=0; j<N; j++) {
+                if (c1[i] == c2[j]) {
+                    // 这里不能像书上递归式那样直接使用 csl[i-1][j-1] + 1，
+                    // 因为这里的序号是从 0 开始
+                    if (i == 0 || j == 0) { 
+                        csl[i][j] = 1;
+                    }
+                    else {
+                        csl[i][j] = csl[i-1][j-1] + 1;
+                    }
+                }
+                else {
+                    // 同样要对序号包含 0 的特殊处理
+                    if (i == 0 && j == 0) {
+                        csl[i][j] = 0;
+                    }
+                    else if (i == 0) {
+                        csl[i][j] = csl[i][j-1];
+                    }
+                    else if (j == 0) {
+                        csl[i][j] = csl[i-1][j];
+                    }
+                    else {
+                        int sub1Len = csl[i][j-1];
+                        int sub2Len = csl[i-1][j];
+                        csl[i][j] = (sub1Len > sub2Len) ? sub1Len : sub2Len;
+                    }
+                }
+            }
+        }
+        return csl[M-1][N-1];
+    }
+
+    void print_csl_table () {
+        for (int i=0; i<M; i++) {
+            for (int j=0; j<N; j++) {
+                printf("%d ", csl[i][j]);
+            }
+            printf("\n");
+        }
+    }
+
+    int main(void) {
+        int n = LCS_length(c1, c2);
+        printf("%d\n", n); // 4
+
+        printf("\n");
+        print_csl_table();
+        // 0 0 0 1 1 1
+        // 1 1 1 1 2 2
+        // 1 1 2 2 2 2
+        // 1 1 2 2 3 3
+        // 1 2 2 2 3 3
+        // 1 2 2 3 3 4
+        // 1 2 2 3 4 4
+    }
+    ```
+
+## 第四步：计算最优解的值
+1. 根据《算法导论》定理 15.1，每一个位置（两个子序列）的 LCS 都是依赖之前某个位置（更小的两个子序列）的 LCS。
+2. 所以为了得到最末尾位置 `(M-1, N-1)`（两个完整序列）的 LCS，只需要找到它依赖的前一个位置（两个子序列）。这个位置可能是 `(M-2, N-2)`、`(M-2, N-1)` 或 `(M-1, N-2)` 中的一个。
+3. 因此我们需要在第三步的基础上，记录每个位置依赖的前一个位置
+    ```cpp
+    #include <stdio.h>
+    #include <string.h>
+
+    #define M 7
+    #define N 6
+
+    char c1[M] = {'A', 'B', 'C', 'B', 'D', 'A', 'B'};
+    char c2[N] = {'B', 'D', 'C', 'A', 'B', 'A'};
+
+    int csl[M][N] = {}; 
+    char* last_csl[M][N] = {}; // 记录每个位置依赖的上一个位置
+
+    int LCS_length (char c1[], char c2[]) {
+        for (int i=0; i<M; i++) {
+            for (int j=0; j<N; j++) {
+                if (c1[i] == c2[j]) {
+                    if (i == 0 || j == 0) { 
+                        csl[i][j] = 1;
+                        // 这种情况下并没有依赖的前一个位置，当前位置就是一个 CS 的开始位置
+                        last_csl[i][j] = "*";
+                    }
+                    else {
+                        csl[i][j] = csl[i-1][j-1] + 1;
+                        // 用箭头记录依赖的前一个位置
+                        last_csl[i][j] = "↖";
+                    }
+                }
+                else {
+                    if (i == 0 && j == 0) {
+                        csl[i][j] = 0;
+                        // 这种情况下同样没有依赖的前一个位置，但当前位置也并不是一个 CS 的开始
+                        last_csl[i][j] = " ";
+                    }
+                    else if (i == 0) {
+                        csl[i][j] = csl[i][j-1];
+                        last_csl[i][j] = "←";
+                    }
+                    else if (j == 0) {
+                        csl[i][j] = csl[i-1][j];
+                        last_csl[i][j] = "↑";
+                    }
+                    else {
+                        int sub1Len = csl[i][j-1];
+                        int sub2Len = csl[i-1][j];
+                        if (sub1Len > sub2Len) {
+                            csl[i][j] = sub1Len;
+                            last_csl[i][j] = "←";
+                        }
+                        else {
+                            csl[i][j] = sub2Len;
+                            last_csl[i][j] = "↑";
+                        }
+                    }
+                }
+            }
+        }
+        return csl[M-1][N-1];
+    }
+
+    void print_csl_table () {
+        for (int i=0; i<M; i++) {
+            for (int j=0; j<N; j++) {
+                printf("%d ", csl[i][j]);
+            }
+            printf("\n");
+        }
+    }
+
+    void print_last_csl_table () {
+        for (int i=0; i<M; i++) {
+            for (int j=0; j<N; j++) {
+                printf("%s ", last_csl[i][j]);
+            }
+            printf("\n");
+        }
+    }
+
+    int main(void) {
+        int n = LCS_length(c1, c2);
+        printf("%d\n", n); // 4
+
+        printf("\n");
+        print_csl_table();
+        // 0 0 0 1 1 1
+        // 1 1 1 1 2 2
+        // 1 1 2 2 2 2
+        // 1 1 2 2 3 3
+        // 1 2 2 2 3 3
+        // 1 2 2 3 3 4
+        // 1 2 2 3 4 4
+
+        printf("\n\n");
+        print_last_csl_table();
+        //   ← ← * ← *
+        // * ← ← ↑ ↖ ←
+        // ↑ ↑ ↖ ← ↑ ↑
+        // * ↑ ↑ ↑ ↖ ←
+        // ↑ ↖ ↑ ↑ ↑ ↑
+        // ↑ ↑ ↑ ↖ ↑ ↖
+        // * ↑ ↑ ↑ ↖ ↑
+
+
+    }
+    ```
+3. 
+
+
+两个完整只要记录每个位置所依赖的前一个位置，就能最终一步步的得出整个两个序列的 LCS。也就是从连个序列
+
+
+```cpp
+#include <stdio.h>
+// #include <stdlib.h>
+
+
+#define M 7
+#define N 6
+
+char c1[M] = {'A', 'B', 'C', 'B', 'D', 'A', 'B'};
+char c2[N] = {'B', 'D', 'C', 'A', 'B', 'A'};
+
+int csl[M][N] = {}; 
+typedef struct {
+    int x; int y;
+} Coor;
+Coor last_csl_coor[M][N] = {};
+
+int LCS_length (char c1[], char c2[]) {
+    for (int i=0; i<M; i++) {
+        for (int j=0; j<N; j++) {
+            if (c1[i] == c2[j]) {
+                // 这里不能像书上递归式那样直接使用 csl[i-1][j-1] + 1，
+                // 因为这里的序号是从 0 开始
+                if (i == 0 || j == 0) { 
+                    csl[i][j] = 1;
+                    last_csl_coor[i][j] = (Coor){-1, -1};
+                }
+                else {
+                    csl[i][j] = csl[i-1][j-1] + 1;
+                    last_csl_coor[i][j] = (Coor){i-1, j-1};
+                }
+            }
+            else {
+                // 同样要对序号包含 0 的特殊处理
+                if (i == 0 && j == 0) {
+                    csl[i][j] = 0;
+                    last_csl_coor[i][j] = (Coor){-1, -1};
+                }
+                else if (i == 0) {
+                    csl[i][j] = csl[i][j-1];
+                    last_csl_coor[i][j] = (Coor){i, j-1};
+                }
+                else if (j == 0) {
+                    csl[i][j] = csl[i-1][j];
+                    last_csl_coor[i][j] = (Coor){i-1, j};
+                }
+                else {
+                    int sub1Len = csl[i][j-1];
+                    int sub2Len = csl[i-1][j];
+                    // csl[i][j] = (sub1Len > sub2Len) ? sub1Len : sub2Len;
+                    if (sub1Len > sub2Len) {
+                        csl[i][j] = sub1Len;
+                        last_csl_coor[i][j] = (Coor){i, j-1};
+                    }
+                    else {
+                        csl[i][j] = sub2Len;
+                        last_csl_coor[i][j] = (Coor){i-1, j};
+                    }
+                }
+            }
+        }
+    }
+    return csl[M-1][N-1];
+}
+
+void print_csl_table () {
+     for (int i=0; i<M; i++) {
+        for (int j=0; j<N; j++) {
+            printf("%d ", csl[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void print_last_csl_coor_table () {
+     for (int i=0; i<M; i++) {
+        for (int j=0; j<N; j++) {
+            printf("{%-2d %2d} ", last_csl_coor[i][j].x, last_csl_coor[i][j].y);
+        }
+        printf("\n");
+    }
+}
+
+void print_csl () {
+    int i = M;
+    int j = N;
+    printf("%d ", c1[i]);
+    while (last_csl_coor[i][j].x > -1 && last_csl_coor[i][j].y > -1) {
+        printf("%d ", c1[i]);
+    }
+}
+
+int main(void) {
+    
+    // Coor a = {5, 4};
+    // last_csl_coor[3][4] = a;
+    // printf("%d %d\n", last_csl_coor[3][4].x, last_csl_coor[3][4].y);
+    int n = LCS_length(c1, c2);
+    printf("%d\n", n); // 4
+
+    printf("\n");
+    print_csl_table();
+    // 0 0 0 1 1 1
+    // 1 1 1 1 2 2
+    // 1 1 2 2 2 2
+    // 1 1 2 2 3 3
+    // 1 2 2 2 3 3
+    // 1 2 2 3 3 4
+    // 1 2 2 3 4 4
+
+    printf("\n\n");
+    print_last_csl_coor_table();
+
+    printf("\n\n");
+    print_csl();
+}
+```
+
+## 《图解算法》中的思路
 ## 最长公共子串
 ### 思路
 1. 因为最长公共子串可能出现在两个字符串的不同的任意位置，所以需要对两个字符串的每个字符都一一比较。
@@ -72,7 +395,7 @@ function mls (str1, str2) {
     let len1 = str1.length;
     let len2 = str2.length;
 
-    let arr= [];
+    let arr = [];
 
     for ( let i=0; i<len1; i++ ) {
         arr[i] = [];
@@ -267,3 +590,9 @@ console.log( lcs('fish', 'fosh') );
 // [1, 1, 2, 2]
 // [1, 1, 2, 3]
 ```
+
+
+
+## Referecens
+* [图解算法](https://book.douban.com/subject/26979890/)
+* [算法导论](https://book.douban.com/subject/20432061/)
