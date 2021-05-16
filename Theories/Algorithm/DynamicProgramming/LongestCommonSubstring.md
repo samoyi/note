@@ -15,6 +15,7 @@
     - [第二步：递归的定义最优解的值](#第二步递归的定义最优解的值)
     - [第三步：自底向上求解](#第三步自底向上求解)
     - [第四步：计算最优解的值](#第四步计算最优解的值)
+    - [算法改进](#算法改进)
     - [《图解算法》中的思路](#图解算法中的思路)
     - [最长公共子串](#最长公共子串)
         - [思路](#思路-1)
@@ -251,133 +252,81 @@
         // ↑ ↖ ↑ ↑ ↑ ↑
         // ↑ ↑ ↑ ↖ ↑ ↖
         // * ↑ ↑ ↑ ↖ ↑
-
-
     }
     ```
-3. 
+4. 现在，为了获得两个完整序列的 LCS，需要从表格的右下角开始，不断追溯前一个依赖的位置，然后记录下其中 `↖` 位置和最后的 `*` 位置的字符，因为这两个位置都是 LCS 的字符
+    ```cpp
+    // 省略已有代码
+
+    void print_csl (int i, int j) {
+        if ( strcmp(last_csl[i][j], " ") == 0 ) {
+            
+        }
+        if ( strcmp(last_csl[i][j], "*") == 0 ) {
+            printf("%c", c1[i]);
+        }
+        else if ( strcmp(last_csl[i][j], "↖") == 0 ) {
+            print_csl(i-1, j-1);
+            printf("%c", c1[i]);
+        }
+        else if ( strcmp(last_csl[i][j], "↑") == 0 ) {
+            print_csl(i-1, j);
+        }
+        else if ( strcmp(last_csl[i][j], "←") == 0 ) {
+            print_csl(i, j-1);
+        }
+    }
+
+    int main(void) {
+        // 省略已有代码
+
+        printf("\n\n");
+        print_csl(M-1, N-1); // BCBA
+    }
+    ```
+5. 上面这一过程的运行时间为 $O(M+N)$，因为每次递归调用 `print_csl` 时 `i` 和 `j` 至少有一个会减一
 
 
-两个完整只要记录每个位置所依赖的前一个位置，就能最终一步步的得出整个两个序列的 LCS。也就是从连个序列
-
-
-```cpp
-#include <stdio.h>
-// #include <stdlib.h>
-
-
-#define M 7
-#define N 6
-
-char c1[M] = {'A', 'B', 'C', 'B', 'D', 'A', 'B'};
-char c2[N] = {'B', 'D', 'C', 'A', 'B', 'A'};
-
-int csl[M][N] = {}; 
-typedef struct {
-    int x; int y;
-} Coor;
-Coor last_csl_coor[M][N] = {};
-
-int LCS_length (char c1[], char c2[]) {
-    for (int i=0; i<M; i++) {
-        for (int j=0; j<N; j++) {
-            if (c1[i] == c2[j]) {
-                // 这里不能像书上递归式那样直接使用 csl[i-1][j-1] + 1，
-                // 因为这里的序号是从 0 开始
-                if (i == 0 || j == 0) { 
-                    csl[i][j] = 1;
-                    last_csl_coor[i][j] = (Coor){-1, -1};
-                }
-                else {
-                    csl[i][j] = csl[i-1][j-1] + 1;
-                    last_csl_coor[i][j] = (Coor){i-1, j-1};
-                }
+## 算法改进
+1. 一旦设计出一个算法，通常情况下你都会发现它在时空开销上有改进的余地。
+2. 一些改进可以将性能提升常数倍，但并不会有渐进性的提升；而另一些改进则可以带来时空上巨大的渐进性提升。
+3. 例如在 LCS 算法中，我们可以不使用 `last_csl`，给定表 `csl` 中的任意值 `csl[i][j]`，我们可以通过比较它和 `csl[i-1][j]`、`csl[i][j-1]` 的关系就能得出它依赖的前一项是哪一个。
+4. 这样的比较是 $O(1)$ 的复杂度。因此这种情况下实现的 `print_csl` 仍然可以保证 $O(M+N)$ 的运行时间
+    ```cpp
+    void print_csl_no_last_csl (int i, int j) {
+        if (c1[i] == c2[j]) {
+            if (i == 0 || j == 0) { 
+                printf("%c", c1[i]);
             }
             else {
-                // 同样要对序号包含 0 的特殊处理
-                if (i == 0 && j == 0) {
-                    csl[i][j] = 0;
-                    last_csl_coor[i][j] = (Coor){-1, -1};
-                }
-                else if (i == 0) {
-                    csl[i][j] = csl[i][j-1];
-                    last_csl_coor[i][j] = (Coor){i, j-1};
-                }
-                else if (j == 0) {
-                    csl[i][j] = csl[i-1][j];
-                    last_csl_coor[i][j] = (Coor){i-1, j};
+                print_csl_no_last_csl(i-1, j-1);
+                printf("%c", c1[i]);
+            }
+        }
+        else {
+            if (i == 0 && j == 0) {
+                
+            }
+            else if (i == 0) {
+                print_csl_no_last_csl(i, j-1);
+            }
+            else if (j == 0) {
+                print_csl_no_last_csl(i-1, j);
+            }
+            else {
+                int sub1Len = csl[i][j-1];
+                int sub2Len = csl[i-1][j];
+                if (sub1Len > sub2Len) {
+                    print_csl_no_last_csl(i, j-1);
                 }
                 else {
-                    int sub1Len = csl[i][j-1];
-                    int sub2Len = csl[i-1][j];
-                    // csl[i][j] = (sub1Len > sub2Len) ? sub1Len : sub2Len;
-                    if (sub1Len > sub2Len) {
-                        csl[i][j] = sub1Len;
-                        last_csl_coor[i][j] = (Coor){i, j-1};
-                    }
-                    else {
-                        csl[i][j] = sub2Len;
-                        last_csl_coor[i][j] = (Coor){i-1, j};
-                    }
+                    print_csl_no_last_csl(i-1, j);
                 }
             }
         }
     }
-    return csl[M-1][N-1];
-}
-
-void print_csl_table () {
-     for (int i=0; i<M; i++) {
-        for (int j=0; j<N; j++) {
-            printf("%d ", csl[i][j]);
-        }
-        printf("\n");
-    }
-}
-
-void print_last_csl_coor_table () {
-     for (int i=0; i<M; i++) {
-        for (int j=0; j<N; j++) {
-            printf("{%-2d %2d} ", last_csl_coor[i][j].x, last_csl_coor[i][j].y);
-        }
-        printf("\n");
-    }
-}
-
-void print_csl () {
-    int i = M;
-    int j = N;
-    printf("%d ", c1[i]);
-    while (last_csl_coor[i][j].x > -1 && last_csl_coor[i][j].y > -1) {
-        printf("%d ", c1[i]);
-    }
-}
-
-int main(void) {
+    ```
     
-    // Coor a = {5, 4};
-    // last_csl_coor[3][4] = a;
-    // printf("%d %d\n", last_csl_coor[3][4].x, last_csl_coor[3][4].y);
-    int n = LCS_length(c1, c2);
-    printf("%d\n", n); // 4
-
-    printf("\n");
-    print_csl_table();
-    // 0 0 0 1 1 1
-    // 1 1 1 1 2 2
-    // 1 1 2 2 2 2
-    // 1 1 2 2 3 3
-    // 1 2 2 2 3 3
-    // 1 2 2 3 3 4
-    // 1 2 2 3 4 4
-
-    printf("\n\n");
-    print_last_csl_coor_table();
-
-    printf("\n\n");
-    print_csl();
-}
-```
 
 ## 《图解算法》中的思路
 ## 最长公共子串
