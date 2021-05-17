@@ -1,6 +1,6 @@
 # Replace Function with Command
 
-inverse of: Replace Command with Function
+inverse of: *Replace Command with Function*
 
 
 <!-- TOC -->
@@ -8,10 +8,6 @@ inverse of: Replace Command with Function
 - [Replace Function with Command](#replace-function-with-command)
     - [思想](#思想)
     - [Motivation](#motivation)
-        - [Command 的定义——命令模式相关](#command-的定义命令模式相关)
-        - [Command 可以丰富函数的功能](#command-可以丰富函数的功能)
-        - [还可以对原函数进行代理](#还可以对原函数进行代理)
-        - [复杂度的权衡](#复杂度的权衡)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -25,30 +21,41 @@ inverse of: Replace Command with Function
 
 
 ## Motivation
-### Command 的定义——命令模式相关
-1. Functions — either freestanding or attached to objects as methods — are one of the fundamental building blocks of programming. But there are times when it’s useful to encapsulate a function into its own object, which I refer to as a “command object” or simply a **command**. 
-2. Such an object is mostly built around a single method, whose request and execution is the purpose of the object.
-3. Like many words in software development, “command” is rather overloaded. In the context I’m using it here, it is an object that encapsulates a request, following the command pattern in Design Patterns [gof]. 
-4. When I use “command” in this sense, I use “command object” to set the context, and “command” afterwards. 
-
-### Command 可以丰富函数的功能
-1. A command offers a greater flexibility for the control and expression of a function than the plain function mechanism. 
-2. Commands can have complimentary operations, such as undo. 
-3. I can provide methods to build up their parameters to support a richer lifecycle. 
-4. I can build in customizations using inheritance and hooks. 
-
-### 还可以对原函数进行代理
-1. If I’m working in a language with objects but without first-­class functions, I can provide much of that capability by using commands instead. 
-2. Similarly, I can use methods and fields to help break down a complex function, even in a language that lacks nested functions, and I can call those methods directly while testing and debugging. 
-
-### 复杂度的权衡
-1. All these are good reasons to use commands, and I need to be ready to refactor functions into commands when I need to. 
-2. But we must not forget that this flexibility, as ever, comes at a price paid in complexity. 
-3. So, given the choice between a first­-class function and a command, I’ll pick the function 95% of the time. I only use a command when I specifically need a facility that simpler approaches can’t provide. 
+1. 通过命令模式将函数转换为对象，可以增强函数的功能。与普通的函数相比，命令对象提供了更大的控制灵活性和更强的表达能力。
+2. 除了函数调用本身，命令对象还可以支持附加的操作，例如通过保存历史的输入数据来实现撤销和回退功能；还可以通过继承和钩子对函数行为进行定制。
+3. 如果使用的编程语言不支持函数作为一等公民但是支持对象作为一等公民，那封装为命令对象就能在一定程度上解决这个问题。
+4. 当然，封装为命令对象也增加了复杂度，所以需要权衡利弊。
 
 
 ## Mechanics
-<img src="./images/01.png" style="display: block;" width="600" />
+从
+```js
+function score (candidate, medicalExam, scoringGuide) {
+    let result = 0;
+    let healthLevel = 0;
+    // long body code
+}
+```
+到
+```js
+class Scorer {
+    constructor (candidate, medicalExam, scoringGuide) {
+        this._candidate = candidate;
+        this._medicalExam = medicalExam;
+        this._scoringGuide = scoringGuide;
+
+        // 可以再增加一些状态来增强功能，例如保存 `excute` 的历史参数列表
+    }
+
+    excute () {
+        this._result = 0;
+        this._healthLevel = 0;
+        // long body code
+    }
+
+    // 可以再定义一些方法来增强功能，例如回退
+}
+```
 
 
 ## References

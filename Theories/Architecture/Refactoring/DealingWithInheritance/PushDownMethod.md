@@ -1,6 +1,6 @@
 # Push Down Method
 
-inverse of: Pull Up Method
+inverse of: *Pull Up Method*
 
 <!-- TOC -->
 
@@ -17,7 +17,7 @@ inverse of: Pull Up Method
 
 
 ## Motivation
-If a method is only relevant to one subclass (or a small proportion of subclasses), removing it from the superclass and putting it only on the subclass(es) makes that clearer. 
+和 *Pull Up Method* 相反。
 
 
 ## Mechanics

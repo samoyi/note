@@ -17,7 +17,7 @@ let has: { [key: number]: ?true } = {};
 let circular: { [key: number]: number } = {}; // 记录每个 watcher 更新了多少次，用来判断是否陷入了循环更新
 let waiting = false; // 是否有 watcher 队列在等待 flush
 let flushing = false; // 是否有 watcher 队列正在 flush
-let index = 0; // flush 队列是执行到第几个 watcher 更新了
+let index = 0; // flush 队列时执行到第几个 watcher 更新了
 
 // flush 完 watcher 队列后，初始化其状态标记
 /**
@@ -151,7 +151,7 @@ export function queueWatcher(watcher: Watcher) {
         if ( !flushing ) {
             queue.push(watcher);
         } 
-        // 正在 flush watcher 队列，则麻烦一点。因为上面说到，在开始 flush 的时候，要先按照 watcher 的 id 排序，
+        // 正在 flush watcher 队列，则麻烦一点。因为上面说到，在开始 flush 的时候，要先按照 watcher 的 id 升序排序，
         // 现在如果正在 flush 就说明已经排好序了，你再插入一个进来，就必须要插入到合适的位置
         else { 
             // if already flushing, splice the watcher based on its id

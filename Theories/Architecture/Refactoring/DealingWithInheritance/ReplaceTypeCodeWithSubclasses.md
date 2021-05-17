@@ -1,11 +1,13 @@
 # Replace Type Code with Subclasses
 
-inverse of: Remove Subclass
+inverse of: *Remove Subclass*
 
 <!-- TOC -->
 
 - [Replace Type Code with Subclasses](#replace-type-code-with-subclasses)
     - [思想](#思想)
+        - [SRP](#srp)
+        - [语义化](#语义化)
     - [Motivation](#motivation)
         - [相比于单个类兼容多类型，创建多个子类可以将一个类里复杂的逻辑判断拆分为清晰简单的子类](#相比于单个类兼容多类型创建多个子类可以将一个类里复杂的逻辑判断拆分为清晰简单的子类)
         - [两种重构方式  TODO 不懂](#两种重构方式--todo-不懂)
@@ -16,7 +18,11 @@ inverse of: Remove Subclass
 
 
 ## 思想
+### SRP
 和 Replace Conditional with Polymorphism 的思想一样的。如果条件分支里要处理的逻辑比较复杂，不如直接抽出为独立的类。
+
+### 语义化
+不要问了功能类似或者样式类似就兼容使用同一个对象，如果它们在语义上不是一个对象，那就不要兼容。
 
 
 ## Motivation
@@ -26,7 +32,6 @@ inverse of: Remove Subclass
 3. Subclasses allow me to use polymorphism to handle conditional logic. 
 4. I find this most helpful when I have several functions that invoke different behavior depending on the value of the type code. 
 5. With subclasses, I can apply *Replace Conditional with Polymorphism* to these functions.
-
 
 ### 两种重构方式  TODO 不懂
 1. When using *Replace Type Code with Subclasses*, I need to consider whether to apply it directly to the class I’m looking at, or to the type code itself. 

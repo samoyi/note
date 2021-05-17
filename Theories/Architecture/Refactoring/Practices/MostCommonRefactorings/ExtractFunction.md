@@ -11,6 +11,7 @@
             - [原代码分析](#原代码分析)
             - [重构后](#重构后)
             - [重构后分析](#重构后分析)
+        - [请求数据的逻辑和处理数据的逻辑分离](#请求数据的逻辑和处理数据的逻辑分离)
     - [过度优化](#过度优化)
     - [References](#references)
 
@@ -184,9 +185,37 @@ formatActivities() {
 * `addFields` 内部虽然定义了三个嵌套函数，但因为 `addFields` 只会被调用一次，所以也无所谓，不会重复声明内部被嵌套的函数。在这种情况下，放在里面更加清晰。
 * 降序排序的代码本来就很短，仅从长度上来说不需要封装为 `descendingSort`。但封装为函数后，在 `formatActivities` 仅仅通过三个函数名就可以很舒服的看到 `addFields` - `descendingSort` - `sortByYear` 这种处理流程。
 
+### 请求数据的逻辑和处理数据的逻辑分离
+1. 常常看到请求接口的函数里面在获取到数据之后原地处理数据
+    ```js
+    function getUserInfo () {
+        ajax('http:// xxx.com/userInfo', function( data ){
+            console.log( 'userId: ' + data.userId );
+            console.log( 'userName: ' + data.userName );
+            console.log( 'nickName: ' + data.nickName );
+        });
+    };
+    ```
+2. 如果处理数据的逻辑比较简单倒还好，但经常会看到一些复杂的处理逻辑也写在请求的函数里。
+3. 所以可以把处理的逻辑独立出来
+    ```js
+    function getUserInfo() {
+        ajax( 'http:// xxx.com/userInfo', function( data ){
+            printUserInfo( data );
+        });
+    };
 
+    function printUserInfo (data) {
+        console.log( 'userId: ' + data.userId );
+        console.log( 'userName: ' + data.userName );
+        console.log( 'nickName: ' + data.nickName );
+    };
+    ```
+    
+    
 ## 过度优化
 
 
 ## References
 * [《重构（第2版）》](https://book.douban.com/subject/33400354/)
+* [《JavaScript设计模式与开发实践》](https://book.douban.com/subject/26382780/)

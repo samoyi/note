@@ -30,7 +30,9 @@
             - [`defineReactive` 函数实际实现订阅者和响应式](#definereactive-函数实际实现订阅者和响应式)
         - [第二步：实际的依赖收集](#第二步实际的依赖收集)
         - [第三步：通知更新](#第三步通知更新)
-        - [Watcher 的实现](#watcher-的实现)
+    - [Watcher 的实现](#watcher-的实现)
+        - [依赖订阅](#依赖订阅)
+        - [更新求值](#更新求值)
     - [References](#references)
 
 <!-- /TOC -->
@@ -562,7 +564,115 @@
 3. `Watcher` 类实现了 `update` 方法，用来接受依赖的更新，所以 `notify` 中会依次调用每个 watcher 的 `update` 方法。
 4. 注意到调用 `notify` 时并没有传 `newVal` 进去，也就是说并没有把依赖的更新值传给 watcher。这是因为在调用 watcher 的 `update` 方法之后，watcher 会直接调用自己的 getter 重新求值。
 
-### Watcher 的实现
+## Watcher 的实现
+### 依赖订阅
+1. 下面的三种情况，都会创建一个 `Watcher` 实例：
+    * 创建一个 `Vue` 实例时：在 `/src/core/instance/lifecycle.js` 中的 `mountComponent` 函数中
+    * 设置一个计算属性时：在 `/src/core/instance/state.js` 中的 `initComputed` 函数中
+    * 设置一个侦听器属性时：在 `/src/core/instance/state.js` 中的 实例方法 `$watch` 方法中
+2. `Watcher` 的构造函数中会调用实例的 `get` 方法，这个方法会对当前 watcher 对应的表达式求值。求值的过程中会访问到依赖的属性，进而绑定依赖
+    ```js
+    get() {
+        // pushTarget 将当前 watcher 设置为 Dep 的静态属性 target，用以依赖收集。
+        pushTarget(this);
+        let value;
+        const vm = this.vm;
+        try {
+            // 调用 watch 的表达式的 getter 函数进行求值
+            // 这个过程就会访问到依赖的属性，进而完成依赖收集
+            value = this.getter.call(vm, vm);
+        } 
+        catch (e) {
+            if (this.user) {
+                handleError(e, vm, `getter for watcher "${this.expression}"`);
+            } 
+            else {
+                throw e;
+            }
+        } 
+        finally {
+            // "touch" every property so they are all tracked as
+            // dependencies for deep watching
+
+            // TODO 详细
+            // 看到在使用 deep $watch 的时候，这个会是 true。比如下面这种情况
+            // vm.$watch('someObject', callback, {
+            //     deep: true
+            // })
+            // 比如这时 someObject 是
+            // someObject: {
+            //     name: '33',
+            //     age: 22,
+            // }
+            // value 就是 someObject 对应的 observer
+            // traverse 应该就是把 someObject 的子属性也作为当前 watcher 的依赖
+            if (this.deep) {
+                traverse(value);
+            }
+            popTarget(); // TODO
+            this.cleanupDeps(); // TODO
+        }
+        return value;
+    }
+    ```
+3. `pushTarget` 将当前 watcher 设置到全局的 `Dep.target` 上。
+4. `this.getter.call(vm, vm)` 对表达式求值，里面会访问到依赖属性的 getter，也就是上面的 `reactiveGetter` 函数。这样就完成了依赖的订阅。
+
+### 更新求值
+1. 前面说到，依赖更新后会调用 watcher 的 `update` 方法来重新求值。`update` 实现如下
+    ```js
+    update() {
+        /* istanbul ignore else */
+        if (this.lazy) {
+            this.dirty = true;
+        } 
+        // sync 更新立刻执行
+        else if (this.sync) {
+            this.run();
+        } 
+        else {
+            // 加入队列等待执行
+            queueWatcher(this);
+        }
+    }
+    ```
+2. 默认是加入缓冲队列等到微任务阶段再异步更新，但也可以同步更新。异步更新的分析在 `./异步更新.md` 中，这里看看同步更新，也就是直接调用 `run` 方法
+    ```js
+    run() {
+        if (this.active) {
+            const value = this.get();
+            if (
+                value !== this.value ||
+                // Deep watchers and watchers on Object/Arrays should fire even
+                // when the value is the same, because the value may
+                // have mutated.
+                isObject(value) ||
+                this.deep
+            ) {
+                // set new value
+                const oldValue = this.value;
+                this.value = value;
+                if (this.user) {
+                    try {
+                        this.cb.call(this.vm, value, oldValue);
+                    } 
+                    catch (e) {
+                        handleError(
+                            e,
+                            this.vm,
+                            `callback for watcher "${this.expression}"`
+                        );
+                    }
+                } 
+                else {
+                    this.cb.call(this.vm, value, oldValue);
+                }
+            }
+        }
+    }
+    ```
+3. 可以看到里面会调用 `get` 方法进行求值。
+4. 设置侦听器属性时创建的 `Watcher` 实例，会设置值为 `true` 的 `user` 选项值，因此会调用 `this.cb`，也就是侦听器属性的函数。
 
 
 ## References

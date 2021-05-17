@@ -72,7 +72,8 @@ export default class Watcher {
         // vm 实例和 watcher 实例互相关联
         this.vm = vm;
 
-        // 所有的 watcher 都会被加入到实例的 _watchers 数组属性中，但渲染 watcher 还会被单独保存在实例的 _watcher 属性上
+        // 所有的 watcher 实例都会被加入到 vm 实例的 _watchers
+        // 但渲染 watcher 还会被单独保存在实例的 _watcher 属性上
         if (isRenderWatcher) {
             vm._watcher = this;
         }
@@ -94,7 +95,7 @@ export default class Watcher {
         // TODO 各参数的含义
         // 数据变化后的回调函数
         // 如果是计算属性，cb 为计算属性函数；
-        // 如果是 watch 属性，cb 为 watch 回调函数
+        // 如果是侦听器属性，cb 为侦听器回调函数
         this.cb = cb;
 
         this.id = ++uid; // uid for batching // TODO 
@@ -255,6 +256,7 @@ export default class Watcher {
                 // set new value
                 const oldValue = this.value;
                 this.value = value;
+                // 侦听器属性时，为 true，于是调用侦听器属性的回调函数
                 if (this.user) {
                     try {
                         this.cb.call(this.vm, value, oldValue);
