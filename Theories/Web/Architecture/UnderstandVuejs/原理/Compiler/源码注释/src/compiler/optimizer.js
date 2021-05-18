@@ -6,10 +6,10 @@
  * ******* 注意 *******
  * 
  * children 属性：ASTNode 的 children 属性并不是 DOM 的 children 属性。DOM 的 children 属性是只包括元素子节点；
- *               而 ASTNode 的 children 属性包括所有的节点，类似于 DOM 的 childNodes  属性。
+ *               而 ASTNode 的 children 属性包括所有的节点，类似于 DOM 的 childNodes 属性。
  *               参考源码 src/compiler/parser/index.js。
  * 
- * type 属性：ASTNode 的 type 属性页不是直接使用 DOM 的 nodeType 属性。注释节点的 type 也会被算作 3，而不是 8。
+ * type 属性：ASTNode 的 type 属性也不是直接使用 DOM 的 nodeType 属性。注释节点的 type 也会被算作 3，而不是 8。
  *            另外 type 为 2 时表示 Mustache 表达式。参考源码 src/compiler/parser/index.js。
  * 
  * ifConditions 属性：只有添加了 v-if 的节点才会有这个属性，v-else-if 和 v-else 都不会有；
@@ -22,7 +22,7 @@ import { makeMap, isBuiltInTag, cached, no } from "shared/util";
 let isStaticKey;
 let isPlatformReservedTag;
 
-// TODO
+// 生成 genStaticKeys 的带缓存版本
 const genStaticKeysCached = cached(genStaticKeys); 
 
 /**
@@ -40,11 +40,12 @@ export function optimize(root: ?ASTElement, options: CompilerOptions) {
     // root 是需要遍历并查找其静态子树的抽象语法树
     if (!root) return;
 
-    // TODO
+    // `isStaticKey` 是下面 `makeMap` 返回的函数，用来确定一个 key 是否是静态 key
     isStaticKey = genStaticKeysCached(options.staticKeys || "");
 
-    // isReservedTag 函数判断一个标签是否是平台环境自身的 tag。对于 web 环境，包括 html 标签和 svg 标签。
-    // isReservedTag 的实现在 src/platforms/web/util/element.js
+    // `isReservedTag` 函数判断一个标签是否是平台环境自身的 tag。对于 web 环境，包括 html 标签和 svg 标签。
+    // `isReservedTag` 的实现在 /src/platforms/web/util/element.js
+    // `|| no` 保证 `isPlatformReservedTag` 返回的一定是布尔值 false 而非其他的 falsy 值
     isPlatformReservedTag = options.isReservedTag || no;
 
     // first pass: mark all non-static nodes.
@@ -70,9 +71,10 @@ export function optimize(root: ?ASTElement, options: CompilerOptions) {
     markStaticRoots(root, false);
 }
 
-// 静态 key
-// 如果节点添加了 vue 指令，ast 就会有非静态的 key
-// 比如添加了 v-if 指令，就会有 if 和 ifConditions 这两个 key
+// 生成静态 key
+// 静态 key 包括下面写死的几个还有通过参数 keys 传入的若干个
+// 测试在默认情况下，keys 值为 "staticClass,staticStyle"
+// genStaticKeys 的返回值是 makeMap 返回的函数，这个函数用来确定一个 key 是否在 makeMap 的参数列表中
 function genStaticKeys(keys: string): Function {
     return makeMap(
         "type,tag,attrsList,attrsMap,plain,parent,children,attrs" +
@@ -85,13 +87,12 @@ function markStatic(node: ASTNode) {
     // 先初步判断是否为静态节点，下面紧接着进一步的判断，可能会得出和初步判断相反的结果
     node.static = isStatic(node);
 
-    // 只有元素节点才需要进一步判断
+    // node.type === 1 的 node 类型为 ASTElement
     if (node.type === 1) {
-        
         // do not make component slot content static. this avoids
         // 1. components not able to mutate slot nodes
         // 2. static slot content fails for hot-reloading
-        // 可以通过这个判断的 node 是自定义组件或者是 vue 的动态组件 component，直接 return 就是不再遍历它们的插槽内容。
+        // 可以通过下面这个判断的 node 是自定义组件或者是 vue 的动态组件 component，直接 return 就是不再遍历它们的插槽内容。
         // 因此插槽里面的节点内容不会检查是否静态，也就是默认为非静态。
         if (
             !isPlatformReservedTag(node.tag) &&
@@ -113,15 +114,15 @@ function markStatic(node: ASTNode) {
         }
 
         // 一组条件渲染的节点
+        // node 是有 v-if 指令的那个节点，node.ifConditions 则包括有 v-if、v-else 以及 v-else-if 的节点
         if (node.ifConditions) {
+            // 这个 for 会遍历 v-else 和 v-else-if 的节点
             for (let i = 1, l = node.ifConditions.length; i < l; i++) {
                 const block = node.ifConditions[i].block;
 
-                // 从 isStatic 的实现看起来，条件渲染中的节点都会被标记为非静态的，
                 markStatic(block);
 
-                // 因此它们的父级也只能是非静态的。
-                // 这一步是多余的？node.ifConditions 为 true 的话 node 就是静态的吧？
+                // TODO
                 if (!block.static) {
                     node.static = false;
                 }
@@ -151,7 +152,7 @@ function markStaticRoots(node: ASTNode, isInFor: boolean) {
         // 标记 v-for 节点子元素的静态节点
         if (node.static || node.once) { // 静态节点或 v-once 节点
             // 如果是 v-for 节点的子元素，则标记
-            // src/compiler/codegen/index.js 会用到，但没看出怎么用 // TODO
+            // /src/compiler/codegen/index.js 会用到，但没看出怎么用 // TODO
             node.staticInFor = isInFor;
         }
 
@@ -189,27 +190,27 @@ function markStaticRoots(node: ASTNode, isInFor: boolean) {
     }
 }
 
+// 判断一个节点是否为静态节点
 function isStatic(node: ASTNode): boolean {
     if (node.type === 2) {
-        // expression
         // Mustache 表达式
         return false;
     }
     if (node.type === 3) {
-        // text
-        // 文本节点和注释节点
+        // 文本节点
         return true;
     }
     return !!(
         node.pre // v-pre 节点
         || (
-          // hasBindings 指示节点是否绑定了 vue 指令，但不包括 v-if 指令
-          // hasBindings 的设置在 src/compiler/parser/index.js 中的 processAttrs 函数
+          // hasBindings 指示节点是否绑定了 vue 指令，判断的正则表达式如下 /^v-|^@|^:/
+          // hasBindings 的设置在 /src/compiler/parser/index.js 中的 processAttrs 函数
+          // 但是这里不会判断 v-if 和 v-for 指令，因为这两个都是是否渲染级别的指令
           !node.hasBindings // no dynamic bindings
-            && !node.if
+            && !node.if // TODO 为什么不包括 v-else 和 v-else-if
             && !node.for // not v-if or v-for or v-else
             // tag 不能是 "slot" 或者 "component"，因为这两个节点肯定是动态编译的。
-            // isBuiltInTag 的实现在 src/shared/util.js。
+            // isBuiltInTag 的实现在 /src/shared/util.js。
             && !isBuiltInTag(node.tag) // not a built-in
             // 必须是当前平台环境自身的 tag，而不能是自定义组件的 tag。
             && isPlatformReservedTag(node.tag) // not a component

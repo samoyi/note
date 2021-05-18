@@ -26,7 +26,6 @@
 * 源码版本：2.5.21
 
 
-
 ## TODO
 模板编译是在 beforeMount 之前还是 mounted 之前？之前在生命周期的地方是在 beforeMount 之前
 `$mount` 方法 在 `beforeMount` 钩子之前执行
@@ -126,9 +125,7 @@
         }
     }
     ```
-
-
-2. 负责模板编译工作的 Compiler，是从下面的方法开始的
+6. `compileToFunctions` 最终会被 `/src/platforms/web/entry-runtime-with-compiler.js` 中的会被 `$mount` 方法调用
   ```js
   // /src/platforms/web/entry-runtime-with-compiler.js
   
