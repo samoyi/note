@@ -38,49 +38,25 @@ key | value
 
 
 ## 跨平台接口
-1. 因为使用了 Virtual DOM 的原因，Vue.js 具有了跨平台的能力（看到 `src/platforms/` 目录下有 `web` 和 `weex` 两个子目录），Virtual DOM 终归只是一些 JavaScript 对象罢了，那么最终是如何调用不同平台的 API 的呢？
-2. 这就需要依赖一层适配层了，将不同平台的 API 封装在内，以同样的接口对外提供
-    ```js
-    const nodeOps = {
-        setTextContent (text) {
-            if (platform === 'weex') {
-                node.parentNode.setAttr('value', text);
-            } else if (platform === 'web') {
-                node.textContent = text;
-            }
-        },
-        parentNode () {
-            //......
-        },
-        removeChild () {
-            //......
-        },
-        nextSibling () {
-            //......
-        },
-        insertBefore () {
-            //......
-        }
-    }
-    ```
-3. 举个例子，现在我们有上述一个 `nodeOps` 对象做适配，根据 platform 区分不同平台来执行当前平台对应的 API，而对外则是提供了一致的接口，供 Virtual DOM 来调用。
+1. 因为使用了 Virtual DOM 的原因，Vue.js 具有了跨平台的能力（看到 `/src/platforms/` 目录下有 `web` 和 `weex` 两个子目录），Virtual DOM 终归只是一些 JavaScript 对象罢了，那么最终是如何调用不同平台的 API 的呢？
+2. 这就需要依赖一层适配层了，将不同平台的 API 封装在内，以同样的接口对外提供。这些同样的接口都定义在 `/src/core/vdom/patch.js` 中的 `createPatchFunction` 函数里。
+3. 不同的平台在调用 `createPatchFunction` 时会传入不同的 `backend` 参数，其中的 `backend.nodeOps` 就是当前平台的 DOM 操作方法。例如 web 平台的 nodeOps 的方法都定义在 `/src/platforms/web/runtime/node-ops.js` 中。
+4. `createPatchFunction` 中的 DOM 操作方法会直接调用 `backend.nodeOps` 中定义的方法。
 
 
 ## 一些 API
-* `/src/core/vdom/patch.js`
-* 具体的实现都是常规 DOM 操作，web 平台的实现在 `src/platforms/web/runtime/node-ops.js`
-
 ### `insert`
 1. `insert` 用来在 `parent` 这个父节点下插入一个子节点，如果指定了 `ref` 则插入到 `ref` 这个子节点前面。
 2. 源码
     ```js
     function insert (parent, elm, ref) {
-        if (isDef(parent)) {
-            if (isDef(ref)) {
+        if ( isDef(parent) ) {
+            if ( isDef(ref) ) {
                 if (nodeOps.parentNode(ref) === parent) {
                     nodeOps.insertBefore(parent, elm, ref)
                 }
-            } else {
+            } 
+            else {
                 nodeOps.appendChild(parent, elm)
             }
         }
