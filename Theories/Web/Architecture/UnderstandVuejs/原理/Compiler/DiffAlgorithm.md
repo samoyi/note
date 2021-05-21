@@ -10,10 +10,10 @@
     - [环境](#环境)
     - [准备知识](#准备知识)
     - [TODO](#todo)
-    - [Level by Level](#level-by-level)
-    - [List](#list)
+    - [DOM 树变化差异比较](#dom-树变化差异比较)
+    - [列表的情况](#列表的情况)
         - [Diff 算法并不知道用户操作](#diff-算法并不知道用户操作)
-        - [使用 key 给节点一个身边标识](#使用-key-给节点一个身边标识)
+        - [使用 `key` 给节点一个身边标识](#使用-key-给节点一个身边标识)
     - [渲染差异（patch）原理](#渲染差异patch原理)
         - [patch](#patch)
         - [sameVnode](#samevnode)
@@ -52,10 +52,11 @@ key | value
 从 watcher 更新到触发 patch 的代码流程
 
 
-## Level by Level
-1. Finding the minimal number of modifications between two arbitrary trees is a $O(n^3)$ problem. As you can imagine, this isn’t tractable for our use case. React uses simple and yet powerful heuristics to find a very good approximation in $O(n)$. TODO 复杂度分析，[参考](https://www.zhihu.com/question/66851503/answer/246766239)
-2. React only tries to reconcile trees level by level. This drastically reduces the complexity and isn’t a big loss as it is very rare in web applications to have a component being moved to a different level in the tree. They usually only move laterally among children. 也就是说，不会进行深度 diff 比较。
+## DOM 树变化差异比较
+1. 查找任意两个树之间的差异是一个 $O(n^3)$ 问题，React 使用了一种简单强大并且直观的算法使得复杂度降至 $O(n)$。
+2. 这是因为 React 只会对两棵树的同层进行比较，也即是说，如果一个节点从上层移动到了下层，React 只会简单的认为上下两层都发生了变化，而不会更智能的识别传是发生了移动。TODO 复杂度分析，[参考](https://www.zhihu.com/question/66851503/answer/246766239)
     <img src="./images/01.png" width="400" style="display: block; margin: 5px 0 10px 0;" />
+3. 这样就大大降低了 diff 算法的复杂度。因为在 web 组件中很少会将节点移动到不同的层级，所以这种简化很少会影响性能。
 3. 比如如下变动
     ```html
     <!-- 变动前 -->
@@ -74,11 +75,11 @@ key | value
         <span>diff</span>       <!-- 层级2 -->
     </div>
     ```
-4. 如果 diff 算法会进行深度比较的话，它就会直接把 `<span>diff</span>` 从第三层提出来放到 `<p>` 后面，这样移动起来很高效，但是比较起来缺很低效。
+4. 如果 diff 算法会进行深度比较的话，它就会直接把 `<span>diff</span>` 从第三层提出来放到 `<p>` 后面。这样移动起来很高效，但是比较起来却很低效。
 5. 实际上，因为它只能同层比较，所以它在比较第二层的时候会发现多了一个 `<span>diff</span>`，所以就新加一个；然后再比较第三层的时候发现 `<span>diff</span>` 没了，于是就删除该节点。
 
 
-## List
+## 列表的情况
 ### Diff 算法并不知道用户操作
 1. 比如根据一个数组 `[1, 2, 3, 4, 5]` 循环渲染出一个列表。之后往数组里又插入了一项，变成了 `[1, 2, 3, 3.5, 4, 5]`。
 2. 你插入的时候当然是知道插入的 index 是 3，但是 diff 算法只是监听数据变化，它并不知道你插入的位置。
@@ -111,16 +112,16 @@ key | value
 8. 然后再改变数组触发重渲染，就成了下面的样子
     <img src="./images/03.png" width="200" style="display: block; margin: 5px 0 10px 0;" />
 9. Diff 算法直接复用的前三个，没问题。
-10. 因为 diff 算法并不知道你是插在哪个位置，所以只要按顺序继续往后比较，然后发现第四项的值从 `4` 变成了 `3.5`，所以它并不需要重新渲染整个`<li>`，只需要修改里面的文本节点值就行了。
-11. 因为前面说了 diff 算法是 Level by Level 的，所以不会去看子节点 `<input>`，而且 `<input>` 也没有依赖什么数据，所以就直接复用它了，就出现了问题。
+10. 因为 diff 算法并不知道你是插在哪个位置，所以只是按顺序继续往后比较，然后发现第四项的值从 `4` 变成了 `3.5`，所以它并不需要重新渲染整个`<li>`，只需要修改里面的文本节点值就行了。
+11. 因为前面说了 diff 算法是同层比较，所以不会去看子节点 `<input>`，而且 `<input>` 也没有依赖什么数据，所以就直接复用它了，就出现了问题。
 
-### 使用 key 给节点一个身边标识
+### 使用 `key` 给节点一个身边标识
 1. 为了解决这个问题，需要给每个列表元素提供一个身份标识，diff 算法根据这个标识来判断到底发生了什么改变
     ```js
     <li v-for="item in array" :key="item"><input>{{item}}</li>
     ```
-2. 现在五个列表项的 key 分别是 `1`、`2`、`3`、`4`、`5`。列表更新后，diff 算法发现这五个 key 所在的列表项都在，然后在第三项后面多了一个节点，现在就能正确的插入了。
-3. 因为 key 必须是唯一的表明节点身份的，所以不能用列表循环的索引作为 key。
+2. 现在五个列表项的 `key` 分别是 `1`、`2`、`3`、`4`、`5`。列表更新后，diff 算法发现这五个 `key` 所在的列表项都在，然后在第三项后面多了一个节点，现在就能正确的插入了。
+3. 因为 `key` 必须是唯一的表明节点身份的，所以不能用列表循环的索引作为 `key`。
 
 
 ## 渲染差异（patch）原理
@@ -155,7 +156,7 @@ key | value
         removeVnodes(parentElm, oldVnode, 0, oldVnode.length - 1);
     }
     ```
-4. 最后一种情况，当 `oldVNode` 与 vno`de 都存在的时候，需要判断它们是否属于 sameVnode（相同的节点）。如果是则进行 patchVnode（比对 VNode ）操作；如果不是则删除老节点，增加新节点
+4. 最后一种情况，当 `oldVNode` 与 `vnode` 都存在的时候，需要判断它们是否属于 sameVnode（相同的节点）。如果是则进行 patchVnode 操作；如果不是则删除老节点，增加新节点
     ```js
     if (sameVnode(oldVNode, vnode)) {
         patchVnode(oldVNode, vnode);
@@ -167,70 +168,48 @@ key | value
 
 ### sameVnode
 1. 看看什么情况下两个 VNode 会属于 sameVnode （相同的节点）。
-2. 示意代码
+2. 源码
     ```js
-    function sameVnode () {
+    // /src/core/vdom/patch.js
+
+    function sameVnode (a, b) {
         return (
-            a.key === b.key &&
-            a.tag === b.tag &&
-            a.isComment === b.isComment &&
-            (!!a.data) === (!!b.data) &&
-            sameInputType(a, b)
+            a.key === b.key  // 首先 key 必须要相同
+            && 
+            ( // 且满足以下两个条件之一
+                (
+                    a.tag === b.tag &&
+                    a.isComment === b.isComment &&
+                    isDef(a.data) === isDef(b.data) &&
+                    sameInputType(a, b)
+                ) 
+                || 
+                (
+                isTrue(a.isAsyncPlaceholder) &&
+                a.asyncFactory === b.asyncFactory &&
+                isUndef(b.asyncFactory.error)
+                )
+            )
         )
     }
 
+    // 根据上面的 sameVnode 中的逻辑，调用这个函数的时候，说明两个节点的是相同类型的 tag 了
+    // 这时还要看看 tag 类型是不是 input：
+    //    * 如果是的话，它们的 type 也要相等才认为是相同的节点
+    //    * 如果不是的话那就没关系，它们就是相同的节点
     function sameInputType (a, b) {
         if (a.tag !== 'input') return true
         let i
-        const typeA = (i = a.data) && (i = i.attrs) && i.type
-        const typeB = (i = b.data) && (i = i.attrs) && i.type
-        return typeA === typeB
+        const typeA = isDef(i = a.data) && isDef(i = i.attrs) && i.type
+        const typeB = isDef(i = b.data) && isDef(i = i.attrs) && i.type
+        // 要么是 type 一样，要么虽然不一样，但是都是文本输入的类型
+        return typeA === typeB || isTextInputType(typeA) && isTextInputType(typeB)
+        // isTextInputType 在 /src/platforms/web/util/element.js。实现如下
+        // const isTextInputType = makeMap('text,number,password,search,email,tel,url')
     }
     ```
 3. 当 `key`、 `tag`、 `isComment`（是否为注释节点）、 `data` 同时定义（或不定义），同时满足当标签类型为 `input` 的时候 `type` 相同（某些浏览器不支持动态修改 `<input>` 类型，所以他们被视为不同类型）时，两个节点就被视为相同的节点。
-4. 源码
-    ```js
-    `/src/core/vdom/patch.js`
-    function sameVnode(a, b) {
-        return (
-            a.key === b.key // 首先 key 必须要相同
-            && ( // 且满足一下两个条件之一
-                ( 
-                    // 条件一
-                    a.tag === b.tag 
-                    && a.isComment === b.isComment 
-                    && isDef(a.data) === isDef(b.data) 
-                    && sameInputType(a, b)
-                ) 
-                || (
-                    // 条件二
-                    isTrue(a.isAsyncPlaceholder) 
-                    && a.asyncFactory === b.asyncFactory 
-                    && isUndef(b.asyncFactory.error)
-                )
-            )
-        );
-    }
 
-
-    function sameInputType(a, b) {
-        if (a.tag !== "input") {
-            // 这个返回 true，看起来 sameInputType 的判断为真的情况是：可以不是 input，但如果是 input，那就必须满足下面的条件？
-            return true
-        };
-        let i;
-        const typeA = isDef((i = a.data)) && isDef((i = i.attrs)) && i.type;
-        const typeB = isDef((i = b.data)) && isDef((i = i.attrs)) && i.type;
-        return (
-            // 要么是 type 一样，要么虽然不一样，但是都是文本输入的类型
-            typeA === typeB || ( isTextInputType(typeA) && isTextInputType(typeB) )
-        );
-    }
-
-
-    // isTextInputType 在 /src/platforms/web/util/element.js
-    // const isTextInputType = makeMap('text,number,password,search,email,tel,url')
-    ```
 
 ### `patch` 函数源码
 `/src/core/vdom/patch.js`
