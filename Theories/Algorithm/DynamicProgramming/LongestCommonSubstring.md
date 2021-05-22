@@ -16,6 +16,9 @@
     - [第三步：自底向上求解](#第三步自底向上求解)
     - [第四步：计算最优解的值](#第四步计算最优解的值)
     - [算法改进](#算法改进)
+    - [自顶向下的带备忘版本](#自顶向下的带备忘版本)
+    - [练习](#练习)
+        - [《算法导论》15.4-5](#算法导论154-5)
     - [《图解算法》中的思路](#图解算法中的思路)
     - [最长公共子串](#最长公共子串)
         - [思路](#思路-1)
@@ -326,7 +329,87 @@
         }
     }
     ```
-    
+5. 这个方法通过移除 `last_csl` 而节省了 $Θ(MN)$ 的空间，但 `csl` 也需要 $Θ(MN)$ 的空间，所以整体的空间渐进性并没有改变。
+6. TODO，《算法导论》练习 15.4-4
+
+
+## 自顶向下的带备忘版本
+1. 数组现在作为备忘，需要进行初始化
+    ```cpp
+    void initCSL () {
+        for (int i=0; i<M; i++) {
+            for (int j=0; j<N; j++) {
+                csl[i][j] = -1;
+            }
+        }
+    }
+    ```
+2. `LCS_length` 改为自顶向下的带备忘版本
+    ```cpp
+    int memoized_LCS_length (char c1[], char c2[], int i, int j) {
+        if (c1[i] == c2[j]) {
+            if (i == 0 || j == 0) { 
+                return 1;
+            }
+            else {
+                if (csl[i-1][j-1] == -1) {
+                    csl[i-1][j-1] = memoized_LCS_length(c1, c2, i-1, j-1);
+                }
+                return csl[i-1][j-1] + 1;
+            }
+        }
+        else {
+            if (i == 0 && j == 0) {
+                return 0;
+            }
+            else if (i == 0) {
+                if (csl[i][j-1] == -1) {
+                    csl[i][j-1] = memoized_LCS_length(c1, c2, i, j-1);
+                }
+                return csl[i][j-1];
+            }
+            else if (j == 0) {
+                if (csl[i-1][j] == -1) {
+                    csl[i-1][j] = memoized_LCS_length(c1, c2, i-1, j);
+                }
+                return csl[i-1][j];
+            }
+            else {
+                (csl[i][j-1] == -1) && (csl[i][j-1] = memoized_LCS_length(c1, c2, i, j-1));
+                (csl[i-1][j] == -1) && (csl[i-1][j] = memoized_LCS_length(c1, c2, i-1, j));
+                return (csl[i][j-1] > csl[i-1][j]) ? csl[i][j-1] : csl[i-1][j];
+            }
+        }
+    }
+    ```
+3. 调用
+    ```cpp
+    int main(void) {
+        initCSL();
+
+        int n = memoized_LCS_length(c1, c2, M-1, N-1);
+        printf("%d\n", n); // 4
+
+        printf("\n");
+        print_csl_table();
+        //  0  0  0  1 -1 -1
+        //  1  1  1  1 -1 -1
+        //  1  1  2  2 -1 -1
+        //  1  1  2  2  3 -1
+        // -1  2  2  2  3 -1
+        // -1 -1 -1  3 -1  4
+        // -1 -1 -1 -1  4 -1
+
+        printf("\n\n");
+        print_csl_no_last_csl(M-1, N-1); // BCBA
+    }
+    ```
+
+
+## 练习
+### 《算法导论》15.4-5
+TODO
+
 
 ## 《图解算法》中的思路
 ## 最长公共子串

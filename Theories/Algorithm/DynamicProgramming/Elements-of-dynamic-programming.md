@@ -1,6 +1,6 @@
 # 动态规划设计的要素
 
-适合应用动态规划方法求解的最优化问题应该具备的两个要素：最优子结构（optimal substructure）和重叠子问题（overlapping subproblems）。
+适合应用动态规划方法求解的最优化问题应该具备的两个要素：**最优子结构**（optimal substructure）和 **重叠子问题**（overlapping subproblems）。
 
 
 <!-- TOC -->
