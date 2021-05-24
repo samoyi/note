@@ -28,6 +28,7 @@ function flushCallbacks() {
 }
 
 
+// 使用 microtask 和 macrotask 两种方案来实现 nextTick 异步延迟。
 // Here we have async deferring wrappers using both microtasks and (macro) tasks.
 // In < 2.4 we used microtasks everywhere, but there are some scenarios where
 // microtasks have too high a priority and fire in between supposedly
@@ -36,27 +37,25 @@ function flushCallbacks() {
 // when state is changed right before repaint (e.g. #6813, out-in transitions).
 // Here we use microtask by default, but expose a way to force (macro) task when
 // needed (e.g. in event handlers attached by v-on).
-// 使用 microtask 或 macrotask 来实现 nextTick 的异步延迟方案。
-// 在 2.5 版本之前，所有情况都是使用 microtask 来实现的，但在某些场景下，由于 microtask 优先级过高而会引发某些问题。
-// 而如果都使用 macrotask 则同样会存在问题。在 ./nextTick.md 中会举例说明。
-// 现在是默认使用 microtask，但在需要的时候(例如事件处理)则强制使用 macrotask。
-let microTimerFunc;
-let macroTimerFunc;
+// 在 2.5 版本之前，所有情况都是使用 microtask 来实现的，但在某些场景下，由于 microtask 优先级过高而会引发某些问题；
+// 而如果都使用 macrotask 则同样会存在问题。在 ./nextTick.md 中会举例说明；
+// 现在是默认使用 microtask，但在需要的时候(例如事件处理中修改模板依赖的数据)则强制使用 macrotask。
+// 下面在实现以下这两个函数时，内部都会定义一个异步方法，异步回调时都会 flush 掉 callbacks 中的函数；
+// 只不过一个是异步到 microtask，另一个是异步到 macrotask。
+let microTimerFunc; // 调用这个函数时，callbacks 中的函数会在本轮 microtask 阶段被 flush
+let macroTimerFunc; // 调用这个函数时，callbacks 中的函数会在下一轮 macrotask 阶段被 flush
 
 // 在需要强制使用 macrotask 时，会用到下面的包装函数 withMacroTask 来包装回调函数；
 // 其中会把 useMacroTask 设置为 ture，来指示 nextTick 直接使用 macrotask。
 let useMacroTask = false;
 
 
+// 定义 macroTimerFunc，使用 macrotask 实现 nextTick
+// 三种实现的的差异需要看规范对比才能看明白，比较麻烦。
 // Determine (macro) task defer implementation.
 // Technically setImmediate should be the ideal choice, but it's only available
 // in IE. The only polyfill that consistently queues the callback after all DOM
 // events triggered in the same loop is by using MessageChannel.
-// 如果用 macrotask 实现 nextTick，选择三种 macrotask 方式之一：
-// 功能上，setImmediate 是最佳选择，但是只有 IE 和 Edge 支持；
-// 下面这一句没看懂是什么意思：The only polyfill that consistently queues the callback after all DOM events triggered in
-// the same loop is by using MessageChannel；
-// 如果也不支持 MessageChannel，则使用 setTimeout 来实现。
 /* istanbul ignore if */
 if (typeof setImmediate !== "undefined" && isNative(setImmediate)) {
     // 如果支持原生 setImmediate 则使用它实现 macrotask 的 nextTick
@@ -81,12 +80,14 @@ else if (
 } 
 else {
     /* istanbul ignore next */
+    // 否则就使用 setTimeout
     macroTimerFunc = () => {
         setTimeout(flushCallbacks, 0);
     };
 }
 
 
+// 定义 microTimerFunc，microtask 实现 nextTick
 // 如果原生支持 Promise 则用 microtask 实现 nextTick，否则用 macrotask
 // Determine microtask defer implementation.
 /* istanbul ignore next, $flow-disable-line */
@@ -119,11 +120,13 @@ else {
  * the changes are queued using a (macro) task instead of a microtask.
  */
 // 前面说了，有时要强制使用 macrotask，例如事件处理函数。
-// 这里会输出一个包装函数，该函数将接收一个函数并输出一个包装函数。该包装函数在作为 nextTick 回调时，会强制使用 macrotask 执行。
-// 在当前的版本中，也只有事件处理函数会用到该包装函数  src/platforms/web/runtime/modules/events.js。
+// 输出的 withMacroTask 函数将接收一个函数并输出一个包装函数。
+// 该包装函数在作为 nextTick 回调执行时，会先把 useMacroTask 设置为 true，从而让该包装函数在在 macrotask 阶段执行。
+// 在当前的版本中，也只有事件处理函数会用到该包装函数，/src/platforms/web/runtime/modules/events.js。
+// 而且事件处理函数修改的数据必须要导致模板重绘才行，否则事件处理函数不会异步执行
 // 下面这行非原生 JS 的语法是 Flow(https://flow.org/) 的语法，表示接收一个 Function 类型的参数，且返回值是 Function 类型
 export function withMacroTask(fn: Function): Function {
-    // 如果被包装函数已经有了 _withTask，说明已经被包装过了，则直接返回该属性，即包装后的函数；
+    // 如果被包装函数已经有了 _withTask 属性，说明已经被包装过了，则直接返回该属性，即包装后的函数；
     // 否则，则为被包装函数定义该属性，属性值为包装后的函数，并返回该函数。
     return (
         fn._withTask ||
@@ -160,16 +163,17 @@ export function nextTick(cb?: Function, ctx?: Object) {
             }
         } 
         // 如果没传回调，则在下一个 macroTask 或 microTask 解析下面的 Promise
+        // 不懂，用处是什么？
         else if (_resolve) {
             _resolve(ctx);
         }
     });
 
-    // 下面这个 if 块的功能是在下一个 microTask 或 macroTask 时 flush 所有传入的回调
+    // 下面这个 if 块的功能是设定在下一个 microTask 或 macroTask 时 flush 所有传入的回调
     // 只在 pending 为 false 时才执行，因为在一个事件循环只需要在第一次调用 nextTick 的时候才执行 macroTimerFunc 或
     // microTimerFunc 来建立 macroTask 或 microTask 回调，之后再调用 nextTick 只需要往 callbacks 推入新函数即可
     if ( !pending ) {
-        pending = true
+        pending = true // flushCallbacks 调用后 pending 会被设为 false
         // 如果 withMacroTask 被调用，则 useMacroTask 会为 true
         if (useMacroTask) {
             macroTimerFunc();
@@ -182,7 +186,7 @@ export function nextTick(cb?: Function, ctx?: Object) {
     }
 
     // 如果没有回调函数，并且环境支持 Promise，则会使用 Promise 构建一个 microTask，
-    // 在调用上面的 _resolve 时 resolve 该 Promise。不懂，用处是什么？
+    // 在调用上面的 _resolve 时 resolve 该 Promise。
     // $flow-disable-line
     if ( !cb && typeof Promise !== "undefined" ) {
         return new Promise(resolve => {

@@ -3,6 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        #app div:last-child {
+            margin-top: 24px;
+        }
+    </style>
 </head>
 <body>
     <div id="app">
@@ -10,11 +15,11 @@
             <i @click="switchAB">A (Click to switch)</i>
         </div>
         <div class="header" v-if="!bDisplayA" @click="switchAB">
-        <!-- <div class="header" v-if="!bDisplayA" @click.capture="switchAB2"> -->
+        <!-- <div class="header" v-if="!bDisplayA" @click.capture="switchAB"> -->
             <i>B (Click to switch)</i>
+            <!-- <i @click="switchAB">B (Click to switch)</i> -->
         </div>
 
-        <br />
         <div>
             bDisplayA is: {{bDisplayA}}
         </div>
