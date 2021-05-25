@@ -32,11 +32,16 @@ function resetSchedulerState() {
     waiting = flushing = false;
 }
 
+
+// 进入 flush 状态
 /**
  * Flush both queues and run the watchers.
  */
 function flushSchedulerQueue() {
+    // 开始 flush 时进入 flushing 状态
+    // flush 结束后会退出 flushing 状态（在 resetSchedulerState 中）
     flushing = true;
+
     let watcher, id;
 
     // 按照 watcher 的 id 顺序来进行 flush
@@ -56,7 +61,7 @@ function flushSchedulerQueue() {
     // 也就是说在循环过程中，queue.length 可能会继续增大
     for (index = 0; index < queue.length; index++) {
         watcher = queue[index];
-        // watcher.before 是啥
+        // TODO watcher.before 是啥
         if (watcher.before) {
             watcher.before();
         }
@@ -170,13 +175,18 @@ export function queueWatcher(watcher: Watcher) {
         }
 
         // queue the flush
+        // 如果还没有 watcher 加入队列，则开启排队等待状态，也就是通过 nextTick 设置延迟的异步 flush
+        // 一旦有一个 watcher 加入，就不需要开启了
         if ( !waiting ) {
+            // 只要有一个 watcher 加入了 flush 队列，就会进入 waiting 状态，此时还没有开始 flush，要在下个 tick 才 flush
+            // flush 结束后会退出 waiting 状态（在 resetSchedulerState 中）
             waiting = true;
 
             if (process.env.NODE_ENV !== "production" && !config.async) {
                 flushSchedulerQueue();
                 return;
             }
+            // 统一在下一个 tick 更新所有 watcher
             nextTick(flushSchedulerQueue);
         }
     }

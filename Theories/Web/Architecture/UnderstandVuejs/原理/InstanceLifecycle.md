@@ -31,7 +31,8 @@
 `Theories\Web\Architecture\UnderstandVuejs\原理\Two-wayBinding.md`  
 本篇中提到的以下四个模块都出自这篇笔记：`Compiler`、`Publisher`、`Observer`和`Subscriber`
 
-![lifecycle](../images/lifecycle.png)
+<!-- ![lifecycle](../images/lifecycle.png) -->
+<img src="../images/lifecycle.png" width="600" style="display: block; margin: 5px 0 10px;" />
 
 
 ## Misc
@@ -55,63 +56,364 @@
 
 ## 实例生命周期
 ### 第一步 实例初始化
-1. 不懂这个初始化到底做了什么，必须要看源码。但总之是很初步的工作，没做什么重要内容。
-2. 初始化结束后触发 `beforeCreate`
+1. 看一下 `/src/core/instance/index.js` 的代码
+    ```js
+    import { initMixin } from './init'
+    import { stateMixin } from './state'
+    import { renderMixin } from './render'
+    import { eventsMixin } from './events'
+    import { lifecycleMixin } from './lifecycle'
+    import { warn } from '../util/index'
+
+    function Vue (options) {
+        if (process.env.NODE_ENV !== 'production' &&
+            !(this instanceof Vue)
+        ) {
+            warn('Vue is a constructor and should be called with the `new` keyword')
+        }
+        this._init(options)
+    }
+
+    initMixin(Vue)
+    stateMixin(Vue)
+    eventsMixin(Vue)
+    lifecycleMixin(Vue)
+    renderMixin(Vue)
+
+    export default Vue
+    ```
+2. 初始化是通过构造函数中的 `this._init(options)` 发起的，而 `_init` 是在 `initMixin` 中定义的。看看 `initMixin` 的代码
+    ```js
+    // `/src/core/instance/init.js`
+
+    export function initMixin (Vue: Class<Component>) {
+        // options 是 new Vue(options) 中的 options 对象
+        Vue.prototype._init = function (options?: Object) {
+            const vm: Component = this
+            // a uid
+            vm._uid = uid++ // 全局实例 id
+
+            let startTag, endTag
+            /* istanbul ignore if */
+            if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+                startTag = `vue-perf-start:${vm._uid}`
+                endTag = `vue-perf-end:${vm._uid}`
+                mark(startTag)
+            }
+
+            // a flag to avoid this being observed
+            vm._isVue = true
+            // merge options
+            if (options && options._isComponent) {
+                // optimize internal component instantiation
+                // since dynamic options merging is pretty slow, and none of the
+                // internal component options needs special treatment.
+                initInternalComponent(vm, options)
+            } 
+            else {
+                vm.$options = mergeOptions(
+                    resolveConstructorOptions(vm.constructor),
+                    options || {},
+                    vm
+                )
+            }
+            /* istanbul ignore else */
+            if (process.env.NODE_ENV !== 'production') {
+                initProxy(vm)
+            } 
+            else {
+                vm._renderProxy = vm
+            }
+            // expose real self
+            vm._self = vm
+            initLifecycle(vm)
+            initEvents(vm)
+            initRender(vm)
+            callHook(vm, 'beforeCreate') // beforeCreate 钩子被调用
+            initInjections(vm) // resolve injections before data/props
+            initState(vm)
+            initProvide(vm) // resolve provide after data/props
+            callHook(vm, 'created') // created 钩子被调用
+
+            /* istanbul ignore if */
+            if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+                vm._name = formatComponentName(vm, false)
+                mark(endTag)
+                measure(`vue ${vm._name} init`, startTag, endTag)
+            }
+
+            if (vm.$options.el) {
+                vm.$mount(vm.$options.el)
+            }
+        }
+    }
+    ```
+3. 可以看到里面有一组初始化的操作，然后其间调用了 `beforeCreate` 和 `created` 两个钩子函数。也就是说 `initMixin` 中包含了实例初始化和实例创建的内容。
 
 #### `beforeCreate`
-Called synchronously immediately after the instance has been initialized, before data observation and event/watcher setup. 也就是说还没有开始处理实例的选项。
-```js
-const vm = new Vue({
-    el: '#components-demo',
-    data: {
-        num1: 22,
-    },
-    beforeCreate(){
-        console.log(this.num1); // undefined
-    },
-});
-```
+1. Called synchronously immediately after the instance has been initialized, before data observation and event/watcher setup. 也就是说还没有开始处理实例的选项。
+    ```js
+    const vm = new Vue({
+        el: '#components-demo',
+        data: {
+            num1: 22,
+        },
+        beforeCreate(){
+            console.log(this.num1); // undefined
+        },
+    });
+    ```
+2. `beforeCreate` 之后的 `initState`，才会初始化实例上常见的属性，并进行 observe。
 
 ### 第二步 创建实例
-1. 这一阶段将处理创建实例时的配置，进而完成创建实例。包括：
-    * 实现 data observation。应该就是指 Observer 模块使用 setter、getter 劫持了实例数据。
+1. 从 `initMixin` 中可以看出来，在初始化之后到实例创建完成之间，进行了三个初始化的工作。其中比较重要的是 `initState`。源码如下
+    ```js
+    export function initState(vm: Component) {
+        vm._watchers = [];
+        const opts = vm.$options;
+        if (opts.props) initProps(vm, opts.props);
+        if (opts.methods) initMethods(vm, opts.methods);
+        if (opts.data) {
+            initData(vm);
+        } 
+        else {
+            observe((vm._data = {}), true /* asRootData */);
+        }
+        if (opts.computed) initComputed(vm, opts.computed);
+        if (opts.watch && opts.watch !== nativeWatch) {
+            initWatch(vm, opts.watch);
+        }
+    }
+    ```  
+2. 这一阶段将处理创建实例时的配置，进而完成创建实例。包括：
+    * 实现 data observation。也就是 Observer 模块使用 setter、getter 劫持了实例数据。
     * 处理了 computed properties, methods, watch/event callbacks。
-2. 这一阶段还不涉及模板，只是纯 JS 的部分。所以实例的 `$el` 也还不可用。
-3. 创建实例结束后触发 `created`
+3. 这一阶段还不涉及模板，只是纯 JS 的部分。所以实例的 `$el` 也还不可用。
+4. 创建实例结束后触发钩子函数 `created`
 
 #### `created`
-既然已经创建完成，所以实例上的各种属性都可访问
-```js
-new Vue({
-    el: '#components-demo',
-    data: {
-        num1: 22,
-    },
-    methods: {
-        foo () {
-            return 22
+1. 既然已经创建完成，所以实例上的各种属性都可访问
+    ```js
+    new Vue({
+        el: '#components-demo',
+        data: {
+            num1: 22,
         },
-    },
-    beforeCreate () {
-        console.log(this.num1); // undefined
-        console.log(this.foo); // undefined
-        console.log(Object.getOwnPropertyDescriptor(this, 'num1')); // undefined
-    },
-    created(){
-        console.log(this.num1); // 22
-        console.log(this.foo); // ƒ foo(){return 22}
-        // 已经完成了 data observation
-        console.log(Object.getOwnPropertyDescriptor(this, 'num1'));
-        // {get: ƒ, set: ƒ, enumerable: true, configurable: true}
-        console.log(this.$el); // undefined  仍未编译模板
-    },
-});
-```
+        methods: {
+            foo () {
+                return 22
+            },
+        },
+        beforeCreate () {
+            console.log(this.num1); // undefined
+            console.log(this.foo); // undefined
+            console.log(Object.getOwnPropertyDescriptor(this, 'num1')); // undefined
+        },
+        created(){
+            console.log(this.num1); // 22
+            console.log(this.foo); // ƒ foo(){return 22}
+            // 已经完成了 data observation
+            console.log(Object.getOwnPropertyDescriptor(this, 'num1'));
+            // {get: ƒ, set: ƒ, enumerable: true, configurable: true}
+            console.log(this.$el); // undefined  仍未编译模板
+        },
+    });
+    ```
+2. 之所以可以直接在 vm 实例上访问到 `data` 上的数据，是因为 `initData` 函数中将 `data` 上的数据代理到了 vm 实例上。
 
 ### 第三阶段 编译模板
-1. 编译模板只是根据数据更新虚拟 DOM，只有 mounting 才会涉及真实 DOM。
-2. 所以真实的 DOM 并不会更新，下面的例子中，虽然这时 `this.$el` 已经指向了实际的 DOM 节点，但该节点还是没有被更新渲染过的。
-3. `beforeMount` 钩子在服务器端渲染期间不被调用。因为涉及挂载的两个钩子函数在服务端渲染期间不会被调用，所以他们不能用于获取数据这样的操作。这样的操作应该在 `created()` 中进行。
+1. `initMixin` 最后会调用 vm 实例的 `$mount` 方法，`$mount` 定义在 `/src/platforms/web/entry-runtime-with-compiler.js` 中，该模块内容如下
+    ```js
+    /* @flow */
+
+    import config from 'core/config'
+    import { warn, cached } from 'core/util/index'
+    import { mark, measure } from 'core/util/perf'
+
+    import Vue from './runtime/index'
+    import { query } from './util/index'
+    import { compileToFunctions } from './compiler/index'
+    import { shouldDecodeNewlines, shouldDecodeNewlinesForHref } from './util/compat'
+
+    const idToTemplate = cached(id => {
+        const el = query(id)
+        return el && el.innerHTML
+    })
+
+    // 下面这行 $mount 定义在 /src/platforms/web/runtime/index.js
+    // 在下面新定义的 $mount 还会调用这个方法。不懂
+    const mount = Vue.prototype.$mount
+    
+    Vue.prototype.$mount = function (
+        el?: string | Element,
+        hydrating?: boolean
+    ): Component {
+        el = el && query(el)
+
+        /* istanbul ignore if */
+        if (el === document.body || el === document.documentElement) {
+            process.env.NODE_ENV !== 'production' && warn(
+            `Do not mount Vue to <html> or <body> - mount to normal elements instead.`
+            )
+            return this
+        }
+
+        const options = this.$options
+        // resolve template/el and convert to render function
+        // 把模板编译为渲染函数
+        if (!options.render) {
+            let template = options.template
+            if (template) {
+                if (typeof template === 'string') {
+                    if (template.charAt(0) === '#') {
+                        template = idToTemplate(template)
+                        /* istanbul ignore if */
+                        if (process.env.NODE_ENV !== 'production' && !template) {
+                            warn(
+                            `Template element not found or is empty: ${options.template}`,
+                            this
+                            )
+                        }
+                    }
+                } 
+                else if (template.nodeType) {
+                    template = template.innerHTML
+                } 
+                else {
+                    if (process.env.NODE_ENV !== 'production') {
+                        warn('invalid template option:' + template, this)
+                    }
+                    return this
+                }
+            } 
+            else if (el) {
+                template = getOuterHTML(el)
+            }
+            if (template) {
+                /* istanbul ignore if */
+                if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+                    mark('compile')
+                }
+
+                const { render, staticRenderFns } = compileToFunctions(template, {
+                    shouldDecodeNewlines,
+                    shouldDecodeNewlinesForHref,
+                    delimiters: options.delimiters,
+                    comments: options.comments
+                }, this)
+                options.render = render
+                options.staticRenderFns = staticRenderFns
+
+                /* istanbul ignore if */
+                if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+                    mark('compile end')
+                    measure(`vue ${this._name} compile`, 'compile', 'compile end')
+                }
+            }
+        }
+        return mount.call(this, el, hydrating)
+    }
+
+    /**
+     * Get outerHTML of elements, taking care
+     * of SVG elements in IE as well.
+     */
+    function getOuterHTML (el: Element): string {
+        if (el.outerHTML) {
+            return el.outerHTML
+        } 
+        else {
+            const container = document.createElement('div')
+            container.appendChild(el.cloneNode(true))
+            return container.innerHTML
+        }
+    }
+
+    Vue.compile = compileToFunctions
+
+    export default Vue
+    ```
+2. 可以看到上面的内容就是在将模板编译为渲染函数。编译完成后调用之前的 `$mount`，该方法会进一步调用 `/src/core/instance/lifecycle.js` 中的 `mountComponent` 函数。源码如下
+    ```js
+    export function mountComponent (
+        vm: Component,
+        el: ?Element,
+        hydrating?: boolean
+    ): Component {
+        vm.$el = el
+        if (!vm.$options.render) {
+            vm.$options.render = createEmptyVNode
+            if (process.env.NODE_ENV !== 'production') {
+                /* istanbul ignore if */
+                if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
+                    vm.$options.el || el) {
+                    warn(
+                    'You are using the runtime-only build of Vue where the template ' +
+                    'compiler is not available. Either pre-compile the templates into ' +
+                    'render functions, or use the compiler-included build.',
+                    vm
+                    )
+                } 
+                else {
+                    warn(
+                    'Failed to mount component: template or render function not defined.',
+                    vm
+                    )
+                }
+            }
+        }
+        callHook(vm, 'beforeMount')
+
+        let updateComponent
+        /* istanbul ignore if */
+        if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+            updateComponent = () => {
+                const name = vm._name
+                const id = vm._uid
+                const startTag = `vue-perf-start:${id}`
+                const endTag = `vue-perf-end:${id}`
+
+                mark(startTag)
+                const vnode = vm._render()
+                mark(endTag)
+                measure(`vue ${name} render`, startTag, endTag)
+
+                mark(startTag)
+                vm._update(vnode, hydrating)
+                mark(endTag)
+                measure(`vue ${name} patch`, startTag, endTag)
+            }
+        } 
+        else {
+            updateComponent = () => {
+                vm._update(vm._render(), hydrating)
+            }
+        }
+
+        // we set this to vm._watcher inside the watcher's constructor
+        // since the watcher's initial patch may call $forceUpdate (e.g. inside child
+        // component's mounted hook), which relies on vm._watcher being already defined
+        new Watcher(vm, updateComponent, noop, {
+            before () {
+                if (vm._isMounted && !vm._isDestroyed) {
+                    callHook(vm, 'beforeUpdate')
+                }
+            }
+        }, true /* isRenderWatcher */)
+        hydrating = false
+
+        // manually mounted instance, call mounted on self
+        // mounted is called for render-created child components in its inserted hook
+        if (vm.$vnode == null) {
+            vm._isMounted = true
+            callHook(vm, 'mounted')
+        }
+        return vm
+    }
+    ```
+3. 因为已经有了 `render`，所以会直接触发 `beforeMount` 钩子函数。可以看到 `mounted` 钩子也会在 `mountComponent` 里触发。
+4. 编译模板不会涉及真实 DOM，所以真实的 DOM 并不会更新，下面的例子中，虽然这时 `this.$el` 已经指向了实际的 DOM 节点，但该节点还是没有被更新渲染过的。
+5. `beforeMount` 钩子在服务器端渲染期间不被调用。因为涉及挂载的两个钩子函数在服务端渲染期间不会被调用，所以他们不能用于获取数据这样的操作。这样的操作应该在 `created()` 中进行。
 4. 模板编译完成后触发 `beforeMount`，渲染函数准备首次调用来进行渲染。
 
 #### `beforeMount`

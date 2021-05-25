@@ -1,9 +1,9 @@
-# nextTick
+# Vuex
 
 
 <!-- TOC -->
 
-- [nextTick](#nexttick)
+- [Vuex](#vuex)
     - [设计思想](#设计思想)
     - [本质](#本质)
     - [环境](#环境)
@@ -39,7 +39,7 @@ key | value
 ## 安装
 1. Vue.js 提供了一个 `Vue.use` 的方法来安装插件，内部会调用插件提供的 `install` 方法。Vuex 作为插件，需要提供一个 `install` 方法来安装
     ```js
-    // src/store.js
+    // /src/store.js
 
     import applyMixin from './mixin'
 
@@ -61,147 +61,165 @@ key | value
     ```
 2. 可以看到，安装时的具体工作是在 `applyMixin` 中进行的，该方法所在模块代码如下
     ```js
-    // src/mixin.js
+    // /src/mixin.js
 
     export default function (Vue) {
-    const version = Number(Vue.version.split('.')[0])
+        const version = Number(Vue.version.split('.')[0]);
 
-    if (version >= 2) {
-        Vue.mixin({ beforeCreate: vuexInit })
-    } else {
-        // override init and inject vuex init procedure
-        // for 1.x backwards compatibility.
-        const _init = Vue.prototype._init
-        Vue.prototype._init = function (options = {}) {
-        options.init = options.init
-            ? [vuexInit].concat(options.init)
-            : vuexInit
-        _init.call(this, options)
+        // Vue 2.x 版本之前的 beforeCreate 钩子名为 init
+        // https://vuejs.org/v2/guide/migration.html#init-renamed
+        if (version >= 2) {
+            Vue.mixin({ beforeCreate: vuexInit });
+        } 
+        else {
+            // 按照 mixin 的顺序重写 init 方法
+            // override init and inject vuex init procedure
+            // for 1.x backwards compatibility.
+            const _init = Vue.prototype._init;
+            Vue.prototype._init = function (options = {}) {
+                options.init = options.init 
+                                ? [vuexInit].concat(options.init) 
+                                : vuexInit;
+                _init.call(this, options);
+            };
         }
-    }
 
-    /**
-     * Vuex init hook, injected into each instances init hooks list.
-     */
-
-    function vuexInit () {
-        const options = this.$options
-        // store injection
-        if (options.store) {
-        this.$store = typeof options.store === 'function'
-            ? options.store()
-            : options.store
-        } else if (options.parent && options.parent.$store) {
-        this.$store = options.parent.$store
+        // 把 store 实例注册到 vm 实例的 $store 属性上
+        /**
+        * Vuex init hook, injected into each instances init hooks list.
+        */
+        function vuexInit() {
+            const options = this.$options;
+            // store injection
+            if (options.store) {
+            this.$store = typeof options.store === 'function' 
+                            ? options.store() 
+                            : options.store;
+            } 
+            else if (options.parent && options.parent.$store) {
+                this.$store = options.parent.$store;
+            }
         }
-    }
     }
     ```
-3. `Vue.mixin({ beforeCreate: vuexInit })` 这一步的逻辑，通过全局混入，为每个组件的 `beforeCreate` 钩子方法都加入了 `vuexInit` 逻辑，设置了 vuex 的初始化逻辑。
-4. 我们知道，在实例化根 Vue 实例的时候，会传入 store 实例
+3. 我们知道，在实例化根 Vue 实例的时候，会传入 store 实例
     ```js
     new Vue({
         el: '#app',
         store
     });
     ```
-5. 所以如果 `vuexInit` 在根 Vue 的 `beforeCreate` 钩子被调用时，这里的 `options.store` 就能引用到 store 实例，在进一步通过组件的 `$store` 属性引用到 store 实例。
+4. 所以如果 `vuexInit` 在根 Vue 的 `beforeCreate` 钩子被调用时，上面的 `options.store` 就能引用到 store 实例，再进一步通过 `$store` 属性引用到 store 实例。
 6. 如果不是根 Vue 实例，则可以通过层层的 `options.parent.$store` 引用到 store 实例。
 
 
 ## 构造函数
 1. 源码
     ```js
-    // src/store.js
+    // /src/store.js
 
-    constructor(options = {}) {
-        // Auto install if it is not done yet and `window` has `Vue`.
-        // To allow users to avoid auto-installation in some cases,
-        // this code should be placed here. See #731
-        if (!Vue && typeof window !== "undefined" && window.Vue) {
-            install(window.Vue);
+    
+    // 从上面 install 的实现可以看到，install 之后 Vue 才会被设置值
+    let Vue // bind on install
+
+    export class Store {
+
+        constructor(options = {}) {
+            // Auto install if it is not done yet and `window` has `Vue`.
+            // To allow users to avoid auto-installation in some cases,
+            // this code should be placed here. See #731
+            if (!Vue && typeof window !== "undefined" && window.Vue) {
+                install(window.Vue);
+            }
+
+            if (__DEV__) {
+                assert(
+                    Vue,
+                    `must call Vue.use(Vuex) before creating a store instance.`
+                );
+                assert(
+                    typeof Promise !== "undefined",
+                    `vuex requires a Promise polyfill in this browser.`
+                );
+                assert(
+                    this instanceof Store,
+                    `store must be called with the new operator.`
+                );
+            }
+
+            const { 
+                // plugins 包含应用在 store 上的插件方法。
+                // 这些插件直接接收 store 作为唯一参数，可以监听 mutation（用于外部地数据持久化、记录或调试）
+                // 或者提交 mutation （用于内部数据，例如 websocket 或 某些观察者）
+                // 文档 https://vuex.vuejs.org/zh/guide/plugins.html
+                plugins = [], 
+                
+                // 默认为非严格模式
+                strict = false 
+            } = options;
+
+            // store internal state
+            this._committing = false; // 用来判断严格模式下是否是用 mutation 修改 state 的
+            this._actions = Object.create(null); // 存放 action
+            this._actionSubscribers = [];
+            this._mutations = Object.create(null); // 存放 mutation
+            this._wrappedGetters = Object.create(null); // 存放 getter
+            this._modules = new ModuleCollection(options);
+            this._modulesNamespaceMap = Object.create(null); // 根据 namespace 存放 module
+            this._subscribers = [];
+            this._watcherVM = new Vue(); // 用以实现 Watch 的 Vue 实例
+            this._makeLocalGettersCache = Object.create(null);
+
+            // bind commit and dispatch to self
+            // 看起来是为了在 action 中直接使用 dispatch 和 commit 调用时也能保证 this 指向 store 实例。例如
+            // actions: {
+            //     async actionB ({ dispatch }) {
+            //         await dispatch('actionA');
+            //     }
+            // }
+            const store = this;
+            const { dispatch, commit } = this;
+            this.dispatch = function boundDispatch(type, payload) {
+                return dispatch.call(store, type, payload);
+            };
+            this.commit = function boundCommit(type, payload, options) {
+                return commit.call(store, type, payload, options);
+            };
+
+            // strict mode
+            this.strict = strict;
+
+            const state = this._modules.root.state;
+
+            // init root module.
+            // this also recursively registers all sub-modules
+            // and collects all module getters inside this._wrappedGetters
+            // this._modules.root 代表根 module 才独有保存的 Module 对象
+            installModule(this, state, [], this._modules.root);
+
+            // initialize the store vm, which is responsible for the reactivity
+            // (also registers _wrappedGetters as computed properties)
+            resetStoreVM(this, state);
+
+            // apply plugins
+            plugins.forEach(plugin => plugin(this));
+
+            const useDevtools =
+                options.devtools !== undefined
+                    ? options.devtools
+                    : Vue.config.devtools;
+            if (useDevtools) {
+                devtoolPlugin(this);
+            }
         }
 
-        if (__DEV__) {
-            assert(
-                Vue,
-                `must call Vue.use(Vuex) before creating a store instance.`
-            );
-            assert(
-                typeof Promise !== "undefined",
-                `vuex requires a Promise polyfill in this browser.`
-            );
-            assert(
-                this instanceof Store,
-                `store must be called with the new operator.`
-            );
-        }
-
-
-        const { 
-            // plugins 包含应用在 store 上的插件方法。
-            // 这些插件直接接收 store 作为唯一参数，可以监听 mutation（用于外部地数据持久化、记录或调试）
-            // 或者提交 mutation （用于内部数据，例如 websocket 或 某些观察者）
-            plugins = [], 
-            
-            // 严格模式
-            strict = false 
-        } = options;
-
-        // store internal state
-        this._committing = false; // 用来判断严格模式下是否是用 mutation 修改 state 的
-        this._actions = Object.create(null); // 存放 action
-        this._actionSubscribers = [];
-        this._mutations = Object.create(null); // 存放 mutation
-        this._wrappedGetters = Object.create(null); // 存放 getter
-        this._modules = new ModuleCollection(options);
-        this._modulesNamespaceMap = Object.create(null); // 根据 namespace 存放 module
-        this._subscribers = [];
-        this._watcherVM = new Vue(); // 用以实现 Watch 的 Vue 实例
-        this._makeLocalGettersCache = Object.create(null);
-
-        // bind commit and dispatch to self
-        // 将 dispatch 与 commit 调用的 this 绑定为 store 对象本身，否则在组件内部 this.dispatch 时的 this 会指向组件的 vm
-        const store = this;
-        const { dispatch, commit } = this;
-        this.dispatch = function boundDispatch(type, payload) {
-            return dispatch.call(store, type, payload);
-        };
-        this.commit = function boundCommit(type, payload, options) {
-            return commit.call(store, type, payload, options);
-        };
-
-        // strict mode
-        this.strict = strict;
-
-        const state = this._modules.root.state;
-
-        // init root module.
-        // this also recursively registers all sub-modules
-        // and collects all module getters inside this._wrappedGetters
-        // this._modules.root 代表根 module 才独有保存的 Module 对象
-        installModule(this, state, [], this._modules.root);
-
-        // initialize the store vm, which is responsible for the reactivity
-        // (also registers _wrappedGetters as computed properties)
-        resetStoreVM(this, state);
-
-        // apply plugins
-        plugins.forEach(plugin => plugin(this));
-
-        const useDevtools =
-            options.devtools !== undefined
-                ? options.devtools
-                : Vue.config.devtools;
-        if (useDevtools) {
-            devtoolPlugin(this);
-        }
+        // ...
     }
     ```
 2. 满足 `!Vue && typeof window !== "undefined" && window.Vue` 时会自动 install Vuex，也就是说不能再调用 `Vue.use(Vuex)`，否则会报错 `[vuex] already installed. Vue.use(Vuex) should be called only once.`。
 3. `installModule` 的作用主要是为 module 加上 namespace （如果有）后，注册 mutation、action 以及 getter，同时递归安装所有子module
     ```js
-    // src/store.js
+    // /src/store.js
 
     function installModule(store, rootState, path, module, hot) {
         const isRoot = !path.length;
@@ -265,7 +283,7 @@ key | value
 
 ## 数据的响应式化——resetStoreVM
 ```js
-// src/store.js
+// /src/store.js
 
 function resetStoreVM(store, state, hot) {
     const oldVm = store._vm;
@@ -326,7 +344,7 @@ function resetStoreVM(store, state, hot) {
 ## commit
 1. 源码
     ```js
-    // src/store.js
+    // /src/store.js
 
     commit(_type, _payload, _options) {
         // check object-style commit
@@ -368,7 +386,7 @@ function resetStoreVM(store, state, hot) {
     ```
 2. Store 给外部提供了一个 `subscribe` 方法，用以注册一个订阅函数，会 push 到 Store 实例的 `_subscribers` 中，同时返回一个从 `_subscribers` 中注销该订阅者的方法
     ```js
-    // src/store.js
+    // /src/store.js
     
     subscribe (fn, options) {
         return genericSubscribe(fn, this._subscribers, options)
@@ -390,10 +408,11 @@ function resetStoreVM(store, state, hot) {
     ```
 3. 在 commit 结束以后则会调用这些 `_subscribers` 中的订阅者，这个订阅者模式提供给外部一个监视 state 变化的可能。state 通过 mutation 改变时，可以有效捕获这些变化。
 
+
 ## dispatch
 1. 源码
     ```js
-    // src/store.js
+    // /src/store.js
 
     dispatch (_type, _payload) {
         // check object-style dispatch
@@ -463,7 +482,7 @@ function resetStoreVM(store, state, hot) {
 ### 注册 action
 1. 源码
     ```js
-    // src/store.js
+    // /src/store.js
     
     function registerAction(store, type, handler, local) {
         // 取出 type 对应的 action
@@ -503,7 +522,7 @@ function resetStoreVM(store, state, hot) {
 ## watch
 watch 一个 `getter` 方法
 ```js
-// src/store.js
+// /src/store.js
 
 watch (getter, cb, options) {
     if (__DEV__) {
@@ -517,7 +536,7 @@ watch (getter, cb, options) {
 ## registerModule
 注册一个动态 module，当业务进行异步加载的时候，可以通过该接口进行注册动态 module
 ```js
-// src/store.js
+// /src/store.js
 
 registerModule (path, rawModule, options = {}) {
     if (typeof path === 'string') path = [path]
@@ -538,7 +557,7 @@ registerModule (path, rawModule, options = {}) {
 ## unregisterModule
 与 `registerModule` 对应的方法，动态注销模块。实现方法是先从 state 中删除模块，然后用 `resetStore` 来重制 store。
 ```js
-// src/store.js
+// /src/store.js
 
 unregisterModule (path) {
     if (typeof path === 'string') path = [path]
@@ -562,7 +581,7 @@ unregisterModule (path) {
 ## resetStore
 这里的 `resetStore` 其实也就是将 store 中的 `_actions` 等进行初始化以后，重新执行 `installModule` 与 `resetStoreVM` 来初始化 module 以及用 Vue 特性使其 “响应式化”，这跟构造函数中的是一致的。
 ```js
-// src/store.js
+// /src/store.js
 
 function resetStore (store, hot) {
     store._actions = Object.create(null)
@@ -581,7 +600,7 @@ function resetStore (store, hot) {
 ## 严格模式
 1. 设置严格模式
     ```js
-    // src/store.js
+    // /src/store.js
 
     function enableStrictMode (store) {
     store._vm.$watch(function () { return this._data.$$state }, () => {
@@ -594,7 +613,7 @@ function resetStore (store, hot) {
 2. 首先，在严格模式下，Vuex 会利用 vm 的 `$watch` 方法来观察 `$$state`，也就是 Store 的 state，在它被修改的时候进入回调。我们发现，回调中只有一句话，用 `assert` 断言来检测 `store._committing`，当 `store._committing` 为 `false` 的时候会触发断言，抛出异常。
 3. Store 的 `commit` 方法中，执行 mutation 的语句是这样的
     ```js
-    // src/store.js
+    // /src/store.js
     
     this._withCommit(() => {
         entry.forEach(function commitIterator (handler) {
@@ -604,7 +623,7 @@ function resetStore (store, hot) {
     ```
 4. `_withCommit` 的实现
     ```js
-    // src/store.js
+    // /src/store.js
 
     _withCommit (fn) {
         const committing = this._committing
@@ -618,7 +637,7 @@ function resetStore (store, hot) {
 
 ## devtool 插件
 ```js
-// src/plugins/devtool.js
+// /src/plugins/devtool.js
 
 // 如果已经安装了该插件，则会在全局对象上暴露一个__VUE_DEVTOOLS_GLOBAL_HOOK__
 // 从全局对象的 __VUE_DEVTOOLS_GLOBAL_HOOK__ 中获取 devtool 插件
