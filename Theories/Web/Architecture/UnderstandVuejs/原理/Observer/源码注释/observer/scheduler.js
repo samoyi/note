@@ -61,7 +61,15 @@ function flushSchedulerQueue() {
     // 也就是说在循环过程中，queue.length 可能会继续增大
     for (index = 0; index < queue.length; index++) {
         watcher = queue[index];
-        // TODO watcher.before 是啥
+        // 实例化 watcher 时如果 options 参数中包含名为 before 的方法
+        // beforeUpdate 钩子函数就是定义在这个 before 方法里的，源码在 /src/core/instance/lifecycle.js
+        // new Watcher(vm, updateComponent, noop, {
+        //     before () {
+        //       if (vm._isMounted && !vm._isDestroyed) {
+        //         callHook(vm, 'beforeUpdate')
+        //       }
+        //     }
+        //   }, true /* isRenderWatcher */)
         if (watcher.before) {
             watcher.before();
         }

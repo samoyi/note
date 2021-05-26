@@ -86,7 +86,16 @@ export default class Watcher {
             this.user = !!options.user;
             this.lazy = !!options.lazy;
             this.sync = !!options.sync;
-            this.before = options.before;
+            // 实例化 watcher 时如果 options 中包含名为 before 的方法，则该方法会在 watcher 实际更新前调用
+            // beforeUpdate 钩子函数就是定义在这个 before 方法里的，源码在 /src/core/instance/lifecycle.js
+            // new Watcher(vm, updateComponent, noop, {
+            //     before () {
+            //       if (vm._isMounted && !vm._isDestroyed) {
+            //         callHook(vm, 'beforeUpdate')
+            //       }
+            //     }
+            //   }, true /* isRenderWatcher */)
+            this.before = options.before; 
         } 
         else {
             this.deep = this.user = this.lazy = this.sync = false;
