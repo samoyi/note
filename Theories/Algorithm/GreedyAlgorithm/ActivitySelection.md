@@ -9,6 +9,8 @@
     - [活动选择问题的最优子结构](#活动选择问题的最优子结构)
     - [贪心选择](#贪心选择)
     - [递归贪心算法](#递归贪心算法)
+    - [迭代贪心算法](#迭代贪心算法)
+    - [动态规划算法 TODO](#动态规划算法-todo)
 
 <!-- /TOC -->
 
@@ -36,6 +38,7 @@
 4. 当然这一组兼容的活动集合不一定是最优的。所以我们在从 n 个活动里面选定一个活动时，就要遍历 n 个活动，对每种情况都按照上面的方法求解，得出 n 个兼容的活动集合，然后就可以从里面选出一个最优的。
 5. 按照这个算法，我们会求解所有可能的子问题。
 
+
 ## 贪心选择
 1. 假如我们不需要求解所有的子问题会怎样？如果每次选择一个活动不需要遍历当前的所有活动而是确定的选择一个。
 2. 对于活动选择问题，我们其实每次不需要遍历当前的所有活动，而只需要考虑一个选择，就是贪心选择。
@@ -48,7 +51,7 @@
 
 ## 递归贪心算法
 1. 假定 `N` 个活动已经按照结束时间递增的顺序排好。
-3. 实现
+2. 实现
     ```cpp
     #include <stdio.h>
 
@@ -87,3 +90,42 @@
         printSelectedIndexes(activity); // 0 3 7 10
     }
     ```
+3. 运行时间为 $Θ(N)$。假如所有活动都是兼容的，那么 `while` 不会被执行，`recursive_activity_selector` 会被递归调用 N 次；假如所有活动都不兼容，那么 `recursive_activity_selector` 只会初始调用一次，它里面的 `while` 循环会被执行 N 次；其他的情况就是，`while` 少执行一次，而 `recursive_activity_selector` 多调用一次。
+
+
+## 迭代贪心算法
+1. 我们可以很容易的将 `recursive_activity_selector` 转换为迭代形式。`recursive_activity_selector` 几乎就是尾递归，将一个尾递归改为迭代形式通常是很直接的。实际上，某些语言的编译器可以自动完成这一工作。
+2. 一次迭代对应着一次递归调用：新一层的递归调用时传递新的参数，对应新一轮的迭代设置新的值，都是新一轮的新数据；递归的结束条件就是就是迭代的结束条件。
+3. 直接改写如下
+    ```cpp
+    void greedy_activity_selector (int finishTime, int startIdx) {
+        while (startIdx < N) { // 结束条件
+            if ( start_time[startIdx] >= finishTime ) {
+                activity[startIdx] = 1;
+                finishTime = finish_time[startIdx]; // 设置新的值
+            }
+            startIdx++; // 设置新的值
+        }
+    }
+    ```
+4. 另外，`recursive_activity_selector` 函数需要参数，是因为每轮递归调用时要通过参数来设置新的值。现在改为迭代后，不需要用该参数来设置新值了，函数值调用一次，即使有参数也是作为初始化的值，所以函数的参数也就没必要了
+    ```cpp
+    void greedy_activity_selector () {
+        activity[0] = 1;
+        int finishTime = finish_time[0]; 
+        int startIdx = 1;
+
+        while (startIdx < N) {
+            if ( start_time[startIdx] >= finishTime ) {
+                activity[startIdx] = 1;
+                finishTime = finish_time[startIdx];
+            }
+            startIdx++;
+        }
+    }
+    ```
+5. 运行时间也是 $Θ(N)$。
+
+
+## 动态规划算法 TODO
+《算法导论》练习 16.1-1
