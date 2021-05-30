@@ -8,12 +8,8 @@
         - [分治](#分治)
     - [设计细节](#设计细节)
         - [进行稍复杂的操作时就应该考虑先检查有没有必要](#进行稍复杂的操作时就应该考虑先检查有没有必要)
-    - [非原地归并](#非原地归并)
-        - [两个已排序的数组归并排序为一个大的数组](#两个已排序的数组归并排序为一个大的数组)
-        - [`merge` 的调用次数是数组长度减一](#merge-的调用次数是数组长度减一)
+    - [归并](#归并)
         - [使用上面的归并方法实现排序](#使用上面的归并方法实现排序)
-    - [原地归并的抽象方法](#原地归并的抽象方法)
-        - [使用上面的归并方法实现排序](#使用上面的归并方法实现排序-1)
         - [分治思想](#分治思想)
     - [Analyzing divide-and-conquer algorithms](#analyzing-divide-and-conquer-algorithms)
     - [分析](#分析)
@@ -27,6 +23,10 @@
         - [测试数组是否已经有序](#测试数组是否已经有序)
         - [不将元素复制到辅助数组](#不将元素复制到辅助数组)
     - [TODO 迭代实现归并排序](#todo-迭代实现归并排序)
+    - [非原地归并](#非原地归并)
+        - [两个已排序的数组归并排序为一个大的数组](#两个已排序的数组归并排序为一个大的数组)
+        - [`merge` 的调用次数是数组长度减一](#merge-的调用次数是数组长度减一)
+        - [使用上面的归并方法实现排序](#使用上面的归并方法实现排序-1)
     - [自底向上的归并排序](#自底向上的归并排序)
         - [分析](#分析-1)
     - [排序算法的复杂度](#排序算法的复杂度)
@@ -61,155 +61,97 @@
 * `merge` 之前检查两个子数组是否已经有序
 
 
-## 非原地归并
-### 两个已排序的数组归并排序为一个大的数组
-1. 实现归并的一种直截了当的办法是将两个不同的有序数组归并到第三个数组中。
-2. 实现的方法很简单，创建一个大的数组然后将两个输入数组中的元素一个个从小到大放入这个数组中。
-    ```js
-    function merge(left, right) {
-        let result = [];
-        let leftIndex = 0;
-        let rightIndex = 0;
-        let leftLen = left.length;
-        let rightLen = right.length;
 
-        // 两个数组都还有元素没有比较完，不断比较并按顺序加入新数组
-        while ( leftIndex < leftLen && rightIndex < rightLen ) {
-            if ( left[leftIndex] < right[rightIndex] ) {
-                result.push( left[leftIndex] );
-                leftIndex++;
-            } 
+
+
+## 归并
+1. 归并排序算法的关键操作是合并两个已排序的子序列，也就是将已排序的前半部分和已排序的后半部分合并排序为整体排好序的状态。
+2. 为了方便排序，我们先把两个子序列拷贝到两个临时序列中，然后对它们进行合并排序，按照顺序放回到原序列中。
+3. 因为两个临时序列最小的元素都在最前面，所以我们可以不断的比较两个临时序列最前面的元素，选出两个里面更小的移动到原序列中。
+4. 两个中更大的那个不会被移动，会留下来和另一个序列中新的最前面的元素再进行比较。
+5. 这个过程保证了最终序列都是按照从小到大的顺序。
+6. 但要注意比较的边界。这样的比较，肯定是有一个临时序列首先变为空的，而此时另一个序列还会剩下一个或多个。
+7. 这种情况下，只需要把剩下的依次放回到原序列就可以了。
+8. 也就是说，在比较的过程中需要知道什么时候其中一个序列已经为空了
+    ```cpp
+    void merge (int* arr, int low, int mid, int high) {
+
+        int leftSize = mid - low + 1;
+        int rightSize = high - mid;
+
+        // 虽然是原地归并，但为了重排序，还是要创建临时数组的
+        // 不过这两个临时数组会在本次 merge 调用完就会被回收
+        int* left = calloc(leftSize, sizeof(int));
+        int* right = calloc(rightSize, sizeof(int));
+        if (left == NULL || right == NULL)  {
+            printf("Error: calloc failed in merge.\n");
+            exit (EXIT_FAILURE);
+        }
+
+        // 复制到临时数组中
+        for (int i=0; i<leftSize; i++) {
+            *(left+i) = arr[low+i];
+        }
+        for (int i=0; i<rightSize; i++) {
+            *(right+i) = arr[mid+1+i];
+        }
+
+        int leftIdx = 0;
+        int rightIdx = 0;
+        // for 循环限定了次数，移动完所有的元素后就会结束，因此不需要判断是否两个临时序列都移动完了
+        for (int i=low; i<=high; i++) {
+            // 左边的临时序列还没有被移动完 且 左边最小的小于右边最小的
+            if ( leftIdx < leftSize && left[leftIdx] < right[rightIdx] ) {
+                arr[i] = left[leftIdx++];
+            }
+            // 左边的临时序列已经被移动完了 或 左边最小的大于等于右边最小的
             else {
-                result.push( right[rightIndex] );
-                rightIndex++;
+                arr[i] = right[rightIdx++];
             }
         }
 
-        // 右边数组的元素已经全部加入了新数组，左边数组还有剩下的
-        while ( leftIndex < leftLen ) {
-            result.push( left[leftIndex] );
-            leftIndex++;
-        }
-
-        // 左边数组的元素已经全部加入了新数组，右边数组还有剩下的
-        while ( rightIndex < rightLen ) {
-            result.push( right[rightIndex] );
-            rightIndex++;
-        }
-
-        return result;
-    }
-
-    let arr1 = [2, 10, 17, 27, 29, 35, 37, 67, 91, 94];
-    let arr2 = [6, 21, 26, 33, 38, 42, 50, 55, 68, 79];
-
-    console.log( merge( arr1, arr2 ) ); 
-    // [2, 6, 10, 17, 21, 26, 27, 29, 33, 35, 37, 38, 42, 50, 55, 67, 68, 79, 91, 94]
-    ```
-
-### `merge` 的调用次数是数组长度减一
-1. 归并排序会把一个数组不断拆分直到全部都是单一元素，然后再不断 merge 回到一个整个的数组。
-2. 想象 10 块单独的积木，你想把它们用胶水粘成一排，一共要涂几次胶水？
-3. 不管你以怎样的排列和组合，最终都要是要涂 9 次胶水。
-
-### 使用上面的归并方法实现排序
-1. 上面的归并方法，让我们掌握了一种对数组进行排序的方法，但前提是这个数组里的两个子数组必须是各自有序的。
-2. 不过既然我们掌握了这个排序方法，那就可以用这个方法来对两个子数组进行排序。
-3. 递归感出来了。只要我们递归的对子数组进行归并排序，最终就能对整个数组进行排序。
-4. 递归的终点，或者说起点，是子数组只有一个元素的情况。
-5. 从这个起点回溯，归并排序这两个单元素数组
-    <img src="./images/03.png" width="400" style="display: block; margin: 5px 0 10px;" />
-6. 我们定义这个排序方法 `mergeSort`，这个方法会 `merge` 两个子数组；这两个子数组也需要是排序好的，那么我们就递归的用 `mergeSort` 去排序这两个子数组
-    ```js
-    function mergeSort ( arr ) {
-        let len = arr.length;
-        if ( len === 1 ) {
-            return arr;
-        }
-
-        let midIndex = Math.floor( len/2 );
-        let left = arr.slice( 0, midIndex );
-        let right = arr.slice( midIndex );
-
-        return merge( mergeSort( left ), mergeSort( right ) );
+        // 回收临时数组内存
+        free(left);
+        free(right);
     }
     ```
+9. 《算法导论》中的方法是在两个临时序列的底部分别放一个极大值，这样在一个序列移动到只剩下这个极大值时就只会移动另一个序列。不过觉得实现起来更麻烦
+    ```cpp
+    void merge (int* arr, int low, int mid, int high) {
 
+        int leftSize = mid - low + 1;
+        int rightSize = high - mid;
 
-## 原地归并的抽象方法
-1. 但是，当用归并将一个大数组排序时，我们需要进行很多次归并，因此在每次归并时都创建一个新数组来存储排序结果会带来问题。TODO，为什么我觉得每次创建的数组是 `left` 和 `right`？
-2. 我们更希望有一种能够在原地归并的方法，这样就可以先将前半部分排序，再将后半部分排序，然后在数组中移动元素而不需要使用额外的空间。乍一看很容易做到，但实际上已有的实现都非常复杂，尤其是和使用额外空间的方法相比。
-3. 下面的方法将两个排好序的子数组组成的一个大数组归并为整体有序的数组。根据《算法导论》的伪代码实现
-    ```js
-    function merge (arr, low, mid, high) {
-        let leftLen = mid - low + 1; // mid 这一项属于左侧子数组
-        let rightLen = high - mid;
-
-        let leftSubArr = [];
-        let rightSubArr = [];
-
-        for (let i=0; i<leftLen; i++) {
-            leftSubArr[i] = arr[low + i];
+        // 这里要多个临时序列分配一个位置来存放极大值
+        int* left = calloc((leftSize+1), sizeof(int));
+        int* right = calloc((rightSize+1), sizeof(int));
+        if (left == NULL || right == NULL)  {
+            printf("Error: calloc failed in merge.\n");
+            exit (EXIT_FAILURE);
         }
-        leftSubArr.push(Number.POSITIVE_INFINITY);
 
-        for (let j=0; j<rightLen; j++) {
-            rightSubArr[j] = arr[mid + 1 + j];
+        for (int i=0; i<leftSize; i++) {
+            *(left+i) = arr[low+i];
         }
-        rightSubArr.push(Number.POSITIVE_INFINITY);
+        *(left+leftSize) = INT_MAX; // 加入极大值
+        for (int i=0; i<rightSize; i++) {
+            *(right+i) = arr[mid+1+i];
+        }
+        *(right+rightSize) = INT_MAX; // 加入极大值
 
-        let i=0;
-        let j=0;
-        for (let k=low; k<=high; k++) {
-            if (leftSubArr[i] < rightSubArr[j]) {
-                arr[k] = leftSubArr[i++];
+        int leftIdx = 0;
+        int rightIdx = 0;
+        for (int i=low; i<=high; i++) {
+            if ( left[leftIdx] < right[rightIdx] ) {
+                arr[i] = left[leftIdx++];
             }
             else {
-                arr[k] = rightSubArr[j++];
+                arr[i] = right[rightIdx++];
             }
         }
-    }
 
-
-    let arr1 = [2, 10, 17, 27, 29, 35, 37, 67, 91, 94];
-    let arr2 = [6, 21, 26, 33, 38, 42, 50, 55, 68, 79];
-    let arr = [...arr1, ...arr2];
-    merge(arr, 0, 9, 19);
-    console.log(arr); // [2, 6, 10, 17, 21, 26, 27, 29, 33, 35, 37, 38, 42, 50, 55, 67, 68, 79, 91, 94]
-    ```
-4. 现在已经不是把两个数组归并为一个了，而是把一个数组里两个独立有序的部分原地归并排序了。
-5. 也就是说，相比于上面归并的方法，这里不需要每次都创建一个 `left` 和 `right` 数组了。（`leftSubArr` 和 `rightSubArr` 只是临时数组，`merge` 调用结束后就会被回收）
-6. 下面是《算法（第4版）》的原地归并，我觉得相比起来更难理解一些。《算法导论》中的逻辑是很明确的把两个子数组归并到一个大数组，更符合归并的感觉；不过下面这个方法还是把一个大数组 `aux` 归并到原来的大数组，没有很明显的归并感
-    ```js
-    function merge ( arr, low, mid, high ) {
-        let i = low;
-        let j = mid+1;
-        let aux = [];
-
-        // 将数组复制一份到 aux
-        for ( let k=low; k<=high; k++ ) {
-            aux[k] = arr[k];
-        }
-
-        for ( let k=low; k<=high; k++ ) {
-            // 前半部分元素已经归并完了，后半部分还有剩余。k 还没到头，所以说明后半部分还有剩余。
-            if ( i > mid ) { 
-                arr[k] = aux[j];
-                j++;
-            }
-            else if ( j > high ) { // 后半部分元素已经归并完了，前半部分还有剩余
-                arr[k] = aux[i];
-                i++;
-            }
-            else if ( aux[i] < aux[j] ) {
-                arr[k] = aux[i];
-                i++;
-            }
-            else {
-                arr[k] = aux[j];
-                j++;
-            }
-        }
+        free(left);
+        free(right);
     }
     ```
 
@@ -351,7 +293,79 @@ TODO
 
 
 
+## 非原地归并
+### 两个已排序的数组归并排序为一个大的数组
+1. 实现归并的一种直截了当的办法是将两个不同的有序数组归并到第三个数组中。
+2. 实现的方法很简单，创建一个大的数组然后将两个输入数组中的元素一个个从小到大放入这个数组中。
+    ```js
+    function merge(left, right) {
+        let result = [];
+        let leftIndex = 0;
+        let rightIndex = 0;
+        let leftLen = left.length;
+        let rightLen = right.length;
 
+        // 两个数组都还有元素没有比较完，不断比较并按顺序加入新数组
+        while ( leftIndex < leftLen && rightIndex < rightLen ) {
+            if ( left[leftIndex] < right[rightIndex] ) {
+                result.push( left[leftIndex] );
+                leftIndex++;
+            } 
+            else {
+                result.push( right[rightIndex] );
+                rightIndex++;
+            }
+        }
+
+        // 右边数组的元素已经全部加入了新数组，左边数组还有剩下的
+        while ( leftIndex < leftLen ) {
+            result.push( left[leftIndex] );
+            leftIndex++;
+        }
+
+        // 左边数组的元素已经全部加入了新数组，右边数组还有剩下的
+        while ( rightIndex < rightLen ) {
+            result.push( right[rightIndex] );
+            rightIndex++;
+        }
+
+        return result;
+    }
+
+    let arr1 = [2, 10, 17, 27, 29, 35, 37, 67, 91, 94];
+    let arr2 = [6, 21, 26, 33, 38, 42, 50, 55, 68, 79];
+
+    console.log( merge( arr1, arr2 ) ); 
+    // [2, 6, 10, 17, 21, 26, 27, 29, 33, 35, 37, 38, 42, 50, 55, 67, 68, 79, 91, 94]
+    ```
+
+### `merge` 的调用次数是数组长度减一
+1. 归并排序会把一个数组不断拆分直到全部都是单一元素，然后再不断 merge 回到一个整个的数组。
+2. 想象 10 块单独的积木，你想把它们用胶水粘成一排，一共要涂几次胶水？
+3. 不管你以怎样的排列和组合，最终都要是要涂 9 次胶水。
+
+### 使用上面的归并方法实现排序
+1. 上面的归并方法，让我们掌握了一种对数组进行排序的方法，但前提是这个数组里的两个子数组必须是各自有序的。
+2. 不过既然我们掌握了这个排序方法，那就可以用这个方法来对两个子数组进行排序。
+3. 递归感出来了。只要我们递归的对子数组进行归并排序，最终就能对整个数组进行排序。
+4. 递归的终点，或者说起点，是子数组只有一个元素的情况。
+5. 从这个起点回溯，归并排序这两个单元素数组
+    <img src="./images/03.png" width="400" style="display: block; margin: 5px 0 10px;" />
+6. 我们定义这个排序方法 `mergeSort`，这个方法会 `merge` 两个子数组；这两个子数组也需要是排序好的，那么我们就递归的用 `mergeSort` 去排序这两个子数组
+    ```js
+    function mergeSort ( arr ) {
+        let len = arr.length;
+        if ( len === 1 ) {
+            return arr;
+        }
+
+        let midIndex = Math.floor( len/2 );
+        let left = arr.slice( 0, midIndex );
+        let right = arr.slice( midIndex );
+
+        return merge( mergeSort( left ), mergeSort( right ) );
+    }
+    ```
 
 
 
