@@ -4,24 +4,24 @@
 <!-- TOC -->
 
 - [Fundamentals](#fundamentals)
-    - [编译和链接](#编译和链接)
-    - [简单程序的一般形式](#简单程序的一般形式)
-        - [指令](#指令)
-        - [函数](#函数)
-        - [语句](#语句)
-    - [变量和赋值](#变量和赋值)
-        - [类型](#类型)
-        - [声明](#声明)
-        - [赋值](#赋值)
-        - [显示变量的值](#显示变量的值)
-        - [取整数](#取整数)
-        - [初始化](#初始化)
-        - [显示表达式的值](#显示表达式的值)
-    - [读入输入](#读入输入)
-        - [示例](#示例)
-    - [定义常量的名字](#定义常量的名字)
-    - [标识符](#标识符)
-        - [关键字](#关键字)
+    - [编译和链接](#%E7%BC%96%E8%AF%91%E5%92%8C%E9%93%BE%E6%8E%A5)
+    - [简单程序的一般形式](#%E7%AE%80%E5%8D%95%E7%A8%8B%E5%BA%8F%E7%9A%84%E4%B8%80%E8%88%AC%E5%BD%A2%E5%BC%8F)
+        - [指令](#%E6%8C%87%E4%BB%A4)
+        - [函数](#%E5%87%BD%E6%95%B0)
+        - [语句](#%E8%AF%AD%E5%8F%A5)
+    - [变量和赋值](#%E5%8F%98%E9%87%8F%E5%92%8C%E8%B5%8B%E5%80%BC)
+        - [类型](#%E7%B1%BB%E5%9E%8B)
+        - [声明](#%E5%A3%B0%E6%98%8E)
+        - [赋值](#%E8%B5%8B%E5%80%BC)
+        - [显示变量的值](#%E6%98%BE%E7%A4%BA%E5%8F%98%E9%87%8F%E7%9A%84%E5%80%BC)
+        - [取整数](#%E5%8F%96%E6%95%B4%E6%95%B0)
+        - [初始化](#%E5%88%9D%E5%A7%8B%E5%8C%96)
+        - [显示表达式的值](#%E6%98%BE%E7%A4%BA%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%9A%84%E5%80%BC)
+    - [读入输入](#%E8%AF%BB%E5%85%A5%E8%BE%93%E5%85%A5)
+        - [示例](#%E7%A4%BA%E4%BE%8B)
+    - [定义常量的名字](#%E5%AE%9A%E4%B9%89%E5%B8%B8%E9%87%8F%E7%9A%84%E5%90%8D%E5%AD%97)
+    - [标识符](#%E6%A0%87%E8%AF%86%E7%AC%A6)
+        - [关键字](#%E5%85%B3%E9%94%AE%E5%AD%97)
     - [References](#references)
 
 <!-- /TOC -->
@@ -92,11 +92,11 @@ int main(void)
 4. 在 C99 中，声明可以不在语句之前。例如，`main` 函数中可以先有一个声明，后面跟一条语句，然后再跟一个声明。
 
 ### 赋值
-1. 当我们把一个包含小数点的常量赋值给 `float` 型变量时，最好在该常量后面加一个字母 `f`（代表float），不加 `f` 可能会引发编译器的警告
+1. 包含小数点但却不以 `f` 结尾的常量是 `double`（double precision的缩写）型的。`double` 型的值比 `float` 型的值存储得更精确，并且可以存储比 `float` 型更大的值，因此在给 `float` 型变量赋值时需要加上字母 `f`
     ```cpp
     profit = 2150.48f;
     ```
-2. 包含小数点但却不以 `f` 结尾的常量是 `double`（double precision的缩写）型的。`double` 型的值比 `float` 型的值存储得更精确，并且可以存储比 `float` 型更大的值，因此在给 `float` 型变量赋值时需要加上字母 `f`。如果不加 `f`，编译器可能会生成一条警告消息，告诉你存储到 `float` 型变量中的数可能超出了该变量的取值范围。不懂，没试出来。
+2. 如果不加 `f`，编译器可能会生成一条警告消息，告诉你存储到 `float` 型变量中的数可能超出了该变量的取值范围。
 
 ### 显示变量的值
 1. 打印 `int` 类型的变量，占位符 `%d` 用来指明在显示过程中变量 `height` 的值的显示位置
@@ -105,15 +105,9 @@ int main(void)
     ```
 2. `%d` 仅用于 `int` 型变量。如果要显示 `float` 型变量，需要用 `%f` 来代替 `%d`
     ```cpp
-    #include <stdio.h>
-
-    int main(void) 
-    {
-        float profit;
-        profit = 2150.48f;
-        printf("Profit: %f\n", profit); // Profit: 2150.479980
-        return 0;
-    }
+    float profit;
+    profit = 2150.48f;
+    printf("Profit: %f\n", profit); // Profit: 2150.479980
     ```
 3. 默认情况下，`%f` 会显示出小数点后 6 位数字。如果要强制 `%f` 显示小数点后 $p$ 位数字，可以把 $.p$ 放置在 `%` 和 `f` 之间
     ```cpp
@@ -121,44 +115,36 @@ int main(void)
     ```
 4. C 语言没有限制调用一次 `printf` 可以显示的变量的数量
     ```cpp
-    #include <stdio.h>
-
-    int main(void) 
-    {
-        int height = 123;
-        float profit = 2150.48f;
-        printf("Height: %d Profit: %.2f\n", height, profit); // Height: 123 Profit: 2150.48
-        return 0;
-    }
+    int height = 123;
+    float profit = 2150.48f;
+    printf("Height: %d Profit: %.2f\n", height, profit); // Height: 123 Profit: 2150.48
     ```
 
 ### 取整数
 1. 在 C 语言中，如果两个整数相除，结果会向下取证
     ```cpp
-    int main(void) 
-    {
-        int x = 100;
-        int y = 17;
-        int quotient_int = x / y;
-        float quotient_float = x / y;
-        printf("Quotient_int: %d; Quotient_float: %.1f.\n", quotient_int, quotient_float); 
-        // Quotient_int: 5; Quotient_float: 5.0.
-        return 0;
-    }
+    int x = 100;
+    int y = 17;
+
+    int quotient_int = x / y;
+    float quotient_float = x / y;
+    
+    printf("Quotient_int: %d;\nQuotient_float: %.1f.\n", quotient_int, quotient_float); 
+    // Quotient_int: 5;    
+    // Quotient_float: 5.0.
     ```
 2. 如果希望向上取整，一种解决方案是给被除数加上 $除数-1$，这样保证了结果会达到或超过准确结果之上的整数
     ```cpp
-    int main(void) 
-    {
-        int x = 100;
-        int y = 17;
-        int pad = y - 1;
-        int quotient_int = (x+pad) / y;
-        float quotient_float = (x+pad) / y;
-        printf("Quotient_int: %d; Quotient_float: %.1f.\n", quotient_int, quotient_float); 
-        // Quotient_int: 6; Quotient_float: 6.0.
-        return 0;
-    }
+    int x = 100;
+    int y = 17;
+
+    int pad = y - 1;
+    int quotient_int = (x + pad) / y;
+    float quotient_float = (x + pad) / y;
+    
+    printf("Quotient_int: %d;\nQuotient_float: %.1f.\n", quotient_int, quotient_float); 
+    // Quotient_int: 6;    
+    // Quotient_float: 6.0.
     ```
 
 ### 初始化
@@ -183,7 +169,7 @@ printf("%d\n", height * length * width); // 960
 
 ## 读入输入
 1. 为了获取输入，就要用到 `scanf` 函数。它是 C 函数库中与 `printf` 相对应的函数。
-2. `scanf` 中的字母 `f` 和` printf` 中的字母 `f` 含义相同，都是表示 “格式化” 的意思。`scanf` 函数和 `printf` 函数都需要使用 **格式串**（format string）来指定输入或输出数据的形式。`scanf` 函数需要知道将获得的输入数据的格式，而 p`rintf` 函数需要知道输出数据的显示格式。
+2. `scanf` 中的字母 `f` 和 `printf` 中的字母 `f` 含义相同，都是表示 “格式化” 的意思。`scanf` 函数和 `printf` 函数都需要使用 **格式串**（format string）来指定输入或输出数据的形式。`scanf` 函数需要知道将获得的输入数据的格式，而 `printf` 函数需要知道输出数据的显示格式。
 3. 为了读入一个 `int` 型值，可以使用下面的 `scanf` 函数调用：
     ```cpp
     scanf("%d", &i);  /* reads an integer; stores into i */ 
@@ -193,7 +179,7 @@ printf("%d\n", height * length * width); // 960
     ```cpp
     scanf("%f", &x);  /* reads a float value; stores into x */
     ```
-6. `%f` 只用于 `float` 型变量，因此这里假设 `x` 是一个 `float` 型变量。字符串 `"%f"` 告诉 `scanf` 函数去寻找一个``float` 格式的输入值（此数可以含有小数点，但不是必须含有）。
+6. `%f` 只用于 `float` 型变量，因此这里假设 `x` 是一个 `float` 型变量。字符串 `"%f"` 告诉 `scanf` 函数去寻找一个 `float` 格式的输入值（此数可以含有小数点，但不是必须含有）。
 
 ### 示例
 1. 代码
