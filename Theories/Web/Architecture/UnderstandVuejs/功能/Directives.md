@@ -20,7 +20,7 @@
         - [vnode](#vnode)
         - [oldVnode](#oldvnode)
     - [钩子函数不是方法调用](#%E9%92%A9%E5%AD%90%E5%87%BD%E6%95%B0%E4%B8%8D%E6%98%AF%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8)
-    - [在bind和update时触发相同行为时的简写](#%E5%9C%A8bind%E5%92%8Cupdate%E6%97%B6%E8%A7%A6%E5%8F%91%E7%9B%B8%E5%90%8C%E8%A1%8C%E4%B8%BA%E6%97%B6%E7%9A%84%E7%AE%80%E5%86%99)
+    - [在 bind 和 update 时触发相同行为时的简写](#%E5%9C%A8-bind-%E5%92%8C-update-%E6%97%B6%E8%A7%A6%E5%8F%91%E7%9B%B8%E5%90%8C%E8%A1%8C%E4%B8%BA%E6%97%B6%E7%9A%84%E7%AE%80%E5%86%99)
     - [可以传入引用类型字面量](#%E5%8F%AF%E4%BB%A5%E4%BC%A0%E5%85%A5%E5%BC%95%E7%94%A8%E7%B1%BB%E5%9E%8B%E5%AD%97%E9%9D%A2%E9%87%8F)
 
 <!-- /TOC -->
@@ -170,56 +170,11 @@
 ### `inserted`
 1. 被绑定元素插入父节点时调用。
 2. 仅保证父节点存在，但不一定已被插入文档中。
-3. `bind` 和 `inserted` 这两个钩子函数，都是在 `beforeMount` 和 `mounted` 钩子函数之间触发的。也就是说，发生在模板编译之后的挂载阶段，所以说不是一边编译模板一边执行绑定。
-4. 不过这样也是有道理的，毕竟钩子函数的第一个参数就是 `el` 就是实际的节点，要让 `el` 能正常访问，必须在实际 DOM 更新之后，但没必要等到挂载渲染全部完成
-    ```js
-    new Vue({
-        el: '#components-demo',
-        data: {
-            num1: 22,
-        },
-        directives: {
-            _bind: {
-                bind: function (el, binding, vnode) {
-                    console.log(el); // 这里证明已经用虚拟 DOM 更新了实际 DOM
-                    // <div id="components-demo">
-                    //     22
-                    // </div>
-                    console.log(el.__vue__); // undefined  这里证明还没完成挂载
-                    console.log(vnode); // VNode {...}
-                },
-            },
-            _inserted: {
-                inserted: function (el, binding, vnode) {
-                    console.log(el);
-                    // <div id="components-demo">
-                    //     22
-                    // </div>
-                    console.log(el.__vue__); // undefined
-                    console.log(vnode); // VNode {...}
-                },
-            },
-            _update: {
-                update: function (el, binding, vnode) {
-                    console.log(el);
-                    // <div id="components-demo">
-                    //     33
-                    // </div>
-                    console.log(el.__vue__); // Vue {...}
-                    console.log(vnode); // VNode {...}
-                },
-            },
-        },
-        mounted(){
-            setTimeout(()=>{
-                this.num1 = 33;
-            }, 2000);
-        },
-    });
-    ```
+3. `bind` 和 `inserted` 这两个钩子函数，都是在 `beforeMount` 和 `mounted` 钩子函数之间触发的。也就是说，发生在模板编译之后的挂载阶段。
+4. 从上面的例子可以看到，这时实际 DOM 也发生了更新。
 
 ### `update`
-1. 所在组件的 VNode 更新时调用（并不一定是指令的值更新），但是可能发生在其子 VNode 更新之前。
+1. 所在组件的 VNode 更新时调用（并不一定是指令的值更新），但是可能发生在其子 VNode 更新之前。从上面例子中的 `update` 钩子可以看到，当前 VNode 本身的 `class` 属性发生改变了，但内部文本节点的 Vnode 还没有更新。
 2. 发生在 `beforeUpdate` 之后，因为 `beforeUpdate` 的时间点是整个更新过程的起点。
 3. 和 `updated` 一样，判断数据是否更新的算法是 Same-value-zero。
 4. 指令的值可能发生了改变，也可能没有。但是你可以通过比较更新前后的值来忽略不必要的模板更新
@@ -253,7 +208,7 @@
     ```
 
 ### `componentUpdated`
-1. 指令所在组件的 VNode 及其子 VNode 全部更新后调用。
+1. 指令所在组件的 VNode 及其子 VNode 全部更新后调用。从上面例子中的 `componentUpdated` 钩子可以看到，文本节点的 Vnode 也发生了更新。
 2. 生命周期钩子函数要确保子组件全部更新完时必须要用到 `vm.$nextTick`，那这里为什么却有了一个单独的钩子呢？不懂
 3. 发生在 `updated` 之前，这很合理。
 
@@ -347,38 +302,30 @@
 除了 `el` 之外，其它参数都应该是只读的，切勿进行修改。如果需要在钩子之间共享数据，建议通过元素的 `dataset` 来进行。
 
 ### `el`
-* 指令所绑定的元素，可以用来直接操作 DOM 。
-* 即使是最早执行的 `bind` 钩子函数，也是在挂载阶段虚拟 DOM 替换了真实 DOM 之后。不过此时挂载过程还没完成，之后才会触发 `mounted`
-    ```html
-    <div id="demo" v-_bind>{{ num1 }}</div>
-    ```
+1. 指令所绑定的元素，可以用来直接操作 DOM 。
+2. 但是，这个值并不总是等于实际的 DOM 节点，看下面的例子
     ```js
-    new Vue({
-        el: '#demo',
-        data: {
-            num1: 22,
+    _bind: {
+        bind (el, binding, vnode) {
+            alert(el === document.querySelector("#demo"));                // false
+            console.log(JSON.stringify(el));                              // {"_prevClass":""}
+            console.log(JSON.stringify(document.querySelector("#demo"))); // {}
         },
-        directives: {
-            _bind: {
-                bind: function (el, binding, vnode) {
-                    // 虚拟 DOM 还没有替换真实 DOM
-                    alert("bind:" + document.querySelector("#demo").innerHTML); // {{ num1 }}
-                },
-            },
+    },
+    _inserted: {
+        inserted (el, binding, vnode) {
+            alert(el === document.querySelector("#demo"));                // true
+            console.log(JSON.stringify(el));                              // {"_prevClass":""}
+            console.log(JSON.stringify(document.querySelector("#demo"))); // {"_prevClass":""}
         },
-        beforeMount(){
-            alert("beforeMount:" + document.querySelector("#demo").innerHTML); // {{ num1 }}
-        },
-        mounted(){
-            alert("mounted:" + document.querySelector("#demo").innerHTML); // 22
-        },
-    });
+    },
     ```
+3. `bind` 调用时，虚拟 DOM 中的节点已经更新了，但还没有更新实际 DOM，所以两者是不相同的。所以在 `bind` 调用时，`el` 还只是虚拟 DOM 中的元素，只有到 `inserted` 调用时，才同步更新到实际的 DOM，两者才是一样的。
 
 ### `binding`
 一个对象，包含以下属性：
-* `name`: 指令名，不包括`v-`前缀。
-* `value`: 指令的绑定值，例如：`v-my-directive="1 + 1"`中，绑定值为`2`。
+* `name`: 指令名，不包括 `v-` 前缀。 
+* `value`: 指令的绑定值，例如：`v-my-directive="1 + 1"` 中，绑定值为 `2`。
     ```html
     <div id="components-demo" v-my-directive="1 + 1">{{ num1 }}</div>
     ```
@@ -391,7 +338,6 @@
         directives: {
             'my-directive': {
                 bind: function (el, binding){
-                    console.log(el.textContent); // "22"
                     console.log(binding.name); // "my-directive"
                     console.log(binding.value); // 2
                 }
@@ -399,8 +345,7 @@
         },
     });
     ```
-* `oldValue`: 指令绑定的前一个值，仅在`update`和`componentUpdated`钩子中可用。在其他
-钩子函数中值为`undefined`。无论值是否改变都可用。
+* `oldValue`: 指令绑定的前一个值，仅在 `update` 和 `componentUpdated` 钩子中可用。在其他钩子函数中值为 `undefined`。无论值是否改变都可用。
     ```html
     <div id="components-demo" v-_update="num1" v-_componentupdated="num2"></div>
     ```
@@ -431,8 +376,7 @@
         },
     });
     ```
-* `expression`: 字符串形式的指令表达式。例如`v-my-directive="1 + 1"`中，表达式为
-`"1 + 1"`。不懂，有什么用
+* `expression`: 字符串形式的指令表达式。例如 `v-my-directive="1 + 1"` 中，表达式为 `"1 + 1"`。不懂，有什么用
     ```html
     <div id="components-demo" v-_bind1="22 + 33" v-_bind2></div>
     ```
@@ -452,8 +396,8 @@
 			},
         },
     });
-    ```
-* `arg`: 传给指令的参数，可选。例如`v-my-directive:foo`中，参数为`"foo"`。
+    ``` 
+* `arg`: 传给指令的参数，可选。例如 `v-my-directive:foo` 中，参数为 `"foo"`
     ```html
     <div id="components-demo">
         <span v-font-color:red>111</span>
@@ -475,8 +419,7 @@
         },
     });
     ```
-* `modifiers`: 一个包含修饰符的对象。例如：`v-my-directive.foo.bar`中，修饰符对象为
-`{ foo: true, bar: true }`。
+* `modifiers`: 一个包含修饰符的对象。例如：`v-my-directive.foo.bar` 中，修饰符对象为 `{ foo: true, bar: true }`
     ```html
     <div id="components-demo">
         <span v-font.bold>111</span>
@@ -507,7 +450,7 @@
 
 ### `vnode`
 * Vue 编译生成的虚拟节点。
-* 比较常用的是在钩子函数里引用 Vue 实例
+* 比较常用的是在钩子函数里通过 `vnode.context` 引用当前 vm 实例
     ```html
     <div id="components-demo" v-show_this></div>
     ```
@@ -524,7 +467,7 @@
     ```
 
 ### `oldVnode`
-上一个虚拟节点，仅在`update`和`componentUpdated`钩子中可用。
+上一个虚拟节点，仅在 `update` 和 `componentUpdated` 钩子中可用。
 ```html
 <div id="components-demo" v-_update v-_componentupdated>{{ num1 }}</div>
 ```
@@ -575,9 +518,8 @@ new Vue({
 ```
 
 
-## 在`bind`和`update`时触发相同行为时的简写
-在很多时候，你可能想在`bind`和`update`时触发相同行为，而不关心其它的钩子，可以直接把指
-令设定为函数。下面的例子会打印`22`和`33`
+## 在 `bind` 和 `update` 时触发相同行为时的简写
+在很多时候，你可能想在 `bind` 和 `update `时触发相同行为，而不关心其它的钩子，可以直接把指令设定为函数。下面的例子会打印 `22` 和 `33`
 ```html
 <div id="components-demo" v-console="num1"></div>
 ```
