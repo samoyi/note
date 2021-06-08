@@ -4,12 +4,12 @@
 <!-- TOC -->
 
 - [Summary](#summary)
-    - [用二进制数表示小数的方法和舍入误差](#用二进制数表示小数的方法和舍入误差)
-    - [浮点数](#浮点数)
-    - [正则表达式和 EXCESS 系统](#正则表达式和-excess-系统)
-        - [正则表达式](#正则表达式)
-        - [EXCESS 系统](#excess-系统)
-    - [测试单精度浮点数在内存中的保存情况](#测试单精度浮点数在内存中的保存情况)
+    - [用二进制数表示小数的方法和舍入误差](#%E7%94%A8%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B0%E8%A1%A8%E7%A4%BA%E5%B0%8F%E6%95%B0%E7%9A%84%E6%96%B9%E6%B3%95%E5%92%8C%E8%88%8D%E5%85%A5%E8%AF%AF%E5%B7%AE)
+    - [浮点数](#%E6%B5%AE%E7%82%B9%E6%95%B0)
+    - [正则表达式和 EXCESS 系统](#%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%92%8C-excess-%E7%B3%BB%E7%BB%9F)
+        - [正则表达式](#%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F)
+        - [EXCESS 系统](#excess-%E7%B3%BB%E7%BB%9F)
+    - [测试单精度浮点数在内存中的保存情况](#%E6%B5%8B%E8%AF%95%E5%8D%95%E7%B2%BE%E5%BA%A6%E6%B5%AE%E7%82%B9%E6%95%B0%E5%9C%A8%E5%86%85%E5%AD%98%E4%B8%AD%E7%9A%84%E4%BF%9D%E5%AD%98%E6%83%85%E5%86%B5)
     - [References](#references)
 
 <!-- /TOC -->
@@ -20,7 +20,7 @@
     <img src="./images/01.png" width="600" style="display: block; margin: 5px 0 10px;" />
 2. 计算机在处理某些小数的时候会出现运算错误，是因为有一些十进制数的小数无法转换成二进制数。例如，十进制数 0.1，就无法用二进制数正确表示。
 3. 下表是小数点后 4 位用二进制数表示时的数值范围为 0.0000～0.1111，下表是所有四位小数可能的结果
-    <table width="90%" border="1">
+    <table width="90%" border="1" style="margin-bottom: 10px;">
         <thead>
             <tr>
                 <th>二进制数</th>
