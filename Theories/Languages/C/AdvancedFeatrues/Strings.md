@@ -361,32 +361,25 @@ TODO，八进制数和十六进制数的转义序列
     gets(str); // 如果输入 "  hello world  "
     printf("[%s]\n", str); // "[  hello world  ]"
     ```
-8. 在把字符读入数组时， `scanf` 函数和 `gets` 函数都无法检测数组何时被填满。因此，它们存储字符时可能越过数组的边界，这会导致未定义的行为。通过用转换说明 $\%n$`s` 代替 `%s` 可以使 `scanf` 函数更安全。这里的数字 $n$ 指出可以存储的最多字符数
-    ```cpp
-    char str[5];
-    scanf("%4s", str); // 如果输入 "hello"
-    printf("[%s]\n", str); // "[hell]"
-    ```
-    可惜的是，`gets` 函数天生就是不安全的，`fgets` 函数则是一种好得多的选择。
 
 ### `scanf` 缓冲区溢出问题
 1. 上面的例子我们声明了长度为 20 的字符数组，输入时也没有超过这个长度，所以并没有导致问题。
-2. 如果忘了限制 `scanf()` 读取字符串的长度，用户就可以输入远远超出程序空间的数据，多余的数据会写到计算机还没有分配好的存储器中。
+2. `scanf` 函数和 `gets` 函数都无法检测数组何时被填满，如果忘了限制读取字符串的长度，用户就可以输入远远超出程序空间的数据，多余的数据会写到计算机还没有分配好的存储器中。
 3. 如果运气好，数据不但能保存，而且不会有任何问题。但缓冲区溢出很有可能会导致程序出错，这种情况通常被称为段错误或 abort trap，不管出现什么错误消息，程序都会崩溃。下面的例子中，如果输入字符串超出不多，一般不会有什么问题，但如果超出比较多了，那就会导致崩溃
-    ```js   
+    ```cpp   
     char food[5];
     printf("Enter favorite food: ");
     scanf("%s", food);
     printf("Favorite food: %s\n", food);
     ```
 4. 为了防止这种问题，应该对用户输入的长度进行限制
-    ```js
-    char food[5];
-    printf("Enter favorite food: ");
-    scanf("%4s", food);
+    ```cpp
+    char str[5];
+    scanf("%4s", str); // 如果输入 "hello"
+    printf("[%s]\n", str); // "[hell]"
     ```
 5. 或者，如果你只想把输入作为字符串，而不需要 `scanf` 那样把输入转换为比如数值的格式化功能，那么可以直接使用更安全的 `fgets` 方法
-    ```js
+    ```cpp
     char food[5];
     printf("Enter favorite food: ");
     fgets(food, sizeof(food), stdin);
@@ -394,7 +387,7 @@ TODO，八进制数和十六进制数的转义序列
 
 ### 逐个字符读字符串
 1. 因为对许多程序而言，`scanf` 函数和 `gets` 函数都有风险且不够灵活，C 程序员经常会自己编写输入函数。通过每次一个字符的方式来读入字符串，这类函数可以提供比标准输入函数更大程度的控制。
-2. 如果决定设计自己的输入函数，那么就需要考虑下面这些问题。
+2. 如果决定设计自己的输入函数，那么就需要考虑下面这些问题
     * 在开始存储字符串之前，函数应该跳过空白字符吗？
     * 什么字符会导致函数停止读取：换行符、任意空白字符还是其他某种字符？需要存储这类字符还是忽略掉？
     * 如果输入的字符串太长以致无法存储，那么函数应该做些什么：忽略额外的字符还是把它们留给下一次输入操作？
@@ -502,7 +495,7 @@ TODO，八进制数和十六进制数的转义序列
 
 ### `strcpy` 函数和 `strncpy` 函数
 #### `strcpy`
-1. `strcpy`函数在 `<string.h>` 中的原型如下：
+1. `strcpy` 函数在 `<string.h>` 中的原型如下：
     ```cpp
     char *strcpy(char *s1, const char *s2);
     ```
@@ -526,13 +519,13 @@ TODO，八进制数和十六进制数的转义序列
         for ( int i = 0; i < STR_SIZE+1; i++ ) {
             printf("[%c] ", str1[i]);
         }
-        // str1: [h] [e] [l] [l] [o] [ ] 
+        // str1: [h] [e] [l] [l] [o] [] 
 
         printf("\nstr2: ");
         for ( int i = 0; i < STR_SIZE+1; i++ ) {
             printf("[%c] ", str2[i]);
         }
-        // str2: [h] [e] [l] [l] [o] [ ]
+        // str2: [h] [e] [l] [l] [o] []
 
         return 0;
     }
@@ -560,14 +553,14 @@ TODO，八进制数和十六进制数的转义序列
         for ( int i = 0; i < STR_SIZE+1; i++ ) {
             printf("[%c] ", str1[i]);
         }
-        // str1: [a] [b] [c] [ ] [ ] [ ] 
+        // str1: [a] [b] [c] [] [] [] 
         // str1 是 6 项数组，但只拷贝进来了 3 个有效字符，所以后面全是空白字符
 
         printf("\nstr2: ");
         for ( int i = 0; i < STR_SIZE+1; i++ ) {
             printf("[%c] ", str2[i]);
         }
-        // str2: [a] [b] [c] [ ] [a] [b] 
+        // str2: [a] [b] [c] [] [a] [b] 
         // str2 是 4 项数组，后面的位置看起来是 str1 的
 
         return 0;
@@ -597,13 +590,13 @@ TODO，八进制数和十六进制数的转义序列
             printf("[%c] ", str1[i]);
         }
         // str1: [h] [e] [l] [l] [o] [ ] [w] [o] [r] [l] [
-        // ] [ ]
+        // ] []
 
         printf("\nstr2: ");
         for ( int i = 0; i < STR_SIZE + 7; i++ ) {
             printf("[%c] ", str2[i]);
         }
-        // str2: [h] [e] [l] [l] [o] [ ] [w] [o] [r] [l] [d] [ ]
+        // str2: [h] [e] [l] [l] [o] [ ] [w] [o] [r] [l] [d] []
 
         return 0;
     }
@@ -731,8 +724,10 @@ TODO，八进制数和十六进制数的转义序列
 
     len = strlen("abc");        /* len is now 3 */
     len = strlen("");           /* len is now 0 */
-    strcpy(strl, "abc");
-    len = strlen(strl);         /* len is now 3 */
+    
+    char str[8] = "hello";
+    printf("%d\n", sizeof(str)); // 8
+    printf("%d\n", strlen(str)); // 5
     ```
 4. 最后一个例子说明了很重要的一点：当用数组作为实际参数时，`strlen` 不会测量数组本身的长度，而是返回存储在数组中的字符串的长度。
 5. 注意换行符造成的计算错误。例如使用 `fgets` 读取用户输入，因为这个函数会记录最后的换行符，所以保存的字符串比实际的有效字符多一个换行符。`strlen` 虽然不记录空字符，但是会记录换行符
@@ -744,7 +739,7 @@ TODO，八进制数和十六进制数的转义序列
 
 ### `strcat` 函数和 `strncat` 函数
 #### `strcat`
-1. `strcat`函数的原型如下：
+1. `strcat` 函数的原型如下：
     ```cpp
     char *strcat(char *s1, const char *s2);
     ```
@@ -768,13 +763,13 @@ TODO，八进制数和十六进制数的转义序列
 #### `strncat`
 1. `strncat` 函数函数比 `strcat` 更安全，但速度也慢一些。与 `strncpy` 一样，它有第三个参数来限制所复制的字符数。下面是调用的形式：
     ```cpp
-    strncat(str1,  str2, sizeof(str1) - strlen(str1) - 1) ;
+    strncat(str1, str2, sizeof(str1) - strlen(str1) - 1) ;
     ```
 2. `strncat` 函数会在遇到空字符时终止 `str1`，第三个参数（待复制的字符数）没有考虑该空字符。
 3. 在上面的例子中，第三个参数计算 `str1` 中的剩余空间，然后减去 `1` 以确保为空字符留下空间。
 
 ### `strcmp` 函数
-1. `strcmp`函数的原型如下：
+1. `strcmp` 函数的原型如下：
     ```cpp
     int strcmp(const char *s1, const char *s2);
     ```
@@ -1020,7 +1015,7 @@ TODO，八进制数和十六进制数的转义序列
 5. C 语言本身不提供这种 “参差不齐的数组类型”，但它提供了模拟这种数组类型的工具。秘诀就是建立一个特殊的数组，这个数组的元素都是指向字符串的指针。
 6. 下面是 `planets` 数组的另外一种写法，这次把它看成是指向字符串的指针的数组：
     ```cpp
-    char *planets[] = {"Mercury", "Venus", "Earth",
+    char* planets[] = {"Mercury", "Venus", "Earth",
                     "Mars", "Jupiter", "Saturn",
                     "Uranus", "Neptune", "Pluto"};
     ```
@@ -1040,14 +1035,14 @@ TODO，八进制数和十六进制数的转义序列
     ```
     而字符串指针数组的数组项是指针
     ```cpp
-    char *str_ptr_arr[5] = {"helloworld"};
+    char* str_ptr_arr[5] = {"helloworld"};
     printf("%d", sizeof(str_ptr_arr[0])); // 4
     ```
     
 ### 命令行参数
 1. 命令行信息不仅对操作系统命令可用，它对所有程序都是可用的。 为了能够访问这些命令行参数（C 标准中称为程序参数），必须把 `main` 函数定义为含有两个参数的函数， 这两个参数通常命名（习惯上）为 `argc` 和 `argv`：
     ```cpp
-    int main(int argc, char *argv[])
+    int main(int argc, char* argv[])
     {
         ...
     }
@@ -1059,7 +1054,6 @@ TODO，八进制数和十六进制数的转义序列
     ls -l remind.c
     ```
     那么 `argc` 将为 3，`argv[0]` 将指向含有程序名的字符串，`argv[1]` 将指向字符串 `"-l"`，`argv[2]` 将指向字符串 `"remind.c"`，而 `argv[3]` 将为空指针。
-    <img src="./images/24.png" width="400" style="display: block; margin: 5px 0 10px;" />
 5. 因为 `argv` 是指针数组，所以访问命令行参数非常容易。常见的做法是，期望有命令行参数的程序将会设置循环来按顺序检查每一个参数。
 6. 设定这种循环的方法之一就是使用整型变量作为 `argv` 数组的下标。例如，下面的循环每行一条地显示命令行参数：
     ```cpp
@@ -1076,18 +1070,25 @@ TODO，八进制数和十六进制数的转义序列
         printf("%s\n", *p);
     ```
 8. 因为 `argv` 是指针数组，它的数组项是指向字符串的指针，所以 `p` 如果指向 `argv[1]`，那就是指向字符的指针的指针，所以声明的类型就是 `char**`。
-9. `p` 不能直接指向第一个字符串，也就是说不能声明为 `char* p = argv[1]`，因为指向字符串的指针实际上是指向字符串第一个字符的，所以自增只会到第二个字符。所以其实我们一般说的 “指向字符串的指针”，实际上准确的应该说是 “指向字符串第一个字符的指针”。
+9. `p` 不能直接指向第一个字符串，也就是说不能声明为 `char* p = argv[1]`，因为指向字符串的指针实际上是指向字符串第一个字符的，所以自增只会到第二个字符
+    ```cpp
+    // 会把 argv[0] 的每个字符逐个打印出来
+    for (char* p=argv[0]; *p; p++) {
+        printf("[%c] ", *p);
+    }
+    ```
+    所以其实我们一般说的 “指向字符串的指针”，实际上准确的应该说是 “指向字符串第一个字符的指针”。
 10. 现在 `p` 是指向指针的指针，有些复杂，要小心使用
-    * 设置 `p` 等于 `&argv[1]` 是有意义的，因为 `argv[1]` 是一个指向字符的指针，所以` &argv[1]` 就是指向指针的指针。
+    * 设置 `p` 等于 `&argv[1]` 是有意义的，因为 `argv[1]` 是一个指向字符的指针，所以 `&argv[1]` 就是指向指针的指针。
     * 因为 `*p` 和 `NULL` 都是指针，所以测试 `*p!= NULL` 是没有问题的。
     * 对 `p` 进行自增操作看起来也是对的——因为 `p` 指向数组元素，所以对它进行自增操作将使 `p` 指向下一个元素。
     * 显示 `*p` 的语句也是合理的，因为 `*p` 指向字符串中的第一个字符，也就是一般意义上所说的 “指向字符串的指针”。
 
 #### `argv` 形参
-1. 注意到，这里的形参是 `char *argv[]`。
+1. 注意到，这里的形参是 `char* argv[]`。
 2. `[]` 说明形参是一个数组，而 `char *` 说明数组项是指向字符串（第一个字符）的指针。
-3. 这个形参还可以声明为 `char **argv`。
-4. `char *` 说明声明的变量（`*argv`）是指向字符串的指针，而 `*argv` 说明这个指针本身也是一个指针。也就是说，`argv` 是 “指向字符串的指针” 的指针。
+3. 这个形参还可以声明为 `char** argv`。
+4. `char*` 说明声明的变量（`* argv`）是指向字符串的指针，而 `* argv` 说明这个指针本身也是一个指针。也就是说，`argv` 是 “指向字符串的指针” 的指针。
 
 #### 例子 核对行星的名字
 1. 设计此程序的目的是为了检查一系列字符串，从而找出哪些字符串是行星的名字。程序执行时，用户将把待测试的字符串放置在命令行中：
@@ -1111,7 +1112,7 @@ TODO，八进制数和十六进制数的转义序列
 
     #define NUM_PLANETS 9
 
-    int main(int argc, char *argv[])
+    int main(int argc, char* argv[])
     {
         char *planets[] = {"Mercury", "Venus", "Earth",
                             "Mars", "Jupiter", "Saturn",
@@ -1146,7 +1147,7 @@ TODO，八进制数和十六进制数的转义序列
     int read_line(char str[], int n, char r[], int m);
 
 
-    int main(int argc, char *argv[])
+    int main(int argc, char* argv[])
     {
         char s[SIZE+1];
         char r[SIZE+1];
@@ -1193,7 +1194,7 @@ TODO，八进制数和十六进制数的转义序列
     void capitalize(char str[], int len);
 
 
-    int main(int argc, char *argv[])
+    int main(int argc, char* argv[])
     {
         char s[] = "abc7 80D ef";
 
@@ -1319,7 +1320,7 @@ TODO，八进制数和十六进制数的转义序列
     void bar (char *str);
 
 
-    int main(int argc, char *argv[])
+    int main(int argc, char* argv[])
     {
         char str[20];
         printf("Enter a date (mm/dd/yyyy): ");
