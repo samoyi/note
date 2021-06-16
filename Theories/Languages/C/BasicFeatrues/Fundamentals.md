@@ -9,6 +9,7 @@
         - [指令](#%E6%8C%87%E4%BB%A4)
         - [函数](#%E5%87%BD%E6%95%B0)
         - [语句](#%E8%AF%AD%E5%8F%A5)
+            - [只有声明语句可以放在全局作用域里面](#%E5%8F%AA%E6%9C%89%E5%A3%B0%E6%98%8E%E8%AF%AD%E5%8F%A5%E5%8F%AF%E4%BB%A5%E6%94%BE%E5%9C%A8%E5%85%A8%E5%B1%80%E4%BD%9C%E7%94%A8%E5%9F%9F%E9%87%8C%E9%9D%A2)
     - [变量和赋值](#%E5%8F%98%E9%87%8F%E5%92%8C%E8%B5%8B%E5%80%BC)
         - [类型](#%E7%B1%BB%E5%9E%8B)
         - [声明](#%E5%A3%B0%E6%98%8E)
@@ -70,6 +71,42 @@ int main(void)
 1. 语句是程序运行时执行的命令。
 2. C 语言规定每条语句都要以分号结尾。（就像任何好的规则一样，这条规则也有一个例外：后面会遇到的复合语句就不以分号结尾。）
 3. 由于语句可以连续占用多行，有时很难确定它的结束位置，因此用分号来向编译器显示语句的结束位置。但指令通常都只占一行，因此不需要用分号结尾。
+
+#### 只有声明语句可以放在全局作用域里面
+1. 之前遇到一个下面的错误，开始还以为是函数指针相关的错误
+    ```cpp
+    #include <stdio.h>
+
+    void f (int n) {}
+    void (*pf)(int);
+
+    pf = f; // 在这里报错
+    
+    int main()
+    {
+        // pf = f; // 在这里正常
+
+        return 0;
+    }
+    ```
+2. 报错如下
+    ```sh
+    pun.c:6:1: warning: data definition has no type or storage class
+    pf = f; // 在这里报错
+    ^~
+    pun.c:6:1: warning: type defaults to 'int' in declaration of 'pf' [-Wimplicit-int]
+    pun.c:6:1: error: conflicting types for 'pf'
+    pun.c:4:8: note: previous declaration of 'pf' was here
+    void (*pf)(int);
+            ^~
+    pun.c:6:6: warning: initialization makes integer from pointer without a cast [-Wint-conversion]
+    pf = f; // 在这里报错
+        ^
+    ```
+3. 警告信息 “6:1: warning: data definition has no type or storage class” 在说 `pf = f;` 没有给 `pf` 声明类型。因为不允许在全局作用于执行这样的赋值语句，所以编译器就认为这时一个变量声明语句，在它发现声明前面没有类型时就给出了这样的警告。
+4. 但这还只是警告，因为没有声明类型的变量会被默认为 `int` 类型，下一句警告说明了这一点：“warning: type defaults to 'int' in declaration of 'pf' [-Wimplicit-int]”。
+5. 但之后出现了真正的错误：“error: conflicting types for 'pf'”。因为之前 `pf` 声明为了指向函数的指针，这里又声明为 `int` 类型，所以发生了冲突。
+6. 因为现在 `pf` 是 `int` 类型，但是用函数 `f` 指针初始化时，给出了最后的警告：“warning: initialization makes integer from pointer without a cast [-Wint-conversion]”。
 
 
 ## 变量和赋值
