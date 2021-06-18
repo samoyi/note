@@ -4,11 +4,11 @@
 <!-- TOC -->
 
 - [The Parts of a Message](#the-parts-of-a-message)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Message Syntax](#message-syntax)
-        - [格式](#格式)
+        - [格式](#%E6%A0%BC%E5%BC%8F)
         - [Quick description of the various parts](#quick-description-of-the-various-parts)
             - [method](#method)
             - [request-URL](#request-url)
@@ -81,7 +81,7 @@
     ```
     HTTP/<major>.<minor>
     ```
-3. where major and minor both are integers. 
+3. major and minor both are integers. 
 
 #### status-code
 1. A three-digit number describing what happened during the request. 
@@ -108,7 +108,7 @@ All HTTP messages begin with a start line. The start line for a request message 
 
 ### Request line
 1. Request messages ask servers to do something to a resource. The start line for a request message, or *request line*, contains a method describing what operation the server should perform and a request URL describing the resource on which to perform the method. 
-2. The request line also includes an HTTP `version` which tells the server what dialect of HTTP the client is speaking. 
+2. The request line also includes an HTTP *version* which tells the server what dialect of HTTP the client is speaking. 
 3. All of these fields are separated by whitespace.
 
 ### Response line
@@ -133,7 +133,7 @@ something went awry on the server.
 9. For example, if you receive status code 515 (which is outside of the defined range for 5XX codes), you should treat the response as indicating a server error, which is the general class of 5XX messages.
 
 ### Reason phrases
-1. The reason phrase is the last component of the start line of the response. It provides a textual explanation of the status code. For example, in the line `HTTP/1.0 200 OK`, the reason phrase is OK.
+1. The reason phrase is the last component of the start line of the response. It provides a textual explanation of the status code. For example, in the line `HTTP/1.0 200 OK`, the reason phrase is `OK`.
 2. Reason phrases are paired one-to-one with status codes. The reason phrase provides a human-readable version of the status code that application developers can pass along to their users to indicate what happened during the request.
 3. The HTTP specification does not provide any hard and fast rules for what reason phrases should look like.
 
@@ -158,19 +158,19 @@ something went awry on the server.
     * General headers: Can appear in both request and response messages
     * Request headers: Provide more information about the request
     * Response headers: Provide more information about the response
-    * Entity headers Describe body size and contents, or the resource itself
+    * Entity headers: Describe body size and contents, or the resource itself
     * Extension headers: New headers that are not defined in the specification
 3. Each HTTP header has a simple syntax: a name, followed by a colon (`:`), followed by optional whitespace, followed by the field value, followed by a CRLF. 
 
 ### Header continuation lines
 Long header lines can be made more readable by breaking them into multiple lines, preceding each extra line with at least one space or tab character. For example:
-    ```
-    HTTP/1.0 200 OK
-    Content-Type: image/gif
-    Content-Length: 8572
-    Server: Test Server
-        Version 1.0
-    ```
+```
+HTTP/1.0 200 OK
+Content-Type: image/gif
+Content-Length: 8572
+Server: Test Server
+    Version 1.0
+```
 
 
 ## Entity Bodies

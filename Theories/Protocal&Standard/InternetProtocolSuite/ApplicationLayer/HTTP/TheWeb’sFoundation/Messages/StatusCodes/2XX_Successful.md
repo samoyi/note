@@ -3,14 +3,14 @@
 
 <!-- TOC -->
 
-- [2XX Successful](#2xx-successful)
-    - [`200 OK`](#200-ok)
-    - [`201 Created`](#201-created)
-    - [`202 Accepted`](#202-accepted)
-    - [`203 Non-Authoritative Information`](#203-non-authoritative-information)
-    - [`204 No Content`](#204-no-content)
-    - [`205 Reset Content`](#205-reset-content)
-    - [`206 Partial Content`](#206-partial-content)
+- [XX Successful](#xx-successful)
+    - [200 OK](#200-ok)
+    - [201 Created](#201-created)
+    - [202 Accepted](#202-accepted)
+    - [203 Non-Authoritative Information](#203-non-authoritative-information)
+    - [204 No Content](#204-no-content)
+    - [205 Reset Content](#205-reset-content)
+    - [206 Partial Content](#206-partial-content)
     - [References](#references)
 
 <!-- /TOC -->
@@ -21,11 +21,10 @@ The request has succeeded.
 
 
 ## `201 Created`
-1. For requests that create server objects (e.g., `PUT`). 相对于 `200` 是一个单纯的成功来说，`201`有更明确的成功意义，即成功处理了请求，并为此创建了新的资源。
+1. For requests that create server objects (e.g., `PUT`). 相对于 `200` 是一个单纯的成功来说，`201` 有更明确的成功意义，即成功处理了请求，并为此创建了新的资源。
 2. The entity body of the response should contain the various URLs for referencing the created resource, with the `Location` header containing the most specific reference. 
 3. The server must have created the object prior to sending this status code.
-4. 例如你发送了一个发送新微博的请求，那么服务器如果成功的创建了一条微博数据，就可以返回 `201`。
-
+4. 例如你发送了一个发布新博文的请求，那么服务器如果成功的创建了一篇博文数据，就可以返回 `201`，并带上该篇博文的 URL。
 
 
 ## `202 Accepted`

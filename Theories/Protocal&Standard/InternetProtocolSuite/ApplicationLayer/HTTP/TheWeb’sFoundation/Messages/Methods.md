@@ -4,14 +4,14 @@
 <!-- TOC -->
 
 - [Methods](#methods)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Safe Methods](#safe-methods)
     - [GET](#get)
     - [HEAD](#head)
-    - [PUT](#put)
     - [POST](#post)
-    - [GET 和 POST 的比较](#get-和-post-的比较)
+    - [PUT](#put)
+    - [GET 和 POST 的比较](#get-%E5%92%8C-post-%E7%9A%84%E6%AF%94%E8%BE%83)
     - [TRACE](#trace)
     - [OPTIONS](#options)
     - [DELETE](#delete)
@@ -30,7 +30,7 @@
 ## Safe Methods
 1. HTTP defines a set of methods that are called *safe* methods. The `GET` and `HEAD` methods are said to be safe, meaning that no action should occur as a result of an HTTP request that uses either the `GET` or `HEAD` method.
 2. By no action, we mean that nothing will happen on the server as a result of the HTTP request. 
-3. For example, consider when you are shopping online at Joe’s Hardware and you click on the “submit purchase” button. Clicking on the button submits a POST request (discussed later) with your credit card information, and an action is performed on the server on your behalf. In this case, the action is your credit card being charged for your purchase.
+3. For example, consider when you are shopping online at Joe’s Hardware and you click on the “submit purchase” button. Clicking on the button submits a POST request with your credit card information, and an action is performed on the server on your behalf. In this case, the action is your credit card being charged for your purchase.
 4. There is no guarantee that a safe method won’t cause an action to be performed (in practice, that is up to the web developers). 
 5. Safe methods are meant to allow HTTP application developers to let users know when an unsafe method that may cause
 some action to be performed is being used. 
@@ -52,18 +52,20 @@ request with an unsafe method and that, as a result, something might happen on t
 4. Server developers must ensure that the headers returned are exactly those that a GET request would return.
 
 
-## PUT
-1. The `PUT` method writes documents to a server, in the inverse of the way that `GET` reads documents from a server. 2. Some publishing systems let you create web pages and install them directly on a web server using `PUT`.
-3. The semantics of the `PUT` method are for the server to take the body of the request and either use it to create a new document named by the requested URL or, if that URL already exists, use the body to replace it
-    <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-4. Because `PUT` allows you to change content, many web servers require you to log in with a password before you can perform a `PUT`.
-
-
 ## POST
 1. The `POST` method was designed to send input data to the server. In practice, it is often used to support HTML forms. 
 2. The data from a filled-in form typically is sent to the server, which then marshals it off to where it needs to go (e.g., to a server gateway program, which then processes it).
     <img src="./images/06.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 3. `POST` is used to send data to a server. `PUT` is used to deposit data into a resource on the server (e.g., a file)
+
+
+## PUT
+1. The `PUT` method writes documents to a server, in the inverse of the way that `GET` reads documents from a server. 
+2. Some publishing systems let you create web pages and install them directly on a web server using `PUT`.
+3. The semantics of the `PUT` method are for the server to take the body of the request and either use it to create a new document named by the requested URL or, if that URL already exists, use the body to replace it
+    <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+4. 可以看到与 `POST` 的明显不同时，`PUT` 提交的内容会被创建为一个独立的资源，之后的响应也会返回这个资源的 URL。而 `POST` 提交的数据可以只是用来验证身份或者在数据库里插入一条记录，并不是一个独立的资源。
+5. Because `PUT` allows you to change content, many web servers require you to log in with a password before you can perform a `PUT`.
 
 
 ## GET 和 POST 的比较

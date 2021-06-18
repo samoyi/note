@@ -6,29 +6,29 @@ The world’s web browsers, servers, and related web applications all talk to ea
 <!-- TOC -->
 
 - [Overview](#overview)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [HTTP: The Internet’s Multimedia Courier](#http-the-internets-multimedia-courier)
     - [Web Clients and Servers](#web-clients-and-servers)
     - [Resources](#resources)
-        - [资源的概念](#资源的概念)
+        - [资源的概念](#%E8%B5%84%E6%BA%90%E7%9A%84%E6%A6%82%E5%BF%B5)
         - [Media Types](#media-types)
         - [URIs](#uris)
             - [URLs](#urls)
             - [URNs](#urns)
-    - [Transactions（事务）](#transactions事务)
-        - [Messages（报文）](#messages报文)
+    - [Transactions（事务）](#transactions%E4%BA%8B%E5%8A%A1)
+        - [Messages（报文）](#messages%E6%8A%A5%E6%96%87)
         - [Methods](#methods)
         - [Status Codes](#status-codes)
         - [Web Pages Can Consist of Multiple Objects](#web-pages-can-consist-of-multiple-objects)
-    - [Messages（报文）](#messages报文-1)
-        - [报文结构](#报文结构)
+    - [Messages（报文）](#messages%E6%8A%A5%E6%96%87)
+        - [报文结构](#%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84)
         - [Simple Message Example](#simple-message-example)
     - [Connections](#connections)
         - [TCP/IP](#tcpip)
         - [Connections, IP Addresses, and Port Numbers](#connections-ip-addresses-and-port-numbers)
         - [A Real Example Using Telnet](#a-real-example-using-telnet)
-            - [关于 Telnet](#关于-telnet)
+            - [关于 Telnet](#%E5%85%B3%E4%BA%8E-telnet)
             - [An HTTP transaction using telnet](#an-http-transaction-using-telnet)
     - [Architectural Components of the Web](#architectural-components-of-the-web)
         - [Proxies](#proxies)
@@ -62,7 +62,7 @@ The world’s web browsers, servers, and related web applications all talk to ea
 4. Together, HTTP clients and HTTP servers make up the basic components of the World Wide Web.
 5. You probably use HTTP clients every day. The most common client is a web browser. 
 6. Web browsers request HTTP objects from servers and display the objects on your screen.
-7. When you browse to a page, such as “http://www.oreilly.com/index.html,” your browser sends an HTTP request to the server www.oreilly.com. 
+7. When you browse to a page, such as “http://www.oreilly.com/index.html”, your browser sends an HTTP request to the server www.oreilly.com. 
 8. The server tries to find the desired object (in this case, “/index.html”) and, if successful, sends the object to the client in an HTTP response, along with the type of the object, the length of the object, and other information.
 
 
@@ -77,7 +77,7 @@ The world’s web browsers, servers, and related web applications all talk to ea
 
 ### Media Types
 1. Because the Internet hosts many thousands of different data types, HTTP carefully tags each object being transported through the Web with a data format label called a MIME type. 
-2. MIME (Multipurpose Internet Mail Extensions) was originally designedto solve problems encountered in moving messages between different electronic mail systems. 
+2. MIME (Multipurpose Internet Mail Extensions) was originally designed to solve problems encountered in moving messages between different electronic mail systems. 
 3. MIME worked so well for email that HTTP adopted it to describe and label its own multimedia content.
 4. Web servers attach a MIME type to all HTTP object data. When a web browser gets an object back from a server, it looks at the associated MIME type to see if it knows how to handle the object. 
 5. Most browsers can handle hundreds of popular object types: displaying image files, parsing and formatting HTML files,
@@ -93,7 +93,7 @@ playing audio files through the computer’s speakers, or launching external plu
 
 ### URIs
 1. Each web server resource has a name, so clients can point out what resources they are interested in. 
-2. The server resource name is called a *uniform resource identifier*, or URI. 
+2. The server resource name is called a **uniform resource identifier**, or URI. 
 3. URIs are like the postal addresses of the Internet, uniquely identifying and locating information resources around the world.
 4. Here’s a URI for an image resource on Joe’s Hardware store’s web server:
     ```
@@ -104,16 +104,16 @@ playing audio files through the computer’s speakers, or launching external plu
 6. URIs come in two flavors, called URLs and URNs. Let’s take a peek at each of these types of resource identifiers now.
 
 #### URLs
-1. The *uniform resource locator* (URL) is the most common form of resource identifier.
+1. The **uniform resource locator** (URL) is the most common form of resource identifier.
 2. URLs describe the specific location of a resource on a particular server. They tell you exactly how to fetch a resource from a precise, fixed location. 
 3. Most URLs follow a standardized format of three main parts:
-    * The first part of the URL is called the *scheme*, and it describes the protocol used to access the resource.
+    * The first part of the URL is called the **scheme**, and it describes the protocol used to access the resource.
     * The second part gives the server Internet address (e.g., www.joes-hardware.com).
     * The rest names a resource on the web server (e.g., /specials/saw-blade.gif ).
 4. Today, almost every URI is a URL.
 
 #### URNs
-1. The second flavor of URI is the *uniform resource name*, or URN. 
+1. The second flavor of URI is the **uniform resource name**, or URN. 
 2. A URN serves as a unique name for a particular piece of content, independent of where the resource currently resides. 
 3. These location-independent URNs allow resources to move from place to place. 
 4. URNs also allow resources to be accessed by multiple network access protocols while maintaining the same name.
@@ -128,11 +128,11 @@ playing audio files through the computer’s speakers, or launching external plu
 ### Messages（报文）
 1. Let’s look in more detail how clients use HTTP to transact with web servers and their resources. 
 2. An HTTP transaction consists of a request command (sent from client to server), and a response result (sent from the server back to the client). 
-3. This communication happens with formatted blocks of data called *HTTP messages*, as illustrated below
+3. This communication happens with formatted blocks of data called **HTTP messages**, as illustrated below
     <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 ### Methods
-1. HTTP supports several different request commands, called *HTTP methods*. 
+1. HTTP supports several different request commands, called **HTTP methods**. 
 2. Every HTTP request message has a method. The method tells the server what action to perform (fetch a web page, run a gateway program, delete a file, etc.). 
 
 ### Status Codes
@@ -158,16 +158,13 @@ playing audio files through the computer’s speakers, or launching external plu
 ### 报文结构
 1. Now let’s take a quick look at the structure of HTTP request and response messages.
 2. HTTP messages are simple, line-oriented sequences of characters. Because they are plain text, not binary, they are easy for humans to read and write.
-3. HTTP messages sent from web clients to web servers are called *request messages*. Messages from servers to clients are called *response messages*. There are no other kinds of HTTP messages. 
+3. HTTP messages sent from web clients to web servers are called **request messages**. Messages from servers to clients are called **response messages**. There are no other kinds of HTTP messages. 
 4. The formats of HTTP request and response messages are very similar
     <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 5. HTTP messages consist of three parts:
-    * *Start line*:   
-        The first line of the message is the start line, indicating what to do for a request or what happened for a response.
-    * *Header fields*:   
-        Zero or more header fields follow the start line. Each header field consists of a name and a value, separated by a colon (`:`) for easy parsing. The headers end with a blank line. Adding a header field is as easy as adding another line.
-    * *Body*:  
-        After the blank line is an optional message body containing any kind of data. Request bodies carry data to the web server; response bodies carry data back to the client. Unlike the start lines and headers, which are textual and structured, the body can contain arbitrary binary data (e.g., images, videos, audio tracks, software applications). Of course, the body can also contain text.
+    * **Start line**: The first line of the message is the start line, indicating what to do for a request or what happened for a response.
+    * **Header fields**: Zero or more header fields follow the start line. Each header field consists of a name and a value, separated by a colon (`:`) for easy parsing. The headers end with a blank line. Adding a header field is as easy as adding another line.
+    * **Body**: After the blank line is an optional message body containing any kind of data. Request bodies carry data to the web server; response bodies carry data back to the client. Unlike the start lines and headers, which are textual and structured, the body can contain arbitrary binary data (e.g., images, videos, audio tracks, software applications). Of course, the body can also contain text.
 
 ### Simple Message Example
 1. Figure below shows the HTTP messages that might be sent as part of a simple transaction. The browser requests the resource `http://www.joes-hardware.com/tools.html`

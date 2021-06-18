@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Preface](#preface)
-    - [Preface](#preface-1)
-    - [章节顺序](#章节顺序)
+    - [Preface](#preface)
+    - [章节顺序](#%E7%AB%A0%E8%8A%82%E9%A1%BA%E5%BA%8F)
     - [References](#references)
 
 <!-- /TOC -->
@@ -28,6 +28,7 @@
 2. Parts Of A Message
 3. Methods
 4. Status Codes
+5. Headers
 
 
 ## References

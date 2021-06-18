@@ -3,21 +3,22 @@
 
 <!-- TOC -->
 
-- [1XX Informational](#1xx-informational)
-    - [`100 Continue`](#100-continue)
-    - [`101 Switching Protocol`](#101-switching-protocol)
-        - [`100 Continue` 深入讨论](#100-continue-深入讨论)
-            - [Clients and `100 Continue`](#clients-and-100-continue)
-            - [Servers and `100 Continue`](#servers-and-100-continue)
-            - [Proxies and `100 Continue`](#proxies-and-100-continue)
+- [XX Informational](#xx-informational)
+    - [100 Continue](#100-continue)
+    - [101 Switching Protocol](#101-switching-protocol)
+    - [100 Continue 深入讨论](#100-continue-%E6%B7%B1%E5%85%A5%E8%AE%A8%E8%AE%BA)
+        - [Clients and 100 Continue](#clients-and-100-continue)
+        - [Servers and 100 Continue](#servers-and-100-continue)
+        - [Proxies and 100 Continue](#proxies-and-100-continue)
     - [References](#references)
 
 <!-- /TOC -->
 
 
 ## `100 Continue`
-1. Indicates that an initial part of the request was received and the client should continue or ignore it if it is already finished..
-2. After sending this, the server must respond after receiving the request.
+1. Indicates that an initial part of the request was received and the client should continue or ignore it if it is already finished.
+2. To have a server check the request's headers, a client must send `Expect: 100-continue` as a header in its initial request and receive a `100 Continue` status code in response before sending the body.
+3. The `100 Continue` status code, in particular, is a bit confusing. It’s intended to optimize the case where an HTTP client application has an entity body to send to a server but wants to check that the server will accept the entity before it sends it. 
 
 
 ## `101 Switching Protocol`
@@ -28,8 +29,7 @@
 
 
 ## `100 Continue` 深入讨论
-1. The 100 Continue status code, in particular, is a bit confusing. It’s intended to optimize the case where an HTTP client application has an entity body to send to a server but wants to check that the server will accept the entity before it sends it. 
-2. We discuss it here in a bit more detail (how it interacts with clients, servers, and proxies) because it tends to confuse HTTP programmers.
+We discuss it here in a bit more detail (how it interacts with clients, servers, and proxies) because it tends to confuse HTTP programmers.
 
 ### Clients and `100 Continue`
 1. If a client is sending an entity to a server and is willing to wait for a `100 Continue` response before it sends the entity, the client needs to send an `Expect` request header with the value `100-continue`. 
