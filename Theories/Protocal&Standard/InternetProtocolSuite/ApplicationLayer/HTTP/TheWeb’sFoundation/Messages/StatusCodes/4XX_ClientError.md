@@ -3,31 +3,31 @@
 
 <!-- TOC -->
 
-- [4XX Client Error](#4xx-client-error)
-    - [`400 Bad Request`](#400-bad-request)
-    - [`401 Unauthorized`](#401-unauthorized)
-        - [`402 Payment Required`](#402-payment-required)
-    - [`403 Forbidden`](#403-forbidden)
-    - [`404 Not Found`](#404-not-found)
-    - [`405 Method Not Allowed`](#405-method-not-allowed)
-    - [`406 Not Acceptable`](#406-not-acceptable)
-    - [`407 Proxy Authentication Required`](#407-proxy-authentication-required)
-    - [`408 Request Timeout`](#408-request-timeout)
-    - [`409 Conflict`](#409-conflict)
-    - [`410 Gone`](#410-gone)
-    - [`411 Length Required`](#411-length-required)
-    - [`412 Precondition Failed`](#412-precondition-failed)
-    - [`413 Payload Too Large`](#413-payload-too-large)
-    - [`414 URI Too Long`](#414-uri-too-long)
-    - [`415 Unsupported Media Type`](#415-unsupported-media-type)
-    - [`416 Requested Range Not Satisfiable`](#416-requested-range-not-satisfiable)
-    - [`417 Expectation Failed`](#417-expectation-failed)
-    - [`418 I'm a teapot`](#418-im-a-teapot)
-    - [`426 Upgrade Required`](#426-upgrade-required)
-    - [`428 Precondition Required`](#428-precondition-required)
-    - [`429 Too Many Requests`](#429-too-many-requests)
-    - [`431 Request Header Fields Too Large`](#431-request-header-fields-too-large)
-    - [`451 Unavailable For Legal Reasons`](#451-unavailable-for-legal-reasons)
+- [XX Client Error](#xx-client-error)
+    - [400 Bad Request](#400-bad-request)
+    - [401 Unauthorized](#401-unauthorized)
+        - [402 Payment Required](#402-payment-required)
+    - [403 Forbidden](#403-forbidden)
+    - [404 Not Found](#404-not-found)
+    - [405 Method Not Allowed](#405-method-not-allowed)
+    - [406 Not Acceptable](#406-not-acceptable)
+    - [407 Proxy Authentication Required](#407-proxy-authentication-required)
+    - [408 Request Timeout](#408-request-timeout)
+    - [409 Conflict](#409-conflict)
+    - [410 Gone](#410-gone)
+    - [411 Length Required](#411-length-required)
+    - [412 Precondition Failed](#412-precondition-failed)
+    - [413 Payload Too Large](#413-payload-too-large)
+    - [414 URI Too Long](#414-uri-too-long)
+    - [415 Unsupported Media Type](#415-unsupported-media-type)
+    - [416 Requested Range Not Satisfiable](#416-requested-range-not-satisfiable)
+    - [417 Expectation Failed](#417-expectation-failed)
+    - [418 I'm a teapot](#418-im-a-teapot)
+    - [426 Upgrade Required](#426-upgrade-required)
+    - [428 Precondition Required](#428-precondition-required)
+    - [429 Too Many Requests](#429-too-many-requests)
+    - [431 Request Header Fields Too Large](#431-request-header-fields-too-large)
+    - [451 Unavailable For Legal Reasons](#451-unavailable-for-legal-reasons)
     - [References](#references)
 
 <!-- /TOC -->
@@ -57,7 +57,7 @@ Currently this status code is not used, but it has been set aside for future use
 1. The server can not find requested resource.
 2. In the browser, this means the URL is not recognized.
 3. In an API, this can also mean that the endpoint is valid but the resource itself does not exist.
-4. Servers may also send this response instead of 403 to hide the existence of a resource from an unauthorized client.
+4. Servers may also send this response instead of `403` to hide the existence of a resource from an unauthorized client.
 5. Often, an entity is included for the client application to display to the user.
 
 

@@ -12,8 +12,8 @@
 - [General headers](#general-headers)
     - [Cache-Control](#cache-control)
     - [Connection](#connection)
-        - [控制代理不再转发的首部字段](#控制代理不再转发的首部字段)
-        - [管理持久连接](#管理持久连接)
+        - [控制代理不再转发的首部字段](#%E6%8E%A7%E5%88%B6%E4%BB%A3%E7%90%86%E4%B8%8D%E5%86%8D%E8%BD%AC%E5%8F%91%E7%9A%84%E9%A6%96%E9%83%A8%E5%AD%97%E6%AE%B5)
+        - [管理持久连接](#%E7%AE%A1%E7%90%86%E6%8C%81%E4%B9%85%E8%BF%9E%E6%8E%A5)
     - [Date](#date)
     - [Trailer](#trailer)
     - [Transfer-Encoding](#transfer-encoding)
@@ -24,11 +24,11 @@
 <!-- /TOC -->
 
 
-## Cache-Control
+## `Cache-Control`
 详见 `Theories\Protocal&Standard\InternetProtocolSuite\ApplicationLayer\HTTP\Cache\`
 
 
-## Connection
+## `Connection`
 1. Allows clients and servers to specify options about the request/response connection.
 2. `Connection` 首部字段具备如下两个作用
     * 控制代理不再转发的首部字段
@@ -55,25 +55,25 @@
 
 
 
-## Date
+## `Date`
 首部字段 `Date` 表明创建 HTTP 报文的日期和时间。
 ```
 Date: Tue, 03 Jul 2012 04:40:59 GMT
 ```
 
 
-## Trailer
+## `Trailer`
 1. When a message includes a message body encoded with the [chunked transfer coding](https://en.wikipedia.org/wiki/Chunked_transfer_encoding) and the sender desires to send metadata in the form of trailer fields at the end of the message, the sender SHOULD generate a `Trailer` header field before the message body to indicate which fields will be present in the trailers.  
 2. This allows the recipient to prepare for receipt of that metadata before it starts processing the body, which is useful if the message is being streamed and the recipient wishes to confirm an integrity check on the fly.
 3. HTTP/2 doesn't support HTTP 1.1's chunked transfer encoding mechanism, as it provides its own, more efficient, mechanisms for data streaming.
 
 
-## Transfer-Encoding
+## `Transfer-Encoding`
 1. Tells the receiver what encoding was performed on the message in order for it to be transported safely
 2. `Transfer-Encoding` is a hop-by-hop header, that is applied to a message between two nodes, not to a resource itself. Each segment of a multi-node connection can use different `Transfer-Encoding` values.
 
 
-## Upgrade
+## `Upgrade`
 1. The `Upgrade` general-header allows the client to specify what additional communication protocols it supports and would like to use if the server finds it appropriate to switch protocols.
 2. The server MUST use the `Upgrade` header field within a `101` (Switching Protocols) response to indicate which protocol(s) are being switched.
     <img src="./images/Upgrade1.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
