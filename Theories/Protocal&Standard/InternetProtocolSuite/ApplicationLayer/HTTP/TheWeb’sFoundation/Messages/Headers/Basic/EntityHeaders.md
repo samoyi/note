@@ -26,7 +26,7 @@
 <!-- /TOC -->
 
 
-## Allow
+## `Allow`
 ```
 Allow: GET, HEAD
 ```
@@ -53,21 +53,21 @@ Allow: GET, HEAD
 1. The content headers provide specific information about the content of the entity, revealing its type, size, and other information useful for processing it. 
 2. For instance, a web browser can look at the content type returned and know how to display the object.
 
-### Content-Encoding
+### `Content-Encoding`
 ```
 Content-Encoding: gzip
 ```
 1. 告知客户端服务器对实体的主体部分选用的内容编码方式。
 2. 内容编码是指在不丢失实体信息的前提下所进行的压缩。
 
-### Content-Language
+### `Content-Language`
 ```
 Content-Language: zh-CN
 ```
 告知客户端实体主体使用的自然语言（指中文或英文等语言）。
 
 
-### Content-Length
+### `Content-Length`
 ```
 Content-Length: 15000
 ```
@@ -75,7 +75,7 @@ Content-Length: 15000
 2. 对实体主体进行内容编码传输时，不能再使用 `Content-Length` 首部字段。
 
 
-### Content-Location
+### `Content-Location`
 ```
 Content-Location: http://www.hackr.jp/index-ja.html
 ```
@@ -83,7 +83,7 @@ Content-Location: http://www.hackr.jp/index-ja.html
 2. 和首部字段 `Location` 不同，`Content-Location` 表示的是报文主体返回资源对应的 URI。
 3. 比如，对于使用首部字段 `Accept-Language` 的服务器驱动型请求，当返回的页面内容与实际请求的对象不同时，首部字段 `Content-Location` 内会写明 URI。（访问 http://www.hackr.jp/ 返回的对象却是 http://www.hackr.jp/index-ja.html 等类似情况）
 
-### Content-MD5
+### `Content-MD5`
 ```
 Content-MD5: OGFkZDUwNGVhNGY3N2MxMDIwZmQ4NTBmY2IyTY==
 ```
@@ -92,7 +92,7 @@ Content-MD5: OGFkZDUwNGVhNGY3N2MxMDIwZmQ4NTBmY2IyTY==
 3. 为确保报文的有效性，作为接收方的客户端会对报文主体再执行一次相同的 MD5 算法。计算出的值与字段值作比较后，即可判断出报文主体的准确性。
 4. 采用这种方法，对内容上的偶发性改变是无从查证的，也无法检测出恶意篡改。其中一个原因在于，内容如果能够被篡改，那么同时意味着 `Content-MD5` 也可重新计算然后被篡改。所以处在接收阶段的客户端是无法意识到报文主体以及首部字段 `Content-MD5` 是已经被篡改过的。
 
-### Content-Range
+### `Content-Range`
 ```
 Content-Range: bytes 5001-10000/10000
 ```
@@ -101,7 +101,7 @@ Content-Range: bytes 5001-10000/10000
 
 <img src="./images/ContentRange.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
-### Content-Type
+### `Content-Type`
 ```
 Content-Type: text/html; charset=UTF-8
 ```
@@ -114,13 +114,13 @@ Content-Type: text/html; charset=UTF-8
 2. For example, information needed to validate whether a cached copy of the resource is still valid and hints about how better to estimate when a cached resource may no longer be valid.
 3. 详见 `Theories\Protocal&Standard\InternetProtocolSuite\ApplicationLayer\HTTP\Cache\`
 
-### ETag 
+### `ETag` 
 The entity tag associated with this entity.
 
-### Expires 
+### `Expires` 
 The date and time at which this entity will no longer be valid and will need to be fetched from the original source.
 
-### Last-Modified 
+### `Last-Modified` 
 The last date and time when this entity changed.
 
 

