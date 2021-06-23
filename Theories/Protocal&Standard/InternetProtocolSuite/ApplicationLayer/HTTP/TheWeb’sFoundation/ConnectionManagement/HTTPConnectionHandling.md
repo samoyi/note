@@ -4,14 +4,14 @@
 <!-- TOC -->
 
 - [HTTP Connection Handling](#http-connection-handling)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [The Oft-Misunderstood Connection Header](#the-oft-misunderstood-connection-header)
     - [Serial Transaction Delays](#serial-transaction-delays)
-        - [实际的延迟](#实际的延迟)
-        - [心理感觉上的延迟](#心理感觉上的延迟)
-        - [浏览器渲染等待的延迟](#浏览器渲染等待的延迟)
-        - [解决方案](#解决方案)
+        - [实际的延迟](#%E5%AE%9E%E9%99%85%E7%9A%84%E5%BB%B6%E8%BF%9F)
+        - [心理感觉上的延迟](#%E5%BF%83%E7%90%86%E6%84%9F%E8%A7%89%E4%B8%8A%E7%9A%84%E5%BB%B6%E8%BF%9F)
+        - [浏览器渲染等待的延迟](#%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E7%AD%89%E5%BE%85%E7%9A%84%E5%BB%B6%E8%BF%9F)
+        - [解决方案](#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88)
     - [References](#references)
 
 <!-- /TOC -->
@@ -49,7 +49,6 @@
 1. In addition to the real delay imposed by serial loading, there is also a psychological perception of slowness when a single image is loading and nothing is happening on the rest of the page. 
 2. Users prefer multiple images to load at the same time.  This is true even if loading multiple images at the same time is slower than loading images one at a time! Users often perceive multiple-image loading as faster.
 
-
 ### 浏览器渲染等待的延迟
 1. Another disadvantage of serial loading is that some browsers are unable to display anything onscreen until enough objects are loaded, because they don’t know the sizes of the objects until they are loaded, and they may need the size information to decide where to position the objects on the screen. 
 2. In this situation, the browser may be making good progress loading objects serially, but the user may be faced with a
@@ -58,10 +57,10 @@ blank white screen, unaware that any progress is being made at all.
 
 ### 解决方案
 Several current and emerging techniques are available to improve HTTP connection performance. The next several sections discuss four such techniques:
-    * Parallel connections: Concurrent HTTP requests across multiple TCP connections
-    * Persistent connections: Reusing TCP connections to eliminate connect/close delays
-    * Pipelined connections: Concurrent HTTP requests across a shared TCP connection
-    * Multiplexed connections: Interleaving chunks of requests and responses (experimental)
+* Parallel connections: Concurrent HTTP requests across multiple TCP connections
+* Persistent connections: Reusing TCP connections to eliminate connect/close delays
+* Pipelined connections: Concurrent HTTP requests across a shared TCP connection
+* Multiplexed connections: Interleaving chunks of requests and responses (experimental)
 
         
 ## References

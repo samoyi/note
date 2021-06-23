@@ -4,15 +4,15 @@
 <!-- TOC -->
 
 - [The Flow of Messages](#the-flow-of-messages)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [TCP Reliable Data Pipes](#tcp-reliable-data-pipes)
     - [TCP Streams Are Segmented and Shipped by IP Packets](#tcp-streams-are-segmented-and-shipped-by-ip-packets)
     - [Keeping TCP Connections Straight](#keeping-tcp-connections-straight)
     - [Programming with TCP Sockets](#programming-with-tcp-sockets)
         - [API](#api)
-        - [一次使用流程举例](#一次使用流程举例)
+        - [一次使用流程举例](#%E4%B8%80%E6%AC%A1%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B%E4%B8%BE%E4%BE%8B)
     - [References](#references)
 
 <!-- /TOC -->
@@ -47,7 +47,7 @@
 
 
 ## TCP Streams Are Segmented and Shipped by IP Packets
-1. TCP sends its data in little chunks called *IP packets* (or IP datagrams). 
+1. TCP sends its data in little chunks called **IP packets** (or **IP datagrams**). 
 2. In this way, HTTP is the top layer in a “protocol stack” of “HTTP over TCP over IP”.
 3. A secure variant, HTTPS, inserts a cryptographic encryption layer (called TLS or SSL) between HTTP and TCP
     <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
@@ -76,22 +76,22 @@
 ### API
 1. Operating systems provide different facilities for manipulating their TCP connections. Let’s take a quick look at one TCP programming interface, to make things concrete. 
 2. Table below shows some of the primary interfaces provided by the sockets API. This sockets API hides all the details of TCP and IP from the HTTP programmer. 
-3. The sockets API was first developed for the Unix operating system, but variants are now available for almost every operating system and language
 
-Sockets API call | Description
---|--
-`s = socket(<parameters>)` | Creates a new, unnamed, unattached socket.
-`bind(s, <local IP:port>)` | Assigns a local port number and interface to the socket.
-`connect(s, <remote IP:port>)` | Establishes a TCP connection to a local socket and a remote host and port.
-`listen(s,...)` | Marks a local socket as legal to accept connections.
-`s2 = accept(s)` | Waits for someone to establish a connection to a local port.
-`n = read(s,buffer,n)` | Tries to read n bytes from the socket into the buffer.
-`n = write(s,buffer,n)` | Tries to write n bytes from the buffer into the socket.
-`close(s)` | Completely closes the TCP connection.
-`shutdown(s,<side>)` | Closes just the input or the output of the TCP connection.
-`getsockopt(s, . . . )` | Reads the value of an internal socket configuration option.
-`setsockopt(s, . . . )` | Changes the value of an internal socket configuration option.
+    Sockets API call | Description
+    --|--
+    `s = socket(<parameters>)` | Creates a new, unnamed, unattached socket.
+    `bind(s, <local IP:port>)` | Assigns a local port number and interface to the socket.
+    `connect(s, <remote IP:port>)` | Establishes a TCP connection to a local socket and a remote host and port.
+    `listen(s,...)` | Marks a local socket as legal to accept connections.
+    `s2 = accept(s)` | Waits for someone to establish a connection to a local port.
+    `n = read(s,buffer,n)` | Tries to read n bytes from the socket into the buffer.
+    `n = write(s,buffer,n)` | Tries to write n bytes from the buffer into the socket.
+    `close(s)` | Completely closes the TCP connection.
+    `shutdown(s,<side>)` | Closes just the input or the output of the TCP connection.
+    `getsockopt(s, . . . )` | Reads the value of an internal socket configuration option.
+    `setsockopt(s, . . . )` | Changes the value of an internal socket configuration option.
 
+3. The sockets API was first developed for the Unix operating system, but variants are now available for almost every operating system and language.
 4. The sockets API lets you create TCP endpoint data structures, connect these endpoints to remote server TCP endpoints, and read and write data streams. 
 5. The TCP API hides all the details of the underlying network protocol handshaking and the segmentation and reassembly of the TCP data stream to and from IP packets.
 

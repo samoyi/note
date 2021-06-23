@@ -4,17 +4,17 @@
 <!-- TOC -->
 
 - [Persistent Connections](#persistent-connections)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Persistent Versus Parallel Connections](#persistent-versus-parallel-connections)
-    - [HTTP/1.1 Persistent Connections](#http11-persistent-connections)
+    - [HTTP/1.0+ Keep-Alive Connections](#http10-keep-alive-connections)
     - [Keep-Alive Operation](#keep-alive-operation)
     - [Keep-Alive Options](#keep-alive-options)
     - [Keep-Alive Connection Restrictions and Rules](#keep-alive-connection-restrictions-and-rules)
     - [Keep-Alive and Dumb Proxies](#keep-alive-and-dumb-proxies)
     - [The Proxy-Connection Hack](#the-proxy-connection-hack)
-    - [HTTP/1.1 Persistent Connections](#http11-persistent-connections-1)
+    - [HTTP/1.1 Persistent Connections](#http11-persistent-connections)
     - [Persistent Connection Restrictions and Rules](#persistent-connection-restrictions-and-rules)
     - [References](#references)
 
@@ -48,7 +48,7 @@
 5. There are two types of persistent connections: the older HTTP/1.0+ “keep-alive” connections and the modern HTTP/1.1 “persistent” connections. 
 
 
-## HTTP/1.1 Persistent Connections
+## HTTP/1.0+ Keep-Alive Connections
 1. Many HTTP/1.0 browsers and servers were extended (starting around 1996) to support an early, experimental type of persistent connections called **keep-alive connections**. 
 2. These early persistent connections suffered from some interoperability design problems that were rectified in later revisions of HTTP/1.1, but many clients and servers still use these earlier keep-alive connections.
 3. Some of the performance advantages of keep-alive connections are visible in figure below, which compares the timeline for four HTTP transactions over serial connections against the same transactions over a single persistent connection
@@ -81,18 +81,20 @@ not support keep-alive and that the server will close the connection when the re
 
 
 ## Keep-Alive Connection Restrictions and Rules
-1. Here are some restrictions and clarifications regarding the use of keep-alive connections:
-    * Keep-alive does not happen by default in HTTP/1.0. The client must send a `Connection: Keep-Alive` request header to activate keep-alive connections.
-    * The `Connection: Keep-Alive` header must be sent with all messages that want to continue the persistence. If the client does not send a `Connection: Keep-Alive` header, the server will close the connection after that request.
-    * Clients can tell if the server will close the connection after the response by detecting the absence of the `Connection: Keep-Alive` response header.
-    * The connection can be kept open only if the length of the message’s entity body can be determined without sensing a connection close—this means that the entity body must have a correct `Content-Length`, have a multipart media type, or be encoded with the chunked transfer encoding. Sending the wrong `Content-Length` back on a keep-alive channel is bad, because the other end of the transaction will not be able to accurately detect the end of one message and the start of another.
-    * Proxies and gateways must enforce the rules of the `Connection` header; the proxy or gateway must remove any header fields named in the `Connection` header, and the `Connection` header itself, before forwarding or caching the message.
-    * Formally, keep-alive connections should not be established with a proxy server that isn’t guaranteed to support the `Connection` header, to prevent the problem with dumb proxies described below. This is not always possible in practice.
-    * Technically, any `Connection` header fields (including `Connection: Keep-Alive`) received from an HTTP/1.0 device should be ignored, because they may have been forwarded mistakenly by an older proxy server. In practice, some clients and servers bend this rule, although they run the risk of hanging on older proxies.
-    * Clients must be prepared to retry requests if the connection closes before they receive the entire response, unless the request could have side effects if repeated.
+Here are some restrictions and clarifications regarding the use of keep-alive connections:
+* Keep-alive does not happen by default in HTTP/1.0. The client must send a `Connection: Keep-Alive` request header to activate keep-alive connections.
+* The `Connection: Keep-Alive` header must be sent with all messages that want to continue the persistence. If the client does not send a `Connection: Keep-Alive` header, the server will close the connection after that request.
+* Clients can tell if the server will close the connection after the response by detecting the absence of the `Connection: Keep-Alive` response header.
+* The connection can be kept open only if the length of the message’s entity body can be determined without sensing a connection close—this means that the entity body must have a correct `Content-Length`, have a multipart media type, or be encoded with the chunked transfer encoding. Sending the wrong `Content-Length` back on a keep-alive channel is bad, because the other end of the transaction will not be able to accurately detect the end of one message and the start of another.
+* Proxies and gateways must enforce the rules of the `Connection` header; the proxy or gateway must remove any header fields named in the `Connection` header, and the `Connection` header itself, before forwarding or caching the message.
+* Formally, keep-alive connections should not be established with a proxy server that isn’t guaranteed to support the `Connection` header, to prevent the problem with dumb proxies described below. This is not always possible in practice.
+* Technically, any `Connection` header fields (including `Connection: Keep-Alive`) received from an HTTP/1.0 device should be ignored, because they may have been forwarded mistakenly by an older proxy server. In practice, some clients and servers bend this rule, although they run the risk of hanging on older proxies.
+* Clients must be prepared to retry requests if the connection closes before they receive the entire response, unless the request could have side effects if repeated.
 
 
 ## Keep-Alive and Dumb Proxies
+
+
 ## The Proxy-Connection Hack
 
 
@@ -106,15 +108,15 @@ not support keep-alive and that the server will close the connection when the re
 
 ## Persistent Connection Restrictions and Rules
 Here are the restrictions and clarifications regarding the use of persistent connections:
-    * After sending a `Connection: close` request header, the client can’t send more requests on that connection.
-    * If a client does not want to send another request on the connection, it should send a `Connection: close` request header in the final request.
-    * The connection can be kept persistent only if all messages on the connection have a correct, self-defined message length—i.e., the entity bodies must have correct `Content-Length`s or be encoded with the chunked transfer encoding.
-    * HTTP/1.1 proxies must manage persistent connections separately with clients and servers—each persistent connection applies to a single transport hop.
-    * HTTP/1.1 proxy servers should not establish persistent connections with an HTTP/1.0 client (because of the problems of older proxies forwarding `Connection` headers) unless they know something about the capabilities of the client. This is, in practice, difficult, and many vendors bend this rule.
-    * Regardless of the values of `Connection` headers, HTTP/1.1 devices may close the connection at any time, though servers should try not to close in the middle of transmitting a message and should always respond to at least one request before closing.
-    * HTTP/1.1 applications must be able to recover from asynchronous closes. Clients should retry the requests as long as they don’t have side effects that could accumulate. 不懂
-    * Clients must be prepared to retry requests if the connection closes before they receive the entire response, unless the request could have side effects if repeated.
-    * A single user client should maintain at most two persistent connections to any server or proxy, to prevent the server from being overloaded. Because proxies may need more connections to a server to support concurrent users, a proxy should maintain at most 2N connections to any server or parent proxy, if there are N users trying to access the servers.
+* After sending a `Connection: close` request header, the client can’t send more requests on that connection.
+* If a client does not want to send another request on the connection, it should send a `Connection: close` request header in the final request.
+* The connection can be kept persistent only if all messages on the connection have a correct, self-defined message length—i.e., the entity bodies must have correct `Content-Length`s or be encoded with the chunked transfer encoding.
+* HTTP/1.1 proxies must manage persistent connections separately with clients and servers—each persistent connection applies to a single transport hop.
+* HTTP/1.1 proxy servers should not establish persistent connections with an HTTP/1.0 client (because of the problems of older proxies forwarding `Connection` headers) unless they know something about the capabilities of the client. This is, in practice, difficult, and many vendors bend this rule.
+* Regardless of the values of `Connection` headers, HTTP/1.1 devices may close the connection at any time, though servers should try not to close in the middle of transmitting a message and should always respond to at least one request before closing.
+* HTTP/1.1 applications must be able to recover from asynchronous closes. Clients should retry the requests as long as they don’t have side effects that could accumulate. 不懂
+* Clients must be prepared to retry requests if the connection closes before they receive the entire response, unless the request could have side effects if repeated.
+* A single user client should maintain at most two persistent connections to any server or proxy, to prevent the server from being overloaded. Because proxies may need more connections to a server to support concurrent users, a proxy should maintain at most 2N connections to any server or parent proxy, if there are N users trying to access the servers.
 
 
 ## References

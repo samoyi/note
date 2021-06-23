@@ -4,15 +4,15 @@
 <!-- TOC -->
 
 - [TCP Performance Considerations](#tcp-performance-considerations)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [HTTP Transaction Delays](#http-transaction-delays)
         - [Several possible causes of delay in an HTTP transaction:](#several-possible-causes-of-delay-in-an-http-transaction)
-            - [1. 域名解析](#1-域名解析)
-            - [2. 建立 TCP 链接](#2-建立-tcp-链接)
-            - [3. 发送和处理请求](#3-发送和处理请求)
-            - [4. 响应请求](#4-响应请求)
+            - [域名解析](#%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90)
+            - [建立 TCP 链接](#%E5%BB%BA%E7%AB%8B-tcp-%E9%93%BE%E6%8E%A5)
+            - [发送和处理请求](#%E5%8F%91%E9%80%81%E5%92%8C%E5%A4%84%E7%90%86%E8%AF%B7%E6%B1%82)
+            - [响应请求](#%E5%93%8D%E5%BA%94%E8%AF%B7%E6%B1%82)
     - [Performance Focus Areas](#performance-focus-areas)
     - [References](#references)
 
@@ -58,7 +58,7 @@ The web server then writes back the HTTP response, which also takes time.
 
 
 ## Performance Focus Areas
-1. The remainder of this section outlines some of the most common TCP-related delays affecting HTTP programmers,including the causes and performance impacts of:
+1. The remainder of this section outlines some of the most common TCP-related delays affecting HTTP programmers, including the causes and performance impacts of:
     * The TCP connection setup handshake
     * TCP slow-start congestion control
     * Nagle’s algorithm for data aggregation

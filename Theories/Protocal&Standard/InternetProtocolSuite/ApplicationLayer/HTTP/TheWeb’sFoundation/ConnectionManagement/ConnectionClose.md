@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Connection Close](#connection-close)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [“At Will” Disconnection](#at-will-disconnection)
     - [Content-Length and Truncation](#content-length-and-truncation)
     - [Connection Close Tolerance, Retries, and Idempotency](#connection-close-tolerance-retries-and-idempotency)
@@ -36,7 +36,7 @@
 6. If this happens, the client sees a connection error in the middle of writing its request message.
 
 
-## Content-Length and Truncation
+## `Content-Length` and Truncation
 1. Each HTTP response should have an accurate `Content-Length` header to describe the size of the response body. Some older HTTP servers omit the `Content-Length` header or include an erroneous length, depending on a server connection close to signify the actual end of data.
 2. When a client or proxy receives an HTTP response terminating in connection close, and the actual transferred entity length doesn’t match the `Content-Length` (or there is no `Content-Length`), the receiver should question the correctness of the length.
 3. If the receiver is a caching proxy, the receiver should not cache the response (to minimize future compounding of a potential error). The proxy should forward the questionable message intact, without attempting to “correct” the `Content-Length`, to maintain semantic transparency.
