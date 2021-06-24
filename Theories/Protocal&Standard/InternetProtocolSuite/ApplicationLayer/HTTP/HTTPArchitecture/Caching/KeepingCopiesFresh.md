@@ -4,15 +4,15 @@
 <!-- TOC -->
 
 - [Keeping Copies Fresh](#keeping-copies-fresh)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Document Expiration](#document-expiration)
         - [Expiration Dates and Ages](#expiration-dates-and-ages)
     - [Server Revalidation](#server-revalidation)
         - [Revalidation with Conditional Methods](#revalidation-with-conditional-methods)
-        - [`If-Modified-Since`: Date Revalidation](#if-modified-since-date-revalidation)
-        - [`If-None-Match`: Entity Tag Revalidation](#if-none-match-entity-tag-revalidation)
+        - [If-Modified-Since: Date Revalidation](#if-modified-since-date-revalidation)
+        - [If-None-Match: Entity Tag Revalidation](#if-none-match-entity-tag-revalidation)
         - [Weak and Strong Validators](#weak-and-strong-validators)
         - [When to Use Entity Tags and Last-Modified Dates](#when-to-use-entity-tags-and-last-modified-dates)
     - [References](#references)
@@ -88,7 +88,7 @@ ends at midnight on July 5, the cache will receive a new document, because the s
     * Some servers cannot accurately determine the last modification dates of their pages.
     * For servers that serve documents that change in sub-second intervals (e.g. realtime monitors), the one-second granularity of modification dates might not be adequate.
 2. To get around these problems, HTTP allows you to compare document “version identifiers” called **entity tags** (ETags). Entity tags are arbitrary labels (quoted strings) attached to the document. They might contain a serial number or version name for the document, or a checksum or other fingerprint of the document content.
-3. When the publisher makes a document change, he can change the document’s entity tag to represent this new version. Caches can then use the `If-None-Match` conditional header to `GET` a new copy of the document if the entity tags have changed.
+3. When the publisher makes a document change, he can change the document’s entity tag to represent this new version. Caches can then use the `If-None-Match` conditional header to GET a new copy of the document if the entity tags have changed.
 4. In figure below, the cache has a document with entity tag “v2.6”. It revalidates with the origin server asking for a new object only if the tag “v2.6” no longer matches
     <img src="./images/15.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 5. If the entity tag on the server had changed (perhaps to “v3.0”), the server would return the new content in a `200 OK` response, along with the content and new ETag. 
@@ -115,7 +115,7 @@ ends at midnight on July 5, the cache will receive a new document, because the s
 ### When to Use Entity Tags and Last-Modified Dates
 1. HTTP/1.1 clients must use an entity tag validator if a server sends back an entity tag. If the server sends back only a `Last-Modified` value, the client can use `If-Modified-Since` validation. If both an entity tag and a last-modified date are available, the client should use both revalidation schemes, allowing both HTTP/1.0 and HTTP/1.1 caches to respond appropriately.
 2. HTTP/1.1 origin servers should send an entity tag validator unless it is not feasible to generate one, and it may be a weak entity tag instead of a strong entity tag, if there are benefits to weak validators. Also, it’s preferred to also send a last-modified value.
-3. If an HTTP/1.1 cache or server receives a request with both `If-Modified-Since` and entity tag conditional headers, it must not return a `304 Not Modified` response unless doing so is consistent with all of the conditional header fields in the request. 只有两个都满足继续使用缓存的条件才能返回 304。
+3. If an HTTP/1.1 cache or server receives a request with both `If-Modified-Since` and entity tag conditional headers, it must not return a `304 Not Modified` response unless doing so is consistent with all of the conditional header fields in the request. 只有两个都满足继续使用缓存的条件才能返回 304，否则还是老老实实使用新的吧。
 
 
 ## References

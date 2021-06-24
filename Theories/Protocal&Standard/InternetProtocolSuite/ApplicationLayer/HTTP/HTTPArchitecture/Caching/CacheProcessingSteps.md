@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Cache Processing Steps](#cache-processing-steps)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Step 1: Receiving](#step-1-receiving)
     - [Step 2: Parsing](#step-2-parsing)
@@ -28,8 +28,9 @@
 
 ## Summary
 1. Modern commercial proxy caches are quite complicated. They are built to be very high-performance and to support advanced features of HTTP and other technologies.
-2. But, despite some subtle details, the basic workings of a web cache are mostly simple. A basic cache-processing sequence for an HTTP GET message consists of seven steps
+2. But, despite some subtle details, the basic workings of a web cache are mostly simple. A basic cache-processing sequence for an HTTP `GET` message consists of seven steps
     <img src="./images/11.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    
     1. Receiving — Cache reads the arriving request message from the network.
     2. Parsing — Cache parses the message, extracting the URL and headers.
     3. Lookup — Cache checks if a local copy is available and, if not, fetches a copy (and stores it locally).
@@ -62,7 +63,7 @@ for use in HTTP/1.1 content negotiation.
 
 ## Step 4: Freshness Check
 1. HTTP lets caches keep copies of server documents for a period of time. During this time, the document is considered “fresh” and the cache can serve the document without contacting the server. 
-2. But once the cached copy has sat around for too long, past the document’s freshness limit, the object is considered “stale,” and the cache needs to revalidate with the server to check for any document changes before serving it. 
+2. But once the cached copy has sat around for too long, past the document’s freshness limit, the object is considered “stale”, and the cache needs to revalidate with the server to check for any document changes before serving it. 
 3. Complicating things further are any request headers that a client sends to a cache, which themselves can force the cache to either revalidate or avoid validation altogether.
 4. HTTP has a set of very complicated rules for freshness checking, made worse by the large number of configuration options cache products support and by the need to interoperate with non-HTTP freshness standards.
 

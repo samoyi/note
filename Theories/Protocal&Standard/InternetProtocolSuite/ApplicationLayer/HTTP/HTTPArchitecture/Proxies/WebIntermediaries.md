@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Web Intermediaries](#web-intermediaries)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Private and Shared Proxies](#private-and-shared-proxies)
         - [Public proxies](#public-proxies)
@@ -49,6 +49,7 @@
 2. A gateway acts as a “protocol converter”, allowing a client to complete a transaction with a server, even when the client and server speak different protocols.
 3. Figure below illustrates the difference between proxies and gateways:
     <img src="./images/02.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    
     * The intermediary device in (a) is an HTTP proxy, because the proxy speaks HTTP to both the client and server.
     * The intermediary device in (b) is an HTTP/POP gateway, because it ties an HTTP frontend to a POP email backend. The gateway converts web transactions into the appropriate POP transactions, to allow the user to read email through HTTP. Web-based email programs such as Yahoo! Mail and MSN Hotmail are HTTP email gateways.
 4. In practice, the difference between proxies and gateways is blurry. Because browsers and servers implement different versions of HTTP, proxies often do some amount of protocol conversion. And commercial proxy servers implement gateway functionality to support SSL security protocols, SOCKS firewalls, FTP access, and web-based applications. 

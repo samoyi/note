@@ -1,4 +1,21 @@
 # Cache
+
+
+
+
+
+
+## `If-Modified-Since` and `If-None-Match` 和 `Expires``Cache-Control`？ 啥关系
+意思是说：`Expires` 过期了或者 `Cache-Control` 不匹配了就肯定要重新验证，但如果客户端主动指定了 `If-Modified-Since`或 `If-None-Match`，那即使没有过期或者不匹配，也要重新验证？
+有 `Last-Modified` 为什么还要 `expires` 和 `Cache-Control`？
+有  `If-Modified-Since` 为什么还要 `If-None-Match`？
+`If-Modified-Since` and `If-None-Match` 是问缓存服务器而不是源服务器的？
+服务器规定过期时间，以及客户端主动要求是否要新的
+请求首部也可以用 Cache-Control，那和 `If-Modified-Since` and `If-None-Match` 什么关系
+
+
+
+
 以[文官方档](https://tools.ietf.org/html/rfc7234)为准
 
 ## 强缓存和协商缓存
@@ -176,8 +193,9 @@ Validating cached responses with ETags
 
 #### 和`Etag`的区别（优先使用`Etag`的原因）
 * 某些服务器不能精确得到资源的最后修改时间。
-* `Last-modified`只能精确到秒，资源一秒内的多次变化无法识别。
-* 对于一些虽然重新生成但是内容不变的资源，使用`Last-modified`就会弃用缓存。
+* `Last-modified` 只能精确到秒，资源一秒内的多次变化无法识别。
+* 对于一些虽然重新生成但是内容不变的资源，使用 `Last-modified` 就会弃用缓存。
+* 有些文档可能被修改了，但是修改并不重要（例如对拼写或注释的修改），不需要更新缓存。
 * 服务器会优先验证 ETag。
 
 
@@ -240,7 +258,7 @@ minimizes the amount of downloaded content whenever an update is fetched.
 而根本不会发送请求。同样的页面在FF中测试，还是会先发送 If-None-Match 确认。
 
 
-***
 ## References
 * [Google Developers - HTTP Caching](https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching)
 * [HTTP 缓存机制一二三](https://zhuanlan.zhihu.com/p/29750583)
+* [*HTTP: the definitive guide*](https://book.douban.com/subject/1440226/)

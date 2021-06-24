@@ -3,13 +3,13 @@
 <!-- TOC -->
 
 - [Hits and Misses](#hits-and-misses)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Revalidations](#revalidations)
         - [Revalidate hit](#revalidate-hit)
-        - [`If-Modified-Since`](#if-modified-since)
-            - [Revalidate hit](#revalidate-hit-1)
+        - [If-Modified-Since](#if-modified-since)
+            - [Revalidate hit](#revalidate-hit)
             - [Revalidate miss](#revalidate-miss)
             - [Object deleted](#object-deleted)
     - [Hit Rate](#hit-rate)
@@ -40,7 +40,7 @@
 2. A cache can revalidate a copy any time it wants, and as often as it wants. But because caches often contain millions of documents, and because network bandwidth is scarce, most caches revalidate a copy only when it is requested by a client and when the copy is old enough to warrant a check.
 3. When a cache needs to revalidate a cached copy, it sends a small revalidation request to the origin server. If the content hasn’t changed, the server responds with a tiny `304 Not Modified` response. 
 4. As soon as the cache learns the copy is still valid, it marks the copy temporarily fresh again and serves the copy to the client. 
-5. This is called a `revalidate hit` or a `slow hit`. It’s slower than a pure cache hit, because it does need to check with the origin server, but it’s faster than a cache miss, because no object data is retrieved from the server
+5. This is called a *revalidate hit* or a *slow hit*. It’s slower than a pure cache hit, because it does need to check with the origin server, but it’s faster than a cache miss, because no object data is retrieved from the server
     <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 ### `If-Modified-Since`

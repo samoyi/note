@@ -4,13 +4,13 @@
 <!-- TOC -->
 
 - [Controlling Cachability](#controlling-cachability)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
-    - [`No-Cache` and `No-Store` Response Headers](#no-cache-and-no-store-response-headers)
-    - [`Max-Age` Response Headers](#max-age-response-headers)
-    - [`Expires` Response Headers](#expires-response-headers)
-    - [`Must-Revalidate` Response Headers](#must-revalidate-response-headers)
+    - [No-Cache and No-Store Response Headers](#no-cache-and-no-store-response-headers)
+    - [Max-Age Response Headers](#max-age-response-headers)
+    - [Expires Response Headers](#expires-response-headers)
+    - [Must-Revalidate Response Headers](#must-revalidate-response-headers)
     - [Heuristic Expiration](#heuristic-expiration)
     - [Client Freshness Constraints](#client-freshness-constraints)
     - [References](#references)
@@ -73,7 +73,8 @@
 ## `Must-Revalidate` Response Headers
 1. Caches may be configured to serve stale (expired) objects, in order to improve performance. If an origin server wishes caches to strictly adhere to expiration information, it can attach a Cache-Control: `Cache-Control: must-revalidate`.
 2. The `Cache-Control: must-revalidate` response header tells caches they cannot serve a stale copy of this object without first revalidating with the origin server. 
-3. Caches are still free to serve fresh copies. If the origin server is unavailable when a cache attempts a must-revalidate freshness check, the cache must return a `504 Gateway Timeout` error.
+3. Caches are still free to serve fresh copies. 也就是说，这个设置并不是说所有的缓存对象都要验证一下，而只是验证过了保质期的缓存对象。保质期内也要验证的是 `no-cache`。
+4. If the origin server is unavailable when a cache attempts a must-revalidate freshness check, the cache must return a `504 Gateway Timeout` error.
 
 
 ## Heuristic Expiration
@@ -87,9 +88,18 @@
 
 ## Client Freshness Constraints
 1. Web browsers have a Refresh or Reload button to forcibly refresh content, which might be stale in the browser or proxy caches. 
-2. The Refresh button issues a GET request with additional `Cache-control` request headers that force a revalidation or
+2. The Refresh button issues a GET request with additional `Cache-Control` request headers that force a revalidation or
 unconditional fetch from the server. The precise Refresh behavior depends on the particular browser, document, and intervening cache configurations.
-3. Clients use `Cache-Control` request headers to tighten or loosen expiration constraints. Clients can use `Cache-control` headers to make the expiration more strict, for applications that need the very freshest documents (such as the manual Refresh button). On the other hand, clients might also want to relax the freshness requirements as a compromise to improve performance, reliability, or expenses.
+3. Clients use `Cache-Control` request headers to tighten or loosen expiration constraints. Clients can use `Cache-Control` headers to make the expiration more strict, for applications that need the very freshest documents (such as the manual Refresh button). On the other hand, clients might also want to relax the freshness requirements as a compromise to improve performance, reliability, or expenses.
+4. Cache-Control request directives
+    Directive | Purpose
+    --|--
+    `Cache-Control: max-stale` `Cache-Control: max-stale=<s>` | The cache is free to serve a stale document. If the `<s>` parameter is specified, the document must not be stale by more than this amount of time. This relaxes the caching rules.
+    `Cache-Control: min-fresh = <s>` | The document must still be fresh for at least `<s>` seconds in the future. This makes the caching rules more strict.
+    `Cache-Control: max-age = <s>` | The cache cannot return a document that has been cached for longer than `<s>` seconds. This directive makes the caching rules more strict, unless the `max-stale` directive also is set, in which case the age can exceed its expiration time.
+    `Cache-Control: no-cache` `Pragma: no-cache` | This client won’t accept a cached resource unless it has been revalidated.
+    `Cache-Control: no-store` | The cache should delete every trace of the document from storage as soon as possible, because it might contain sensitive information.
+    `Cache-Control: only-if-cached` | The client wants a copy only if it is in the cache.
 
 
 ## References

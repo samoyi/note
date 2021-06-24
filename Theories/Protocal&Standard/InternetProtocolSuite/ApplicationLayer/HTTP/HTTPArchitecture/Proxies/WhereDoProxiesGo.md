@@ -6,20 +6,20 @@ The previous section explained what proxies do. Now let’s talk about where pro
 <!-- TOC -->
 
 - [Where Do Proxies Go](#where-do-proxies-go)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Proxy Server Deployment](#proxy-server-deployment)
-        - [Egress proxy (上图 a)](#egress-proxy-上图-a)
-        - [Access (ingress) proxy (上图 b)](#access-ingress-proxy-上图-b)
-        - [Surrogates (上图 c)](#surrogates-上图-c)
-        - [Network exchange proxy (上图 d)](#network-exchange-proxy-上图-d)
+        - [Egress proxy 上图 a](#egress-proxy-%E4%B8%8A%E5%9B%BE-a)
+        - [Access ingress proxy 上图 b](#access-ingress-proxy-%E4%B8%8A%E5%9B%BE-b)
+        - [Surrogates 上图 c](#surrogates-%E4%B8%8A%E5%9B%BE-c)
+        - [Network exchange proxy 上图 d](#network-exchange-proxy-%E4%B8%8A%E5%9B%BE-d)
     - [Proxy Hierarchies](#proxy-hierarchies)
         - [Proxy hierarchy content routing](#proxy-hierarchy-content-routing)
     - [How Proxies Get Traffic](#how-proxies-get-traffic)
-        - [Modify the client (上图 a)](#modify-the-client-上图-a)
-        - [Modify the network (上图 b)](#modify-the-network-上图-b)
-        - [Modify the DNS namespace (上图 c)](#modify-the-dns-namespace-上图-c)
-        - [Modify the web server (上图 d)](#modify-the-web-server-上图-d)
+        - [Modify the client 上图 a](#modify-the-client-%E4%B8%8A%E5%9B%BE-a)
+        - [Modify the network 上图 b](#modify-the-network-%E4%B8%8A%E5%9B%BE-b)
+        - [Modify the DNS namespace 上图 c](#modify-the-dns-namespace-%E4%B8%8A%E5%9B%BE-c)
+        - [Modify the web server 上图 d](#modify-the-web-server-%E4%B8%8A%E5%9B%BE-d)
     - [References](#references)
 
 <!-- /TOC -->
@@ -64,6 +64,7 @@ With sufficient horsepower, proxies can be placed in the Internet peering exchan
 2. However, hierarchies do not have to be static. A proxy server can forward messages to a varied and changing set of proxy servers and origin servers, based on many factors.
 3. For example, in figure below, the access proxy routes to parent proxies or origin servers in different circumstances:
     <img src="./images/13.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    
     * If the requested object belongs to a web server that has paid for content distribution, the proxy could route the request to a nearby cache server that would either return the cached object or fetch it if it wasn’t available.
     * If the request was for a particular type of image, the access proxy might route the request to a dedicated compression proxy that would fetch the image and then compress it, so it would download faster across a slow modem to the client.
 4. Here are a few other examples of dynamic parent selection:
