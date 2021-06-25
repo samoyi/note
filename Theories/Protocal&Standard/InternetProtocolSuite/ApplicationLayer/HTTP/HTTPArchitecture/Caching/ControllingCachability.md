@@ -13,6 +13,14 @@
     - [Must-Revalidate Response Headers](#must-revalidate-response-headers)
     - [Heuristic Expiration](#heuristic-expiration)
     - [Client Freshness Constraints](#client-freshness-constraints)
+        - [Cache-Control request directives](#cache-control-request-directives)
+            - [Cache-Control: max-stale 和 Cache-Control: max-stale=<s>](#cache-control-max-stale-%E5%92%8C-cache-control-max-stales)
+            - [Cache-Control: min-fresh = <s>](#cache-control-min-fresh--s)
+            - [Cache-Control: max-age = <s>](#cache-control-max-age--s)
+            - [Cache-Control: no-cache 和 Pragma: no-cache](#cache-control-no-cache-%E5%92%8C-pragma-no-cache)
+            - [Cache-Control: no-store](#cache-control-no-store)
+            - [Cache-Control: only-if-cached](#cache-control-only-if-cached)
+            - [Cache-Control: no-transform](#cache-control-no-transform)
     - [References](#references)
 
 <!-- /TOC -->
@@ -88,18 +96,43 @@
 
 ## Client Freshness Constraints
 1. Web browsers have a Refresh or Reload button to forcibly refresh content, which might be stale in the browser or proxy caches. 
-2. The Refresh button issues a GET request with additional `Cache-Control` request headers that force a revalidation or
-unconditional fetch from the server. The precise Refresh behavior depends on the particular browser, document, and intervening cache configurations.
-3. Clients use `Cache-Control` request headers to tighten or loosen expiration constraints. Clients can use `Cache-Control` headers to make the expiration more strict, for applications that need the very freshest documents (such as the manual Refresh button). On the other hand, clients might also want to relax the freshness requirements as a compromise to improve performance, reliability, or expenses.
-4. Cache-Control request directives
-    Directive | Purpose
-    --|--
-    `Cache-Control: max-stale` `Cache-Control: max-stale=<s>` | The cache is free to serve a stale document. If the `<s>` parameter is specified, the document must not be stale by more than this amount of time. This relaxes the caching rules.
-    `Cache-Control: min-fresh = <s>` | The document must still be fresh for at least `<s>` seconds in the future. This makes the caching rules more strict.
-    `Cache-Control: max-age = <s>` | The cache cannot return a document that has been cached for longer than `<s>` seconds. This directive makes the caching rules more strict, unless the `max-stale` directive also is set, in which case the age can exceed its expiration time.
-    `Cache-Control: no-cache` `Pragma: no-cache` | This client won’t accept a cached resource unless it has been revalidated.
-    `Cache-Control: no-store` | The cache should delete every trace of the document from storage as soon as possible, because it might contain sensitive information.
-    `Cache-Control: only-if-cached` | The client wants a copy only if it is in the cache.
+2. The Refresh button issues a `GET` request with additional `Cache-Control` request headers that force a revalidation or unconditional fetch from the server. The precise Refresh behavior depends on the particular browser, document, and intervening cache configurations. 
+3. 例如在 Chrome 中，普通刷新如果会使用缓存的情况，强制刷新的话，就会带上 `Cache-Control: no-cache` 来确保获得的是最新的资源。
+4. Clients use `Cache-Control` request headers to tighten or loosen expiration constraints. Clients can use `Cache-Control` headers to make the expiration more strict, for applications that need the very freshest documents (such as the manual Refresh button). On the other hand, clients might also want to relax the freshness requirements as a compromise to improve performance, reliability, or expenses.
+
+### Cache-Control request directives
+#### `Cache-Control: max-stale` 和 `Cache-Control: max-stale=<s>`
+1. The cache is free to serve a stale document. 
+2. If the `<s>` parameter is specified, the document must not be stale by more than this amount of time. This relaxes the caching rules.
+
+#### `Cache-Control: min-fresh = <s>` 
+The document must still be fresh for at least `<s>` seconds in the future. 
+2. This makes the caching rules more strict.
+
+#### `Cache-Control: max-age = <s>`
+1. The cache cannot return a document that has been cached for longer than `<s>` seconds. 
+2. This directive makes the caching rules more strict, unless the `max-stale` directive also is set, in which case the age can exceed its expiration time.
+
+#### `Cache-Control: no-cache` 和 `Pragma: no-cache`
+1. This client won’t accept a cached resource unless it has been revalidated. 
+
+#### `Cache-Control: no-store`
+1. The cache should delete every trace of the document from storage as soon as possible, because it might contain sensitive information.
+2. The `no-store` request directive indicates that a cache must not store any part of either this request or any response to it. 不仅是不应缓存对该请求的响应，该请求本身的信息也不应存储。
+3. This directive applies to both private and shared caches.  "must not store" in this context means that the cache must not intentionally store the information in non-volatile storage, and must make a best-effort attempt to remove the information from volatile storage as promptly as possible after forwarding it.
+4. This directive is not a reliable or sufficient mechanism for ensuring privacy. In particular, malicious or compromised caches might not recognize or obey this directive, and communications networks might be vulnerable to eavesdropping.
+5. Note that if a request containing this directive is satisfied from a cache, the `no-store` request directive does not apply to the already stored response.
+
+#### `Cache-Control: only-if-cached`
+1. The `only-if-cached` request directive indicates that the client only wishes to obtain a stored response.
+2. If it receives this directive, a cache should either respond using a stored response that is consistent with the other constraints of the request, or respond with a `504` (Gateway Timeout) status code.  
+3. If a group of caches is being operated as a unified system with good internal connectivity, a member cache may forward such a request within that group of caches.
+4. 看起来是用于一个系统中的多个成员使用同样的共享缓存，这样的好处似乎不仅仅是不用重复请求，更重要的是保证每个成员都可以加载到同一个版本的资源。
+
+#### `Cache-Control: no-transform`
+1. The `no-transform` request directive indicates that an intermediary (whether or not it implements a cache) MUST NOT transform the payload.
+2. The `Content-Encoding`, `Content-Range`, `Content-Type` headers must not be modified by a proxy. 
+3. A non-transparent proxy might, for example, convert between image formats in order to save cache space or to reduce the amount of traffic on a slow link. The `no-transform` directive disallows this.
 
 
 ## References
