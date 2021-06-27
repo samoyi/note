@@ -7,9 +7,9 @@
 <!-- TOC -->
 
 - [URL Syntax](#url-syntax)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
-    - [URL 结构](#url-结构)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
+    - [URL 结构](#url-%E7%BB%93%E6%9E%84)
     - [Schemes: What Protocol to Use](#schemes-what-protocol-to-use)
     - [Hosts and Ports](#hosts-and-ports)
     - [Usernames and Passwords](#usernames-and-passwords)
@@ -17,6 +17,10 @@
     - [Parameters](#parameters)
     - [Query Strings](#query-strings)
     - [Fragments](#fragments)
+    - [Host, Domain, Origin and Site](#host-domain-origin-and-site)
+        - [public suffix 和 registrable domain](#public-suffix-%E5%92%8C-registrable-domain)
+        - [Origin](#origin)
+        - [Site](#site)
     - [References](#references)
 
 <!-- /TOC -->
@@ -186,5 +190,28 @@
     <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 
+## Host, Domain, Origin and Site
+1. 上面已经介绍了 **host**，再看一下标准中的表述：A host is a domain, an IP address, an opaque host, or an empty host.
+2. 再看看 **domain**，标准上的表述是：A domain is a non-empty ASCII string that identifies a realm within a network。 但感觉 MDN 上的一个表述似乎更准确：A domain is an authority within the internet that controls its own resources. Its "domain name" is a way to address this authority as part of the hierarchy in a URL。也就是，domain（域）是那个 realm，而 domain name（域名）是表示那个 realm 的一串字符。
+3. 一个普通的 host，既可以表示为域名也可以表示为 IP 地址。
+
+### public suffix 和 registrable domain
+1. Host 还包括两个特别的部分：public suffix 和 registrable domain。
+2. A host’s public suffix is the portion of a host which is included on the [Public Suffix List](https://publicsuffix.org/learn/).
+3. 直观的说，这部分就是你去注册域名时不能自定义的那一部分。比如你可以选择注册 `mysite.com`、`mysite.org` 或者 `mysite.com.cn`，`com`、`org` 或者 `com.cn` 就是不能定义的那一部分。
+4. Public suffix 还有一些特殊的，比如 Github Pages 的 `github.io`。
+5. Public suffix 的作用是用来判断域名中哪一部分是很多网站公共的部分，哪一部分是各个网站自定义的部分。
+6. 比如浏览器不允许给 public suffix 设置 cookie，比如你给 `com` 设置了一个 cookie，因为给一个域设置 cookie 后它的子域也会收到这个 cookie，这就会导致所有的基于 `com` 都会网站收到这个 cookie。
+7. 而 registrable domain 就是在 public suffix 的基础上，再加上前面注册的那个自定义名字。规范上的表述是：A host’s registrable domain is a domain formed by the most specific public suffix, along with the domain label immediately preceding it, if any. 
+8. 例如 `example.com` 和 `www.example.com` 的 registrable domain 都是 `example.com`；`github.io` 的 registrable domain 是 null；`whatwg.github.io` 的 registrable domain 是 `whatwg.github.io`。
+
+### Origin
+1. Origins are the fundamental currency of the web's security model. Two actors in the web platform that share an origin are assumed to trust each other and to have the same authority. Actors with differing origins are considered potentially hostile versus each other, and are isolated from each other to varying degrees.
+
+### Site
+
 ## References
 * [*HTTP: the definitive guide*](https://book.douban.com/subject/1440226/)
+* [URL 标准文档](https://url.spec.whatwg.org/)
+* [Domain](https://developer.mozilla.org/en-US/docs/Glossary/Domain)
+* [PUBLIC SUFFIX LIST](https://publicsuffix.org/learn/)

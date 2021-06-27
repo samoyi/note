@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [HTTP Headers](#http-headers)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [From](#from)
     - [User-Agent](#user-agent)
@@ -23,7 +23,7 @@
 
 ## Summary
 1. Table below shows the seven HTTP request headers that most commonly carry information about the user
-    <table>
+    <table border="1" cellpadding="10" cellspacing="0" style="margin-bottom: 10px; text-align: center;">
         <thead>
             <tr>
                 <th>Header name</th>
@@ -33,37 +33,37 @@
         </thead>
         <tbody>
             <tr>
-                <td>From</td>
+                <td><code>From</code></td>
                 <td>Request</td>
                 <td>User’s email address</td>
             </tr>
             <tr>
-                <td>User-Agent</td>
+                <td><code>User-Agent</code></td>
                 <td>Request</td>
                 <td>User’s browser software</td>
             </tr>
             <tr>
-                <td>Referer</td>
+                <td><code>Referer</code></td>
                 <td>Request</td>
                 <td>Page user came from by following link</td>
             </tr>
             <tr>
-                <td>Authorization</td>
+                <td><code>Authorization</code></td>
                 <td>Request</td>
                 <td>Username and password</td>
             </tr>
             <tr>
-                <td>Client-ip</td>
+                <td><code>Client-ip</code></td>
                 <td>Extension (Request)</td>
                 <td>Client’s IP address</td>
             </tr>
             <tr>
-                <td>X-Forwarded-For</td>
+                <td><code>X-Forwarded-For</code></td>
                 <td>Extension (Request)</td>
                 <td>Client’s IP address</td>
             </tr>
             <tr>
-                <td>Cookie</td>
+                <td><code>Cookie</code></td>
                 <td>Extension (Request)</td>
                 <td>Server-generated ID label</td>
             </tr>
