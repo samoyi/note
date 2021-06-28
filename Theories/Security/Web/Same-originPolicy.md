@@ -4,18 +4,19 @@
 <!-- TOC -->
 
 - [Same-origin policy](#same-origin-policy)
-    - [Same-origin policy 限制范围](#same-origin-policy-限制范围)
-        - [AJAX 同源限制是为了防止 CSRF](#ajax-同源限制是为了防止-csrf)
-    - [相关定义](#相关定义)
-        - [同源（same origin）的定义](#同源same-origin的定义)
-        - [源（origin）的定义](#源origin的定义)
-    - [继承源](#继承源)
-    - [绕过同源策略](#绕过同源策略)
-        - [使用 `document.domain`](#使用-documentdomain)
-        - [使用 CORS、WebSocket 或 JSONP](#使用-corswebsocket-或-jsonp)
-            - [HTML 中第三方资源的跨域使用](#html-中第三方资源的跨域使用)
-        - [使用代理服务器](#使用代理服务器)
-        - [`window.postMessage()`](#windowpostmessage)
+    - [Same-origin policy 限制范围](#same-origin-policy-%E9%99%90%E5%88%B6%E8%8C%83%E5%9B%B4)
+        - [AJAX 同源限制是为了防止 CSRF](#ajax-%E5%90%8C%E6%BA%90%E9%99%90%E5%88%B6%E6%98%AF%E4%B8%BA%E4%BA%86%E9%98%B2%E6%AD%A2-csrf)
+    - [相关定义](#%E7%9B%B8%E5%85%B3%E5%AE%9A%E4%B9%89)
+        - [同源（same origin）的定义](#%E5%90%8C%E6%BA%90same-origin%E7%9A%84%E5%AE%9A%E4%B9%89)
+        - [源（origin）的定义](#%E6%BA%90origin%E7%9A%84%E5%AE%9A%E4%B9%89)
+    - [继承源](#%E7%BB%A7%E6%89%BF%E6%BA%90)
+    - [绕过同源策略](#%E7%BB%95%E8%BF%87%E5%90%8C%E6%BA%90%E7%AD%96%E7%95%A5)
+        - [使用 document.domain](#%E4%BD%BF%E7%94%A8-documentdomain)
+            - [危害](#%E5%8D%B1%E5%AE%B3)
+        - [使用 CORS、WebSocket 或 JSONP](#%E4%BD%BF%E7%94%A8-corswebsocket-%E6%88%96-jsonp)
+            - [HTML 中第三方资源的跨域使用](#html-%E4%B8%AD%E7%AC%AC%E4%B8%89%E6%96%B9%E8%B5%84%E6%BA%90%E7%9A%84%E8%B7%A8%E5%9F%9F%E4%BD%BF%E7%94%A8)
+        - [使用代理服务器](#%E4%BD%BF%E7%94%A8%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8)
+        - [window.postMessage](#windowpostmessage)
     - [References](#references)
 
 <!-- /TOC -->
@@ -40,7 +41,7 @@
 
 ## 相关定义
 ### 同源（same origin）的定义
-相同的协议（protocol）、相同的端口（port）和相同的主机（host）
+相同的协议（protocol）、相同的端口（port）和相同的主机（host，包括域名和 IP）
 
 ### 源（origin）的定义
 1. 脚本本身的来源和同源策略并不相关，相关的是脚本所嵌入的文档的来源。
@@ -63,57 +64,63 @@
 3. frame 或子域可以通过设置与父级相同的 `document.domain` 来实现跨域访问 DOM。
 4. 父级和子级必须都设置该属性且属性值相等。即使父级设置的该属性值就是当前的域名，也不能省略设置。
 5. 对该属性任何赋值操作，都会导致端口号被设置为 `null`，即使是 `document.domain = document.domain`。所以才必须给父子的该属性都赋值，以保证两者的端口号都是 `null`。
+    ```html
+    <!-- http://localhost/test/index.html -->
+    <body>
+        <iframe id="myIframe" src="http://localhost:8080/"></iframe>
+    </body>
+    <script>
+    "use strict";
 
-```html
-<!-- http://localhost/test/index.html -->
-<body>
-    <iframe id="myIframe" src="http://localhost:8080/"></iframe>
-</body>
-<script>
-"use strict";
+    document.domain = 'localhost';
 
-document.domain = 'localhost';
+    window.onload = function(){
+        let frameWin = document.getElementById("myIframe").contentWindow;
+        let frameDoc = frameWin.document;
 
-window.onload = function(){
-    let frameWin = document.getElementById("myIframe").contentWindow;
-    let frameDoc = frameWin.document;
+        console.log(frameDoc.querySelector('#child').textContent)
+        console.log(frameDoc.cookie);
+        console.log(frameWin.localStorage);
+        console.log(frameWin.sessionStorage);
+    };
+    </script>
+    ```
+    ```js
+    // 8080 端口域服务器
+    const http = require('http');
+    const fs = require('fs');
 
-    console.log(frameDoc.querySelector('#child').textContent)
-    console.log(frameDoc.cookie);
-    console.log(frameWin.localStorage);
-    console.log(frameWin.sessionStorage);
-};
-</script>
-```
-```js
-// 8080 端口域服务器
-const http = require('http');
-const fs = require('fs');
+    http.createServer((req, res)=>{
+        if (req.url !== '/favicon.ico'){
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            fs.createReadStream('./test.html').pipe(res);
+        }
+        else {
+            res.end('');
+        }
+    }).listen(8080);
+    ```
+    ```html
+    <!-- 8080 端口域被访问的静态文件 -->
+    <body>
+        <h1 id="child">子级页面</h1>
+    </body>
+    <script>
+    "use strict";
+    document.domain = 'localhost';
 
-http.createServer((req, res)=>{
-    if (req.url !== '/favicon.ico'){
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        fs.createReadStream('./test.html').pipe(res);
-    }
-    else {
-        res.end('');
-    }
-}).listen(8080);
-```
-```html
-<!-- 8080 端口域被访问的静态文件 -->
-<body>
-    <h1 id="child">子级页面</h1>
-</body>
-<script>
-"use strict";
-document.domain = 'localhost';
+    document.cookie = 'key=2233';
+    localStorage.name = '33';
+    sessionStorage.age = 22;
+    </script>
+    ```
 
-document.cookie = 'key=2233';
-localStorage.name = '33';
-sessionStorage.age = 22;
-</script>
-```
+#### 危害
+1. Avoid using the `document.domain` setter. It undermines the security protections provided by the same-origin policy. 
+2. This is especially acute when using shared hosting; for example, if an untrusted third party is able to host an HTTP server at the same IP address but on a different port, then the same-origin protection that normally protects two different sites on the same host will fail, as the ports are ignored when comparing origins after the `document.domain` setter has been used.
+3. Because of these security pitfalls, this feature is in the process of being removed from the web platform. (This is a long process that takes many years.)
+4. Instead, use `postMessage()` or `MessageChannel` objects to communicate across origins in a safe manner.
+
 
 ### 使用 CORS、WebSocket 或 JSONP
 1. 可实现跨域 AJAX 和 HTML 中第三方资源的跨域使用
@@ -190,3 +197,4 @@ sessionStorage.age = 22;
 * [阮一峰](http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html)
 * [Javascript - The Definitive Guide 6th](http://shop.oreilly.com/product/9780596805531.do)
 * [Bypass Same Origin Policy](http://qnimate.com/same-origin-policy-in-nutshell/)
+* [Origin 的标准文档](https://html.spec.whatwg.org/multipage/origin.html)

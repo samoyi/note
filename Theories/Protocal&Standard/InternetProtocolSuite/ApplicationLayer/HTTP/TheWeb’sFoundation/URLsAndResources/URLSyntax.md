@@ -207,11 +207,24 @@
 
 ### Origin
 1. Origins are the fundamental currency of the web's security model. Two actors in the web platform that share an origin are assumed to trust each other and to have the same authority. Actors with differing origins are considered potentially hostile versus each other, and are isolated from each other to varying degrees.
+2. For example, if Example Bank's web site, hosted at `bank.example.com`, tries to examine the DOM of Example Charity's web site, hosted at `charity.example.org`, a "SecurityError" `DOMException` will be raised.
+3. Origin 分为特殊的 opaque origin 和普通的 tuple origin。一个 tuple origin 包括四部分：
+    * A scheme (a scheme).
+    * A host (a host).
+    * A port (a port).
+    * A domain (null or a domain). Null unless stated otherwise. 这个 domain，就是同源策略中可以通过 `document.domain` 修改的那个。
+4. 两个 tuple origin 如果 schemes、hosts 和 port 都相同，那就认为是同源（same origin）的。还有一个 same origin-domain 的概念，就是和上面那个 domain 相关的。但是不建议修改 domain，所以默认情况下只要是 same origin 那就是 same origin-domain。
+5. 注意这里比较的是 host，也就是说可以是域名也可以是 IP 地址。
 
 ### Site
+1. A scheme-and-host is a tuple of a scheme and a host. A site is an opaque origin or a scheme-and-host. 不包括端口号。
+2. 对于普通的 tuple origin 来说，如果两个 origin 的 registrable domain 和 scheme 相同，那就说它们是 same site。
+3. 注意这里是 registrable domain 相同，而上面的 same origin 是 host 相同。所以说一个 host 上可以存在多个 site。
+
 
 ## References
 * [*HTTP: the definitive guide*](https://book.douban.com/subject/1440226/)
 * [URL 标准文档](https://url.spec.whatwg.org/)
 * [Domain](https://developer.mozilla.org/en-US/docs/Glossary/Domain)
 * [PUBLIC SUFFIX LIST](https://publicsuffix.org/learn/)
+* [Origin 的标准文档](https://html.spec.whatwg.org/multipage/origin.html)
