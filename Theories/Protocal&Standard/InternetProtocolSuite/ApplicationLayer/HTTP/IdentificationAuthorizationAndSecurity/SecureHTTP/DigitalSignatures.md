@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Digital Signatures](#digital-signatures)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Signatures Are Cryptographic Checksums](#signatures-are-cryptographic-checksums)
     - [References](#references)
@@ -32,6 +32,7 @@
 2. Digital signatures often are generated using asymmetric, public-key technology. The author’s private key is used as a kind of “thumbprint”, because the private key is known only by the owner.
 3. Figure blow shows an example of how node A can send a message to node B and sign it:
     <img src="./images/07.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    
     1. Node A distills the variable-length message into a fixed-sized digest.
     2. Node A applies a “signature” function to the digest that uses the user’s private key as a parameter. Because only the user knows the private key, a correct signature function shows the signer is the owner. In this figure, we use the decoder function D as the signature function, because it involves the user’s private key.
     3. With the RSA cryptosystem, the decoder function D is used as the signature function, because D already takes the private key as input. Note that the decoder function is just a function, so it can be used on any input. Also, in the RSA cryptosystem, the D and E functions work when applied in either order and cancel each other out. So, `E(D(stuff)) = stuff`, just as `D(E(stuff)) = stuff`.

@@ -1,18 +1,17 @@
-# Making HTTP Safe
+# Digital Cryptography
 
 
 <!-- TOC -->
 
-- [Making HTTP Safe](#making-http-safe)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+- [Digital Cryptography](#digital-cryptography)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [The Art and Science of Secret Coding](#the-art-and-science-of-secret-coding)
     - [Ciphers](#ciphers)
     - [Cipher Machines](#cipher-machines)
     - [Keyed Ciphers](#keyed-ciphers)
     - [Digital Ciphers](#digital-ciphers)
-    - [Symmetric-Key Cryptography](#symmetric-key-cryptography)
     - [References](#references)
 
 <!-- /TOC -->
@@ -70,16 +69,7 @@
 2. Unlike physical metal keys or dial settings in mechanical devices, digital keys are just numbers. These digital key values are inputs to the encoding and decoding algorithms. The coding algorithms are functions that take a chunk of data and encode/decode it based on the algorithm and the value of the key.
 3. Given a plaintext message called *P*, an encoding function called *E*, and a digital encoding key called *e*, you can generate a coded ciphertext message *C*
     <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-4. You can decode the ciphertext *C* back into the original plaintext *P* by using the decoder function *D* and the decoding key *d*. Of course, the decoding and encoding functions are inverses of each other; the decoding of the encoding of *P* gives back the original message *P*
-    <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-
-
-## Symmetric-Key Cryptography
-1. Let’s talk in more detail about how keys and ciphers work together. 
-2. Many digital cipher algorithms are called **symmetric-key** ciphers, because they use the same key value for encoding as they do for decoding (*e* = *d*). Let’s just call the key *k*.
-3. In a symmetric key cipher, both a sender and a receiver need to have the same shared secret key, *k*, to communicate. 
-4. The sender uses the shared secret key to encrypt the message and sends the resulting ciphertext to the receiver. The receiver takes the ciphertext and applies the decrypting function, along with the same shared secret key, to recover the original plaintext.
-4. Some popular symmetric-key cipher algorithms are DES, Triple-DES, RC2, and RC4.
+4. You can decode the ciphertext *C* back into the original plaintext *P* by using the decoder function *D* and the decoding key *d*. Of course, the decoding and encoding functions are inverses of each other; the decoding of the encoding of *P* gives back the original message *P*.
 
 
 ## References

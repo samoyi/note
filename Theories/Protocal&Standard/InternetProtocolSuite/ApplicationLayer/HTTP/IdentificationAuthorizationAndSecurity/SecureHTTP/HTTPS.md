@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [HTTPS](#https)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [HTTPS Schemes](#https-schemes)
     - [Secure Transport Setup](#secure-transport-setup)
@@ -40,11 +40,11 @@ sending them to TCP
 
 ## HTTPS Schemes
 1. Today, secure HTTP is optional. Thus, when making a request to a web server, we need a way to tell the web server to perform the secure protocol version of HTTP. This is done in the scheme of the URL.
-2. In normal, nonsecure HTTP, the scheme prefix of the URL is http, as in:
+2. In normal, nonsecure HTTP, the scheme prefix of the URL is *http*, as in:
     ```
     http://www.joes-hardware.com/index.html
     ```
-    In the secure HTTPS protocol, the scheme prefix of the URL is https, as in:
+    In the secure HTTPS protocol, the scheme prefix of the URL is *https*, as in:
     ```
     https://cajun-shop.securesites.com/Merchant2/merchant.mv?Store_Code=AGCGS
     ```

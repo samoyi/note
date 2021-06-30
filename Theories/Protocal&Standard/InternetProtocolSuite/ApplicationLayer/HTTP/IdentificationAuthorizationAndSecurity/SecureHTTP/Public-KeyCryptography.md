@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Public-Key Cryptography](#public-key-cryptography)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [RSA](#rsa)
     - [Hybrid Cryptosystems and Session Keys](#hybrid-cryptosystems-and-session-keys)
@@ -26,8 +26,8 @@
 3. This makes key establishment much easier, because everyone can find the public key for a particular host. But the decoding key is kept secret, so only the recipient can decode messages sent to it
     <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 4. Node X can take its encoding key $e^x$ and publish it publicly. Now anyone wanting to send a message to node X can use the same, well-known public key. 
+5. Because each host is assigned an encoding key, which everyone uses, public-key cryptography avoids the $N^2$ explosion of pairwise symmetric keys
     <img src="./images/06.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-5. Because each host is assigned an encoding key, which everyone uses, public-key cryptography avoids the $N^2$ explosion of pairwise symmetric keys.
 6. Even though everyone can encode messages to X with the same key, no one other than X can decode the messages, because only X has the decoding private key $d^x$. 
 7. Splitting the keys lets anyone encode a message but restricts the ability to decode messages to only the owner. This makes it easier for nodes to securely send messages to servers, because they can just look up the server’s public key.
 8. Public-key encryption technology makes it possible to deploy security protocols to every computer user around the world.
