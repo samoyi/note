@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Content-Length: The Entity’s Size](#content-length-the-entitys-size)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Entity Bodies](#entity-bodies)
     - [Detecting Truncation](#detecting-truncation)
@@ -13,11 +13,11 @@
     - [Content-Length and Persistent Connections](#content-length-and-persistent-connections)
     - [Content Encoding](#content-encoding)
     - [Rules for Determining Entity Body Length](#rules-for-determining-entity-body-length)
-        - [1. HTTP message type is not allowed to have a body](#1-http-message-type-is-not-allowed-to-have-a-body)
-        - [2. Message contains a Transfer-Encoding header](#2-message-contains-a-transfer-encoding-header)
-        - [3. Use Content-Length header](#3-use-content-length-header)
-        - [4. “multipart/byteranges” media type](#4-multipartbyteranges-media-type)
-        - [5. Connection closes](#5-connection-closes)
+        - [HTTP message type is not allowed to have a body](#http-message-type-is-not-allowed-to-have-a-body)
+        - [Message contains a Transfer-Encoding header](#message-contains-a-transfer-encoding-header)
+        - [Use Content-Length header](#use-content-length-header)
+        - [“multipart/byteranges” media type](#multipartbyteranges-media-type)
+        - [Connection closes](#connection-closes)
     - [References](#references)
 
 <!-- /TOC -->
@@ -34,7 +34,7 @@
 2. The size includes any content encodings (the `Content-Length` of a gzip-compressed text file will be the compressed size, not the original size).
 3. The `Content-Length` header is mandatory for messages with entity bodies, unless the message is transported using chunked encoding. 
 4. `Content-Length` is needed to detect premature message truncation when servers crash and to properly segment messages
-that share a persistent connection.
+that share a persistent connection.（所以如果压缩的会就会是压缩后的大小，因为传输的是压缩后的数据）
 
 
 ## Entity Bodies
@@ -78,7 +78,7 @@ that share a persistent connection.
 ## Rules for Determining Entity Body Length
 1. The following rules describe how to correctly determine the length and end of an entity body in several different circumstances. 
 2. The rules should be applied in order; the first match applies.
-3. The HTTP/1.1 specification counsels that if a request contains a body and no `Content-Length`, the server should send a` 400 Bad Request` response if it cannot determine the length of the message, or a `411 Length Required` response if it wants to insist on receiving a valid `Content-Length`.
+3. The HTTP/1.1 specification counsels that if a request contains a body and no `Content-Length`, the server should send a `400 Bad Request` response if it cannot determine the length of the message, or a `411 Length Required` response if it wants to insist on receiving a valid `Content-Length`.
 
 ### 1. HTTP message type is not allowed to have a body
 1. If a particular HTTP message type is not allowed to have a body, ignore the `Content-Length` header for body calculations. 

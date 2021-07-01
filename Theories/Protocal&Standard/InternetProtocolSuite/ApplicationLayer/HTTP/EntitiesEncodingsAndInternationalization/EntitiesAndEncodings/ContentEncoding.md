@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Content Encoding](#content-encoding)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [The Content-Encoding Process](#the-content-encoding-process)
     - [Content-Encoding Types](#content-encoding-types)
@@ -54,7 +54,7 @@
 1. Of course, we don’t want servers encoding content in ways that the client can’t decipher. To prevent servers from using encodings that the client doesn’t support, the client passes along a list of supported content encodings in the `Accept-Encoding` request header
     <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 2. If the HTTP request does not contain an `Accept-Encoding` header, a server can assume that the client will accept any encoding (equivalent to passing `Accept-Encoding: *`).
-3. The Accept-Encoding field contains a comma-separated list of supported encodings. Here are a few examples:
+3. The `Accept-Encoding` field contains a comma-separated list of supported encodings. Here are a few examples:
     ```
     Accept-Encoding: compress, gzip
     Accept-Encoding:
