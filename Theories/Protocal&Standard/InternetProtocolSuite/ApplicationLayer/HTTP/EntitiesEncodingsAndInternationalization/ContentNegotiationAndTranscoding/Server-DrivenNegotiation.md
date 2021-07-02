@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Server-Driven Negotiation](#server-driven-negotiation)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Content-Negotiation Headers](#content-negotiation-headers)
     - [Content-Negotiation Header Quality Values](#content-negotiation-header-quality-values)
@@ -54,7 +54,7 @@
 1. However, say that one of the clients prefers Spanish. Which version of the page should the server send back? English or French? The server has just two choices: either guess, or fall back on the client-driven model and ask the client to choose. 
 2. However, if the Spaniard happens to understand some English, he might choose the English page—it wouldn’t be ideal, but it would do. In this case, the Spaniard needs the ability to pass on more information about his preferences, conveying that he does have minimal knowledge of English and that, in a pinch, English will suffice. 
 3. Fortunately, HTTP does provide a mechanism for letting clients like our Spaniard give richer descriptions of their preferences, using quality values (“q values” for short).
-4. The HTTP protocol defines quality values to allow clients to list multiple choices for each category of preference and associate an order of preference with each choice. For example, clients can send an Accept-Language header of the form: 
+4. The HTTP protocol defines quality values to allow clients to list multiple choices for each category of preference and associate an order of preference with each choice. For example, clients can send an `Accept-Language` header of the form: 
     ```
     Accept-Language: en;q=0.5, fr;q=0.0, nl;q=1.0, tr;q=0.0
     ```

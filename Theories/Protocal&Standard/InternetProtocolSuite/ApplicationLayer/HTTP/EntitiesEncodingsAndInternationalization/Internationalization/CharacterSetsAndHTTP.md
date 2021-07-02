@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Character Sets and HTTP](#character-sets-and-http)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Charset Is a Character-to-Bits Encoding](#charset-is-a-character-to-bits-encoding)
     - [How Character Sets and Encodings Work](#how-character-sets-and-encodings-work)
@@ -46,6 +46,7 @@
 1. We want to convert from bits in a document into characters that we can display onscreen. But because there are many different alphabets, and many different ways of encoding characters into bits (each with advantages and disadvantages), we need a standard way to describe and apply the bits-to-character decoding algorithm. 
 2. Bits-to-character conversions happen in two steps, as shown in figure below: 
     <img src="./images/02.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    
     1. In (a), bits from a document are converted into a character code that identifies a particular numbered character in a particular coded character set. In the example, the decoded character code is numbered 225. 
     2. In (b), the character code is used to select a particular element of the coded character set. In iso-8859-6, the value 225 corresponds to “ARABIC LETTER FEH”. The algorithms used in Steps a and b are determined from the MIME charset tag.
 3. A key goal of internationalized character systems is the isolation of the semantics (letters) from the presentation (graphical presentation forms). HTTP concerns itself only with transporting the character data and the associated language and charset labels. The presentation of the character shapes is handled by the user’s graphics display software (browser, operating system, fonts), as shown in (c).
@@ -53,7 +54,7 @@
 
 ## Standardized MIME Charset Values
 1. The combination of a particular character encoding and a particular coded character set is called a **MIME charset**. 
-2. HTTP uses standardized MIME charset tags in the Content-Type and Accept-Charset headers. MIME charset values are registered with the IANA.
+2. HTTP uses standardized MIME charset tags in the `Content-Type` and `Accept-Charset` headers. MIME charset values are registered with the IANA.
 
 
 ## Content-Type Charset Header and META Tags

@@ -4,8 +4,8 @@
 <!-- TOC -->
 
 - [Transparent Negotiation](#transparent-negotiation)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Caching and Alternates](#caching-and-alternates)
     - [The Vary Header](#the-vary-header)
@@ -35,7 +35,8 @@
 3. Figure below illustrates both a correct and incorrect sequence of operations involving a cache
     <img src="./images/01.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 4. The first request results in the cache forwarding the request to the server and storing the response. The second response is looked up by the cache, and a document matching the URL is found. This document, however, is in French, and the requestor wants a Spanish document. If the cache just sends back the French document to the requestor, it will be behaving incorrectly.
-5. The cache must therefore forward the second request to the server as well, and store both the response and an “alternate” response for that URL. The cache now has two different documents for the same URL, just as the server does. 6. These different versions are called **variants** or **alternates**. Content negotiation can be thought of as the process of selecting, from the variants, the best match for a client request.
+5. The cache must therefore forward the second request to the server as well, and store both the response and an “alternate” response for that URL. The cache now has two different documents for the same URL, just as the server does. 
+6. These different versions are called **variants** or **alternates**. Content negotiation can be thought of as the process of selecting, from the variants, the best match for a client request.
 
 
 ## The Vary Header
@@ -49,7 +50,8 @@
     Accept-Encoding: gzip
     Accept-Language: en, pdf
     Accept-Charset: iso-8859-1, *, utf-8
-    
+    ```
+    ```
     HTTP/1.1 200 OK
     Date: Sun, 10 Dec 2000 22:13:40 GMT
     Server: Apache/1.3.12 OpenSSL/0.9.5a (Unix) FrontPage/4.0.4.3
@@ -66,7 +68,7 @@
 5. When a new request arrives, the cache finds the best match using the content-negotiation headers. Before it can serve this document to the client, however, it must see whether the server sent a `Vary` header in the cached response. 
 6. If a `Vary` header is present, the header values for the headers in the new request must match the header values in the old, cached request. Because servers may `vary` their responses based on client request headers, caches must store both the client request headers and the corresponding server response headers with each cached varaint, in order to implement transparent negotiation. This is illustrated in figure below
     <img src="./images/02.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-7. If a server’s Vary header looked like this, the huge number of different `User-Agent` and `Cookie` values could generate many variants:
+7. If a server’s `Vary` header looked like this, the huge number of different `User-Agent` and `Cookie` values could generate many variants:
     ```
     Vary: User-Agent, Cookie
     ```

@@ -5,7 +5,7 @@
 
 - [Internationalization](#internationalization)
     - [Preface](#preface)
-    - [章节顺序](#章节顺序)
+    - [章节顺序](#%E7%AB%A0%E8%8A%82%E9%A1%BA%E5%BA%8F)
     - [References](#references)
 
 <!-- /TOC -->
@@ -29,7 +29,6 @@
 4. Language Tags and HTTP
 5. Internationalized URIs
 6. Other Considerations
-
 
 
 ## References

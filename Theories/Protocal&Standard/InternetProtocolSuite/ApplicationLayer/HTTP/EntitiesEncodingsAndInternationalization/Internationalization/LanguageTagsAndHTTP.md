@@ -4,19 +4,12 @@
 <!-- TOC -->
 
 - [Language Tags and HTTP](#language-tags-and-http)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
-    - [Character Set Terminology](#character-set-terminology)
-        - [Character](#character)
-        - [Glyph](#glyph)
-        - [Coded character](#coded-character)
-        - [Coding space](#coding-space)
-        - [Code width](#code-width)
-        - [Character repertoire](#character-repertoire)
-        - [Coded character set](#coded-character-set)
-        - [Character encoding scheme](#character-encoding-scheme)
-    - [没看](#没看)
+    - [The Content-Language Header](#the-content-language-header)
+    - [The Accept-Language Header](#the-accept-language-header)
+    - [没看](#%E6%B2%A1%E7%9C%8B)
     - [References](#references)
 
 <!-- /TOC -->
@@ -29,41 +22,41 @@
 
 
 ## Summary
-The previous section described how the HTTP `Accept-Charset` header and the `Content-Type` charset parameter carry character-encoding information from the client and server. HTTP programmers who do a lot of work with international applications and content need to have a deeper understanding of multilingual character systems to understand technical specifications and properly implement software. It isn’t easy to learn multilingual character systems—the terminology is complex and inconsistent, you often have to pay to read the standards documents, and you may be unfamiliar with the other languages with which you’re working. This section is an overview of character systems and standards
+1. Language tags are short, standardized strings that name spoken languages.
+2. We need standardized names, or some people will tag French documents as “French”, others will use “Français”, others still might use “France”, and lazy people might just use “Fra” or “F”. Standardized language tags avoid this confusion.
+3. There are language tags for English (en), German (de), Korean (ko), and many other languages. 
+4. Language tags can describe regional variants and dialects of languages, such as Brazilian Portuguese (pt-BR), U.S. English (en-US), and Hunan Chinese (zh-xiang). There is even a standard language tag for Klingon (i-klingon)!
 
 
-## Character Set Terminology
-Here are eight terms about electronic character systems that you should know:
+## The Content-Language Header
+1. The `Content-Language` entity header field describes the target audience languages for the entity. 
+2. If the content is intended primarily for a French audience, the ContentLanguage header field would contain:
+    ```
+    Content-Language: fr
+    ```
+3. The `Content-Language` header isn’t limited to text documents. Audio clips, movies, and applications might all be intended for a particular language audience. Any media type that is targeted to particular language audiences can have a `Content-Language` header. In figure below, the audio file is tagged for a Navajo audience
+    <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+4. 注意和 `charset` 的区别，`Content-Language` 并不是说明内容使用什么语言，例如说文档用什么语言显示，这显然是字符编码应该做的事情。而是说内容是为什么语言用户提供的。例如一篇简单的法语文章，如果它是为了中国的法语初学者准备的，`Content-Language` 就应该设置为 `zh`，而不是 `fr`。
+5. If the content is intended for multiple audiences, you can list multiple languages. As suggested in the HTTP specification, a rendition of the “Treaty of Waitangi,” presented simultaneously in the original Maori and English versions, would call for:
+    ```
+    Content-Language: mi, en
+    ```
 
-### Character
-1. An alphabetic letter, numeral, punctuation mark, ideogram (as in Chinese), symbol, or other textual “atom” of writing. 
-2. The Universal Character Set (UCS) initiative, known informally as Unicode(Unicode is a commercial consortium based on UCS that drives commercial products.), has developed a standardized set of textual names for many characters in many languages, which often are used to conveniently and uniquely name characters.
 
-### Glyph
-A stroke pattern or unique graphical shape that describes a character. A character may have multiple glyphs if it can be written different ways.
-
-### Coded character
-A unique number assigned to a character so that we can work with it.
-
-### Coding space
-A range of integers that we plan to use as character code values.
-
-### Code width
-The number of bits in each (fixed-size) character code.
-
-### Character repertoire
-A particular working set of characters (a subset of all the characters in the world).
-
-### Coded character set
-A set of coded characters that takes a character repertoire (a selection of characters from around the world) and assigns each character a code from a coding space. In other words, it maps numeric character codes to real characters.
-
-### Character encoding scheme
-An algorithm to encode numeric character codes into a sequence of content bits (and to decode them back). Character encoding schemes can be used to reduce the amount of data required to identify characters (compression), work around
-transmission restrictions, and unify overlapping coded character sets.
+## The Accept-Language Header
+1. Most of us know at least one language. HTTP lets us pass our language restrictions and preferences along to web servers. 
+2. If the web server has multiple versions of a resource, in different languages, it can give us content in our preferred language. Servers also can use the Accept-Language header to generate dynamic content in the language of the user or to select images or target language-appropriate merchandising promotions. Here, a client requests Spanish content:
+    ```
+    Accept-Language: es
+    ```
+3. You can place multiple language tags in the `Accept-Language` header to enumerate all supported languages and the order of preference (left to right). Here, the client prefers English but will accept Swiss German (de-CH) or other variants of German (de):
+    ```
+    Accept-Language: en, de-CH, de
+    ```
 
 
 ## 没看
-该节其他内容
+该节剩余内容
 
 
 ## References

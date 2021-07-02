@@ -1,11 +1,11 @@
-# Internationalization
+# Content Negotiation and Transcoding
 
 
 <!-- TOC -->
 
-- [Internationalization](#internationalization)
+- [Content Negotiation and Transcoding](#content-negotiation-and-transcoding)
     - [Preface](#preface)
-    - [章节顺序](#章节顺序)
+    - [章节顺序](#%E7%AB%A0%E8%8A%82%E9%A1%BA%E5%BA%8F)
     - [References](#references)
 
 <!-- /TOC -->
