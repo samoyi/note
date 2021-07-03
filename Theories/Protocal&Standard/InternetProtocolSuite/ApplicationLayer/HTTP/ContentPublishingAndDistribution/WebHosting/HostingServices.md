@@ -3,8 +3,8 @@
 <!-- TOC -->
 
 - [Hosting Services](#hosting-services)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [A Simple Example: Dedicated Hosting](#a-simple-example-dedicated-hosting)
     - [References](#references)
@@ -26,7 +26,7 @@
 
 
 ## A Simple Example: Dedicated Hosting
-1. Suppose that Joe’s Hardware Online and Mary’s Antique Auction both want fairly high-volume web sites. Irene’s ISP has racks and racks full of identical, highperformance web servers that it can lease to Joe and Mary, instead of having Joe and Mary purchase their own servers and maintain the server software.
+1. Suppose that Joe’s Hardware Online and Mary’s Antique Auction both want fairly high-volume web sites. Irene’s ISP has racks and racks full of identical, high-performance web servers that it can lease to Joe and Mary, instead of having Joe and Mary purchase their own servers and maintain the server software.
 2. In figure below, both Joe and Mary sign up for the dedicated web hosting service offered by Irene’s ISP
     <img src="./images/01.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 3. Joe leases a dedicated web server that is purchased and maintained by Irene’s ISP. Mary gets a different dedicated server from Irene’s ISP. Irene’s ISP gets to buy server hardware in volume and can select hardware that is reliable, time-tested, and low-cost. If either Joe’s Hardware Online or Mary’s Antique Auction grows in popularity, Irene’s ISP can offer Joe or Mary additional servers immediately.

@@ -6,16 +6,16 @@
 - [General Redirection Methods](#general-redirection-methods)
     - [Summary](#summary)
     - [HTTP Redirection](#http-redirection)
-        - [原理](#原理)
+        - [原理](#%E5%8E%9F%E7%90%86)
         - [Disadvantages](#disadvantages)
     - [DNS Redirection](#dns-redirection)
-        - [原理](#原理-1)
+        - [原理](#%E5%8E%9F%E7%90%86)
         - [DNS round robin](#dns-round-robin)
         - [Multiple addresses and round-robin address rotation](#multiple-addresses-and-round-robin-address-rotation)
         - [DNS round robin for load balancing](#dns-round-robin-for-load-balancing)
         - [The impact of DNS caching](#the-impact-of-dns-caching)
         - [Other DNS-based redirection algorithms](#other-dns-based-redirection-algorithms)
-    - [Anycast Addressing 不懂](#anycast-addressing-不懂)
+    - [Anycast Addressing 不懂](#anycast-addressing-%E4%B8%8D%E6%87%82)
     - [IP MAC Forwarding](#ip-mac-forwarding)
     - [IP Address Forwarding](#ip-address-forwarding)
     - [Network Element Control Protocol](#network-element-control-protocol)
@@ -72,8 +72,8 @@ Most DNS clients just use the first address of the multi-address set. To balance
 4. But, even though DNS doesn’t deal out the transactions of a single client across server replicas, it does a decent job of spreading the aggregate load of multiple clients. As long as there is a modestly large number of clients with similar demand, the load will be relatively well distributed across servers.
 
 ### Other DNS-based redirection algorithms
-1. We’ve already discussed how DNS rotates address lists with each request. However, some enhanced DNS servers use other techniques for choosing the order of the ddresses:
-    * Load-balancing algorithms: Some DNS servers keep track of the load on the web servers and place the leastloaded web servers at the front of the list.
+1. We’ve already discussed how DNS rotates address lists with each request. However, some enhanced DNS servers use other techniques for choosing the order of the addresses:
+    * Load-balancing algorithms: Some DNS servers keep track of the load on the web servers and place the least-loaded web servers at the front of the list.
     * Proximity-routing algorithms: DNS servers can attempt to direct users to nearby web servers, when the farm of web servers is geographically dispersed.
     * Fault-masking algorithms:DNS servers can monitor the health of the network and route requests away from service interruptions or other faults.
 2. Typically, the DNS server that runs sophisticated server-tracking algorithms is an authoritative server that is under the control of the content provider

@@ -3,16 +3,16 @@
 <!-- TOC -->
 
 - [Virtual Hosting](#virtual-hosting)
-    - [设计思想](#设计思想)
-    - [抽象本质](#抽象本质)
+    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
+    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
     - [Summary](#summary)
     - [Virtual Server Request Lacks Host Information](#virtual-server-request-lacks-host-information)
     - [Making Virtual Hosting Work](#making-virtual-hosting-work)
         - [Virtual hosting by URL path](#virtual-hosting-by-url-path)
         - [Virtual hosting by port number](#virtual-hosting-by-port-number)
         - [Virtual hosting by IP address](#virtual-hosting-by-ip-address)
-        - [Virtual hosting by `Host` header](#virtual-hosting-by-host-header)
-    - [HTTP/1.1 `Host` Headers](#http11-host-headers)
+        - [Virtual hosting by Host header](#virtual-hosting-by-host-header)
+    - [HTTP/1.1 Host Headers](#http11-host-headers)
         - [Syntax and usage](#syntax-and-usage)
         - [Missing Host headers](#missing-host-headers)
         - [Interpreting Host headers](#interpreting-host-headers)
@@ -42,6 +42,7 @@
 2. Recall that HTTP/1.0 requests send only the path component of the URL in the request message. If you try to get `http://www.joes-hardware.com/index.html`, the browser connects to the server `www.joes-hardware.com`, but the HTTP/1.0 request says “GET /index.html”, with no further mention of the hostname.
 3. If the server is virtually hosting multiple sites, this isn’t enough information to figure out what virtual web site is being accessed. For example, in figure below:
     <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    
     * If client A tries to access `http://www.joes-hardware.com/index.html`, the request “GET /index.html” will be sent to the shared web server.
     * If client B tries to access `http://www.marys-antiques.com/index.html`, the identical request “GET /index.html” will be sent to the shared web server.
 4. As far as the web server is concerned, there is not enough information to determine which web site is being accessed! The two requests look the same, even though they are for totally different documents (from different web sites). The problem is that the web site host information has been stripped from the request.
