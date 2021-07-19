@@ -305,104 +305,28 @@
 1. 参考《算法导论》第 10 页的伪代码，元素 $A[1..(j-1)]$ 就是 **原来** 在位置 $1$ 到 $j-1$ 的元素，但现在已排序。$A[1..(j-1)]$ 可以原地排序，那整个数组也就可以原地排序。
 2. 我们把 $A[1..(j-1)]$ 的这些性质形式的表示为一个 **循环不变式**。直接看《算法导论》第 10 页的讲解。
 
-
 ### 实现
 1. 基本排序逻辑
     <img src="./images/13.png" width="500" style="display: block; margin: 5px 0 10px;" />
-2. 我初步的尝试实现是：
-    ```py
-    def insertionSort (list):
-        size = len(list)
-
-        for leftLast in range(0, len(list)-1):
-            inserted = list[leftLast+1]
-            leftIndex = leftLast
-
-            while inserted < list[leftIndex] and leftIndex > -1:
-                leftIndex -= 1
-            
-            # 这个插入操作很麻烦，涉及两个 O(n) 操作
-            popped = list.pop(leftLast+1)
-            if leftIndex == -1:
-                list.insert(0, popped)
-            else:
-                list.insert(leftIndex+1, popped)
-
-    list = [54, 26, 93, 17, 77, 31, 44, 55, 20]
-    insertionSort(list)
-    ```
-3. 但下面使用 “右移” 的插入算法效率会更高
     <img src="./images/14.png" width="600" style="display: block; margin: 5px 0 10px;" />
-4. 实现：
-    ```py
-    def insertionSort (list):
-        for leftLast in range(0, len(list)-1):
-            inserted = list[leftLast+1]
-            leftIndex = leftLast
-
-            # 下面循环中的赋值和最后一步的赋值操作加起来也不会超过 O(n+1)
-            while inserted < list[leftIndex] and leftIndex > -1:
-                list[leftIndex+1] = list[leftIndex]
-                leftIndex -= 1
-            
-            list[leftIndex+1] = inserted
-
-    list = [54, 26, 93, 17, 77, 31, 44, 55, 20]
-    insertionSort(list)
-    ```
-5. JS 实现。上面的动画里是先找到合适的位置，然后让中间的所有元素依次向右移动一个位置。按照这个思路，实现如下
-    ```js
-    function insertionSort( arr ) {
-        let len = arr.length;
-
-        for ( let i=1; i<len; i++ ) {
-            let currItem = arr[i]; // 本轮比较要插入到合适位置的项
-            let j = i;
-            let prev = i-1; // 记录中间要移动的元素
-
-            // 通过不断地向左比较，找到 currItem 合适的位置
-            while ( j > 0 && currItem < arr[j-1] ) {
+2. 实现：
+    ```cpp
+    void insertion_sort (int* arr, int startIdx, int endIdx) {
+        for (int i = startIdx + 1; i <= endIdx; i++) {
+            int j = i - 1;
+            int curr = arr[i];
+            while (j >= 0 && curr < arr[j]) {
+                arr[j+1] = arr[j];
                 j--;
             }
-
-            // 所有比 currItem 大的，依次右移一个位置
-            while ( prev >= j ) {
-                arr[prev+1] = arr[prev];
-                prev--;
-            }
-
-            // 这里本来是想通过判断，在值相同的情况下不用进行赋值操作
-            // 但判断本身就是一次访问操作，里面还要再进行一次赋值操作，不如直接只进行一次赋值操作
-            // if ( arr[j] !== currItem ) {
-                arr[j] = currItem;
-            // }
+            arr[j+1] = curr; // 没比过 arr[j]，所以要放到 arr[j] 的右边
         }
     }
     ```
-6. 这个实现本身已经没什么问题了，不过如果愿意的话可以把两个 `while` 合并为一个，一边比较一边移动，而不是比较完之后再统一移动。两个方法在性能上是一样的，只是减少一点代码量然后省掉了变量 `prev` 而已
+3. 一个可能的性能优化点是，每轮比较之后的插入操作 `arr[j+1] = curr`，并不是总是有意义的。如果 `while` 循环体根本没有执行，那么其实并不需要最后的一步操作。因此可以加上判断
     ```js
-    function insertionSort( arr ) {
-        let len = arr.length;
-
-        for ( let i=1; i<len; i++ ) {
-            let currItem = arr[i];
-            let j = i;
-
-            // 依次和前面已排序的项比较
-            // 如果比前一项小，则把前一项向后移动一位，前一项会空出来（为一个重复值）
-            while ( j > 0 && arr[j-1] > currItem ) {
-                arr[j] = arr[j-1];
-                j--;
-            }
-            
-            arr[j] = currItem;
-        }
-    }
-    ```
-7. 一个可能的性能优化点是，每轮比较之后的插入操作 `arr[j] = currItem;`，并不是总是有意义的。如果 `while` 循环体根本没有执行，那么其实并不需要最后的一步操作。因此可以加上判断
-    ```js
-    if ( j < i ) {
-        arr[j] = currItem;
+    if (j < i - 1) {
+        arr[j+1] = curr;
     }
     ```
     这样就在某些情况下省掉了一次数组写入的操作。不过如果大多数时候都是需要插入的，那大多数的索引比较就没意义了。在不同的数据情况下，哪种消耗更大呢？
@@ -488,6 +412,7 @@ let b = [1, 1, 0, 0, 1, 1];
 let c = foo(a, b);
 console.log(c); // [1, 0, 1, 1, 0, 0, 1]
 ```
+
 
 ## Shell Sort
 ### 设计思想
