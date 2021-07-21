@@ -13,7 +13,7 @@
     - [Analyzing divide-and-conquer algorithms](#analyzing-divide-and-conquer-algorithms)
     - [分析](#分析)
         - [数组长度和高度（层数-1）的关系](#数组长度和高度层数-1的关系)
-        - [`mergeSort` 的调用次数](#mergesort-的调用次数)
+        - [`merge_sort` 的调用次数](#merge_sort-的调用次数)
         - [比较次数](#比较次数)
         - [访问次数](#访问次数)
         - [线性对数](#线性对数)
@@ -174,15 +174,13 @@
     3. 最后执行合并步骤：归并两个已排序的子数组。
 3. 这段递归代码是归纳证明算法能够正确地将数组排序的基础：如果它能将两个子数组排序，它就能够通过归并两个子数组来将整个数组排序。
     ```cpp
-    void mergeSort (int* arr, int low, int high) {
-        if (low >= high) {
-            return;
+    void merge_sort(int* arr, int low, int high) {
+        if (high > low) {
+            int mid = (low + high) / 2; // 分解为两部分
+            merge_sort(arr, low, mid); // 解决（排序）左半部分
+            merge_sort(arr, mid+1, high); // 解决（排序）右半部分
+            merge(arr, low, mid, high); // 合并
         }
-
-        int mid = (low + high) / 2;
-        mergeSort(arr, low, mid);
-        mergeSort(arr, mid+1, high);
-        merge(arr, low, mid, high);
     }
     ```
 
@@ -200,8 +198,8 @@
 3. 最后一层只有一个，所以 $\frac{n}{2^{高度}} = 1$，也就是 $2^{高度} = n$。例如 $n = 4$ 时，高度就是 $2$；$n = 2$ 时，高度就是 $1$；$n = 1$ 时，高度就是 $0$。
 4. 所以如果有 $n$ 个元素，那分出的高度就是 $lg n$。$lg$ 指 $log_2$。
 
-### `mergeSort` 的调用次数
-1. 刚开始调用一次，之后每次划分都会调用两次 `mergeSort`，最后划分为单项数组时，每个单向数组调用一次。
+### `merge_sort` 的调用次数
+1. 刚开始调用一次，之后每次划分都会调用两次 `merge_sort`，最后划分为单项数组时，每个单向数组调用一次。
 2. 调用的总次数是 $2^0 + 2^1 + 2^2 +...+ n/2 + n$，最后两项实际上就是 $2^{lg{n-1}}$ 和 $2^{lg{n}}$。
 3. 等比数列求和 $\frac{1-n*2}{1-2} = 2n-1$。
 
@@ -209,7 +207,7 @@
 1. 命题：对于长度为 $N$ 的任意数组，自顶向下的归并排序需要 $\frac{1}{2}N\log_2 N$ 至 $N\log_2 N$ 次比较。
 2. 可以通过下图所示的树状图来理解这个命题
     <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px;" />
-3. 每个节点都表示一个 `mergeSort()` 方法通过 `merge()` 方法归并而成的子数组。
+3. 每个节点都表示一个 `merge_sort()` 方法通过 `merge()` 方法归并而成的子数组。
 4. 对于这样一个 $n$ 层的树，我们定义最顶上完整的数组是第 $0$ 层，最底下第一次 merge 之后层是第 $n-1$ 层。
 5. 对于 $0$ 到 $n-1$ 之间的任意第 $k$ 层，有 $2^k$ 个子数组。因为每次都一分为二成两个子数组。
 5. 我们假定这个数组的长度是 2 的幂（《算法导论》上说到这种简化不影响递归式解的增长量级），那么最底下一行就有 $2^{n-1}$ 个两项子数组，所以完整数组的长度 $N= 2^n$。
@@ -249,7 +247,7 @@
     ```
 4. 然后应用到归并排序里
     ```js
-    function mergeSort ( arr, low, high ) {
+    function merge_sort ( arr, low, high ) {
         if ( high - low < 14 ) {
             insertionSortForMergeSort( arr, low, high );
             return;
@@ -261,8 +259,8 @@
 
         let mid = Math.floor( low + (high-low) / 2 );
 
-        mergeSort( arr, low, mid );
-        mergeSort( arr, mid+1, high );
+        merge_sort( arr, low, mid );
+        merge_sort( arr, mid+1, high );
         merge ( arr, low, mid, high );
     }
     ```
@@ -270,7 +268,7 @@
 ### 测试数组是否已经有序
 1. 我们可以添加一个判断条件，如果 `a[mid]` 小于等于 `a[mid+1]`，我们就认为数组已经是有序的并跳过 `merge()` 方法
     ```js
-    function mergeSort ( arr, low, high ) {
+    function merge_sort ( arr, low, high ) {
         if ( high - low < 14 ) {
             insertionSortForMergeSort( arr, low, high );
             return;
@@ -282,8 +280,8 @@
 
         let mid = Math.floor( low + (high-low) / 2 );
 
-        mergeSort( arr, low, mid );
-        mergeSort( arr, mid+1, high );
+        merge_sort( arr, low, mid );
+        merge_sort( arr, mid+1, high );
         if ( arr[mid] > arr[mid+1] ) {
             merge ( arr, low, mid, high );
         }
@@ -362,9 +360,9 @@ TODO
 4. 递归的终点，或者说起点，是子数组只有一个元素的情况。
 5. 从这个起点回溯，归并排序这两个单元素数组
     <img src="./images/03.png" width="400" style="display: block; margin: 5px 0 10px;" />
-6. 我们定义这个排序方法 `mergeSort`，这个方法会 `merge` 两个子数组；这两个子数组也需要是排序好的，那么我们就递归的用 `mergeSort` 去排序这两个子数组
+6. 我们定义这个排序方法 `merge_sort`，这个方法会 `merge` 两个子数组；这两个子数组也需要是排序好的，那么我们就递归的用 `merge_sort` 去排序这两个子数组
     ```js
-    function mergeSort ( arr ) {
+    function merge_sort ( arr ) {
         let len = arr.length;
         if ( len === 1 ) {
             return arr;
@@ -374,7 +372,7 @@ TODO
         let left = arr.slice( 0, midIndex );
         let right = arr.slice( midIndex );
 
-        return merge( mergeSort( left ), mergeSort( right ) );
+        return merge( merge_sort( left ), merge_sort( right ) );
     }
     ```
 
@@ -509,7 +507,7 @@ TODO
             return Math.floor( Math.random() * n* 10 );
         });
 
-        mergeSort( arr, 0, n-1 )
+        merge_sort( arr, 0, n-1 )
         // MergeBU(arr)
 
         console.log(count_accesses);

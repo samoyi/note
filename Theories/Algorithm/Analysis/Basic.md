@@ -21,7 +21,7 @@
             - [使用基准分析进行时间分析的例子](#使用基准分析进行时间分析的例子)
         - [基准测试的缺陷](#基准测试的缺陷)
     - [数学模型](#数学模型)
-        - [输入规模和运行时间](#输入规模和运行时间)
+        - [输入规模（input size）和运行时间（running time）](#输入规模input-size和运行时间running-time)
         - [使用步骤数来描述一个算法的复杂度](#使用步骤数来描述一个算法的复杂度)
         - [大 $O$、大 $Θ$ 和大 $Ω$](#大-o大-θ-和大-ω)
         - [大 O 记法——取函数的数量级函数用来近似计算复杂度，和求极限原理相同](#大-o-记法取函数的数量级函数用来近似计算复杂度和求极限原理相同)
@@ -173,12 +173,13 @@
 3. 前者取决于计算机、Java 编译器和操作系统，后者取决于程序本身和输入。
 4. 如果对于程序的所有部分我们都知道了这些性质，可以将它们相乘并将程序中所有指令的成本相加得到总运行时间。
 
-### 输入规模和运行时间
+### 输入规模（input size）和运行时间（running time）
 1. In general, the time taken by an algorithm grows with the size of the input, so it is traditional to describe the running time of a program as a function of the size of its input. 
-2. To do so, we need to define the terms “running time” and “size of input” more carefully.
-3. The best notion for **input size** depends on the problem being studied.
-4. The **running time** of an algorithm on a particular input is the number of primitive operations or “steps” executed. 
-5. It is convenient to define the notion of step so that it is as machine-independent as possible. 6. For the moment, let us adopt the following view. A constant amount of time is required to execute each line of our pseudocode. One line may take a different amount of time than another line, but we shall assume that each execution of the $i$th line takes time $c_i$, where $c_i$ is a
+2. To do so, we need to define the terms “**running time**” and “**size of input**” more carefully.
+3. The best notion for input size depends on the problem being studied.
+4. The running time of an algorithm on a particular input is the number of primitive operations or “steps” executed. 
+5. It is convenient to define the notion of step so that it is as machine-independent as possible.
+6. For the moment, let us adopt the following view. A constant amount of time is required to execute each line of our pseudocode. One line may take a different amount of time than another line, but we shall assume that each execution of the $i$th line takes time $c_i$, where $c_i$ is a
 constant.
 
 ### 使用步骤数来描述一个算法的复杂度
