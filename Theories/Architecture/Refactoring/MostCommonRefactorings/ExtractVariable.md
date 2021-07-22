@@ -16,6 +16,7 @@ inverse of: *Inline Variable*
 
 
 ## Motivation
+### 意图与实现分离
 1. 如果表达式比较复杂，那看起来就很费劲，而且很多时候我们只关心这个表达式的意图，而不关心它的实现
     ```js
     return order.quantity * order.itemPrice -
@@ -29,6 +30,74 @@ inverse of: *Inline Variable*
     const shipping = Math.min(basePrice * 0.1, 100);
     return basePrice - quantityDiscount + shipping;
     ```
+
+### 定义相对值
+1. 下面是实现归并排序 `merge` 函数的一个实现
+    ```cpp
+    void merge(int* arr, int low, int mid, int high) {
+        int* left = calloc(mid - low + 1, sizeof(int));
+        int* right = calloc(high - mid, sizeof(int));
+        if (left == NULL || right == NULL)  {
+            printf("Error: calloc failed in merge.\n");
+            exit(EXIT_FAILURE);
+        }
+        
+        for (int i=low; i<=mid; i++) {
+            left[i-low] = arr[i];
+        }
+        for (int j=mid+1; j<=high; j++) {
+            right[j-mid-1] = arr[j];
+        }
+
+        int m = low, n = mid + 1;
+        for (int k=low; k<=high; k++) {
+            if (m <= mid && n <= high) {
+                if (left[m-low] < right[n-mid-1]) {
+                    arr[k] = left[m-low];
+                    m++;
+                }
+                else {
+                    arr[k] = right[n-mid-1];
+                    n++;
+                }
+            }
+            else if (m == mid+1) {
+                arr[k] = right[n-mid-1];
+                n++;
+            }
+            else {
+                arr[k] = left[m-low];
+                m++;
+            }
+        }    
+
+        free(left);
+        free(right);
+    }
+    ```
+2. 在调用两个 `calloc` 函数是，第一个参数的表达式并没有提取变量，这首先就违背了意图与实现分离。应该改成下面的样子
+    ```cpp
+    int leftSize = mid - low + 1;
+    int rightSize = high - mid;
+
+    int* left = calloc(leftSize, sizeof(int));
+    int* right = calloc(rightSize, sizeof(int));
+    ```
+3. 由于没有提取变量，所以在下面复制两个数组的时候，循环体内部的逻辑就显得不够直观
+    ```cpp
+    for (int i=low; i<=mid; i++) {
+        left[i-low] = arr[i];
+    }
+    ```
+    `left` 的索引还是只能使用 `arr` 的索引变量 `low` 来计算，而 `arr` 的索引又不能使用自己的 `low` 来计算。
+4. 如果之前提取了变量，则这个循环就变成了
+    ```cpp
+    for (int i=0; i<leftSize; i++) {
+        left[i] = arr[low+i];
+    }
+    ```
+    现在可以很直观的看出来是依次对 `left` 的每一项进行操作，而且也可以直观的看出来是从 `arr` 中的哪些项进行复制。
+5. 提取变量后，`left` 就可以使用相对于自己的索引数据，而不是原本的 `arr` 的索引数据。使用相对数据一般都要比使用绝对数据更方便一些。
 
 
 ## Mechanics
