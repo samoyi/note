@@ -285,10 +285,14 @@ constant.
                 }
             }
             if (!stillOK) {
+                free(arr1);
+                free(arr2);
                 return false;
             }
         }
 
+        free(arr1);
+        free(arr2);
         return true;
     }
     ```
@@ -298,62 +302,68 @@ constant.
 
 ### 方案 2：排序法
 1. 如果按照字母表顺序给字符排序，异序词得到的结果将是同一个字符串
-    ```py
-    def anagramSolution2(s1, s2):
-        alist1 = list(s1)
-        alist2 = list(s2)
+    ```cpp
+    bool anagramSolution2(char* str1, char* str2, int strSize) {
+        int* arr1 = (int*)malloc(strSize*sizeof(int));
+        int* arr2 = (int*)malloc(strSize*sizeof(int));
 
-        alist1.sort()
-        alist2.sort()
+        if (arr1 == NULL || arr2 == NULL) {
+            printf("malloc failed.\n");
+            return false;
+        }
 
-        pos = 0
-        matches = True
+        for (int i=0; i<strSize; i++) {
+            arr1[i] = str1[i];
+            arr2[i] = str2[i];
+        }
 
-        while pos < len(s1) and matches:
-            if alist1[pos] == alist2[pos]:
-                pos = pos + 1
-            else:
-                matches = False
+        merge_sort(arr1, 0, strSize-1);
+        merge_sort(arr2, 0, strSize-1);
 
-    return matches
+        for (int i=0; i<strSize; i++) {
+            if (arr1[i] != arr2[i]) {
+                free(arr1);
+                free(arr2);
+                return false;
+            }
+        }
+
+        free(arr1);
+        free(arr2);
+        
+        return true;
+    }
     ```
-2. 如果不考虑排序，看起来只需要遍历一遍，时间复杂度是 $O(n)$。
-3. 但是，排序的时间复杂度基本上是 $O(n^2)$ 或 $O(n\log n)$，所以排序操作起主导作用。
-4. 也就是说，该算法和排序过程的数量级相同。
+2. 如果不考虑排序，只需要遍历一遍，时间复杂度是 $O(n)$。但是，归并排序的时间复杂度是 $O(n\log n)$，所以排序操作起主导作用。也就是说，该算法和归并排序过程的数量级相同。
 
 ### 方案 3：蛮力法
 1. 我以为清点法就是蛮力法了，没想到真正的蛮力法是生成第一个字符串的所有异序词！还真没想到这个方法。
 2. 因为要遍历所有可能的结果，所以在这个例子，复杂度高达 $n!$。但这也是一个思路，而且也许在某些场景下这还是最优的方法。
 
 ### 方案 4：计数法
-1. 最后一个方案基于这样一个事实：两个异序词有同样数目的 a、同样数目的 b、同样数目的 c，等等。
+1. 最后一个方案基于这样一个事实：两个异序词有同样数目的 `a`、同样数目的 `b`、同样数目的 `c`，等等。
 2. 要判断两个字符串是否为异序词，先统计一下每个字符出现的次数。因为字符可能有 26 种，所以使用 26 个计数器，对应每个字符。每遇到一个字符，就将对应的计数器加 1。
 3. 最后，如果两个计数器列表相同，那么两个字符串肯定是异序词。
-    ```py
-    def anagramSolution4(s1, s2):
-        c1 = [0] * 26
-        c2 = [0] * 26
-            
-        for i in range(len(s1)):
-            pos = ord(s1[i]) - ord('a')
-            c1[pos] = c1[pos] + 1
-            
-        for i in range(len(s2)):
-            pos = ord(s2[i]) - ord('a')
-            c2[pos] = c2[pos] + 1
-                    
-        j = 0
-        stillOK = True
-        while j < 26 and stillOK:
-            if c1[j] == c2[j]:
-                j = j + 1
-            else:
-                stillOK = False
-                
-        return stillOK
+    ```cpp
+    bool anagramSolution4(char* str1, char* str2, int strSize) {
+        int count1[26] = {0};
+        int count2[26] = {0};
+
+        for (int i=0; i<strSize; i++) {
+            count1[str1[i] - (int)'a']++;
+            count2[str2[i] - (int)'a']++;
+        }
+
+        for (int i=0; i<26; i++) {
+            if (count1[i] != count2[i]) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
     ```
-4. 前两个 `for` 循环的次数都是 n，最后一个 `while` 循环遍历字母表，最多是 26。时间复杂度为 $T(n)=2n+26$，即 $O(n)$。
-5. 尽管这个方案的执行时间是线性的，它还是要用额外的空间来存储计数器。也就是说，这个算法用空间换来了时间。
+4. 尽管这个方案的执行时间是 $O(n)$ 级别的，它还是要用额外的空间来存储计数器。也就是说，这个算法用空间换来了时间。
 
 
 ## 时间与空间
