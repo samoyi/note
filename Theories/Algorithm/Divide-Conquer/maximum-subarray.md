@@ -9,6 +9,7 @@
             - [动态规划的情况](#动态规划的情况)
             - [分治法的情况](#分治法的情况)
     - [设计思想](#设计思想)
+        - [问题变换](#问题变换)
         - [怎么想到用分治的](#怎么想到用分治的)
         - [暴力算法的改进](#暴力算法的改进)
         - [动态规划](#动态规划)
@@ -49,11 +50,20 @@ TODO
 
 
 ## 设计思想
+### 问题变换
+1. 我们希望找到在哪一段时间内价格增长最多。
+2. 但我们不在乎增长率，也就是说不需要考虑这段时间的长短，哪怕是增长率很慢的很长一段时间，只要在这段时间内价格增长最多那就是最优解。
+3. 增长最多要怎么表示？一段时间的增长要怎么表示？
+4. 最直观的当然还是首尾价格差，暴力求解方法就是根据这个计算的。
+5. 不过一段时间的总的增长，是由每一天的增长或减少组合到一起的。所以把一段时间中每一天的增长或减少相加，就能得出来这段时间的总的增长。
+6. 这样问题就变换成了 **最大子数组**（maximum subarray）问题。
+
 ### 怎么想到用分治的
-1. 拿到问题时，发现问题规模太大了，不好处理。（可能只是一个十项数组，但是人脑的处理能力实在有有限）
-2. 于是可以尝试分治，那么最简单的就是一分为二。
-3. 立刻会想到的是左侧子数组和右侧子数组找最大的，但是很快就会意识到跨越的问题。于是就是三个里面找最大的。
-4. 问题的关键就是在跨域两侧的数组里面求最大的。
+1. 拿到问题时，发现问题规模太大了，不好处理。可能只是一个十项数组，但是人脑的处理能力实在有限。
+2. 于是可以尝试分治，那么最简单的就是一分为二。分别找到左侧子数组和右侧子数组中的最大子数组。
+3. 但是找到后也不能立刻得到结果，因为还有跨域所有两部分的数组。
+4. 就像归并排序中，给左右两个子数组分别排序后，也不能立刻得到整个排序的数组一样，还需要进行一步归并；这里还要再解决跨域左右两边的子数组问题。
+5. 左侧子数组中的最大子数组、右侧子数组中的最大子数组、跨域两侧的最大子数组，三者中最大的就是整个数组的最大子数组。问题的关键就是在跨域两侧的数组里面求最大的。
 
 ### 暴力算法的改进
 1. 在确定的子数组起点的情况下，求不同终点时的子数组 sum 有些动态规划的感觉：每次求一个新的 sum 不需要从头开始求，而只需要用当前项加上之前的结果即可。
@@ -68,7 +78,7 @@ TODO
 2. Suppose we want to find a maximum subarray of the subarray $A[low..high]$. Divide-and-conquer suggests that we divide the subarray into two subarrays of as equal size as possible. 
 3. That is, we find the midpoint, say $mid$, of the subarray, and consider the subarrays $A[low..mid]$ and $A[mid+1..high]$. 
 4. Any contiguous subarray $A[i..j]$ of $A[low..high]$ must lie in exactly one of the following places:
-    * entirely in the subarray $A[low..mid]$, so that low $i \le j \le mid$,
+    * entirely in the subarray $A[low..mid]$, so that $low \le i \le j \le mid$,
     * entirely in the subarray $A[mid+1..high]$, so that $mid < i \le j \le high$, or
     * crossing the midpoint, so that $low \le i \le mid < j \le high$
 5. We can find maximum subarrays of $A[low..mid]$ and $A[mid+1..high]$ recursively, because these two subproblems are smaller instances of the problem of finding a maximum subarray. 
@@ -151,45 +161,47 @@ TODO
 
 
 ## 暴力求解
-1. 刚开始写了这样的解法
-    ```js
-    function brute_force_find_maximum_subarray(arr, lowIdx, highIdx) {
-        let i, j, k, maxLeft, maxRight, sum, max = Number.NEGATIVE_INFINITY;
-        for (i=lowIdx; i<=highIdx; i++) {
-            for (j=i; j<=highIdx; j++) {
-                sum = 0;
-                for (k=i; k<=j; k++) {
-                    sum += arr[k];
-                }
-                if (sum > max) {
-                    max = sum;
-                    maxLeft = i;
-                    maxRight = j;
+1. 遍历所有的日期组合
+    ```cpp
+    #define PRICE_COUNT 16
+
+    void brute_force_find_maximum_subarray(int* prices, int startIdx, int endIdx, 
+                                            int* max, int* maxLeftIdx, int* maxRightIdx);
+
+    int main(void) {
+        int prices[PRICE_COUNT] = {113, 110, 85, 105, 102, 86, 63, 81, 
+                                    101, 94, 106, 101, 79, 94, 90, 97};
+        int max = 0, maxLeftIdx = 0, maxRightIdx = 0;
+
+        brute_force_find_maximum_subarray(prices, 0, PRICE_COUNT-1, 
+                                            &max, &maxLeftIdx, &maxRightIdx);
+
+        printf("%d %d %d\n", max, maxLeftIdx, maxRightIdx); // 43 6 10
+
+        return 0;
+    }
+
+    void brute_force_find_maximum_subarray(int* prices, int startIdx, int endIdx, 
+                                            int* max, int* maxLeftIdx, int* maxRightIdx) {
+        if (startIdx >= endIdx) {
+            printf("endIdx must be larger than startIdx\n");
+            return;
+        }
+
+        *max = 0;
+        for (int i=startIdx; i<endIdx; i++) {
+            for (int j=i+1; j<=endIdx; j++) { // 注意 j 的初始值
+                int temp = prices[j] - prices[i];
+                if (temp > *max) {
+                    *max = temp;
+                    *maxLeftIdx = i;
+                    *maxRightIdx = j;
                 }
             }
         }
-        return [maxLeft, maxRight, max];
     }
     ```
-2. 都达到立方级别了。实际上最内层的 `for` 循环是不需要的，在 `i` 确定后，每次 `j` 的更新不需要清零 `sum` 重新计算，而是直接在上一次 `j` 计算出的 `sum` 的基础上累加就行了
-    ```js
-    function brute_force_find_maximum_subarray(arr, lowIdx, highIdx) {
-        let i, j, maxLeft, maxRight, sum, max = Number.NEGATIVE_INFINITY;
-        for (i=lowIdx; i<=highIdx; i++) {
-            sum = 0;
-            for (j=i; j<=highIdx; j++) {
-                sum += arr[j];
-                if (sum > max) {
-                    max = sum;
-                    maxLeft = i;
-                    maxRight = j;
-                }
-            }
-        }
-        return [maxLeft, maxRight, max];
-    }
-    ```
-3. 当数组规模很小时，暴力算法会更快。不过话说回来，如果很小，分治也很快，所以没必要同时实现两个算法。
+2. 当数组规模很小时，暴力算法会更快。不过如果很小，分治也很快，所以没必要同时实现两个算法。
 
 
 ## 线性时间的动态规划版本
