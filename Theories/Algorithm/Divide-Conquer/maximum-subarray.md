@@ -85,49 +85,58 @@ TODO
 6. Thus, all that is left to do is find a maximum subarray that crosses the midpoint, and take a subarray with the largest sum of the three.
 
 ### 寻找跨越中点的最大子数组
-1. We can easily find a maximum subarray crossing the midpoint in time linear in the size of the subarray $A[low..high]$. 
-2. This problem is not a smaller instance of our original problem, because it has the added restriction that the subarray it chooses must cross the midpoint.
-3. Any subarray crossing the midpoint is itself made of two subarrays $A[i..mid]$ and $A[mid+1..j]$, where $low \le i \le mid$ and $mid < j \le high$. 
-4. Therefore, we just need to find maximum subarrays of the form $A[i..mid]$ and $A[mid+1..j]$ and then combine them. 
-5. The procedure `find_max_crossing_subarray` takes as input the array `arr` and the indices `lowIdx`, `midIdx`, and `highIdx`, and it returns a tuple containing the indices demarcating a maximum subarray that crosses the midpoint, along with the sum of the values in a maximum subarray
-    ```js
-    let arr = [13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7];
-    let len = arr.length; 
-    // 中点是 18
+1. 我的第一反应还是两个嵌套的循环遍历所有跨域中点的子数组，这样的复杂度仍然是平方级别。
+2. 没想到这里居然还能在分治一次，从而将复杂度讲到线性级别。
+3. We can easily find a maximum subarray crossing the midpoint in time linear in the size of the subarray $A[low..high]$. 
+4. This problem is not a smaller instance of our original problem, because it has the added restriction that the subarray it chooses must cross the midpoint.
+5. Any subarray crossing the midpoint is itself made of two subarrays $A[i..mid]$ and $A[mid+1..j]$, where $low \le i \le mid$ and $mid < j \le high$. 
+6. Therefore, we just need to find maximum subarrays of the form $A[i..mid]$ and $A[mid+1..j]$ and then combine them. 
+7. The procedure `find_max_crossing_subarray` takes as input the array `arr` and the indices `lowIdx`, `midIdx`, and `highIdx`, and it returns a tuple containing the indices demarcating a maximum subarray that crosses the midpoint, along with the sum of the values in a maximum subarray
+    ```cpp
+    int main(void) {
+        int arr[PRICE_COUNT] = {13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7};
+        int leftIdx = PRICE_COUNT/2, rightIdx = PRICE_COUNT/2 + 1, sum = 0;
 
-    function find_max_crossing_subarray (arr, lowIdx, midIdx, highIdx) {
-        let leftSum = Number.NEGATIVE_INFINITY;
-        let rightSum = Number.NEGATIVE_INFINITY;
-        let leftMaxtIdx, rightMaxtIdx, tempSum;
-        
-        tempSum = 0;
-        for (let i=midIdx; i>=0; i--) {
-            tempSum += arr[i];
-            if (tempSum > leftSum) {
-                leftSum = tempSum;
-                leftMaxtIdx = i;
-            }
-        }
+        find_max_crossing_subarray(arr, 0, PRICE_COUNT/2, PRICE_COUNT-1, &leftIdx, &rightIdx, &sum);
 
-        tempSum = 0;
-        for (let i=midIdx+1; i<=highIdx; i++) {
-            tempSum += arr[i];
-            if (tempSum > rightSum) {
-                rightSum = tempSum;
-                rightMaxtIdx = i;
-            }
-        }
+        printf("%d %d %d\n", leftIdx, rightIdx, sum); // 7 10 43
 
-        return [leftMaxtIdx, rightMaxtIdx, leftSum + rightSum];
+        return 0;
     }
 
-    let re = find_max_crossing_subarray(arr, 0, Math.floor((len-1)/2), len-1);
-    console.log(re); // [7, 10, 43]
+    void find_max_crossing_subarray (int* arr, int lowIdx, int midIdx, int highIdx, 
+                                        int* leftIdx, int* rightIdx, int* sum) {
+        int currLeft = midIdx;
+        int currRight = midIdx + 1;
+        int leftMax = 0;
+        int rightMax = 0;
+        int leftSum = 0;
+        int rightSum = 0;
+        
+        for (int i=midIdx; i>=lowIdx; i--) {
+            leftSum += arr[i];
+            if (leftSum > leftMax) {
+                leftMax = leftSum;
+                currLeft = i;
+            }
+        }
+        for (int j=midIdx+1; j<=highIdx; j++) {
+            rightSum += arr[j];
+            if (rightSum > rightMax) {
+                rightMax = rightSum;
+                currRight = j;
+            }
+        }
+
+        *leftIdx = currLeft;
+        *rightIdx = currRight;
+        *sum = leftMax + rightMax;
+    }
     ```
 6. 可以看到，对于长度为 $n$ 的数组，这个方法中两个 `for` 的总次数也是 $n$。
 
 ### 递归求解
-1. With a linear-time `find_max_crossing_subarray` procedure in hand, we can write pseudocode for a divide-and-conquer algorithm to solve the maximumsubarray problem
+1. With a linear-time `find_max_crossing_subarray` procedure in hand, we can write a divide-and-conquer algorithm to solve the maximumsubarray problem
     ```js
     function find_maximum_subarray (arr, lowIdx, highIdx) {
         if (lowIdx === highIdx) {
