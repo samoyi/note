@@ -93,34 +93,49 @@ TODO
 6. Therefore, we just need to find maximum subarrays of the form $A[i..mid]$ and $A[mid+1..j]$ and then combine them. 
 7. The procedure `find_max_crossing_subarray` takes as input the array `arr` and the indices `lowIdx`, `midIdx`, and `highIdx`, and it returns a tuple containing the indices demarcating a maximum subarray that crosses the midpoint, along with the sum of the values in a maximum subarray
     ```cpp
+    #define PRICE_COUNT 16
+
+    typedef struct {
+        int lowIdx;
+        int midIdx;
+        int highIdx;
+    } Arr_Indexes;
+
+    typedef struct {
+        int leftIdx;
+        int rightIdx;
+        int sum;
+    } Max_Subarray_Tuple;
+
+
     int main(void) {
         int arr[PRICE_COUNT] = {13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7};
-        int leftIdx = PRICE_COUNT/2, rightIdx = PRICE_COUNT/2 + 1, sum = 0;
 
-        find_max_crossing_subarray(arr, 0, PRICE_COUNT/2, PRICE_COUNT-1, &leftIdx, &rightIdx, &sum);
+        Arr_Indexes indexex = {0, PRICE_COUNT/2, PRICE_COUNT-1};
+        Max_Subarray_Tuple tuple;
 
-        printf("%d %d %d\n", leftIdx, rightIdx, sum); // 7 10 43
+        find_max_crossing_subarray(arr, &indexex, &tuple);
+        print_subarray_tuple(&tuple); // [7 10 43]
 
         return 0;
     }
 
-    void find_max_crossing_subarray (int* arr, int lowIdx, int midIdx, int highIdx, 
-                                        int* leftIdx, int* rightIdx, int* sum) {
-        int currLeft = midIdx;
-        int currRight = midIdx + 1;
+    void find_max_crossing_subarray (int* arr, Arr_Indexes* indexex, Max_Subarray_Tuple* tuple) {
+        int currLeft = indexex->midIdx;
+        int currRight = indexex->midIdx + 1;
         int leftMax = 0;
         int rightMax = 0;
         int leftSum = 0;
         int rightSum = 0;
         
-        for (int i=midIdx; i>=lowIdx; i--) {
+        for (int i=indexex->midIdx; i>=indexex->lowIdx; i--) {
             leftSum += arr[i];
             if (leftSum > leftMax) {
                 leftMax = leftSum;
                 currLeft = i;
             }
         }
-        for (int j=midIdx+1; j<=highIdx; j++) {
+        for (int j=indexex->midIdx+1; j<=indexex->highIdx; j++) {
             rightSum += arr[j];
             if (rightSum > rightMax) {
                 rightMax = rightSum;
@@ -128,9 +143,9 @@ TODO
             }
         }
 
-        *leftIdx = currLeft;
-        *rightIdx = currRight;
-        *sum = leftMax + rightMax;
+        tuple->leftIdx = currLeft;
+        tuple->rightIdx = currRight;
+        tuple->sum = leftMax + rightMax;
     }
     ```
 6. 可以看到，对于长度为 $n$ 的数组，这个方法中两个 `for` 的总次数也是 $n$。
