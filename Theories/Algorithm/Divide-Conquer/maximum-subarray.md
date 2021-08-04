@@ -97,7 +97,6 @@ TODO
 
     typedef struct {
         int lowIdx;
-        int midIdx;
         int highIdx;
     } Arr_Indexes;
 
@@ -111,8 +110,8 @@ TODO
     int main(void) {
         int arr[PRICE_COUNT] = {13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7};
 
-        Arr_Indexes indexex = {0, PRICE_COUNT/2, PRICE_COUNT-1};
-        Max_Subarray_Tuple tuple;
+        Arr_Indexes indexes = {0, PRICE_COUNT-1};
+        Max_Subarray_Tuple tuple = {}; 
 
         find_max_crossing_subarray(arr, &indexex, &tuple);
         print_subarray_tuple(&tuple); // [7 10 43]
@@ -120,22 +119,30 @@ TODO
         return 0;
     }
 
-    void find_max_crossing_subarray (int* arr, Arr_Indexes* indexex, Max_Subarray_Tuple* tuple) {
-        int currLeft = indexex->midIdx;
-        int currRight = indexex->midIdx + 1;
-        int leftMax = 0;
-        int rightMax = 0;
+    void find_max_crossing_subarray (int* arr, Arr_Indexes* indexes, Max_Subarray_Tuple* tuple) {
+        int midIdx = (indexes->highIdx + indexes->lowIdx) / 2;
+        int currLeft = midIdx;
+        int currRight = midIdx + 1;
+        
+        // 本来这里的 leftMax 和 rightMax 也初始化为了 0，在这个输入数组这里并没有看到问题；
+        // 但是如果使用数组 {13, -3, -25, 20, -3, -16, -23, 18} 测试，输出是 [3 4 20]，
+        // 而正确的应该是 [3 4 17]。
+        // 因为在当前输入中，第二个 for 循环一次都没有执行，所以最后的 rightMax 值为 0；
+        // 但实际上如果一次都没执行，rightMax 和 leftMax 都应该是起始位置的值。
+        int leftMax = arr[currLeft];
+        int rightMax = arr[currRight];
         int leftSum = 0;
         int rightSum = 0;
-        
-        for (int i=indexex->midIdx; i>=indexex->lowIdx; i--) {
+
+        for (int i=midIdx; i>=indexes->lowIdx; i--) {
             leftSum += arr[i];
             if (leftSum > leftMax) {
                 leftMax = leftSum;
                 currLeft = i;
             }
         }
-        for (int j=indexex->midIdx+1; j<=indexex->highIdx; j++) {
+        
+        for (int j=midIdx+1; j<=indexes->highIdx; j++) {
             rightSum += arr[j];
             if (rightSum > rightMax) {
                 rightMax = rightSum;
@@ -152,59 +159,34 @@ TODO
 
 ### 递归求解
 1. With a linear-time `find_max_crossing_subarray` procedure in hand, we can write a divide-and-conquer algorithm to solve the maximumsubarray problem
-    ```cpp
-    void find_maximum_subarray (int* arr, Arr_Indexes* indexes, Max_Subarray_Tuple* tuple) {
-        
-        if (indexes->lowIdx == indexes->highIdx) {
-            // 这里也要赋值，否则递归到最后这里的时候 tuple 里的值还是未初始化的
-            tuple->leftIdx = indexes->lowIdx;
-            tuple->rightIdx = indexes->lowIdx;
-            tuple->sum = arr[indexes->lowIdx];
-            return;
+    ```js
+    function find_maximum_subarray (arr, lowIdx, highIdx) {
+        if (lowIdx === highIdx) {
+            return [lowIdx, highIdx, arr[lowIdx]];
         }
 
-        Arr_Indexes leftIndexes = {indexes->lowIdx, 
-                                    (indexes->midIdx + indexes->lowIdx)/2,
-                                    indexes->midIdx};
-        Max_Subarray_Tuple leftTuple;
-        find_maximum_subarray(arr, &leftIndexes, &leftTuple);
+        let midIdx = Math.floor((lowIdx + highIdx)/2);
 
-        Arr_Indexes rightIndexes = {indexes->midIdx+1, 
-                                    (indexes->highIdx + indexes->midIdx + 1)/2, 
-                                    indexes->highIdx};
-        Max_Subarray_Tuple rightTuple;
-        find_maximum_subarray(arr, &rightIndexes, &rightTuple);
+        let leftTuple = find_maximum_subarray(arr, lowIdx, midIdx);
+        let rightTuple = find_maximum_subarray(arr, midIdx+1, highIdx);
+        let crossTuple = find_max_crossing_subarray(arr, lowIdx, midIdx, highIdx);
         
-        Arr_Indexes midIndexes = {indexes->lowIdx, 
-                                    indexes->midIdx, 
-                                    indexes->highIdx};
-        Max_Subarray_Tuple midTuple;
-        find_max_crossing_subarray(arr, &midIndexes, &midTuple);
+        let leftSum = leftTuple[2];
+        let rightSum = rightTuple[2];
+        let crossSum = crossTuple[2];
 
-
-        // Max_Subarray_Tuple* maxTuple;
-
-        if (leftTuple.sum >= midTuple.sum && leftTuple.sum >= rightTuple.sum) {
-            // *maxTuple = leftTuple;
-            tuple->sum = leftTuple.sum;
-            tuple->leftIdx = leftTuple.leftIdx;
-            tuple->rightIdx = leftTuple.rightIdx;
+        if (leftSum >= rightSum && leftSum >= crossSum) {
+            return leftTuple;
         }
-        else if (midTuple.sum >= leftTuple.sum && midTuple.sum >= rightTuple.sum) {
-            // *maxTuple = midTuple;
-            tuple->sum = midTuple.sum;
-            tuple->leftIdx = midTuple.leftIdx;
-            tuple->rightIdx = midTuple.rightIdx;
+        else if (rightSum >= leftSum && rightSum >= crossSum) {
+            return rightTuple;
         }
         else {
-            // *maxTuple = rightTuple;
-            tuple->sum = rightTuple.sum;
-            tuple->leftIdx = rightTuple.leftIdx;
-            tuple->rightIdx = rightTuple.rightIdx;
+            return crossTuple;
         }
     }
     ```
-    
+
 ### 递归式和复杂度
 直接看《算法导论》42页的分析。和归并排序具有一样的复杂度，都是 $n\lg n$ 级别。
 
