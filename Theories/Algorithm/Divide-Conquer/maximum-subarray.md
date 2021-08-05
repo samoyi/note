@@ -13,6 +13,7 @@
         - [怎么想到用分治的](#怎么想到用分治的)
         - [暴力算法的改进](#暴力算法的改进)
         - [动态规划](#动态规划)
+        - [初始值](#初始值)
     - [分治思路](#分治思路)
         - [划分](#划分)
         - [寻找跨越中点的最大子数组](#寻找跨越中点的最大子数组)
@@ -71,6 +72,11 @@ TODO
 
 ### 动态规划
 
+### 初始值
+1. `find_max_crossing_subarray` 最初实现中，`leftMax` 和 `rightMax` 初始化为 0，在某些输入的情况下会出现内部循环体一次都不执行的情况。
+2. 例如输入为 `{13, -3, -25, 20, -3, -16, -23, 18}` 时，右侧的 `for` 循环就不会执行，所以 `rightMax` 会保持在初始值。其实 `rightMax` 的初始值应该是 -3，但这里就错误的设置为了 0。
+3. 也就是说，初始值就应该是语义上的初始值，是该数据默认情况下什么都不发生时的值，而不应该随便的设置为 0 这样的值。
+
 
 ## 分治思路
 ### 划分
@@ -124,17 +130,46 @@ TODO
         int currLeft = midIdx;
         int currRight = midIdx + 1;
         
-        // 本来这里的 leftMax 和 rightMax 也初始化为了 0，在这个输入数组这里并没有看到问题；
+        // 本来下面这部分是注释中的实现，其中开始的四个变量都初始化为了 0，
+        // 在这个输入数组这里并没有看到问题；
         // 但是如果使用数组 {13, -3, -25, 20, -3, -16, -23, 18} 测试，输出是 [3 4 20]，
-        // 而正确的应该是 [3 4 17]。
+        // 而正确的应该是 [3 4 17]；
         // 因为在当前输入中，第二个 for 循环一次都没有执行，所以最后的 rightMax 值为 0；
-        // 但实际上如果一次都没执行，rightMax 和 leftMax 都应该是起始位置的值。
+        // 但实际上如果一次都没执行，rightMax 和 leftMax 都应该是起始位置的值；
+        // 这里 leftSum 和 rightSum 初始化为 0 并没有问题，因为如果会进入循环，
+        // 会立刻初始化为初始的数组项的值；如果不仅如此循环，最后也不会用到这两个变量。
+
+        // int leftMax = 0;
+        // int rightMax = 0;
+        // int leftSum = 0;
+        // int rightSum = 0;
+
+        // for (int i=midIdx; i>=indexes->lowIdx; i--) {
+        //     leftSum += arr[i];
+        //     if (leftSum > leftMax) {
+        //         leftMax = leftSum;
+        //         currLeft = i;
+        //     }
+        // }
+
+        // for (int j=midIdx+1; j<=indexes->highIdx; j++) {
+        //     rightSum += arr[j];
+        //     if (rightSum > rightMax) {
+        //         rightMax = rightSum;
+        //         currRight = j;
+        //     }
+        // }
+
+        // 现在把 leftMax 和 rightMax 改为真正的初始值，也就是初始位置的数组项的值；
+        // leftSum 和 rightSum 虽然没有影响，但按照语义也改为这两个真正的初始值；
+        // leftSum 和 rightSum 修改了之后，for 循环就要从初始位置的下一个位置开始计算新的 
+        // leftSum 和 rightSum。
         int leftMax = arr[currLeft];
         int rightMax = arr[currRight];
-        int leftSum = 0;
-        int rightSum = 0;
+        int leftSum = arr[currLeft];
+        int rightSum = arr[currRight];
 
-        for (int i=midIdx; i>=indexes->lowIdx; i--) {
+        for (int i=midIdx-1; i>=indexes->lowIdx; i--) {
             leftSum += arr[i];
             if (leftSum > leftMax) {
                 leftMax = leftSum;
@@ -142,7 +177,7 @@ TODO
             }
         }
         
-        for (int j=midIdx+1; j<=indexes->highIdx; j++) {
+        for (int j=midIdx+2; j<=indexes->highIdx; j++) {
             rightSum += arr[j];
             if (rightSum > rightMax) {
                 rightMax = rightSum;
