@@ -14,12 +14,12 @@
         - [暴力算法的改进](#暴力算法的改进)
         - [动态规划](#动态规划)
         - [初始值](#初始值)
+    - [暴力求解](#暴力求解)
     - [分治思路](#分治思路)
         - [划分](#划分)
         - [寻找跨越中点的最大子数组](#寻找跨越中点的最大子数组)
         - [递归求解](#递归求解)
         - [递归式和复杂度](#递归式和复杂度)
-    - [暴力求解](#暴力求解)
     - [线性时间的动态规划版本](#线性时间的动态规划版本)
     - [References](#references)
 
@@ -62,12 +62,12 @@ TODO
 ### 怎么想到用分治的
 1. 拿到问题时，发现问题规模太大了，不好处理。可能只是一个十项数组，但是人脑的处理能力实在有限。
 2. 于是可以尝试分治，那么最简单的就是一分为二。分别找到左侧子数组和右侧子数组中的最大子数组。
-3. 但是找到后也不能立刻得到结果，因为还有跨域所有两部分的数组。
+3. 但是找到后也不能立刻得到结果，因为还有所有跨越两部分的数组。
 4. 就像归并排序中，给左右两个子数组分别排序后，也不能立刻得到整个排序的数组一样，还需要进行一步归并；这里还要再解决跨域左右两边的子数组问题。
 5. 左侧子数组中的最大子数组、右侧子数组中的最大子数组、跨域两侧的最大子数组，三者中最大的就是整个数组的最大子数组。问题的关键就是在跨域两侧的数组里面求最大的。
 
 ### 暴力算法的改进
-1. 在确定的子数组起点的情况下，求不同终点时的子数组 sum 有些动态规划的感觉：每次求一个新的 sum 不需要从头开始求，而只需要用当前项加上之前的结果即可。
+1. 在确定的子数组起点的情况下，求不同终点时的子数组 sum 有些动态规划重叠子问题的感觉：每次求一个新的 sum 不需要从头开始求，而只需要用当前项加上之前的结果即可。
 2. 当我们在解决某个问题的时候，可能会首先想到一个直接粗暴的解法，那我们需要再想想有什么更好的办法，而一种常见的优化就是：利用已有的结果最为基础。
 
 ### 动态规划
@@ -76,6 +76,50 @@ TODO
 1. `find_max_crossing_subarray` 最初实现中，`leftMax` 和 `rightMax` 初始化为 0，在某些输入的情况下会出现内部循环体一次都不执行的情况。
 2. 例如输入为 `{13, -3, -25, 20, -3, -16, -23, 18}` 时，右侧的 `for` 循环就不会执行，所以 `rightMax` 会保持在初始值。其实 `rightMax` 的初始值应该是 -3，但这里就错误的设置为了 0。
 3. 也就是说，初始值就应该是语义上的初始值，是该数据默认情况下什么都不发生时的值，而不应该随便的设置为 0 这样的值。
+
+
+## 暴力求解
+1. 遍历所有的日期组合
+    ```cpp
+    #define PRICE_COUNT 16
+
+    void brute_force_find_maximum_subarray(int* prices, int startIdx, int endIdx, 
+                                            int* max, int* maxLeftIdx, int* maxRightIdx);
+
+    int main(void) {
+        int prices[PRICE_COUNT] = {113, 110, 85, 105, 102, 86, 63, 81, 
+                                    101, 94, 106, 101, 79, 94, 90, 97};
+        int max = 0, maxLeftIdx = 0, maxRightIdx = 0;
+
+        brute_force_find_maximum_subarray(prices, 0, PRICE_COUNT-1, 
+                                            &max, &maxLeftIdx, &maxRightIdx);
+
+        printf("%d %d %d\n", max, maxLeftIdx, maxRightIdx); // 43 6 10
+
+        return 0;
+    }
+
+    void brute_force_find_maximum_subarray(int* prices, int startIdx, int endIdx, 
+                                            int* max, int* maxLeftIdx, int* maxRightIdx) {
+        if (startIdx >= endIdx) {
+            printf("endIdx must be larger than startIdx\n");
+            return;
+        }
+
+        *max = 0;
+        for (int i=startIdx; i<endIdx; i++) {
+            for (int j=i+1; j<=endIdx; j++) { // 注意 j 的初始值
+                int temp = prices[j] - prices[i];
+                if (temp > *max) {
+                    *max = temp;
+                    *maxLeftIdx = i;
+                    *maxRightIdx = j;
+                }
+            }
+        }
+    }
+    ```
+2. 当数组规模很小时，暴力算法会更快。不过如果很小，分治也很快，所以没必要同时实现两个算法。
 
 
 ## 分治思路
@@ -194,80 +238,50 @@ TODO
 
 ### 递归求解
 1. With a linear-time `find_max_crossing_subarray` procedure in hand, we can write a divide-and-conquer algorithm to solve the maximumsubarray problem
-    ```js
-    function find_maximum_subarray (arr, lowIdx, highIdx) {
-        if (lowIdx === highIdx) {
-            return [lowIdx, highIdx, arr[lowIdx]];
-        }
-
-        let midIdx = Math.floor((lowIdx + highIdx)/2);
-
-        let leftTuple = find_maximum_subarray(arr, lowIdx, midIdx);
-        let rightTuple = find_maximum_subarray(arr, midIdx+1, highIdx);
-        let crossTuple = find_max_crossing_subarray(arr, lowIdx, midIdx, highIdx);
+    ```cpp
+    void find_maximum_subarray (int* arr, Arr_Indexes* indexes, Max_Subarray_Tuple* tuple) {
         
-        let leftSum = leftTuple[2];
-        let rightSum = rightTuple[2];
-        let crossSum = crossTuple[2];
-
-        if (leftSum >= rightSum && leftSum >= crossSum) {
-            return leftTuple;
+        if (indexes->lowIdx == indexes->highIdx) {
+            // 这里也要赋值，否则递归到最后这里的时候 tuple 里的值还是未初始化的
+            tuple->leftIdx = indexes->lowIdx;
+            tuple->rightIdx = indexes->highIdx;
+            tuple->sum = arr[indexes->lowIdx];
+            return;
         }
-        else if (rightSum >= leftSum && rightSum >= crossSum) {
-            return rightTuple;
+
+        int midIdx = (indexes->lowIdx + indexes->highIdx) / 2;
+
+        Arr_Indexes leftIndexes = {indexes->lowIdx, midIdx};
+        Max_Subarray_Tuple leftTuple;
+        find_maximum_subarray(arr, &leftIndexes, &leftTuple);
+
+        Arr_Indexes rightIndexes = {midIdx+1, indexes->highIdx};
+        Max_Subarray_Tuple rightTuple;
+        find_maximum_subarray(arr, &rightIndexes, &rightTuple);
+        
+        Arr_Indexes midIndexes = {indexes->lowIdx, indexes->highIdx};
+        Max_Subarray_Tuple crossTuple;
+        find_max_crossing_subarray(arr, &midIndexes, &crossTuple);
+
+
+        Max_Subarray_Tuple maxTuple;
+        if (leftTuple.sum >= crossTuple.sum && leftTuple.sum >= rightTuple.sum) {
+            maxTuple = leftTuple;
+        }
+        else if (crossTuple.sum >= leftTuple.sum && crossTuple.sum >= rightTuple.sum) {
+            maxTuple = crossTuple;
         }
         else {
-            return crossTuple;
+            maxTuple = rightTuple;
         }
+        tuple->sum = maxTuple.sum;
+        tuple->leftIdx = maxTuple.leftIdx;
+        tuple->rightIdx = maxTuple.rightIdx;
     }
     ```
 
 ### 递归式和复杂度
-直接看《算法导论》42页的分析。和归并排序具有一样的复杂度，都是 $n\lg n$ 级别。
-
-
-## 暴力求解
-1. 遍历所有的日期组合
-    ```cpp
-    #define PRICE_COUNT 16
-
-    void brute_force_find_maximum_subarray(int* prices, int startIdx, int endIdx, 
-                                            int* max, int* maxLeftIdx, int* maxRightIdx);
-
-    int main(void) {
-        int prices[PRICE_COUNT] = {113, 110, 85, 105, 102, 86, 63, 81, 
-                                    101, 94, 106, 101, 79, 94, 90, 97};
-        int max = 0, maxLeftIdx = 0, maxRightIdx = 0;
-
-        brute_force_find_maximum_subarray(prices, 0, PRICE_COUNT-1, 
-                                            &max, &maxLeftIdx, &maxRightIdx);
-
-        printf("%d %d %d\n", max, maxLeftIdx, maxRightIdx); // 43 6 10
-
-        return 0;
-    }
-
-    void brute_force_find_maximum_subarray(int* prices, int startIdx, int endIdx, 
-                                            int* max, int* maxLeftIdx, int* maxRightIdx) {
-        if (startIdx >= endIdx) {
-            printf("endIdx must be larger than startIdx\n");
-            return;
-        }
-
-        *max = 0;
-        for (int i=startIdx; i<endIdx; i++) {
-            for (int j=i+1; j<=endIdx; j++) { // 注意 j 的初始值
-                int temp = prices[j] - prices[i];
-                if (temp > *max) {
-                    *max = temp;
-                    *maxLeftIdx = i;
-                    *maxRightIdx = j;
-                }
-            }
-        }
-    }
-    ```
-2. 当数组规模很小时，暴力算法会更快。不过如果很小，分治也很快，所以没必要同时实现两个算法。
+直接看《算法导论》42 页的分析。和归并排序具有一样的复杂度，都是 $n\lg n$ 级别。
 
 
 ## 线性时间的动态规划版本
