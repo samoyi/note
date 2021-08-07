@@ -71,6 +71,13 @@ TODO
 2. 当我们在解决某个问题的时候，可能会首先想到一个直接粗暴的解法，那我们需要再想想有什么更好的办法，而一种常见的优化就是：利用已有的结果最为基础。
 
 ### 动态规划
+1. 如果使用动态规划，那就要描绘出问题的最优子结构：对于整个数组的最大子数组，怎么根据整个数组的一个子数组的最大子数组，来计算出整个数组的最大子数组。
+1. 最大子数组问题的解是两个数组项，而得出这个解是根据子数组的和值。
+2. 如果使用动态规划，就要看最大子数组的是不是包含子数组的最大子数组，也就是是否具有最优子结构。
+3. 接下来，要使用一种选择方式，来确定问题的解。最直观的就是通过两个索引来确定一个子数组，然后遍历所有可能的索引选择，选出和值最大的子数组。
+4. 但是如果通过两个索引来确定子数组并比较和值，则还是平方级别的复杂度。
+
+
 
 ### 初始值
 1. `find_max_crossing_subarray` 最初实现中，`leftMax` 和 `rightMax` 初始化为 0，在某些输入的情况下会出现内部循环体一次都不执行的情况。
@@ -286,10 +293,10 @@ TODO
 
 ## 线性时间的动态规划版本
 1. 最大子数组可能是以数组中的 `A[i]` 作为结尾的。我们遍历数组，计算每个 `A[i]` 作为结尾的局部最大子数组，看看哪一个是全局最大的。
-2. 局部最大子数组至少包含一项 `A[i]`，它前面可能包含另个或多个项。
+2. 局部最大子数组至少包含一项 `A[i]`，它前面可能包含零个、一个或多个项。
 3. 如果以 `A[i-1]` 结尾的局部最大子数组的值是正的，那 `A[i]` 就可以合并它们，变成一个更大的局部子数组；如果以 `A[i-1]` 结尾的局部最大子数组的值是零甚至是负的，那 `A[i]` 合并它们就无效甚至会越来越小，那 `A[i]` 自己就是局部最大子数组。
 4. 如果使用变量 `currSum` 来追踪 `A[i-1]` 的局部最大子数组的值，那么就有
-    ```js
+    ```cpp
     if (currSum > 0) {
         currSum += arr[i]; 
     }
@@ -297,23 +304,38 @@ TODO
         currSum = arr[i];
     }
     ```
+5. 最优子结构：以 `A[i]` 结尾的最大子数组，要么 `A[i]` 自己，要么就是以 `A[i-1]` 结尾的最大子数组。
+6. 重叠子问题：
 5. 这样就可以每次基于以前一项结尾的局部最大子数组的值计算以当前项结尾的局部最大子数组的值。所有局部最大子数组的值中最大的就是全局最大的
-    ```js
-    function kadane_find_maximum_subarray(arr, lowIdx, highIdx) {
-        let maxSum = Number.NEGATIVE_INFINITY;
-        let currSum = Number.NEGATIVE_INFINITY;
-        
-        for (let i=lowIdx; i<=highIdx; i++) {
+    ```cpp
+    int main(void) {
+        int arr[PRICE_COUNT] = {13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7};
+
+        Arr_Indexes indexes = {0, PRICE_COUNT-1};
+        int maxSum = kadane_find_maximum_subarray (arr, &indexes);
+        printf("%d\n", maxSum); // 43
+
+        return 0;
+    }
+
+
+    int kadane_find_maximum_subarray (int* arr, Arr_Indexes* indexes) {
+        int currSum = arr[indexes->lowIdx];
+        int maxSum = arr[indexes->lowIdx];
+
+        for (int i=indexes->lowIdx+1; i<=indexes->highIdx; i++) {
             if (currSum > 0) {
-                currSum += arr[i]; 
+                currSum += arr[i];
             }
             else {
                 currSum = arr[i];
             }
+            
             if (currSum > maxSum) {
                 maxSum = currSum;
             }
         }
+
         return maxSum;
     }
     ```
