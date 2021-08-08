@@ -304,33 +304,35 @@ TODO
         currSum = arr[i];
     }
     ```
-5. 最优子结构：以 `A[i]` 结尾的最大子数组，要么 `A[i]` 自己，要么就是以 `A[i-1]` 结尾的最大子数组。
-6. 重叠子问题：
-5. 这样就可以每次基于以前一项结尾的局部最大子数组的值计算以当前项结尾的局部最大子数组的值。所有局部最大子数组的值中最大的就是全局最大的
+5. 最优子结构：以 `A[i]` 结尾的最大子数组，要么是 `A[i]` 自己，要么就是以 `A[i-1]` 结尾的最大子数组再加上 `A[i]`。
+6. 重叠子问题：计算以 `A[i]` 结尾的最大子数组，需要用到以 `A[i-1]` 结尾的最大子数组，进一步用到以 `A[i-2]` 结尾的最大子数组，以此类推。
+7. 这样就可以每次基于以前一项结尾的局部最大子数组的值计算以当前项结尾的局部最大子数组的值。所有局部最大子数组的值最大的就是全局最大的
     ```cpp
     int main(void) {
         int arr[PRICE_COUNT] = {13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7};
 
-        Arr_Indexes indexes = {0, PRICE_COUNT-1};
-        int maxSum = kadane_find_maximum_subarray (arr, &indexes);
+        int maxSum = kadane_find_maximum_subarray (arr, 0, PRICE_COUNT-1);
         printf("%d\n", maxSum); // 43
 
         return 0;
     }
 
 
-    int kadane_find_maximum_subarray (int* arr, Arr_Indexes* indexes) {
-        int currSum = arr[indexes->lowIdx];
-        int maxSum = arr[indexes->lowIdx];
+    int kadane_find_maximum_subarray (int* arr, int lowIdx, int highIdx) {
+        if (lowIdx == highIdx) {
+            return arr[lowIdx];
+        }
 
-        for (int i=indexes->lowIdx+1; i<=indexes->highIdx; i++) {
+        int currSum = arr[lowIdx];
+        int maxSum = arr[lowIdx];
+
+        for (int i=lowIdx+1; i<=highIdx; i++) {
             if (currSum > 0) {
-                currSum += arr[i];
+                currSum = arr[i] + currSum;
             }
             else {
                 currSum = arr[i];
             }
-            
             if (currSum > maxSum) {
                 maxSum = currSum;
             }
@@ -339,17 +341,25 @@ TODO
         return maxSum;
     }
     ```
-6. 记录上最大子数组的首尾序号。尾序号 `maxRight` 好确定，只要当前元素比 `maxSum`，那当前元素的需要就是 `maxRight`。但 `maxLeft` 有点没那么简单，我最初是这么计算
-    ```js
-    function kadane_find_maximum_subarray(arr, lowIdx, highIdx) {
-        let maxSum = Number.NEGATIVE_INFINITY;
-        let currSum = Number.NEGATIVE_INFINITY;
-        let maxLeft = -1;
-        let maxRight = -1;
+8. 接下来需要记录最大子数组的首尾序号。尾序号 `maxRight` 好确定，只要当前元素比 `maxSum`，那当前元素的序号就是 `maxRight`。但 `maxLeft` 有点没那么简单，我最初是这么计算
+    ```cpp
+    void kadane_find_maximum_subarray (int* arr, int lowIdx, int highIdx, 
+                                        Max_Subarray_Tuple* tuple) {
+        if (lowIdx == highIdx) {
+            tuple->leftIdx = lowIdx;
+            tuple->rightIdx = highIdx;
+            tuple->sum = arr[lowIdx];
+        }
 
-        for (let i=lowIdx; i<=highIdx; i++) {
+        int currSum = arr[lowIdx];
+        int maxSum = arr[lowIdx];
+
+        int maxLeft = 0;
+        int maxRight = 0;
+
+        for (int i=lowIdx+1; i<=highIdx; i++) {
             if (currSum > 0) {
-                currSum += arr[i]; 
+                currSum = arr[i] + currSum;
             }
             else {
                 currSum = arr[i];
@@ -360,72 +370,51 @@ TODO
                 maxRight = i;
             }
         }
-        
-        return [maxLeft, maxRight, maxSum];
+
+        tuple->leftIdx = maxLeft;
+        tuple->rightIdx = maxRight;
+        tuple->sum = maxSum;
     }
     ```
-7. 使用数组 `[13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7]` 测试时没发现问题。但使用 `[13, -3, -25, 20, -3, -16, -23, 18]` 测试时，正确的情况是 `maxLeft` 和 `maxRight` 都是 3，但计算结果 `maxLeft` 变成了 7。
-8. 问题就在于，这样的实现中，找到了最大子数组之后，如果后面的累加导致 `currSum` 小于等于 0，则 `maxLeft` 会错误的发生变化。那个长数组之所以没法显示出错误，是因为最大子数组是 `[18, 20, -7, 12]`，此时 `currSum` 为 43，后面几项累加的过程也都是正值。
-9. 所以，`maxLeft` 的确定也必须要在 `if (currSum > maxSum)` 里面。那么怎么确定？
-10. 一步步推演一次计算的过程会发现，需要在局部 sum 从负值变为非负值的时候记下当前的索引，然后在 `currSum` 大于 `maxSum` 的时候，把刚才记下的索引作为 `maxLeft`。增加一个变量 `tempMaxLeft` 用于记录
-    ```js
-    function kadane_find_maximum_subarray(arr, lowIdx, highIdx) {
-        let maxSum = Number.NEGATIVE_INFINITY;
-        let currSum = Number.NEGATIVE_INFINITY;
-        let maxLeft = -1;
-        let maxRight = -1;
+9. 使用数组 `[13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7]` 测试时没发现问题。但使用 `[13, -3, -25, 20, -3, -16, -23, 18]` 测试时，正确的情况是 `maxLeft` 和 `maxRight` 都是 3，但计算结果 `maxLeft` 变成了 7。
+10. 问题就在于，这样的实现中，找到了最大子数组之后，如果后面的累加导致 `currSum` 小于等于 0，则 `maxLeft` 会错误的发生变化。
+11. 那个长数组之所以没显示出错误，是因为最大子数组是 `[18, 20, -7, 12]`，此时 `currSum` 为 43，后面几项累加的过程也都是正值。
+12. 也就是说，这里的 `maxLeft` 在任何 `currSum` 小于等于零的时候都会更新。但正确的情况是，只有在 `maxSum` 发生更新时的 `maxLeft` 才是最大子数组对应的 `maxLeft`。
+13. 所以，`maxLeft` 的确定也必须要在 `if (currSum > maxSum)` 里面。引入变量 `lastMaxLeft` 记录每次的更新，然后在 `if (currSum > maxSum)` 中把 `lastMaxLeft` 赋值给 `maxLeft`
+    ```cpp
+    void kadane_find_maximum_subarray (int* arr, int lowIdx, int highIdx, 
+                                        Max_Subarray_Tuple* tuple) {
+        if (lowIdx == highIdx) {
+            tuple->leftIdx = lowIdx;
+            tuple->rightIdx = highIdx;
+            tuple->sum = arr[lowIdx];
+        }
 
-        let tempMaxLeft = -1;
+        int currSum = arr[lowIdx];
+        int maxSum = arr[lowIdx];
 
-        for (let i=lowIdx; i<=highIdx; i++) {
+        int lastMaxLeft = 0;
+        int maxLeft = 0;
+        int maxRight = 0;
+
+        for (int i=lowIdx+1; i<=highIdx; i++) {
             if (currSum > 0) {
-                currSum += arr[i]; 
+                currSum = arr[i] + currSum;
             }
             else {
                 currSum = arr[i];
-                // 上一轮的 currSum 小于等于零，所以走到了这里的 else
-                // 下面的 if 说明变为了非负值
-                if (currSum >= 0) {
-                    tempMaxLeft = i;
-                }
+                lastMaxLeft = i;
             }
             if (currSum > maxSum) {
                 maxSum = currSum;
-                maxLeft = tempMaxLeft;
+                maxLeft = lastMaxLeft;
                 maxRight = i;
             }
         }
 
-        return [maxLeft, maxRight, maxSum];
-    }
-    ```
-11. 但现在还有问题，比如说输入数组是 `[-5, -4, -3, -2, -1]` 这样全都是负值的，则 `currSum >= 0` 永远都会是 `false`。导致 `maxLeft` 停留在初始的 -1。在这种情况下，并不存在 “局部 sum 从负值变为非负值”。
-12. 实际上，`maxLeft` 所在的位置并不要求是非负值，而是要求它前一个位置不能是正值，因为如果是正值，那 `maxLeft` 就应该左移到这个正值上。
-13. 所以 `tempMaxLeft = i` 不需要外层的判断
-    ```js
-    function kadane_find_maximum_subarray(arr, lowIdx, highIdx) {
-        let maxSum = Number.NEGATIVE_INFINITY;
-        let currSum = Number.NEGATIVE_INFINITY;
-        let maxLeft = -1;
-        let maxRight = -1;
-
-        let tempMaxLeft = -1;
-
-        for (let i=lowIdx; i<=highIdx; i++) {
-            if (currSum > 0) {
-                currSum += arr[i]; 
-            }
-            else {
-                currSum = arr[i];
-                tempMaxLeft = i;
-            }
-            if (currSum > maxSum) {
-                maxSum = currSum;
-                maxLeft = tempMaxLeft;
-                maxRight = i;
-            }
-        }
-        return [maxLeft, maxRight, maxSum];
+        tuple->leftIdx = maxLeft;
+        tuple->rightIdx = maxRight;
+        tuple->sum = maxSum;
     }
     ```
 
