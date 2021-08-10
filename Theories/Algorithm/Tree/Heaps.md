@@ -72,6 +72,10 @@
 1. 二叉堆的入队操作和出队操作均可达到 $O(\log n)$。
 2. 二叉堆画出来很像一棵树，但实现时只用一个列表作为内部表示。
 3. 二叉堆有两个常见的形式：**最小堆**（最小的元素一直在队首）与 **最大堆**（最大的元素一直在队首）。
+4. Viewing a heap as a tree, we define the **height** of a node in a heap to be the number of edges on the longest simple downward path from the node to a leaf, and we define the height of the heap to be the height of its root. 
+5. Since a heap of $N$ elements is based on a complete binary tree, its height is $Θ(lgN)$.
+We shall see that the basic operations on heaps run in time at most proportional
+to the height of the tree and thus take $O(lgN)$ time.
 
 
 ## 结构属性
@@ -84,7 +88,7 @@
     * 前 $n$ 行（$n$ 从 1 开始计）的节点总数为 $\frac{1*(1-2^n)}{1-2} = 2^n - 1$；
     * 第 $n+1$ 行（$i=n$）的节点数是 $2^n$
 7. 也就是说：$某一行完整的节点数=它上面所有节点数+1$。
-8. 因此，对于在列表中处于位置 $p$ 的节点来说，它的左子节点正好处于位置 $2p$；同理，右子节点处于位置 $2p+1$
+8. 因此，对于在列表中处于位置 $p$（$p$ 从 1 开始计）的节点来说，它的左子节点正好处于位置 $2p$；同理，右子节点处于位置 $2p+1$
     <img src="./images/06.png" width="600"  style="display: block; margin: 5px 0 10px;" />
 9. 对第 8 点的证明：
     1. 已知第 $n$ 行的第 $k$ 个元素的总序号是 $p$
@@ -93,12 +97,13 @@
     4. 因此第 $n+1$ 行的第 1 组两个节点的总序号是 $2^n$ 和 $2^n + 1$
     5. 第 $n+1$ 的第 2 组两个节点的总序号是 $2^n + 2$ 和 $2^n + 3$
     6. 因此第 $n+1$ 的第 $k$ 组两个节点的总序号是 $2^n + 2k-2$ 和 $2^n + 2k-1$，变形为 $2(2^{n-1} + k - 1)$ 和 $2(2^{n-1} + k - 1) + 1$
-    7. 根据第 2 步，可以得出 $2p$ 和 $2p+1$
+    7. 根据第 2 步，可以得出 $2p$ 和 $2p+1$。
+    8. 如果 $p$ 从 0 开始计，则两个子节点是 $2p+1$ 和 $2p+2$，父节点就是 $\lfloor (p-1)/2 \rfloor$。
 10. 证明含有 $n$ 个元素的堆的高度是 $\lfloor \lg n \rfloor$:
     1. 先用行数来计算。根据上面第 6 点，第 x 行的元素数量范围是 $[2^{x-1}, 2^x)$。
     2. 现在就假设 $n$ 个元素的堆有 $x$ 行，所以 $2^{x-1} \leq n < 2^x$。
     3. 取对数，有 $x-1 \leq \lg n < x$。所以 $x-1 = \lfloor \lg n \rfloor$。
-    4. 因为 $x$ 是的堆行数，所以 $x - 1$ 就是堆的高度。
+    4. 因为 $x$ 是堆的行数，所以 $x - 1$ 就是堆的高度。
 11. 证明当用数组表示存储 $n$ 个元素的堆时，叶节点下标分别是 $\lfloor n/2 \rfloor + 1, \lfloor n/2 \rfloor + 2, ..., n$
     1. 这里可以通过观察一个二叉堆的图的方法。
     2. 看出来最后一个非叶节点就是第 $n$ 个节点的父节点，所以该节点的序号为 $\lfloor n/2 \rfloor$。
@@ -118,15 +123,42 @@
 2. 交换后，这个上浮的节点比它的两个子节点都大（现在的两个子节点，一个是刚被换下来的曾经的父节点，另一个比曾经的父节点更小，因为它是曾经父节点的子节点）。
 3. 但这个上浮的节点仍然可能比它现在新的父节点更大。因此我们可以一遍遍地用同样的办法恢复秩序，将这个节点不断向上移动直到我们遇到了一个更大的父节点
     <img src="./images/13.png" width="400" style="display: block; margin: 5px 0 10px;" />
-4. 只要记住位置 $k$ 的节点的父节点的位置是 $\lfloor k/2\rfloor$，这个过程实现起来很简单
-    ```js
-    swim (k) {
-        while ( k > 1 && this.less(Math.floor(k/2), k) ) {
-            let parentIndex = Math.floor(k/2);
-            this.swap(parentIndex, k);
-            k = parentIndex;
+4. 只要记住位置 $k$ 的节点的父节点的位置是 $\lfloor k/2\rfloor$（序号从 1 开始），这个过程实现起来很简单
+    ```cpp
+    #define HEAP_LENGTH 10
+
+    int heap[HEAP_LENGTH] = {16, 14, 10, 8, 17, 9, 3, 2, 4, 1};
+
+    int heapSize = HEAP_LENGTH;
+
+    void swim_recursive (int* arr, int i);
+
+
+    int main(void) {
+
+        swim_recursive(heap, 4);
+        print_arr(heap, 0, heapSize-1); // [17, 16, 10, 8, 14, 9, 3, 2, 4, 1]
+        return 0;
+    }
+
+    void swim_recursive (int* arr, int i) {
+        int pIdx = (i-1)/2; // 序号从 0 开始
+        if (pIdx >= 0 && arr[pIdx] < arr[i]) {
+            swap(arr, pIdx, i);
+            i = pIdx;
+            swim_recursive(arr, i);
         }
-        return k;
+    }
+    ```
+5. 循环实现。最初实现成了下面的样子
+    ```cpp
+    void swim_loop (int* arr, int i) {
+        int pIdx = (i-1)/2;
+        while (pIdx >= 0 && arr[pIdx] < arr[i]) {
+            swap(arr, pIdx, i);
+            i = pIdx;
+            pIdx = (i-1)/2;
+        }
     }
     ```
 
@@ -134,56 +166,105 @@
 1. 如果堆的有序状态因为某个节点变得比它的两个子节点或是其中之一更小了而被打破了，那么我们可以通过将它和它的两个子节点中的较大者交换来恢复堆。
 2. 交换可能会在子节点处继续打破堆的有序状态，因此我们需要不断地用相同的方式将其修复，将节点向下移动直到它的子节点都比它更小或是到达了堆的底部
     <img src="./images/14.png" width="400" style="display: block; margin: 5px 0 10px;" />
-3. 由位置为 $k$ 的节点的子节点位于 $2k$ 和 $2k+1$ 可以直接得到对应的代码
-    ```js
-    sink (i) {
-        // 这个判断条件只能保证有左侧子节点，但只要有左侧的，就应该进行比较
-        while (2*i <= this.size) {
-            let left = 2*i; 
-            let right = 2*i + 1; 
-            let largest = left; // 假设左侧子节点是最大的，作为比较的基准
+3. 递归实现
+    ```cpp
+    #define HEAP_LENGTH 10
 
-            // 如果有右侧的，就和左侧的比较，确定子节点中更大的那个，然后再去和父节点比较
-            if ( right <= this.size && this.less(left, right)) {
-                largest = right;
-            }
+    int heap[HEAP_LENGTH] = {16, 4, 10, 14, 7, 9, 3, 2, 8, 1};
 
-            if (!this.less(i, largest)) {
-                break;
-            }
+    int heapSize = HEAP_LENGTH;
 
-            this.swap(i, largest);
 
-            i = largest;
+    int main(void) {
+
+        sink_recursive(heap, 1);
+        print_arr(heap, 0, heapSize-1); // [16, 14, 10, 8, 7, 9, 3, 2, 4, 1]
+
+        return 0;
+    }
+
+
+    void sink_recursive (int* arr, int i) {
+        int lIdx = i*2 + 1;
+        int rIdx = i*2 + 2;
+
+        int largestIdx = i;
+        if (lIdx < heapSize && arr[lIdx] > arr[i]) {
+            largestIdx = lIdx;
+        }
+        if (rIdx < heapSize && arr[rIdx] > arr[largestIdx]) {
+            largestIdx = rIdx;
+        }
+        if (largestIdx != i) {
+            swap(arr, i, largestIdx);
+            sink_recursive(arr, largestIdx);
         }
     }
     ```
-4. 《算法导论》中的递归实现
-    ```js
-    sink_recursive (i) {
-        let left = 2*i;
-        let right = 2*i + 1;
-        let largest;
+4. 循环实现。第一次是这样实现的
+    ```cpp
+    void sink_loop (int* arr, int i) {
+        int lIdx = i*2 + 1;
+        int rIdx = i*2 + 2;
 
-        if (left <= this.size && this.less(i, left)) {
-            largest = left;
-        }
-        else {
-            largest = i;
-        }
-        if (right <= this.size && this.less(largest, right)) {
-            largest = right;
-        }
+        // 这个判断条件只能保证有左侧子节点，但只要有左侧的，就应该进行比较
+        while (lIdx < heapSize) {
+            int largestIdx = i;
+            lIdx = i*2 + 1;
+            rIdx = i*2 + 2;
 
-        if (largest !== i) {
-            this.swap(i, largest);
-            this.sink_recursive(largest);
+            if (arr[lIdx] > arr[i]) {
+                largestIdx = lIdx;
+            }
+
+            if (rIdx < heapSize && arr[rIdx] > arr[largestIdx]) {
+                largestIdx = rIdx;
+            }
+
+            if (largestIdx == i) {
+                break;
+            }
+            
+            swap(arr, i, largestIdx);
+            i = largestIdx;
+        }
+    }
+    ```
+    也是正确的，但是有几个地方看起来不舒服：
+    * `lIdx` 和 `rIdx` 在循环内外重复的赋值；
+    * `rIdx` 在循环外的初始化是没有用的，循环条件不需要用到，循环内部也会重新赋值；
+    * `largestIdx` 反复声明；
+5. 修改如下
+    ```cpp
+    void sink_loop (int* arr, int i) {
+        int largestIdx;
+        int lIdx;
+        int rIdx;
+
+        while (i*2 + 1 < heapSize) {
+            largestIdx = i;
+            lIdx = i*2 + 1;
+            rIdx = i*2 + 2;
+
+            if (arr[lIdx] > arr[i]) {
+                largestIdx = lIdx;
+            }
+
+            if (rIdx < heapSize && arr[rIdx] > arr[largestIdx]) {
+                largestIdx = rIdx;
+            }
+
+            if (largestIdx == i) {
+                break;
+            }
+            
+            swap(arr, i, largestIdx);
+            i = largestIdx;
         }
     }
     ```
 
 ### 复杂度
-TODO  
 运行时间是 $O(\lg n)$，堆的高度 $h$ 是 $\lfloor \lg n \rfloor$。所以时间复杂度是 $O(h)$。
 
 
@@ -213,7 +294,6 @@ TODO
         }
     }
     ```
-
 
 ### 复杂度
 TODO   $O(n)$
