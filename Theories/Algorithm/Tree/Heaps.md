@@ -290,10 +290,10 @@ to the height of the tree and thus take $O(lgN)$ time.
 4. 而自底向上就保证了那些没有上浮到位的节点还会被访问到。
 5. 那么，现在就可以想到，如果要自顶向下，就不能用 sink 而要用 swim，swim 会让之后不再访问的大节点上浮到位，而只会让小节点下沉一层，但因为是自顶向下，所以它们还会被访问到。
 6. 但是因为 swim 是从子节点出发向父节点比较，所以不能省略对叶节点的遍历
-    ```js
-    build () {
-        for (let i=1; i<=this.size; i++) {
-            this.swim(i);
+    ```cpp
+    void build_swim (int* arr) {
+        for (int i=0; i<heapSize; i++) {
+            swim_loop(arr, i);
         }
     }
     ```
@@ -408,11 +408,17 @@ class BinaryHeap {
 1. 先将元素追加到列表的末尾，然后再通过大小比较把它移动到合适的位置
     <img src="./images/07.png" width="400"  style="display: block; margin: 5px 0 10px;" />
 2. `insert` 方法先把新的节点添加到尾部，然后再使用 `swim` 方法把它移动到合适的位置
-    ```js    
-    insert (v) {
-        this.arr.push(v);
-        this.size++;
-        return this.swim(this.size);
+    ```cpp
+    void insert(int* arr, int k) {
+        if (heapSize < HEAP_LENGTH) {
+            arr[heapSize] = k;
+            printf("%d\n", heapSize);
+            swim_loop(arr, heapSize);
+            heapSize++;
+        }
+        else {
+            printf("Insert failed, heap is full.\n");
+        }
     }
     ```
 
@@ -420,19 +426,21 @@ class BinaryHeap {
 1. 要移除根节点，肯定不能直接移除，否则就变成两棵树了。那么找谁来填补空位呢？
 2. 因为根节点是最大的，那么看起来应该找第二大的节点来填补，也就是根节点的某个子节点。
 3. 但是这样并不行，因为这个第二大的节点几乎都有两个子节点了，不能再接收和它同父的节点了。就算让这个第二大的节点舍弃调一个本身的子树，那这个子树的重新安放就会很麻烦。
-4. 不过，因为有了 `sink` 方法，所以就可以换上了一个节点，然后再让它 sink 到合适的位置。
+4. 不过，因为有了 sink 方法，所以就可以换上了一个节点，然后再让它 sink 到合适的位置。
 5. 被换上的节点只能是叶节点，因为如果不是的话，那就要拆树。
 6. 理论上可以换上去任何一个叶节点，但考虑到后续操作的方便性，还是应该换上去最后一个叶节点
     <img src="./images/08.png" width="400"  style="display: block; margin: 5px 0 10px;" />
 7. 把最后一个节点移到顶节点，然后再通过大小比较把它移动到合适的位置
-    ```js
-    delMax () {
-        let maxNode = this.arr[1];
-        this.swap(1, this.size); 
-        // 删除交换下来的最大节点。但并不是真的删除，只是不再计入堆的 list 中，排序的时候还会用到
-        this.size--; 
-        this.sink(1);
-        return maxNode;
+    ```cpp
+    void delMax(int* arr) {
+        if (heapSize > 0) {
+            arr[0] = arr[heapSize-1];
+            sink_loop(arr, 0);
+            heapSize--;
+        }
+        else {
+            printf("Insert failed, heap is empty.\n");
+        }
     }
     ```
 
