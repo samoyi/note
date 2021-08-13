@@ -9,6 +9,7 @@
         - [`swim` 和 `sink`](#swim-和-sink)
     - [设计思想](#设计思想)
         - [迁移时注意环境变动](#迁移时注意环境变动)
+        - [脑补的秩序](#脑补的秩序)
         - [排序](#排序)
         - [优先队列](#优先队列)
     - [用途](#用途)
@@ -54,6 +55,11 @@
 1. 在设计删除节点算法时很容易就会想到套用 `delMax` 中的方法，但是这个方法虽然在 `delMax` 中是正确的，但是放到删除节点时，却出现了问题。
 2. 也就是说，同一个方法，放在不同的实验环境，很有可能就会产生不同的结果。
 3. 在进行任何迁移时，都要考虑环境的改变。
+
+### 脑补的秩序
+1. 在设计 `delete` 方法时，一开始错误的设计，是因为感觉上，二叉堆就是从大到小按顺序排列的。
+2. 二叉堆在整体上确实是按照顺序排列的，但并不是严格按顺序排列。但我却下意识的脑补成了一种更有秩序的状态。
+3. 这种对更有秩序、更和谐的脑补是无处不自的。
 
 ### 排序
 1. 上面本质中说到堆只能维护任意子树的根节点和后代节点的大小关系，所以排序的具体比较步骤只能发生在根节点和后代节点之间，而不能是任意两个节点。
@@ -458,28 +464,30 @@ class BinaryHeap {
         return deletedNode;
     }
     ```
-2. 但是 `[15, 7, 9, 1, 2, 3, 8]` 这样的数组在执行 `delete(5)` 时就暴露了问题：最后一个元素被交换后并不需要往下移动，而是需要往上移动。`delMax` 之所以没有问题，是因为被交换到了顶部，只有下移的可能存在。
-3. 而其他情况的交换，只要两个节点没有明确的 “祖先-后代” 关系，就不能确定它俩的大小关系，所以最后一个节点交换过去（都不能说交换上去，因为就像上面这个例子中这样两者其实高度是一样的）之后，不一定是要上浮还是下沉。
+2. 但是 `[15, 7, 9, 1, 2, 3, 8]` 这样的数组在执行 `delete(4)` 时就暴露了问题：最后一个元素被交换后并不需要往下移动，而是需要往上移动。`delMax` 之所以没有问题，是因为被交换到了顶部，只有下移的可能存在。
+3. 而其他情况的交换，只要两个节点没有明确的 “祖先-后代” 关系，就不能确定它俩的大小关系，所以最后一个节点交换过去（都不能说交换 “上去”，因为就像上面这个例子中这样两者其实高度是一样的）之后，不一定是要上浮还是下沉。
 4. 既然交换之后有可能需要上移也有可能是下移，那就做个判断
-    ```js
-    delete(i) {
-        if (i > this.size || i < 1) {
-            throw new RangeError("Wrong index");
-        }
-        let deletedNode = this.arr[i];
-        this.swap(i, this.size); 
-        this.size--;
-        let parent = this.arr[Math.floor(i/2)];
-        if (parent && parent<this.arr[i]) {
-            this.swim(i);
+    ```cpp
+    int delete(int* arr, int index) {
+        if (index >= heapSize || index < 0) {
+            printf("Delete failed, wrong index.\n");
         }
         else {
-            this.sink(i);
+            int deleted = arr[index];
+            arr[index] = arr[heapSize-1];
+            heapSize--;
+            int pIdx = (index-1)/2;
+            if (pIdx >= 0 && arr[pIdx] < arr[index]) {
+                swim_loop(arr, index);
+            }
+            else {
+                sink_loop(arr, index);
+            }
+            return deleted;
         }
-        return deletedNode;
     }
     ```
-4. 其实还可以简化。因为 `swim` 方法本身就可以判断父节点是否存在以及是否比父节点大；而且，只要换上来的节点比被删除的节点大，它就只可能是 `swim`，否则就只可能是 `sink`
+5. 其实还可以简化。因为 swim 方法本身就可以判断父节点是否存在以及是否比父节点大；而且，只要换上来的节点比被删除的节点大，它就只可能是 swim，否则就只可能是 sink
     ```js
     delete(i) {
         if (i > this.size || i < 1) {
@@ -495,6 +503,25 @@ class BinaryHeap {
             this.sink(i);
         }
         return deletedNode;
+    }
+    ```
+    ```cpp
+    int delete(int* arr, int index) {
+        if (index >= heapSize || index < 0) {
+            printf("Delete failed, wrong index.\n");
+        }
+        else {
+            int deleted = arr[index];
+            arr[index] = arr[heapSize-1];
+            heapSize--;
+            if (arr[index] > deleted) {
+                swim_loop(arr, index);
+            }
+            else {
+                sink_loop(arr, index);
+            }
+            return deleted;
+        }
     }
     ```
 
