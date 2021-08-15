@@ -52,7 +52,7 @@
 
 ## 设计思想
 ### 迁移时注意环境变动
-1. 在设计删除节点算法时很容易就会想到套用 `delMax` 中的方法，但是这个方法虽然在 `delMax` 中是正确的，但是放到删除节点时，却出现了问题。
+1. 在设计删除节点算法时很容易就会想到套用 `del_max` 中的方法，但是这个方法虽然在 `del_max` 中是正确的，但是放到删除节点时，却出现了问题。
 2. 也就是说，同一个方法，放在不同的实验环境，很有可能就会产生不同的结果。
 3. 在进行任何迁移时，都要考虑环境的改变。
 
@@ -321,7 +321,7 @@ class BinaryHeap {
     }
 
     // 对元素的列表，和 arr 不同。
-    // 这里不包括起始的 null；以及 delMax 时，只是不计入 list 中，而并不会真的从 arr 中移除
+    // 这里不包括起始的 null；以及 del_max 时，只是不计入 list 中，而并不会真的从 arr 中移除
     get list () {
         return this.arr.slice(1, this.size+1);
     }
@@ -400,7 +400,7 @@ class BinaryHeap {
         return this.swim(this.size);
     }
 
-    delMax () {
+    del_max () {
         let maxNode = this.arr[1];
         this.swap(1, this.size); 
         this.size--;
@@ -438,20 +438,36 @@ class BinaryHeap {
     <img src="./images/08.png" width="400"  style="display: block; margin: 5px 0 10px;" />
 7. 把最后一个节点移到顶节点，然后再通过大小比较把它移动到合适的位置
     ```cpp
-    void delMax(int* arr) {
+    void del_max(int* arr) {
         if (heapSize > 0) {
             arr[0] = arr[heapSize-1];
-            sink_loop(arr, 0);
             heapSize--;
+            sink_loop(arr, 0);
         }
         else {
-            printf("Insert failed, heap is empty.\n");
+            printf("Del_max failed, heap is empty.\n");
+        }
+    }
+    ```
+8. 为了后续的堆排序算法实现，修改一下 `del_max`，让 `arr[0]` 和 `arr[heapSize-1]` 互相交换，而不是单向赋值
+    ```cpp
+    void del_max(int* arr) {
+        if (heapSize > 0) {
+            swap(arr, 0, heapSize-1);
+            // sink_loop 需要根据正确的 heapSize 来执行，所以要在 sink_loop 之前就 heapSize--；
+            // 把最大元素换到最后之后，如果还是按照之前的 heapSize 进行 sink_loop，
+            // 最大元素可能就会发生移动，最后 heapSize-- 删除的就是最大元素了。
+            heapSize--;
+            sink_loop(arr, 0);
+        }
+        else {
+            printf("Del_max failed, heap is empty.\n");
         }
     }
     ```
 
 ### 删除节点
-1. 有了上面的 `delMax`，大概很容易想到这样的实现
+1. 有了上面的 `del_max`，大概很容易想到这样的实现
     ```js
     delete(i) {
         if (i > this.size || i < 1) {
@@ -464,7 +480,7 @@ class BinaryHeap {
         return deletedNode;
     }
     ```
-2. 但是 `[15, 7, 9, 1, 2, 3, 8]` 这样的数组在执行 `delete(4)` 时就暴露了问题：最后一个元素被交换后并不需要往下移动，而是需要往上移动。`delMax` 之所以没有问题，是因为被交换到了顶部，只有下移的可能存在。
+2. 但是 `[15, 7, 9, 1, 2, 3, 8]` 这样的数组在执行 `delete(4)` 时就暴露了问题：最后一个元素被交换后并不需要往下移动，而是需要往上移动。`del_max` 之所以没有问题，是因为被交换到了顶部，只有下移的可能存在。
 3. 而其他情况的交换，只要两个节点没有明确的 “祖先-后代” 关系，就不能确定它俩的大小关系，所以最后一个节点交换过去（都不能说交换 “上去”，因为就像上面这个例子中这样两者其实高度是一样的）之后，不一定是要上浮还是下沉。
 4. 既然交换之后有可能需要上移也有可能是下移，那就做个判断
     ```cpp
@@ -488,23 +504,6 @@ class BinaryHeap {
     }
     ```
 5. 其实还可以简化。因为 swim 方法本身就可以判断父节点是否存在以及是否比父节点大；而且，只要换上来的节点比被删除的节点大，它就只可能是 swim，否则就只可能是 sink
-    ```js
-    delete(i) {
-        if (i > this.size || i < 1) {
-            throw new RangeError("Wrong index");
-        }
-        let deletedNode = this.arr[i];
-        this.swap(i, this.size); 
-        this.size--;
-        if (this.arr[i] > deletedNode) {
-            this.swim(i);
-        }
-        else {
-            this.sink(i);
-        }
-        return deletedNode;
-    }
-    ```
     ```cpp
     int delete(int* arr, int index) {
         if (index >= heapSize || index < 0) {
@@ -527,7 +526,7 @@ class BinaryHeap {
 
 
 ## 最小堆的实现
-需要修改 `swim` 和 `sink` 方法，以及把 `delMax` 换成 `delMin`
+需要修改 `swim` 和 `sink` 方法，以及把 `del_max` 换成 `del_min`
 ```js
 class MinBinaryHeap {
     constructor (arr=[]) {
@@ -594,7 +593,7 @@ class MinBinaryHeap {
         return this.swim(this.size);
     }
 
-    delMin () {
+    del_min () {
         let minNode = this.arr[1];
         this.swap(1, this.size); 
         this.size--;
@@ -606,15 +605,15 @@ class MinBinaryHeap {
 
 
 ## Heapsort
-1. 上面实现的 `delMax` 可以把最大节点移到 `list` 尾部，然后再从 `list` 中移除。
-2. 那么反复调用 `delMax` 就可以从大到小的移除堆中的节点，被移除的节点按从小到大顺序保存在 `arr` 中
+1. 上面的 `del_max` 可以实现为最大节点交换到堆列表尾部（`arr[heapSize-1]`），之后随着 `heapSize--`，之前的最大节点不在计入堆的范围中，但是仍然保存在 `arr` 中。
+2. 那么反复调用 `del_max` 就可以从大到小的移除堆中的节点，被移除的节点按从小到大顺序保存在 `arr` 中
     ```js
     function heapSort(arr) {
         let heap = new BinaryHeap(arr);
 
         let size = heap.size;
         for (let i=size; i>1; i--) {
-            heap.delMax();
+            heap.del_max();
         }
         return heap.arr.slice(1);
     }
@@ -622,14 +621,14 @@ class MinBinaryHeap {
 3. 为什么不是反向交换，也就是说从堆顶开始？好像也可以，试了一下没发现问题
     ```js
     for (let i=1; i<size; i++) {
-        heap.delMax();
+        heap.del_max();
     }
     ```
 
 ### 时间复杂度
 1. `build` 的时间复杂度是 $O(n)$；每次 `sink` 的时间复杂度是 $O(\lg n)$，一共 $n-1$ 次。所以排序的复杂度是 $O(n \lg n)$。
 2. 如果输入数组是升序的，复杂度如何？因为是升序，所以 build 过程移动的会比较多，因为整体要让小节点下来大节点上去，但时间复杂度仍然是 $O(n)$。在经过 build 后，其实也就打乱顺序了，而且升序的数组并不会让 build 更快。所以复杂度还是一样的。
-3. 降序呢？降序的数组在 build 时每个 sink 都会在第一次 `while` 循环 break，但 build 的复杂度仍然是 $O(n)$ 级别。build 完之后顺序并没有改变，还是降序的，正好和期望的排顺序相反，排序会不会更慢呢？因为是降序，所以每次 `delMax` 中的 `sink` 都会从根节点下降到叶节点，但仍然是 $O(\lg n)$ 界别的。所以整体的时间复杂度还是不变的。
+3. 降序呢？降序的数组在 build 时每个 sink 都会在第一次 `while` 循环 break，但 build 的复杂度仍然是 $O(n)$ 级别。build 完之后顺序并没有改变，还是降序的，正好和期望的排顺序相反，排序会不会更慢呢？因为是降序，所以每次 `del_max` 中的 `sink` 都会从根节点下降到叶节点，但仍然是 $O(\lg n)$ 界别的。所以整体的时间复杂度还是不变的。
 
 
 ## 优先队列（Priority Queues）
@@ -657,14 +656,14 @@ class Max_Priority_Queue {
 ```
 
 #### 删除并返回最大元素
-时间复杂度由 `delMax` 中的 `sink` 来决定，因此是 $O(\lg n)$
+时间复杂度由 `del_max` 中的 `sink` 来决定，因此是 $O(\lg n)$
 ```js
 dequeue () {
     if (this.heap.size < 1) {
         throw new RangeError("Heap underflow");
     }
 
-    return this.heap.delMax();
+    return this.heap.del_max();
 }
 ```
 
