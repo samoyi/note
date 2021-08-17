@@ -28,14 +28,10 @@
         - [删除节点](#删除节点)
     - [最小堆的实现](#最小堆的实现)
     - [Heapsort](#heapsort)
-        - [时间复杂度](#时间复杂度)
     - [优先队列（Priority Queues）](#优先队列priority-queues)
-        - [最大优先队列（Max-priority queues）的实现](#最大优先队列max-priority-queues的实现)
-            - [建立队列](#建立队列)
-            - [删除并返回最大元素](#删除并返回最大元素)
-            - [提升一个元素的优先级](#提升一个元素的优先级)
-            - [加入新元素](#加入新元素)
-        - [用最小堆实现最小优先队列](#用最小堆实现最小优先队列)
+        - [删除并返回最大元素](#删除并返回最大元素)
+        - [提升一个元素的优先级](#提升一个元素的优先级)
+        - [加入新元素](#加入新元素)
 
 <!-- /TOC -->
 
@@ -137,7 +133,7 @@ to the height of the tree and thus take $O(lgN)$ time.
 
     int heapSize = HEAP_LENGTH;
 
-    void swim_recursive (int* arr, int i);
+    int swim_recursive (int* arr, int i);
 
 
     int main(void) {
@@ -147,24 +143,26 @@ to the height of the tree and thus take $O(lgN)$ time.
         return 0;
     }
 
-    void swim_recursive (int* arr, int i) {
+    int swim_recursive (int* arr, int i) {
         int pIdx = (i-1)/2; // 序号从 0 开始
         if (pIdx >= 0 && arr[pIdx] < arr[i]) {
             swap(arr, pIdx, i);
             i = pIdx;
-            swim_recursive(arr, i);
+            i = swim_recursive(arr, i); // 这里的赋值是要追踪每次 swim 后的位置，在递归的最外层返回
         }
+        return i;
     }
     ```
-5. 循环实现。最初实现成了下面的样子
+5. 循环实现
     ```cpp
-    void swim_loop (int* arr, int i) {
+    int swim_loop (int* arr, int i) {
         int pIdx = (i-1)/2;
         while (pIdx >= 0 && arr[pIdx] < arr[i]) {
             swap(arr, pIdx, i);
             i = pIdx;
             pIdx = (i-1)/2;
         }
+        return i;
     }
     ```
 
@@ -415,12 +413,12 @@ class BinaryHeap {
     <img src="./images/07.png" width="400"  style="display: block; margin: 5px 0 10px;" />
 2. `insert` 方法先把新的节点添加到尾部，然后再使用 `swim` 方法把它移动到合适的位置
     ```cpp
-    void insert(int* arr, int k) {
+    int insert(int* arr, int k) {
         if (heapSize < HEAP_LENGTH) {
             arr[heapSize] = k;
-            printf("%d\n", heapSize);
-            swim_loop(arr, heapSize);
+            int idx = swim_loop(arr, heapSize);
             heapSize++;
+            return idx;
         }
         else {
             printf("Insert failed, heap is full.\n");
@@ -438,11 +436,13 @@ class BinaryHeap {
     <img src="./images/08.png" width="400"  style="display: block; margin: 5px 0 10px;" />
 7. 把最后一个节点移到顶节点，然后再通过大小比较把它移动到合适的位置
     ```cpp
-    void del_max(int* arr) {
+    int del_max(int* arr) {
         if (heapSize > 0) {
+            int deleted = arr[0];
             arr[0] = arr[heapSize-1];
             heapSize--;
             sink_loop(arr, 0);
+            return deleted;
         }
         else {
             printf("Del_max failed, heap is empty.\n");
@@ -451,14 +451,16 @@ class BinaryHeap {
     ```
 8. 为了后续的堆排序算法实现，修改一下 `del_max`，让 `arr[0]` 和 `arr[heapSize-1]` 互相交换，而不是单向赋值
     ```cpp
-    void del_max(int* arr) {
+    int del_max(int* arr) {
         if (heapSize > 0) {
+            int deleted = arr[0];
             swap(arr, 0, heapSize-1);
             // sink_loop 需要根据正确的 heapSize 来执行，所以要在 sink_loop 之前就 heapSize--；
             // 把最大元素换到最后之后，如果还是按照之前的 heapSize 进行 sink_loop，
             // 最大元素可能就会发生移动，最后 heapSize-- 删除的就是最大元素了。
             heapSize--;
             sink_loop(arr, 0);
+            return deleted;
         }
         else {
             printf("Del_max failed, heap is empty.\n");
@@ -607,105 +609,73 @@ class MinBinaryHeap {
 ## Heapsort
 1. 上面的 `del_max` 可以实现为最大节点交换到堆列表尾部（`arr[heapSize-1]`），之后随着 `heapSize--`，之前的最大节点不在计入堆的范围中，但是仍然保存在 `arr` 中。
 2. 那么反复调用 `del_max` 就可以从大到小的移除堆中的节点，被移除的节点按从小到大顺序保存在 `arr` 中
-    ```js
-    function heapSort(arr) {
-        let heap = new BinaryHeap(arr);
+    ```cpp
+    #define HEAP_LENGTH 10
+    int heap[HEAP_LENGTH] = {4, 1, 3, 2, 16, 9, 10, 14, 8, 7};
+    int heapSize = 10;
 
-        let size = heap.size;
-        for (let i=size; i>1; i--) {
-            heap.del_max();
+    int main(void) {
+        heap_sort(heap, HEAP_LENGTH);
+        print_arr(heap, 0, HEAP_LENGTH-1); // [1, 2, 3, 4, 7, 8, 9, 10, 14, 16]
+        return 0;
+    }
+
+    void heap_sort(int* arr, int size) {
+        build(arr);
+        for (int i=0; i<size; i++) {
+            del_max(arr);
         }
-        return heap.arr.slice(1);
     }
     ```
-3. 为什么不是反向交换，也就是说从堆顶开始？好像也可以，试了一下没发现问题
-    ```js
-    for (let i=1; i<size; i++) {
-        heap.del_max();
-    }
-    ```
-
-### 时间复杂度
-1. `build` 的时间复杂度是 $O(n)$；每次 `sink` 的时间复杂度是 $O(\lg n)$，一共 $n-1$ 次。所以排序的复杂度是 $O(n \lg n)$。
-2. 如果输入数组是升序的，复杂度如何？因为是升序，所以 build 过程移动的会比较多，因为整体要让小节点下来大节点上去，但时间复杂度仍然是 $O(n)$。在经过 build 后，其实也就打乱顺序了，而且升序的数组并不会让 build 更快。所以复杂度还是一样的。
-3. 降序呢？降序的数组在 build 时每个 sink 都会在第一次 `while` 循环 break，但 build 的复杂度仍然是 $O(n)$ 级别。build 完之后顺序并没有改变，还是降序的，正好和期望的排顺序相反，排序会不会更慢呢？因为是降序，所以每次 `del_max` 中的 `sink` 都会从根节点下降到叶节点，但仍然是 $O(\lg n)$ 界别的。所以整体的时间复杂度还是不变的。
+3. `build` 的时间复杂度是 $O(n)$；每次 `sink` 的时间复杂度是 $O(\lg n)$，一共 $n-1$ 次。所以排序的复杂度是 $O(n \lg n)$。
 
 
 ## 优先队列（Priority Queues）
 1. 许多应用程序都需要处理有序的元素，但不一定要求它们全部有序，或是不一定要一次就将它们排序。很多情况下我们会收集一些元素，处理当前键值最大的元素，然后再收集更多的元素，再处理当前键值最大的元素，如此这般。
 2. 在这种情况下，一个合适的数据结构应该支持两种操作：**删除并返回最大元素**（或最小元素） 和 **插入元素**。这种数据类型叫做 **优先队列**。
-3. 优先队列的典型应有包括作业调度，每次都要从作业队列中选择优先级最高的作业来执行，这可以用最大优先队列实现；还有比如基于事件驱动的模拟器，队列中保存着要模拟的事件，每个时间都有一个发生时间的属性，要按照时间从小到大依次的触发，这可以用最小优先队列实现。
-4. 如果使用优先队列来处理一个数值数组，我们可以规定数组项就是队列元素，数组项值的大小就是元素的优先级。对于实际的应用中，优先队列对应的不是数组，而是应用程序中的对象，因此我们需要确定对象和队列元素的对应关系。为此，需要再队列的每个元素中存储对应对象的 **句柄**（handle），通过一个队列元素的句柄（如一个指针或者整型数），我们可以找到应用程序里对应的那个对象；同样在应用程序的每个对象中，我们也要存储一个可以找到对应队列元素的句柄，通常使用队列数组的下标（如果这个对象的优先级变化，那对应的下标也会跟着变化）。
+3. 优先队列的典型应有包括作业调度，每次都要从作业队列中选择优先级最高的作业来执行，这可以用最大优先队列实现；还有比如基于事件驱动的模拟器，队列中保存着要模拟的事件，每个事件都有一个发生时间的属性，要按照时间从小到大依次的触发，这可以用最小优先队列实现。
+4. 如果使用优先队列来处理一个数值数组，我们可以规定数组项就是队列元素，数组项值的大小就是元素的优先级。对于实际的应用中，优先队列对应的不是数组，而是应用程序中的对象，因此我们需要确定对象和队列元素的对应关系。为此，需要在队列的每个元素中存储对应对象的 **句柄**（handle），通过一个队列元素的句柄（如一个指针或者整型数），我们可以找到应用程序里对应的那个对象；同样在应用程序的每个对象中，我们也要存储一个可以找到对应队列元素的句柄，通常使用队列数组的下标（如果这个对象的优先级变化，那对应的下标也会跟着变化）。
 
-### 最大优先队列（Max-priority queues）的实现
-#### 建立队列
-```js
-class Max_Priority_Queue {
-    constructor (arr) {
-        this.heap = new BinaryHeap(arr);
-    }
-
-    get list () {
-        return this.heap.list;
-    }
-
-    get maximum () {
-        return this.heap.list[1];
-    }
+### 删除并返回最大元素
+直接使用 `del_max` 实现，因此时间复杂度是 $O(\lg n)$
+```cpp
+int dequeue(int* arr) {
+    return del_max(arr);
 }
 ```
 
-#### 删除并返回最大元素
-时间复杂度由 `del_max` 中的 `sink` 来决定，因此是 $O(\lg n)$
-```js
-dequeue () {
-    if (this.heap.size < 1) {
-        throw new RangeError("Heap underflow");
+### 提升一个元素的优先级
+1. 增加一个数组项的值，然后通过上面实现的 swim 把它移动到合适的位置。
+2. 提升之后，还要知道被提升到什么位置了，所以要返回 swim 的结果
+    ```cpp
+    int main(void) {
+
+        print_arr(heap, 0, HEAP_LENGTH-1); // [16, 14, 10, 8, 7, 9, 3, 2, 4, 1]
+        int idx = increase_key (heap, 9, 11);
+        printf("%d\n", idx); // 4
+        print_arr(heap, 0, HEAP_LENGTH-1); // [16, 14, 10, 8, 11, 9, 3, 2, 4, 7]
+    
+        return 0;
     }
 
-    return this.heap.del_max();
-}
-```
-
-#### 提升一个元素的优先级
-1. 增加一个数组项的值，然后通过上面实现的 `swim` 把它移动到合适的位置。
-2. 提升之后，还要知道被提升到什么位置了，所以要返回 `swim` 的结果。在堆的实现中，序号是从 1 开始计的，不过感觉这里的队列还是从 0 开始计比较合适，所以 `increase_key` 的实现里涉及两个 +1 和一个 -1 的操作
-    ```js
-    increase_key (index, key) {
-        if (index >= this.heap.size || index < 0) {
-            throw new RangeError("Wrong index");
+    int increase_key (int* arr, int index, int key) {
+        if (index >= heapSize || index < 0) {
+            printf("Increase failed, wrong index.\n");
         }
-        if (key < this.list[index]) {
-            throw new RangeError("New key is smaller than current key");
+        else if (key < arr[index]) {
+            printf("Increase failed, new key is smaller than current key.\n");
         }
-        this.heap.arr[index+1] = key;
-        return this.heap.swim(index+1) - 1;
+        arr[index] = key;
+        return swim_loop(arr, index);
     }
     ```
-3. 时间复杂度由 `swim` 来决定，因此是 $O(\lg n)$。
+3. 时间复杂度由 swim 来决定，因此是 $O(\lg n)$。
 
-#### 加入新元素
-1. 把一个元素加入到最后，然后根据优先级 `swim` 到合适的位置。可以直接使用堆的 `insert` 方法
-    ```js
-    enqueue (key) {
-        let idx = this.heap.size + 1;
-        this.heap.arr[idx] = key;
-        return this.heap.insert(idx) - 1;
+### 加入新元素
+1. 直接使用堆的 `insert` 方法
+    ```cpp
+    int enqueue (int* arr, int key) {
+        return insert(arr, key);
     }
     ```
-2. 时间复杂度由 `insert` 中的 `swim` 来决定，因此是 $O(\lg n)$。
-
-### 用最小堆实现最小优先队列
-只需要把 `increase_key` 换成 `decrease_key`
-```js
-decrease_key (index, key) {
-    if (index >= this.heap.size || index < 0) {
-        throw new RangeError("Wrong index");
-    }
-    if (key > this.list[index]) {
-        throw new RangeError("New key is bigger than current key");
-    }
-    this.heap.arr[index+1] = key;
-    return this.heap.swim(index+1) - 1;
-}
-```
+2. 时间复杂度由 `insert` 中的 swim 来决定，因此是 $O(\lg n)$。
