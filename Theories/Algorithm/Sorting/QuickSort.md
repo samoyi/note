@@ -98,31 +98,31 @@ notation are quite small.
 ### `partition` 的时间复杂度
 1. `for` 之前和之后的操作都输常数次数。
 2. `for` 的次数是 $n-1$，里面的每次比较和交换也都是常数次数。
-3. 所示整体的时间复杂度是 $O(n)。
+3. 所示整体的时间复杂度是 $O(n)$。
 
 ### 最坏的输入情况
 1. 输入数据最坏情况是，快速排序的每次 `partition` 产生的两部分分别包含 $n-1$ 和 0 个元素。
 2. 在这种情况下，快速排序运行时间的递归式为 $T(n) = O(n) + T(n-1) + T(0) = T(n-1) + O(n)$。
 3. 可以想象，随着不断的递归，会得到一个算术级数，结果为 $O(n^2)$。
 4. 所以在最坏的输入情况下，快速排序并不比插入排序更好。
-5. 进一步的，如果输入数组本来就是有序的（包括升序、降序和所有元素都相等的情况），快速排序的算法时间复杂度就是这里的 $O(n^2)$；而对应的（对应的是指）插入排序此时只需要 $O(n)$。
+5. 进一步的，如果输入数组本来就是有序的（包括升序、降序和所有元素都相等的情况），快速排序的算法时间复杂度就是这里的 $O(n^2)$；而插入排序此时只需要 $O(n)$。
 
 ### 最好的输入情况
-1. 输入数据最好情况是，快速排序的每次 `partition` 产生的两部分都不大于 $n/2$，也就是 $n$ 为偶数时平分、为奇数时差一个。
+1. 输入数据最好情况是，快速排序的每次 `partition` 产生的两部分都不大于 $n/2$：一个子问题的规模为 $\lfloor n/2 \rfloor$，另一个为 $\lceil n/2 \rceil - 1$。
 2. 在这种情况下，快速排序运行时间的递归式为 $T(n) = O(n) + 2T(n/2)$。
 3. 和归并排序的复杂度一样，$O(n \lg n)$。
 
 ### 常数比例的划分，时间复杂度都是 $O(n \lg n)$
 1. 快速排序的平均运行时间更接近于最好情况，而非最坏情况。
 2. 假设划分算法总是产生 1:9 的划分，看起来是很不平衡的。递归式为 $T(n) = cn + T(n/10) + T(9n/10)$。
-3. 这里直接看《算法导论》98 页。
-4. 这样的划分会产生左右很不平衡的递归树。短的那边高度是 $\log_{10} n$，长的那边高度是 $\log_{10/9} n$。
-5. 在短的那侧还没递归结束之前，对于整棵树来说，每层的划分代价都是 $cn$，$O(n)$ 级别。
-6. 短的那侧递归完了之后只剩下长的那侧自己递归，这时对于整棵树来说，每层的划分代价的上限是 $cn$（在本例中是 $9cn/10$ ？），$O(n)$ 级别。
-7. 所以纵观整棵树，：每层的代价都是 $O(n)$ 级别；而深度 $\log_{10/9} n$ 为 $O(\lg n)$ 级别。所以整棵树总的复杂度还是 $O(n \lg n)$。
+3. 这样的划分会产生左右很不平衡的递归树。看《算法导论》98 页的图：
+    * 最左边的分支因为一直除以 $10$ 除到 $1$，所以会最早结束，高度是 $\log_{10} n$；
+    * 最右边的分支因为一直除以 $10/9$ 除到 $1$，所以会最晚结束，高度是 $\log_{10/9} n$。
+4. 在最短的分支还没递归结束之前，对于整棵树来说，每层的划分代价都是 $cn$，$O(n)$ 级别；最短的分支递归完了之后，对于整棵树来说，每层的划分代价的上限是 $cn$（书上说是小于等于 $cn$，难道不是小于？），$O(n)$ 级别。
+5. 所以纵观整棵树：每层的代价都是 $O(n)$ 级别，而深度 $\log_{10/9} n$ 为 $O(\lg n)$ 级别，所以整棵树总的复杂度还是 $O(n \lg n)$。
 
 ### 对于平均情况的直观观察
-1. 这里直接看《算法导论》99 页。
+1. 这里直接看《算法导论》99 页。TODO
 2. 在平均的情况中，每次的划分情况有好有坏，所以总的层数会比最好情况要多。
 3. 但这种层数的加深仍然只是常数倍的；而且整体来说，都是要对 $n$ 个元素进行划分，不平衡的划分在分出一个比最好情况时大的子数组时，也会分出一个比最会好情况时小的子数组。
 4. 所以整体来说，在平均情况下，时间复杂度还是 $O(n \lg n)$。
@@ -135,10 +135,10 @@ notation are quite small.
 ## 随机化版本
 1. 前面说到如果输入数据是有序的（包括所有元素都相等），那么快速排序就会变成 $O(n^2)$ 复杂度
     <img src="./images/11.png" width="600" style="display: block; margin: 5px 0 10px; border: 10px solid #fff" />
-2. 这是最糟的情况，数组并没有被分成两半，相反，其中一个子数组始终为空，这导致调用栈非常长，为 $O(N)$，而在最佳情况下，栈高为 $O(log N)$。
-3. 而不管是最糟情况还是最佳情况，在调用栈的每层都涉及 $N$ 个元素。所以，最糟情况下快速排序的时间复杂度为 $O(N^2)$，而最佳情况的时间复杂度是 $O(N log N)$。
+2. 这是最糟的情况，数组并没有被分成两半，相反，其中一个子数组始终为空，这导致调用栈非常长，为 $O(n)$，而在最佳情况下，栈高为 $O(\lg n)$。
+3. 而不管是最糟情况还是最佳情况，在调用栈的每层都涉及 $n$ 个元素。所以，最糟情况下快速排序的时间复杂度为 $O(n^2)$，而最佳情况的时间复杂度是 $O(n \lg n)$。
 4. 即使输入数据不是完全有序的，很多时候也是比较有序的，完全的随机常常是需要设计之后才能实现的抽样结果。
-5. 这样的数据虽然不一定会导致 $O(n \lg n)$ 的复杂度，但也会让快速排序无法发挥出最快的速度。因此我们希望可以在算法中引入随机性，从而使算法对于所有的输入都能获得较好的期望性能。
+5. 这样的数据虽然不一定会导致 $O(n^2)$ 的复杂度，但也会让快速排序无法发挥出最快的速度。因此我们希望可以在算法中引入随机性，从而使算法对于所有的输入都能获得较好的期望性能。
 6. 一种方法是在排序之前先对输入数据进行乱序，另一种方法是采用 **随机抽样**（random sampling）技术选择 pivot。
 
 ### 乱序输入数据
@@ -147,60 +147,16 @@ notation are quite small.
 
 ### 随机抽样选择 pivot
 1. 随机抽样选择 pivot 可以不用对输入数据进行额外的乱序。
-2. 与每次都选择子数组中最右（`rightIndex`）元素作为 pivot 不同，随机抽样是每次都随机选择一个元素作为 pivot。
-3. 实现方法是每次随机选出一个元素和 `rightIndex` 元素交换来作为 pivot
-    ```js
-    function partition (arr, leftIndex, rightIndex) {
-        let randIdx = Math.floor(Math.random() * (rightIndex - leftIndex + 1) + leftIndex);
-        swap(arr, randIdx, rightIndex);
-        let pivot = arr[rightIndex];
-
-        let i = leftIndex - 1;
-        let j = leftIndex;
-
-        for (; j<rightIndex; j++) {
-            let val = arr[j];
-            if (val <= pivot) {
-                swap(arr, ++i, j);
-            }
-        } 
-
-        swap(arr, i+1, rightIndex);
-
-        return i+1;
+2. 与每次都选择子数组中最右（`rightIdx`）元素作为 pivot 不同，随机抽样是每次都随机选择一个元素作为 pivot。
+3. 实现方法是每次随机选出一个元素和 `rightIdx` 元素交换来作为 pivot
+    ```cpp
+    int randomized_partition (int* arr, int leftIdx, int rightIdx) {
+        int randIdx = rand() % (rightIdx-leftIdx+1) + leftIdx;
+        swap(arr, randIdx, rightIdx);
+        return partition(arr, leftIdx, rightIdx);
     }
     ```
-4. 仍然无法解决子数组都相同的方法。针对这种情况，一个解决方法是每次划分都记录比较时相同元素的次数，如果每次比较都相同，就证明该子数组全部元素都相同
-    ```js
-    function partition (arr, leftIndex, rightIndex) {
-        let randIdx = Math.floor(Math.random() * (rightIndex - leftIndex + 1) + leftIndex);
-        swap(arr, randIdx, rightIndex);
-        let pivot = arr[rightIndex];
-
-        let i = leftIndex - 1;
-        let j = leftIndex;
-        let nSameTimes = 0;
-
-        for (; j<rightIndex; j++) {
-            let val = arr[j];
-            if (val <= pivot) {
-                swap(arr, ++i, j);
-            }
-            if (val === pivot) {
-                nSameTimes++;
-            }
-        } 
-
-        if (nSameTimes === rightIndex - leftIndex) {
-            return Math.floor((leftIndex + rightIndex)/2);
-        }
-
-        swap(arr, i+1, rightIndex);
-
-        return i+1;
-    }
-    ```
-5. 可以看到并没有增加复杂度。不过下面会讲到一个方法，在重复数据比较多的情况下甚至可以降低算法的复杂度。
+4. 仍然无法解决子数组都相同的方法。下面会讲到一个方法，在重复数据比较多的情况下甚至可以降低算法的复杂度。
 
 
 ## 算法改进
@@ -213,21 +169,59 @@ notation are quite small.
     * 对于小数组，快速排序比插入排序慢；
     * 因为递归，快速排序的 `quickSort()` 方法在小数组中也会调用自己。
 2. 因此，在排序小数组时应该切换到插入排序。小数组边界大小的最佳值是和系统相关的，但是 5 ～ 15 之间的任意值在大多数情况下都能令人满意
-    ```js
-    function quickSort (arr, leftIndex, rightIndex) {
-        if ( leftIndex + 10 >= rightIndex ) {
-            insertionSort(arr, leftIndex, rightIndex);
-            return;
+    ```cpp
+    void quickSort (int* arr, int leftIdx, int rightIdx) {
+        if (leftIdx < rightIdx) {
+            if (leftIdx + 10 > rightIdx) {
+               insertionSort(arr, leftIdx, rightIdx);
+            }
+            else {
+                int pivotIdx = partition(arr, leftIdx, rightIdx);
+                quickSort(arr, leftIdx, pivotIdx-1);
+                quickSort(arr, pivotIdx+1, rightIdx);
+            }
         }
-
-        let index = partition(arr, leftIndex, rightIndex);
-        quickSort( arr, leftIndex, index-1);
-        quickSort( arr, index+1, rightIndex);
     }
     ```
 
 ### 针对相同元素值的快速排序
 1. 之前的划分是把以比较的划分为两部分：小于等于 pivot 的，和大于 pivot 的。这里的改进是要划分为三部分：小于 pivot 的，等于 pivot 的，大于 pivot 的。这样，在划分之后的递归调用 `quickSort` 就可以直接略过相同的那部分。
+2. 在上面 `partition` 的基础上，在小于等于 pivot 和大于 pivot 的区段中间，再加上等于 pivot 的区段。
+3. 最后返回的需要是两个索引值，用来指明中间区段的范围，以便只需要对两边的区段进行递归排序。下面的实现没有返回索引值，而是直接设置了索引值指针参数的值
+    ```cpp
+    void threePart_quickSort (int* arr, int leftIdx, int rightIdx) {
+        if (leftIdx < rightIdx) {
+            int l, r;
+            // l 和 r 会被设置为左侧子数组的最右索引和右侧子数组的最左索引
+            threePart_partition(arr, leftIdx, rightIdx, &l, &r);
+            threePart_quickSort(arr, leftIdx, l);
+            threePart_quickSort(arr, r, rightIdx);
+        }
+    }
+
+    void threePart_partition (int* arr, int leftIdx, int rightIdx, int* l, int* r) {
+        int pivot = arr[rightIdx];
+        int i = leftIdx - 1; // 小于 pivot 的区段的最后一个
+        int m = leftIdx - 1; // 等于 pivot 的区段的最后一个
+        int j = leftIdx; // 当前待比较的
+
+        for (; j<rightIdx; j++) {
+            if (arr[j] == pivot) {
+                swap(arr, ++m, j);
+            }
+            else if (arr[j] < pivot) {
+                // 先把 j 所在的元素交换到中间区段，然后再进一步交换到左边区段
+                swap(arr, ++m, j);
+                swap(arr, ++i, m);
+            }
+        }
+
+        swap(arr, ++m, rightIdx);
+        *l = i;
+        *r = m+1;
+    }
+    ```
+
 2. 选择最左侧元素作为 `pivot`，从左到右遍历数组一次，维护一个指针 `lt` 使得 `a[leftIndex..lt-1]` 中的元素都小于 `v`，一个指针 `gt` 使得 `a[gt+1..rightIndex]` 中的元素都大于 `v`，一个指针 `i` 使得 `a[lt..i-1]` 中的元素都等于 `v`，`a[i..gt]` 中的元素都还未确定，如下图所示
     <img src="./images/10.png" width="400" style="display: block; margin: 5px 0 10px; border: 10px solid #fff" />
 3. 在比较的过程中：`lt` 指向最左侧的和 `pivot` 相等的元素，`i` 指向待比较元素，`gt` 指向最右侧的不确定元素。
