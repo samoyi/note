@@ -5,6 +5,7 @@
 
 - [QuickSort](#quicksort)
     - [设计思想](#设计思想)
+        - [`partition` 中的 `i`](#partition-中的-i)
     - [概述](#概述)
     - [分治描述](#分治描述)
     - [`partition` 实现](#partition-实现)
@@ -22,6 +23,7 @@
     - [算法改进](#算法改进)
         - [切换到插入排序](#切换到插入排序)
         - [针对相同元素值的快速排序](#针对相同元素值的快速排序)
+            - [《算法（第4版）》的实现](#算法第4版的实现)
         - [三取样切分](#三取样切分)
     - [从两边向中间靠拢的 `partition` 版本](#从两边向中间靠拢的-partition-版本)
     - [References](#references)
@@ -29,6 +31,7 @@
 <!-- /TOC -->
 
 ## 设计思想
+### `partition` 中的 `i`
 
 
 ## 概述
@@ -67,7 +70,25 @@ notation are quite small.
     * 如果大于 pivot：直接 `j` 加一。因为是以 `j` 作为循环的索引，所以循环体内什么都不用做。
     * 如果小于等于 pivot：把当前元素和深色区域第一个元素交换，然后 `i` 加一；`j` 作为循环的索引自动加一。
 6. 循环结束后，`j` 走到 pivot 的位置，把 pivot 和深色区域最左边的交换后，整个数组就是被 pivot 一分为二了。
-7. 实现如下
+7. 最初实现如下，功能上是没有问题
+    ```cpp
+    int partition (int* arr, int leftIdx, int rightIdx) {
+        int pivot = arr[rightIdx];
+        int i = leftIdx - 1; // 比 pivot 大的区间之前的第一个元素的索引
+        int j = leftIdx; // 比 pivot 大的区间之后的第一个元素的索引
+
+        for (; j<rightIdx; j++) {
+            if (arr[j] <= pivot) {
+                swap(arr, ++i, j);
+            }
+        }
+ 
+        swap(arr, i+1, rightIdx);
+
+        return i+1;
+    }
+    ```
+8. `i` 标记的是大的区间之前的第一个元素，但是在第二个 `swap` 之后，`i` 右边换过来了 pivot 元素，现在 `i` 就不是大的区间之前的第一个元素了。所以这里应该也让 `i` 自增，保持正确的语义。另外，最后也可以简单的直接返回 `i`
     ```cpp
     int partition (int* arr, int leftIdx, int rightIdx) {
         int pivot = arr[rightIdx];
@@ -80,9 +101,9 @@ notation are quite small.
             }
         }
 
-        swap(arr, i+1, rightIdx);
+        swap(arr, ++i, rightIdx);
 
-        return i+1;
+        return i;
     }
     ```
 
@@ -221,16 +242,68 @@ notation are quite small.
         *r = m+1;
     }
     ```
+4. 要交换到小于 pivot 的区段时，因为中间要跨域两个区段，所以必须要进行两次交换。参考《算法（第4版）》的实现，把大于 pivot 的区段放到最右边，这样在未排序的左边就只有两个区段
+    ```cpp
+    void threePart_partition (int* arr, int leftIdx, int rightIdx, int* l, int* r) {
+        int pivot = arr[rightIdx];
+        int i = leftIdx - 1; // 小于 pivot 的区段的最后一个
+        int j = leftIdx; // 当前待比较的
+        int k = rightIdx; // 大于 pivot 的区段的最左边的
 
-2. 选择最左侧元素作为 `pivot`，从左到右遍历数组一次，维护一个指针 `lt` 使得 `a[leftIndex..lt-1]` 中的元素都小于 `v`，一个指针 `gt` 使得 `a[gt+1..rightIndex]` 中的元素都大于 `v`，一个指针 `i` 使得 `a[lt..i-1]` 中的元素都等于 `v`，`a[i..gt]` 中的元素都还未确定，如下图所示
+        // 本来这里的终止条件还是用的之前的 j<rightIdx，
+        // 不过现在因为右边有了大于 pivot 的区段，索引应该是小于 k
+        for (; j<k; j++) {
+            if (arr[j] < pivot) {
+                swap(arr, ++i, j);
+            }
+            else if (arr[j] > pivot) {
+                // 这里的 --k 因为还是没比较的元素，所以交换过来后仍然需要比较，因此 j 不能自增
+                swap(arr, --k, j--);
+            }
+        }
+
+        swap(arr, j, rightIdx);
+        *l = i;
+        *r = k;
+    }
+    ```
+5. 上面有个奇怪的 `j--` 用来抵消 `for` 的自增，不如直接换成 `while`，然后在内部明确的自增 `j`，看起来也比隐晦的 `j` 自增更容易理解
+    ```cpp
+    void threePart_partition (int* arr, int leftIdx, int rightIdx, int* l, int* r) {
+        count++;
+        int pivot = arr[rightIdx];
+        int i = leftIdx - 1; // 小于 pivot 的区段的最后一个
+        int j = leftIdx; // 当前待比较的
+        int k = rightIdx; // 大于 pivot 的区段的最左边的
+
+        while (j < k) {
+            if (arr[j] < pivot) {
+                swap(arr, ++i, j++);
+            }
+            else if (arr[j] > pivot) {
+                swap(arr, --k, j);
+            }
+            else {
+                j++;
+            }
+        }
+
+        swap(arr, j, rightIdx);
+        *l = i;
+        *r = k;
+    }
+    ```
+    
+#### 《算法（第4版）》的实现
+1. 选择最左侧元素作为 `pivot`，从左到右遍历数组一次，维护一个指针 `lt` 使得 `a[leftIndex..lt-1]` 中的元素都小于 `v`，一个指针 `gt` 使得 `a[gt+1..rightIndex]` 中的元素都大于 `v`，一个指针 `i` 使得 `a[lt..i-1]` 中的元素都等于 `v`，`a[i..gt]` 中的元素都还未确定，如下图所示
     <img src="./images/10.png" width="400" style="display: block; margin: 5px 0 10px; border: 10px solid #fff" />
-3. 在比较的过程中：`lt` 指向最左侧的和 `pivot` 相等的元素，`i` 指向待比较元素，`gt` 指向最右侧的不确定元素。
-4. 每次比较：
+2. 在比较的过程中：`lt` 指向最左侧的和 `pivot` 相等的元素，`i` 指向待比较元素，`gt` 指向最右侧的不确定元素。
+3. 每次比较：
     * 如果 `arr[i]` 小于 `v`，将 `arr[lt]` 和 `arr[i]` 交换，将 `lt` 和 `i` 加一；
     * 如果 `arr[i]` 大于 `v`，将 `arr[gt]` 和 `arr[i]` 交换，将 `gt` 减一；因为之前 `gt` 位的元素也是不确定的，所以这里交换到 `i` 位之后要继续进行比较； 
     * 如果 `arr[i]` 等于 `v`，将 `i` 加一。
-5. 上述比较会不断缩小不确定的 `arr[i..gt]`。当 `i` 等于 `gt` 时，还剩最后一个待排序的元素，此时的比较规则还是一样的，只不过比较之后 `gt` 所在的元素就不是不确定的了，而是最右侧的等于 `pivot` 的元素。
-6. 实现
+4. 上述比较会不断缩小不确定的 `arr[i..gt]`。当 `i` 等于 `gt` 时，还剩最后一个待排序的元素，此时的比较规则还是一样的，只不过比较之后 `gt` 所在的元素就不是不确定的了，而是最右侧的等于 `pivot` 的元素。
+5. 实现
     ```js
     function quickSort (arr, leftIndex, rightIndex) {
         if ( leftIndex + 10 >= rightIndex ) {
