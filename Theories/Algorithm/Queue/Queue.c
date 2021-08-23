@@ -3,12 +3,15 @@
 #include <stdbool.h>
 #include "Queue.h"
 
-
-bool isFull(Queue* q) {
-    return q->tail == q->head - 1 || (q->head == 0 && q->tail == QUEUE_SIZE);
+void initQueue(Queue* q) {
+    q->head = 0;
+    q->tail = 0;
 }
 bool isEmpty(Queue* q) {
     return q->head == q->tail;
+}
+bool isFull(Queue* q) {
+    return q->tail + 1 == q->head || (q->head == 0 && q->tail == QUEUE_SIZE);
 }
 void enqueue(Queue* q, int n) {
     if (isFull(q)) {
@@ -38,6 +41,7 @@ int dequeue(Queue* q) {
     return dequeued;
 }
 void printQueue(Queue* q) {
+    printf("[");
     int i;
     if (q->tail > q->head) {
         for (i=q->head; i<q->tail; i++) {
@@ -52,13 +56,14 @@ void printQueue(Queue* q) {
             printf("%d ", q->list[i]);
         }
     }
+    printf("]");
     printf("\n");
 }
 int countQueue(Queue* q) {
-    if (q->tail < q->head) {
-        return QUEUE_SIZE - q->head + q->tail + 1;
+    if (q->tail >= q->head) {
+        return q->tail - q->head;
     }
     else {
-        return q->tail - q->head;
+        return QUEUE_SIZE - q->head + q->tail + 1;
     }
 }

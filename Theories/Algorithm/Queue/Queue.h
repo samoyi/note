@@ -12,8 +12,9 @@ typedef struct {
     int tail;
 } Queue;
 
-bool isFull(Queue*);
+void initQueue(Queue*);
 bool isEmpty(Queue*);
+bool isFull(Queue*);
 void enqueue(Queue*, int);
 int  dequeue(Queue*);
 void printQueue(Queue*);
