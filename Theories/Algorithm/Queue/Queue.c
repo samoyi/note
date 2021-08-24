@@ -3,7 +3,13 @@
 #include <stdbool.h>
 #include "Queue.h"
 
-void initQueue(Queue* q) {
+void initQueue(Queue* q, int size) {
+    q->size = size;
+    q->list = calloc(size, sizeof(int));
+    if (q->list == NULL) {
+        printf("calloc failed in initQueue.\n");
+        exit(EXIT_FAILURE);
+    }
     q->head = 0;
     q->tail = 0;
 }
@@ -11,7 +17,7 @@ bool isEmpty(Queue* q) {
     return q->head == q->tail;
 }
 bool isFull(Queue* q) {
-    return q->tail + 1 == q->head || (q->head == 0 && q->tail == QUEUE_SIZE);
+    return q->tail + 1 == q->head || (q->head == 0 && q->tail == q->size);
 }
 void enqueue(Queue* q, int n) {
     if (isFull(q)) {
@@ -19,7 +25,7 @@ void enqueue(Queue* q, int n) {
         exit(EXIT_FAILURE);
     }
     q->list[q->tail] = n;
-    if (q->tail == QUEUE_SIZE) {
+    if (q->tail == q->size) {
         q->tail = 0;
     }
     else {
@@ -32,7 +38,7 @@ int dequeue(Queue* q) {
         exit(EXIT_FAILURE);
     }
     int dequeued = q->list[q->head];
-    if (q->head == QUEUE_SIZE) {
+    if (q->head == q->size) {
         q->head = 0;
     }
     else {
@@ -49,7 +55,7 @@ void printQueue(Queue* q) {
         }
     }
     else if (q->tail < q->head) {
-        for (i=q->head; i<=QUEUE_SIZE; i++) {
+        for (i=q->head; i<=q->size; i++) {
             printf("%d ", q->list[i]);
         }
         for (i=0; i<q->tail; i++) {
@@ -64,6 +70,6 @@ int countQueue(Queue* q) {
         return q->tail - q->head;
     }
     else {
-        return QUEUE_SIZE - q->head + q->tail + 1;
+        return q->size - q->head + q->tail + 1;
     }
 }

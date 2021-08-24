@@ -3,16 +3,15 @@
 
 #include <stdbool.h>
 
-#define QUEUE_SIZE 12
-
 
 typedef struct {
-    int list[QUEUE_SIZE + 1]; // tail 所在位置不保存元素
+    int size;
+    int* list;
     int head;
     int tail;
 } Queue;
 
-void initQueue(Queue*);
+void initQueue(Queue*, int size);
 bool isEmpty(Queue*);
 bool isFull(Queue*);
 void enqueue(Queue*, int);
