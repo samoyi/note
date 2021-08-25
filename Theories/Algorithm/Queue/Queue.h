@@ -18,6 +18,6 @@ void enqueue(Queue*, int);
 int  dequeue(Queue*);
 void printQueue(Queue*);
 int countQueue(Queue*);
-
+void freeQueue (Queue*);
 
 #endif

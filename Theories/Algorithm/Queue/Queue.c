@@ -73,3 +73,6 @@ int countQueue(Queue* q) {
         return q->size - q->head + q->tail + 1;
     }
 }
+void freeQueue (Queue* q) {
+    free(q->list);
+}
