@@ -515,8 +515,24 @@ TODO，八进制数和十六进制数的转义序列
     ```cpp
     #include <string.h>
     ```
-7. 在 `<string.h>` 中声明的每个函数至少需要一个字符串作为实际参数。字符串形式参数声明为 `char *` 类型，这使得实际参数可以是字符数组、`char *` 类型的变量或者字符串字面量——上述这些都适合作为字符串。
-8. 然而，要注意那些没有声明为 `const` 的字符串形式参数。这些形式参数可能会在调用函数时发生改变，所以对应的实际参数不应该是字符串字面量。
+7. 在 `<string.h>` 中声明的每个函数至少需要一个字符串作为实际参数。字符串形式参数声明为 `char*` 类型，这使得实际参数可以是字符数组、`char*` 类型的变量或者字符串字面量——上述这些都适合作为字符串。
+8. 然而，要注意那些没有声明为 `const` 的字符串形式参数。这些形式参数可能会在调用函数时发生改变，所以对应的实际参数不应该是字符串字面量
+    ```cpp
+    void foo (char* str){
+        str[0] = 'a';
+    }
+
+    int main(void) {
+        char s[] = "hello"; // 字符数组，所以最后会打印出 "aello"
+        // char* s = "hello"; // 字符串常量，报错：Segmentation fault
+
+        foo(s);
+        printf("%s\n", s);
+
+
+        return 0;
+    }
+    ```
 
 ### `strcpy` 函数和 `strncpy` 函数
 #### `strcpy`
@@ -531,7 +547,7 @@ TODO，八进制数和十六进制数的转义序列
     {
 
         char str1[STR_SIZE+1];
-        char str2[] = "hello";
+        char str2[STR_SIZE+1] = "hello";
 
         printf("%d\n\n", sizeof(str2)); // 6
 
@@ -660,14 +676,14 @@ TODO，八进制数和十六进制数的转义序列
     ```cpp
     char* s1 = strdup(s2);
     ```
-    `strdup` 相当于
+4. `strdup` 相当于
     ```cpp
     ptr2 = malloc(strlen(ptr1)+1);
-    strcpy(ptr2,ptr1);
+    strcpy(ptr2, ptr1);
     ```
-4. 因为 `strdup()` 把新字符串放在堆上，所以千万记得要用 `free()` 函数释放空间。
-5. 这里也能看出自字符数组和字符指针的区别。So if you want the string which you have copied to be used in another function (as it is created in heap section) you can use `strdup`, else `strcpy` is enough.
-6. 一个例子
+5. 因为 `strdup()` 把新字符串放在堆上，所以千万记得要用 `free()` 函数释放空间。
+6. 这里也能看出自字符数组和字符指针的区别。So if you want the string which you have copied to be used in another function (as it is created in heap section) you can use `strdup`, else `strcpy` is enough.
+7. 一个例子
     ```cpp
     #include <stdlib.h>
     #include <stdio.h>
@@ -922,7 +938,7 @@ TODO，八进制数和十六进制数的转义序列
     {
         size_t n = 0;
 
-        for (;  *s != '\0'; s++)
+        for (; *s != '\0'; s++)
             n++;
 
         return n;
@@ -934,7 +950,7 @@ TODO，八进制数和十六进制数的转义序列
     {
         size_t n = 0;
 
-        for (;  *s; s++)
+        for (; *s; s++)
             n++;
 
         return n;
@@ -976,7 +992,7 @@ TODO，八进制数和十六进制数的转义序列
     }
     ```
     运行速度的提升得益于不需要在 `while` 循环内部对 `n` 进行自增操作。
-8. 请注意，在 `p` 的声明中出现了单词 `const`，如果没有它，编译器会注意到把 `s` 赋值给 `p` 会给 `s` 指向的字符串造成一定风险。不懂
+8. 请注意，在 `p` 的声明中出现了单词 `const`，如果没有它，编译器会注意到把 `s` 赋值给 `p` 会给 `s` 指向的字符串造成一定风险，因为 `s` 指向的字符串本来是不能修改的。
 9. 语句
     ```cpp
     while (*s)
@@ -1094,7 +1110,7 @@ TODO，八进制数和十六进制数的转义序列
     for (p = &argv[1]; *p != NULL; p++)
         printf("%s\n", *p);
     ```
-8. 因为 `argv` 是指针数组，它的数组项是指向字符串的指针，所以 `p` 如果指向 `argv[1]`，那就是指向字符的指针的指针，所以声明的类型就是 `char**`。
+8. 因为 `argv` 是指针数组，它的数组项是指向字符串的指针，所以 `p` 如果指向 `argv[1]`，那就是指向字符串的指针的指针，所以声明的类型就是 `char**`。
 9. `p` 不能直接指向第一个字符串，也就是说不能声明为 `char* p = argv[1]`，因为指向字符串的指针实际上是指向字符串第一个字符的，所以自增只会到第二个字符
     ```cpp
     // 会把 argv[0] 的每个字符逐个打印出来
