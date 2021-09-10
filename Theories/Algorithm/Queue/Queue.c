@@ -5,7 +5,7 @@
 
 void initQueue(Queue* q, int size) {
     q->size = size;
-    q->list = calloc(size, sizeof(int));
+    q->list = calloc(size+1, sizeof(int)); // 数组项比队列元素数多一个
     if (q->list == NULL) {
         printf("calloc failed in initQueue.\n");
         exit(EXIT_FAILURE);

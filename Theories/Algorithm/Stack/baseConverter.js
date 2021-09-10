@@ -5,29 +5,20 @@
 
 const Stack = require('./Stack');
 
-/*
- * 思路（以除以10为例）
- *
- * 第一次除以10，得出一个整数解和一个余数
- * 余数意味着不到10，所以作为个位数很合理
- * 整数解意味着在余数以外，有多少个10
- * 整数解现在的一个 1 ，实际上代表 10
- * 再除以10，这时的 10 实际上已经代表 100 了
- * 所以余数就是不能被100整除的部分，就是作为十位数
- * 整数解现在代表着有多少个100
- * 以此类推
- */
 function baseConverter(decNumber, base) {
-    if (!Number.isSafeInteger(decNumber)) return;
+    if (!Number.isSafeInteger(decNumber)) {
+        throw new Error("Wrong decimal number.")
+    }
+    if (!Number.isSafeInteger(base) || base < 2 || base > 16) {
+        throw new RangeError("Wrong base range.")
+    }
 
     let remStack = new Stack();
-    let rem = null;
     let baseString = '';
     let digits = '0123456789ABCDEF';
 
     while (decNumber > 0) {
-        rem = decNumber % base;
-        remStack.push(rem);
+        remStack.push(decNumber % base);
         decNumber = Math.floor(decNumber / base);
     }
 
