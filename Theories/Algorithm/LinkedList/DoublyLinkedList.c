@@ -3,81 +3,79 @@
 #include "DoublyLinkedList.h"
 
 
-static Node* head = NULL;
-static Node* tail = NULL;
-
-
-Node* search_node (int key) {
-    Node* p = head;
-    while (p != NULL && p->key != key) {
-        p = p->next;
+Node* list_search (int key) {
+    Node* ptr = head;
+    while (ptr && ptr->key != key) {
+        ptr = ptr->next;
     }
-    return p;
+    return ptr;
 }
 
-void insert_node (int key) {
+void list_insert (int key) {
     Node* node = malloc(sizeof(Node));
     if (node == NULL) {
-        printf("Create node fail.");
+        printf("malloc failed in list_insert");
         exit(EXIT_FAILURE);
     }
-    if (tail == NULL) {
+
+    init_node(node, key);
+
+    if (is_list_empty()) {
+        head = node;
         tail = node;
     }
     else {
-        head->prev = node;
+        node->prev = tail;
+        tail->next = node;
+        tail = node;
     }
-    node->key = key;
-    node->prev = NULL;
-    node->next = head;
-    head = node;
 }
 
-void delete_node(Node* node) {
-    Node* p = head;
-    while (p != NULL && p->key != node->key) {
-        p = p->next;
+Node* list_delete (int key) {
+    Node* ptr = head;
+    while (ptr && ptr->key != key) {
+        ptr = ptr->next;
     }
-    if (p != NULL) {
-        int pIsHead = p->prev == NULL;
-        int pIsTail = p->next == NULL;
-
-        if (pIsHead && pIsTail) {
-            head = NULL;
-            tail = NULL;
-        }
-        else if (pIsHead) {
-            head = p->next;
-            p->next->prev = NULL;
-        }
-        else if (pIsTail) {
-            tail = p->prev;
-            p->prev->next = NULL;
-        }
-        else {
-            p->prev->next = p->next;
-            p->next->prev = p->prev;
-        }
-        free(p);
+    if (ptr == NULL) {
+        return NULL;
     }
 
+    if (ptr == head) {
+        head = ptr->next;
+    } 
+    else {
+        ptr->prev->next = ptr->next;
+    }
+
+    if (ptr == tail) {
+        tail = ptr->prev;
+    } 
+    else {
+        ptr->next->prev = ptr->prev;
+    }
+
+    return ptr;
 }
 
 void empty_list (void) {
-    Node* curr = head;
+    Node* ptr = head;
     Node* next;
-    while (curr != NULL) {
-        next = curr->next;
-        free(curr);
-        curr = next;
+    while (ptr) {
+        next = ptr->next;
+        free(ptr);
+        ptr = next;
     }
+
+    // 释放了 head 和 tail 指向的内存并不会让这两个指针变为空指针，所以要手动设置
+    head = NULL;
+    tail = NULL;
 }
 
 void print_list (void) {
-    Node* p = head;
-    while (p != NULL) {
-        printf("%d->", p->key);
-        p = p->next;
+    Node* ptr = head;
+    while (ptr) {
+        printf("%d -> ", ptr->key);
+        ptr = ptr->next;
     }
     printf("\n");
 }
