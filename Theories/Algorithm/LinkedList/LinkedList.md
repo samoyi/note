@@ -5,11 +5,11 @@
 
 - [LinkedList](#linkedlist)
     - [链表和数组的区别](#链表和数组的区别)
-        - [内存连续型不同](#内存连续型不同)
+        - [内存连续性不同](#内存连续性不同)
             - [查询元素的区别](#查询元素的区别)
             - [插入和移除元素的区别](#插入和移除元素的区别)
         - [设计思想区别](#设计思想区别)
-        - [统一与自治](#统一与自治)
+            - [统一与自治](#统一与自治)
             - [封闭与开放——无边界性带来更灵活的组合和拆分](#封闭与开放无边界性带来更灵活的组合和拆分)
     - [反转单向列表](#反转单向列表)
         - [循环](#循环)
@@ -22,7 +22,7 @@
 
 
 ## 链表和数组的区别
-### 内存连续型不同 
+### 内存连续性不同 
 1. 从内存使用上来说，传统数组中的元素在内存上是连续的，而链表的元素因为是通过指针联系，所以不需要是连续的。
 2. 由于这个特性，所以链表查询元素比较耗时，而数组插入和删除元素比较耗时。
 
@@ -37,7 +37,7 @@
 3. 如果是 append 到最后一项，则数组会比较快，因为它拥有较快的查询，且 append 不涉及移动数组项；而链表还是需要从头部一路根据指针找到尾部。（如果是双向列表，则可以从尾部开始，所以也不会慢）
 
 ### 设计思想区别
-### 统一与自治
+#### 统一与自治
 1. 传统数组的方式是全盘统一管理，链表的方式是自治管理。
 2. 统一管理会有一套统一的编制体系，所以查找起来更方便。但因为是一套编制，所以其中一个节点的变动都是对整个编制的变动。
 3. 自治管理中，虽然每个节点有同一个的规则，但是所有节点并没有规划进统一的编制。因此两个节点或多个节点直接发生的变动，并不会影响全局，更准确的说就是根本没有一个全局编制。而没有全局编制的缺点也就是不方便在全局层面上进行管理。
@@ -50,10 +50,107 @@
 
 ## 反转单向列表
 ### 循环
-1. 原理很容易理解，只不过实现是要注意的一个细节就是：每次只处理 curr 和 prev 元素之间的关系，而 curr 和 next 两者的关系要留个下个迭代的 curr 和 prev 去处理。这样才是合理的迭代。
+1. 刚开始这样实现，有问题
+    ```cpp
+    void reverse_iteration(void) {
+        if (head == NULL) {
+            return;
+        }
+
+        Node* curr = head;
+        // 遍历列表，让当前元素的下一个元素的 next 指针指向当前元素
+        while (curr->next) {
+            curr->next->next = curr;
+            curr = curr->next;
+        }
+
+        // 反转后设定新的链表尾和头
+        head->next = NULL;
+        head = curr;
+    }
+    ```
+2. 每次改变了下一个元素的 `next`，下一轮循环却还试图使用改变之前的 `next` 指针。所以每轮改变了 `next` 指针后，下一轮判断条件中的 `curr->next` 就不能用了。
+3. 一个指针想要指向两个地方，那就再多加一个指针
+    ```cpp
+    void reverse_iteration(void) {
+        if (head == NULL) {
+            return;
+        }
+
+        Node* prev = head;
+        Node* curr = head->next;
+        Node* next; // 保存改变之前的 next
+        while (curr) {
+            next = curr->next;
+            curr->next = prev; // 设置新的 next
+            // 设置下一轮
+            prev = curr;
+            curr = next;
+        }
+
+        // 反转后设定新的链表尾和头
+        head->next = NULL;
+        head = prev;
+    }
+    ```
+4. 链表为空的情况（`head == NULL`）也完全可以并入到 `while` 里面
+    ```cpp
+    void reverse_iteration(void) {
+        Node* curr = head;
+        Node* prev = NULL;
+        Node* next;
+        while (curr) {
+            next = curr->next;
+            curr->next = prev;
+            prev = curr;
+            curr = next;
+        }
+
+        // head->next = NULL; // 循环第一轮已经设置 
+        head = prev;
+    }
+    ```
 
 ### 递归
-1. 递归反转的思路是很典型的递归思路，和阶乘的相同的结果：直接用上一层的结果进行这一层的计算，进而得到一个递进的结果。
+1. 直接把上面的循环改为递归。上面的循环中每轮要设置新的 `prev` 和 `curr`，所以这两个作为参数
+    ```cpp
+    void reverse_recurse (Node* prev, Node* curr) {
+        if (curr == NULL) {
+            head = prev;
+        }
+        else {
+            Node* next = curr->next;
+            curr->next = prev;
+            prev = curr;
+            curr = next;
+            reverse_recurse (prev, curr);
+        }
+    }
+    ```
+2. `reverse_recurse` 调用的时候因为还需要传递参数，所以在包装一个函数作为接口
+    ```cpp
+    void reverse_recursion () {
+        reverse_recurse(NULL, head);
+    }
+    ```
+3. 但更好的方法是，直接从递归的本意出发，也就是在之前的基础上或者说利用之前的计算结果再进行新的计算。也就是类似于阶乘的逻辑结构，高层级的计算递归的利用低一层级的计算结果。列出来的形式，就是最高层级的函数中递归的调用低一层级的函数。
+4. 对于这里的情况，就是链表 `1->2->3->4` 的反转函数中递归的调用 `2->3->4` 的反转函数，内层函数调用结束后，它的结果 `4->3->2` 会直接被外层函数利用
+    ```cpp
+    void reverse_recurse (Node* prev, Node* curr) {
+        if (curr == NULL) {
+            head = prev;
+        }
+        else {
+            Node* next = curr->next;
+            reverse_recurse(curr, next); // 反转 head 之后的链表
+            // 到了这里，head 之后的链表已经完成了反转
+            curr->next = prev;
+        }
+    }
+    void reverse_recursion () {
+        reverse_recurse(NULL, head);
+    }
+    ```
 
 
 ## 一些习题

@@ -44,14 +44,13 @@ void delete_node(Node* node) {
 }
 
 void reverse_iteration(void) {
-    Node* curr = head; // 遍历到的节点
-    Node* prev = NULL; // curr 修改前的 prev 节点 
-    Node* next = NULL; // curr 修改前的 next 节点
-
+    Node* curr = head;
+    Node* prev = NULL;
+    Node* next;
     while (curr) {
         next = curr->next;
         curr->next = prev;
-        // 下一轮
+        // 设置下一轮
         prev = curr;
         curr = next;
     }
@@ -59,20 +58,35 @@ void reverse_iteration(void) {
     head = prev;
 }
 
-void reverse_recurse(Node* curr) {
-    Node* next = curr->next;
-    if (next) {
-        reverse_recurse(next);
-        next->next = curr;
-        curr->next = NULL;
+void reverse_recurse (Node* prev, Node* curr) {
+    if (curr == NULL) {
+        head = prev;
     }
     else {
-        head = curr;
+        Node* next = curr->next;
+        reverse_recurse(curr, next);
+        // 到了这里，head 之后的链表已经完成了反转
+        curr->next = prev;
     }
 }
-void reverse_recursion(void) {
-    reverse_recurse(head);
+void reverse_recursion () {
+    reverse_recurse(NULL, head);
 }
+
+// void reverse_recurse(Node* curr) {
+//     Node* next = curr->next;
+//     if (next) {
+//         reverse_recurse(next);
+//         next->next = curr;
+//         curr->next = NULL;
+//     }
+//     else {
+//         head = curr;
+//     }
+// }
+// void reverse_recursion(void) {
+//     reverse_recurse(head);
+// }
 
 void empty_list (void) {
     Node* curr = head;
