@@ -151,6 +151,25 @@
         reverse_recurse(NULL, head);
     }
     ```
+5. 另一个看起来更简单的实现。TODO，对比两种
+    ```cpp
+    void reverse_recurse(Node* curr) {
+        Node* next = curr->next;
+        if (next) {
+            reverse_recurse(next);
+            next->next = curr;
+            curr->next = NULL;
+        }
+        else {
+            head = curr;
+        }
+    }
+    void reverse_recursion(void) {
+        if (head != NULL) {
+            reverse_recurse(head);
+        }
+    }
+    ```
 
 
 ## 一些习题

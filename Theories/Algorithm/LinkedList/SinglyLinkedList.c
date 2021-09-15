@@ -58,35 +58,22 @@ void reverse_iteration(void) {
     head = prev;
 }
 
-void reverse_recurse (Node* prev, Node* curr) {
-    if (curr == NULL) {
-        head = prev;
+void reverse_recurse(Node* curr) {
+    Node* next = curr->next;
+    if (next) {
+        reverse_recurse(next);
+        next->next = curr;
+        curr->next = NULL;
     }
     else {
-        Node* next = curr->next;
-        reverse_recurse(curr, next);
-        // 到了这里，head 之后的链表已经完成了反转
-        curr->next = prev;
+        head = curr;
     }
 }
-void reverse_recursion () {
-    reverse_recurse(NULL, head);
+void reverse_recursion(void) {
+    if (head != NULL) {
+        reverse_recurse(head);
+    }
 }
-
-// void reverse_recurse(Node* curr) {
-//     Node* next = curr->next;
-//     if (next) {
-//         reverse_recurse(next);
-//         next->next = curr;
-//         curr->next = NULL;
-//     }
-//     else {
-//         head = curr;
-//     }
-// }
-// void reverse_recursion(void) {
-//     reverse_recurse(head);
-// }
 
 void empty_list (void) {
     Node* curr = head;
