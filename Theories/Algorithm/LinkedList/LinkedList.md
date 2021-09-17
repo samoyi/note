@@ -176,50 +176,49 @@
 ### 1.3.28　使用递归寻找链表最大值
 1. 接受一条链表的首结点作为参数，返回链表中键最大的节点的值。假设所有键均为正整数，如果链表为空则返回 0。
 2. 根据递归思想 “用前一层或前几层的成果（返回）再做些什么事情”，这里的递归逻辑是：在第一个元素和第二个元素之间比较，得到一个最大值；然后再用这个最大值和第二个元素的下一个元素比较，再得到最大值；继续和下一个元素比较。
-3. 递归函数接收两个参数：一个是之前若干次比较过之后产生的最大值，第二个是下一个待比较的元素。这样，每次都是用已有的最大值和新元素进行比较。
-```js
-function maxInLinkedList_recursion ( max, current ) {
-    if ( current === null ) {
-        return 0
+3. 递归函数接收两个参数：一个是之前若干次比较过之后产生的最大值，第二个是下一个待比较的元素。这样，每次都是用已有的最大值和新元素进行比较
+    ```cpp
+    int foo (Node* head) {
+        if (head == NULL) {
+            return 0;
+        }
+        else {
+            int n = foo(head->next);
+            return head->key > n ? head->key : n;
+        }
     }
 
-    max = current.element > max ? current.element : max;
-    if ( current.next ) {
-        return maxInLinkedList_recursion (max, current.next);
+    int max_in_linkedList () {
+        return foo(head);
     }
-    else {
-        return max;
-    }
-}
+    ```
+    ```js
+    function maxInLinkedList_recursion ( max, current ) {
+        if ( current === null ) {
+            return 0
+        }
 
-let max = maxInLinkedList_recursion( 0, ll.getHead() );
-```
+        max = current.element > max ? current.element : max;
+        if ( current.next ) {
+            return maxInLinkedList_recursion (max, current.next);
+        }
+        else {
+            return max;
+        }
+    }
+
+    let max = maxInLinkedList_recursion( 0, ll.getHead() );
+    ```
 
 ### 1.3.40 前移编码
 1. 从标准输入读取一串字符，使用链表保存这些字符并清除重复字符。当你读取了一个从未见过的字符时，将它插入表头。当你读取了一个重复的字符时，将它从链表中删去并再次插入表头。
-2. 将你的程序命名为 `MoveToFront`：它实现了著名的 **前移编码** 策略，这种策略假设最近访问过的元素很可能会再次访问，因此可以用于缓存、数据压缩等许多场景。很有用的策略啊。
-3. 虽然题目要求用链表，不过还是用数组吧
-    ```js
-    function moveToFront ( str, arr=[] ) {
-        let charList = [...str];
-
-        charList.forEach(( char ) => {
-            let index = arr.indexOf( char );
-            if ( index > -1 ) {
-                char = arr.splice( index, 1 )[0];
-            }
-            arr.unshift( char );
-        });
-        
-
+2. 将你的程序命名为 `MoveToFront`：它实现了著名的 **前移编码** 策略，这种策略假设最近访问过的元素很可能会再次访问，因此可以用于缓存、数据压缩等许多场景。
+3. 实现
+    ```cpp
+    void MoveToFront (const char str[], int size) {
+        for (int i=0; i<size; i++) {
+            delete_node(str[i] - 'a');
+            insert_node(str[i] - 'a');
+        }
     }
-
-
-    const arr = []
-
-    moveToFront( 'hello', arr );
-    console.log( arr ); // ["o", "l", "e", "h"]
-
-    moveToFront( 'world', arr );
-    console.log( arr ); // ["d", "l", "r", "o", "w", "e", "h"]
     ```

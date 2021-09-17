@@ -26,19 +26,27 @@ void insert_node (int key) {
     head = node;
 }
 
-void delete_node(Node* node) {
-    if (node == head) {
-        head = node->next;
-        free(node);
+Node* delete_node(int key) {
+    if (head == NULL) {
+        return NULL;
+    }
+    if (key == head->key) {
+        head = head->next;
+        return head;
     }
     else {
         Node* prev = head;
-        while (prev != NULL && prev->next->key != node->key) {
+        Node* curr = head->next;
+        while (curr && curr->key != key) {
             prev = prev->next;
+            curr = curr->next;
         }
-        if (prev != NULL) {
-            prev->next = node->next;
-            free(node);
+        if (curr) {
+            prev->next = curr->next;
+            return curr;
+        }
+        else {
+            return NULL;
         }
     }
 }
@@ -92,4 +100,11 @@ void print_list (void) {
         p = p->next;
     }
     printf("\n");
+}
+
+void MoveToFront (const char str[], int size) {
+    for (int i=0; i<size; i++) {
+        delete_node(str[i] - 'a');
+        insert_node(str[i] - 'a');
+    }
 }

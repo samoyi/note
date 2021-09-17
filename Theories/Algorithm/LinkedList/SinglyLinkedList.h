@@ -12,11 +12,12 @@ typedef struct Node{
 
 Node* search_node (int key);
 void insert_node (int key);
-void delete_node(Node* node);
+Node* delete_node(int key);
 void reverse_iteration(void);
 void reverse_recursion(void);
 void empty_list (void);
 void print_list (void);
 
+void MoveToFront (const char str[], int size);
 
 #endif
