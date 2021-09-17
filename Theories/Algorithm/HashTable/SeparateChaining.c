@@ -3,6 +3,7 @@
 
 #define SIZE 9
 
+// 双向链表
 typedef struct Node{
     int key;
     struct Node* prev;
@@ -10,16 +11,19 @@ typedef struct Node{
 } Node;
 
 // 若干个散列函数
+// 这里只实现了 hash_fn_mod 一个
 int hash_fn_mod (int key);
 
 // 散列表是一个数组，每个数组项指向一个槽位链表的 head 节点
 Node* table[SIZE];
+
 void hash_init(void);
 void hash_put(int key);
 Node* hash_get(int key);
 void hash_delete(Node*);
 void print_list(int idx);
 void print_table(void);
+
 
 // 确定当前使用的散列函数
 int (*hash_fn)(int) = hash_fn_mod;
@@ -43,6 +47,7 @@ int main(void) {
 
     return 0;
 }
+
 
 int hash_fn_mod (int key) {
     return key % SIZE;
@@ -76,29 +81,55 @@ Node* hash_get (int key) {
     }
     return curr;
 }
+// node 节点在链表中总共有四种可能的情况，对应不同的删除逻辑，逐一分析
 void hash_delete (Node* node) {
     Node* prev = node->prev;
     Node* next = node->next;
-
-    // 只要有 next，不管 prev 只不是 NULL 都可以
-    // 如果没有 next，说明 node 是 tail，删掉后后面也不会有受影响的节点
-    if (next != NULL) {
-        next->prev = prev;
+    
+    if (prev == NULL && next == NULL) {
+        int idx = hash_fn(node->key);
+        table[idx] = NULL;
     }
-
-    // 只要有 prev，不管 next 是不是 NULL 都可以
-    // 但 prev 是 NULL 的话，还有一步要处理，因为此时 node 就是 head，
-    // 所以 table[idx] 还在引用 node，因此还必须要让 table[idx] 引用 next
-    if (prev != NULL) {
-        prev->next = next;
-    }
-    else {
+    else if (prev == NULL) {
         int idx = hash_fn(node->key);
         table[idx] = next;
+        next->prev = NULL;
+    }
+    else if (next == NULL) {
+        prev->next = NULL;
+    }
+    else {
+        prev->next = next;
+        next->prev = prev;
     }
 
     free(node);
 }
+// 上面的删除算法可以如下简化，但是理解和实现起来没有那么直观；
+// 虽然有代码量的减少，但是并没有速度的提升。
+// void hash_delete (Node* node) {
+//     Node* prev = node->prev;
+//     Node* next = node->next;
+
+//     // 只要有 next，不管 prev 只不是 NULL 都可以
+//     // 如果没有 next，说明 node 是 tail，删掉后后面也不会有受影响的节点
+//     if (next != NULL) {
+//         next->prev = prev;
+//     }
+
+//     // 只要有 prev，不管 next 是不是 NULL 都可以
+//     // 但 prev 是 NULL 的话，还有一步要处理，因为此时 node 就是 head，
+//     // 所以 table[idx] 还在引用 node，因此还必须要让 table[idx] 引用 next
+//     if (prev != NULL) {
+//         prev->next = next;
+//     }
+//     else {
+//         int idx = hash_fn(node->key);
+//         table[idx] = next;
+//     }
+
+//     free(node);
+// }
 void print_list(int idx) {
     Node* curr = table[idx];
     while (curr != NULL) {
