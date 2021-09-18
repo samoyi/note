@@ -26,6 +26,7 @@
             - [插入元素](#插入元素)
             - [删除元素](#删除元素)
     - [处理冲突——开放寻址法](#处理冲突开放寻址法)
+        - [探查序列](#探查序列)
         - [插入逻辑](#插入逻辑)
         - [查找逻辑](#查找逻辑)
         - [删除逻辑](#删除逻辑)
@@ -242,22 +243,28 @@
 
 
 ## 处理冲突——开放寻址法
-### 插入逻辑
+### 探查序列
 1. To perform insertion using open addressing, we successively examine, or **probe**, the hash table until we find an empty slot in which to put the key.
-2. 也就是说第一次散列出来的值可能被占用了，所以就要再尝试若干次的再散列，直到找到一个没有被占用的槽位。
-3. 再散列可以很简单的尝试后一个位置，也可以是其他复杂一些的在散列逻辑，但都要保证再散列可以遍历所有的可插入槽位。
-4. 考虑到下面讲到了删除逻辑，这里的可插入槽位包括从来没有插入过的槽位和曾经插入过但是被删除的槽位。
+2. Instead of being fixed in the order $0, 1,..., m-1$ (which requires $Θ(n)$ search time), the sequence of positions probed depends upon the key being inserted. 
+3. To determine which slots to probe, we extend the hash function to include the probe number (starting from $0$) as a second input. With open addressing, we require that for every key $k$, the **probe sequence** is $\langle h(k, 0), h(k, 1),..., h(k, m-1) \rangle$. 也就是说，散列函数的初次散列和之后的在散列，会按照这个序列计算出的位置依次遍历槽位。
+4. 再散列可以很简单的尝试后一个位置，也可以是其他复杂一些的再散列逻辑，但都要保证再散列可以遍历所有的可插入槽位。
+5. 不用链接法中的指针和链表，节省下来的空间可以用于提供更多的槽位，潜在的减少了冲突，提高了检索速度。
+
+### 插入逻辑
+1. 对于待插入的关键字 $k$，散列函数会依次计算出探查序列中的位置，直到找到一个可插入槽位或者遍历完所有槽位。
+2. 考虑到下面讲到了删除逻辑，如果哈希表是支持删除功能的，那么这里的 “可插入槽位” 就包括从来没有插入过的槽位和曾经插入过但是被删除的槽位。
 
 ### 查找逻辑
-1. 查找逻辑和插入逻辑差不多。先根据当前 key 计算散列值，然后看看对应的槽位是否为空。如果为空，就说明要查找的元素不存在。
-2. 注意，这里说的 “槽位为空”，是指它从来没有被插入元素一直为空的，而不包括曾经插入但之后删除了。
+1. 查找逻辑和插入逻辑差不多。先根据当前 key 计算散列值，依次查看探查序列中的槽位，如果直到找到空槽位或者找完了所有槽位还没找到，就说明要查找的元素不存在。
+2. 注意，这里说的 “空槽位”，是指它从来没有被插入元素一直为空的，而不包括曾经插入但之后删除了。因为要查找的元素可能是在这个空槽为曾经不空的时候插入到了它所在的探查序列的后方某个槽位。
 3. 插入元素时我们会不断的再散列找到一个没有被占用的槽位，假如我们的散列表没有删除操作，那么查找时如果一直再散列到一个没有被占用的槽位时还没有找到对应 key 的元素，那就说该元素不存在。
-4. 但是我们要实现删除操作，那么比如 k 元素插入时散列值为 i，但是 i 被占用了，所以 k 元素放到了 j。之后 i 所在的元素被删除了，我们想要查找 k 元素时散列到 i，发现没有被占用，但现在就不能说 k 元素不存在。
+4. 但是我们要实现删除操作，那么比如 `k` 元素插入时散列值为 `i`，但是 `i` 被占用了，所以 `k` 元素放到了 `j`。之后 `i` 所在的元素被删除了，我们想要查找 `k` 元素时散列到 `i`，发现没有被占用，但现在就不能说 `k` 元素不存在。
 5. 所以我们必须要区分一直为空和被删除了的两种状态。查找时再散列遇到一直为空就说明不存在，遇到被删除的则要继续再散列。
 
 ### 删除逻辑
 1. 也是散列和再散列的过程，只不过删除之后不能把槽位标记为空，而要标记为被删除。
-2. When we use the special value DELETED, however, search times no longer depend on the load factor $O(α)$, and for this reason chaining is more commonly selected as a collision resolution technique when keys must be deleted. 被删除的元素不会计入 $O(α)$，但是又会影响查找。
+2. When we use the special value `DELETED`, however, search times no longer depend on the load factor $O(α)$, and for this reason chaining is more commonly selected as a collision resolution technique when keys must be deleted. 被删除的元素不会计入 $α$ 的计算，但是又会影响查找。
+3. 因此，在必须要删除关键字的应用中，更常见的做法是采用链接法来解决冲突。
 
 ### 均匀散列
 1. 对于一个拥有 $m$ 个槽位的哈希表，为了插入一个元素，它需要探查的可能性有多少种？
@@ -266,7 +273,7 @@
 
 ### 线性探测（Linear Probing）方法
 1. 先用散列函数计算出散列值 `x`，如果 `x` 的槽位已经被占用那就尝试 `x+1`，以此类推。
-2. 注意，为了遍历散列表，可能需要往回检查第一个槽。也就是说一直找到散列表最后一个仍然没有空位，则循环到头部再检测。
+2. 为了遍历散列表，可能需要往回检查第一个槽。也就是说一直找到散列表最后一个仍然没有空位，则循环到头部再检测。
 3. 线性探测有个缺点，那就是会使散列表中的元素出现聚集现象，称为 **一次群集**（primary clustering）。也就是说，如果一个槽发生太多冲突，线性探测会填满其附近的槽，而这会影响到后续插入的元素，有时要越过数个槽位才能找到一个空槽。
 4. 实现在 `./LinearProbing.c`。
 5. 线性探测第一次散列有 $m$ 种可能性，因为之后再散列规则都是确定的加一，所以整体的探查可能性只有 $m$。
