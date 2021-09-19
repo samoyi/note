@@ -18,6 +18,10 @@ struct slot {
     bool deleted;
 } table[SIZE];
 void hash_init(void);
+static bool isVirginalSlot (int pos);
+static bool isDeleted (int pos);
+static bool hasNode (int pos);
+static bool isTableFull ();
 void hash_put(int key, int val);
 Node* hash_get(int key);
 void hash_delete(int key);
@@ -25,6 +29,7 @@ void print_table(void);
 
 
 static int index = 0; // 遍历探查序列时自增
+static int count = 0; // 槽位占用数
 
 
 int main(void) {
@@ -85,10 +90,30 @@ void hash_init(void) {
     }
 }
 
+// node 为 NULL 说明槽位为空，之前从来没有被插入过节点；
+// 因此槽位一旦被插入节点，即使删除后，node 也不会变为 NULL。
+bool isVirginalSlot (int pos) {
+    return table[pos].node == NULL;
+}
+
+// 所以要判断一个槽位是否有节点，必须要再结合 delete；
+// 在 node 不为 NULL 时：
+//      * deleted 为 true 说明当前的节点已经被删除
+//      * delete 为 false 说明当前有节点
+bool isDeleted (int pos) {
+    return table[pos].node && table[pos].deleted;
+}
+bool hasNode (int pos) {
+    return table[pos].node && !table[pos].deleted;
+}
+
+bool isTableFull () {
+    return count == SIZE;
+}
+
 void hash_put (int key, int val) {
-    if (index == SIZE) {
+    if ( isTableFull() ) {
         printf("Input overflow");
-        index = 0;
         return;
     }
     index = 0; // 每次操作都要从 0 开始遍历探查序列
@@ -96,13 +121,13 @@ void hash_put (int key, int val) {
     // 槽位为空或 DELETE 时，可以插入新的节点;
     // 槽位有节点并且节点 key 和参数中的相同时，更新节点的值;
     // 因此槽位有节点但 key 不同，并且没有遍历完探查序列时，再散列;
-    // 下面不会发出现 index == SIZE 的情况，因为至少一个槽位。
+    // 下面不会出现 index == SIZE 的情况，因为至少一个槽位可用。
     int pos = hash_fn(key);
-    while (table[pos].node && table[pos].node->key != key) {
+    while ( hasNode(pos) && table[pos].node->key != key ) {
         pos = hash_fn(key);
     }
 
-    if (table[pos].node) { // 更新
+    if ( hasNode(pos) ) { // 更新
         table[pos].node->val = val;
     }
     else {
@@ -114,59 +139,59 @@ void hash_put (int key, int val) {
         newNode->key = key;
         newNode->val = val;
         table[pos].node = newNode;
-        table[pos].deleted = false; // 需要？
+        table[pos].deleted = false;
+        count++;
     }
 }
 
 Node* hash_get (int key) {
     index = 0;
 
-    // 散列到空槽位或者遍历了整个探查序列仍然没找到则结束
+    // 散列到空槽位或者遍历了整个探查序列仍然没找到则操作结束
     int pos = hash_fn(key);
-    if (index == SIZE) { // 只有 SIZE 为 1 时
+    if ( isVirginalSlot(pos) || index == SIZE ) { // 只有 SIZE 为 1 时这里才会 index == SIZE
         return NULL;
     }
-    while ( table[pos].deleted
-            || (table[pos].node && table[pos].node->key != key) 
-    ) {
+
+    // 槽位节点已删除或者不是对应的节点时则循环继续（再散列）
+    // 这里区分操作结束的条件和循环退出的条件，可以简化循环的判断条件，
+    // 同时在循环退出后，明确当前状态而不需要再判断因为哪种情况退出
+    while ( isDeleted(pos) || table[pos].node->key != key ) {
         pos = hash_fn(key);
-        if (index == SIZE) {
+        if ( isVirginalSlot(pos) || index == SIZE ) {
             return NULL;
         }
     }
 
-    return table[pos].node; // 实际的节点或者 NULL
+    return table[pos].node;
 }
 
 void hash_delete (int key) {
     index = 0;
     
     int pos = hash_fn(key);
-
-    // 遍历停止的条件：
-    //      完整遍历了探查序列（index == SIZE）
-    //      || 槽位为空（table[pos].node == NULL）
-    //      || 找到节点（table[pos].node->key == key）
-
-    if (index == SIZE || table[pos].node == NULL) { // 只有 SIZE 为 1 时，此时 index 才会等于 SIZE
+    // 散列到空槽位或者遍历了整个探查序列仍然没找到则操作结束
+    if ( isVirginalSlot(pos) || index == SIZE ) { // 只有 SIZE 为 1 时，此时 index 才会等于 SIZE
         return;
     }
 
-    while ( table[pos].node->key != key ) {
+    // 槽位节点已删除或者不是对应的节点时则循环继续（再散列）
+    while ( isDeleted(pos) || table[pos].node->key != key ) {
         pos = hash_fn(key);
-        if (index == SIZE || table[pos].node == NULL) {
+        if ( isVirginalSlot(pos) || index == SIZE ) {
             return;
         }
     }
 
     free(table[pos].node);
-    table[pos].node = NULL;
+    // table[pos].node = NULL; // 这样设置就会变成空槽位
     table[pos].deleted = true;
+    count--;
 }
 
 void print_table(void) {
     for (int i=0; i<SIZE; i++) {
-        if (table[i].node) {
+        if ( hasNode(i) ) {
             printf("%d: {%d: %d}\n", i, table[i].node->key, table[i].node->val);
         }
     }
