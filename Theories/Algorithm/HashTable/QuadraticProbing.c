@@ -139,6 +139,8 @@ Node* hash_get (int key) {
     index = 0;
 
     int pos = hash_fn(key);
+    // TODO，因为二次探查中并不是逐个槽位探查，所以并不能像线性探查那样
+    // 用 index == SIZE 来判断遍历了所有的槽位。但暂时不知道要怎么处理。
     if ( isVirginalSlot(pos) || index == SIZE ) {
         return NULL;
     }
