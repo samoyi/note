@@ -2,9 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define SIZE 11
-#define C1 1
-#define C2 3
+#define SIZE 16
+
 
 typedef struct Node{
     int key;
@@ -38,35 +37,44 @@ int main(void) {
 
     hash_init();
     
-    hash_put(5, 55);
-    hash_put(23, 2323);
-    hash_put(14, 1414);
-    hash_put(4, 8);
-    hash_put(9, 18);
-    hash_put(7, 14);
-    hash_put(15, 155);
+    hash_put(5, 55); // 5 
+    hash_put(23, 2323); // 7
+    hash_put(14, 1414); // 14
+    hash_put(4, 8); // 4
+    hash_put(9, 18); // 9
+    hash_put(7, 14); // 8
+    hash_put(15, 155); // 15
+    hash_put(16, 155); // 0
+    hash_put(45, 155); // 13
+    hash_put(315, 155); // 11
+    hash_put(515, 155); // 3
+    hash_put(615, 155); // 10
+    hash_put(1615, 155); // 2
+    hash_put(3615, 155); // 12
+    hash_put(6615, 155);
+    hash_put(26615, 155);
     print_table();
-    // 1: {23: 2323}
-    // 3: {14: 1414}
     // 4: {4: 8}
     // 5: {5: 55}
-    // 7: {7: 14}
-    // 8: {15: 155}
+    // 7: {23: 2323}
+    // 8: {7: 14}
     // 9: {9: 18}
+    // 14: {14: 1414}
+    // 15: {15: 155}
 
-    printf("--------------------\n");
-    hash_delete(4);
-    hash_delete(14);
-    print_table();
-    // 1: {23: 2323}
-    // 5: {5: 55}
-    // 7: {7: 14}
-    // 8: {15: 155}
-    // 9: {9: 18}
+    // printf("--------------------\n");
+    // hash_delete(4);
+    // hash_delete(14);
+    // print_table();
+    // // 5: {5: 55}
+    // // 7: {23: 2323}
+    // // 8: {7: 14}
+    // // 9: {9: 18}
+    // // 15: {15: 155}  
 
-    printf("--------------------\n");
-    printf("15 %d\n", hash_get(15)->val);
-    // 15: 155
+    // printf("--------------------\n");
+    // printf("15 %d\n", hash_get(15)->val);
+    // // 15: 155
 
     return 0;
 }
@@ -76,7 +84,8 @@ int aux_hash_fn (int key) {
 }
 
 int hash_fn (int key) {
-    int pos = (aux_hash_fn(key) + C1 * index + C2 * index * index) % SIZE; 
+    // int pos = (aux_hash_fn(key) + C1 * index + C2 * index * index) % SIZE; 
+    int pos = (aux_hash_fn(key) + (index * index + index)/2 ) % SIZE; 
     index++;
     return pos % SIZE;
 }
