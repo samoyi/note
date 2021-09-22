@@ -10,21 +10,26 @@ typedef struct Node{
 } Node;
 
 
-int hash_fn_mod (int key);
-int rehash_step (int key);
+int aux_hash_fn (int key);
+int aux_hash_fn1 (int key);
+int hash_fn (int key);
 
-// 散列表是一个数组，每个数组项的 node 属性指向该槽位的节点， deleted 属性说明是否之前被删除
 struct slot {
     Node* node;
     bool deleted;
 } table[SIZE];
 void hash_init(void);
+static bool isVirginalSlot (int pos);
+static bool isDeleted (int pos);
+static bool hasNode (int pos);
+static bool isTableFull ();
 void hash_put(int key, int val);
 Node* hash_get(int key);
 void hash_delete(int key);
 void print_table(void);
 
 
+static int index = 0;
 static int count = 0;
 
 
@@ -40,49 +45,90 @@ int main(void) {
     hash_put(7, 14);
     hash_put(80, 8080);
     hash_put(123456, 654321);
+    hash_put(705, 705705);
     print_table();
+    // 4: {4: 8}
+    // 5: {5: 55}
+    // 7: {7: 14}
+    // 9: {9: 18}
+    // 10: {705: 705705}
+    // 14: {14: 1414}
+    // 23: {23: 2323}
+    // 80: {80: 8080}
+    // 337: {123456: 654321}
 
     printf("--------------------\n");
     hash_delete(4);
     hash_delete(14);
+    hash_delete(5);
     print_table();
+    // 7: {7: 14}
+    // 9: {9: 18}
+    // 10: {705: 705705}
+    // 23: {23: 2323}
+    // 80: {80: 8080}
+    // 337: {123456: 654321}
 
     printf("--------------------\n");
     printf("80: %d\n", hash_get(80)->val);
+    // 80: 8080
 
     return 0;
 }
 
-int hash_fn_mod (int key) {
+
+int aux_hash_fn (int key) {
     return key % SIZE;
 }
-int rehash_step (int key) {
-    return 1 + key % (SIZE-1);
+int aux_hash_fn1 (int key) {
+    return 1 + key % (SIZE - 1);
 }
+
+int hash_fn (int key) {
+    int pos = (aux_hash_fn(key) + index*aux_hash_fn1(key)) % SIZE; 
+    index++;
+    return pos % SIZE;
+}
+
 void hash_init(void) {
-    count = 0;
+    index = 0;
     for (int i=0; i<SIZE; i++) {
         table[i].node = NULL;
         table[i].deleted = false;
     }
 }
+
+bool isVirginalSlot (int pos) {
+    return table[pos].node == NULL;
+}
+
+bool isDeleted (int pos) {
+    return table[pos].node && table[pos].deleted;
+}
+
+bool hasNode (int pos) {
+    return table[pos].node && !table[pos].deleted;
+}
+
+bool isTableFull () {
+    return count == SIZE;
+}
+
 void hash_put (int key, int val) {
-    
-    if (count == SIZE) {
+    if ( isTableFull() ) {
         printf("Input overflow");
         return;
     }
 
-    int pos = hash_fn_mod(key);
-    int rehash_times = 0;
-    while (table[pos].node && table[pos].node->key != key) {
-        rehash_times++;
-        pos += rehash_step(key);
-        pos %= SIZE;
+    index = 0;
+
+    int pos = hash_fn(key);
+    while ( hasNode(pos) && table[pos].node->key != key ) {
+        pos = hash_fn(key);
     }
-    if (table[pos].node) {
+
+    if ( hasNode(pos) ) {
         table[pos].node->val = val;
-        table[pos].deleted = false;
     }
     else {
         Node* newNode = malloc(sizeof(Node));
@@ -93,53 +139,52 @@ void hash_put (int key, int val) {
         newNode->key = key;
         newNode->val = val;
         table[pos].node = newNode;
-
+        table[pos].deleted = false;
         count++;
     }
 }
+
 Node* hash_get (int key) {
-    int pos = hash_fn_mod(key);
-    int rehash_times = 0;
-    // 如果全部都是有节点或者删除状态，那么查找一个不存在的节点时会无限循环
-    // 使用 times 记录查找次数，如果找了一圈还没找到就跳出
-    int times = 0;
-    while ((table[pos].node && table[pos].node->key != key) || table[pos].deleted) {
-        rehash_times++;
-        pos += rehash_step(key);
-        pos %= SIZE;
-        if (times++ == SIZE) {
-            break;
-        }
-    }
-    if (times == SIZE+1) {
+    index = 0;
+
+    int pos = hash_fn(key);
+    if ( isVirginalSlot(pos) ) {
         return NULL;
     }
-    else {
-        return table[pos].node;
-    }
-}
-void hash_delete (int key) {
-    int pos = hash_fn_mod(key);
-    int rehash_times = 0;
-    int times = 0;
-    while ((table[pos].node && table[pos].node->key != key) || table[pos].deleted) {
-        rehash_times++;
-        pos += rehash_step(key);
-        pos %= SIZE;
-        if (times++ == SIZE) {
-            break;
+
+    while ( isDeleted(pos) || table[pos].node->key != key ) {
+        pos = hash_fn(key);
+        if ( isVirginalSlot(pos) || index == SIZE ) {
+            return NULL;
         }
     }
-    if (times != SIZE+1 && table[pos].node != NULL) {
-        free(table[pos].node);
-        table[pos].node = NULL;
-        table[pos].deleted = true;
-        count--;
-    }
+
+    return table[pos].node;
 }
+
+void hash_delete (int key) {
+    index = 0;
+
+    int pos = hash_fn(key);
+    if ( isVirginalSlot(pos) ) {
+        return;
+    }
+
+    while ( isDeleted(pos) || table[pos].node->key != key ) {
+        pos = hash_fn(key);
+        if ( isVirginalSlot(pos) || index == SIZE ) {
+            return;
+        }
+    }
+
+    free(table[pos].node);
+    table[pos].deleted = true;
+    count--;
+}
+
 void print_table(void) {
     for (int i=0; i<SIZE; i++) {
-        if (table[i].node) {
+        if ( hasNode(i) ) {
             printf("%d: {%d: %d}\n", i, table[i].node->key, table[i].node->val);
         }
     }

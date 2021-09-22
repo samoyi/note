@@ -149,7 +149,7 @@ Node* hash_get (int key) {
 
     // 散列到空槽位或者遍历了整个探查序列仍然没找到则操作结束
     int pos = hash_fn(key);
-    if ( isVirginalSlot(pos) || index == SIZE ) { // 只有 SIZE 为 1 时这里才会 index == SIZE
+    if ( isVirginalSlot(pos) ) {
         return NULL;
     }
 
@@ -171,7 +171,7 @@ void hash_delete (int key) {
     
     int pos = hash_fn(key);
     // 散列到空槽位或者遍历了整个探查序列仍然没找到则操作结束
-    if ( isVirginalSlot(pos) || index == SIZE ) { // 只有 SIZE 为 1 时，此时 index 才会等于 SIZE
+    if ( isVirginalSlot(pos) ) {
         return;
     }
 
