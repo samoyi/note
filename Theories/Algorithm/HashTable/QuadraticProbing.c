@@ -37,13 +37,13 @@ int main(void) {
 
     hash_init();
     
-    hash_put(5, 55); // 5 
-    hash_put(23, 2323); // 7
-    hash_put(14, 1414); // 14
-    hash_put(4, 8); // 4
-    hash_put(9, 18); // 9
-    hash_put(7, 14); // 8
-    hash_put(15, 155); // 15
+    hash_put(5, 55);
+    hash_put(23, 2323);
+    hash_put(14, 1414);
+    hash_put(4, 8);
+    hash_put(9, 18);
+    hash_put(7, 14);
+    hash_put(15, 155);
     print_table();
     // 4: {4: 8}
     // 5: {5: 55}
@@ -111,11 +111,12 @@ void hash_put (int key, int val) {
     }
 
     index = 0;
+    int pos;
 
-    int pos = hash_fn(key);
-    while ( hasNode(pos) && table[pos].node->key != key ) {
+    do {
         pos = hash_fn(key);
     }
+    while ( hasNode(pos) && table[pos].node->key != key );
 
     if ( hasNode(pos) ) {
         table[pos].node->val = val;
@@ -136,36 +137,30 @@ void hash_put (int key, int val) {
 
 Node* hash_get (int key) {
     index = 0;
+    int pos;
 
-    int pos = hash_fn(key);
-    if ( isVirginalSlot(pos) ) {
-        return NULL;
-    }
-
-    while ( isDeleted(pos) || table[pos].node->key != key ) {
+    do {
         pos = hash_fn(key);
         if ( isVirginalSlot(pos) || index == SIZE ) {
             return NULL;
         }
-    }
+    } 
+    while ( isDeleted(pos) || table[pos].node->key != key );
  
     return table[pos].node;
 }
 
 void hash_delete (int key) {
     index = 0;
+    int pos;
 
-    int pos = hash_fn(key);
-    if ( isVirginalSlot(pos) ) {
-        return;
-    }
-
-    while ( isDeleted(pos) || table[pos].node->key != key ) {
+    do {
         pos = hash_fn(key);
         if ( isVirginalSlot(pos) || index == SIZE ) {
             return;
         }
     }
+    while ( isDeleted(pos) || table[pos].node->key != key );
 
     free(table[pos].node);
     table[pos].deleted = true;

@@ -121,11 +121,12 @@ void hash_put (int key, int val) {
     }
 
     index = 0;
+    int pos;
 
-    int pos = hash_fn(key);
-    while ( hasNode(pos) && table[pos].node->key != key ) {
+    do {
         pos = hash_fn(key);
     }
+    while ( hasNode(pos) && table[pos].node->key != key );
 
     if ( hasNode(pos) ) {
         table[pos].node->val = val;
@@ -146,36 +147,30 @@ void hash_put (int key, int val) {
 
 Node* hash_get (int key) {
     index = 0;
-
-    int pos = hash_fn(key);
-    if ( isVirginalSlot(pos) ) {
-        return NULL;
-    }
-
-    while ( isDeleted(pos) || table[pos].node->key != key ) {
+    int pos;
+    
+    do { 
         pos = hash_fn(key);
         if ( isVirginalSlot(pos) || index == SIZE ) {
             return NULL;
         }
     }
+    while ( isDeleted(pos) || table[pos].node->key != key );
 
     return table[pos].node;
 }
 
 void hash_delete (int key) {
     index = 0;
-
-    int pos = hash_fn(key);
-    if ( isVirginalSlot(pos) ) {
-        return;
-    }
-
-    while ( isDeleted(pos) || table[pos].node->key != key ) {
+    int pos;
+    
+    do {
         pos = hash_fn(key);
         if ( isVirginalSlot(pos) || index == SIZE ) {
             return;
         }
     }
+    while ( isDeleted(pos) || table[pos].node->key != key );
 
     free(table[pos].node);
     table[pos].deleted = true;
