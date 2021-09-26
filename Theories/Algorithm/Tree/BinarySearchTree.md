@@ -111,12 +111,12 @@
 
 ## 节点关系
 ### 大小关系的相对性
-1. 对于任意节点 $k$，小于等于节点 $k$ 的节点不一定位于 $k$ 的左子树，因为节点 $k$ 可能位于一棵更大的右子树之上；同理，大于等于节点 $k$ 的节点不一定位于 $k$ 的右子树，因为节点 $k$ 可能位于一棵更大的左子树之上。
+1. 对于任意节点 $k$，小于等于节点 $k$ 的节点不一定全部位于 $k$ 的左子树，因为节点 $k$ 可能位于一棵规模更大的右子树之上；同理，大于等于节点 $k$ 的节点不一定全部位于 $k$ 的右子树，因为节点 $k$ 可能位于一棵规模更大的左子树之上。
 2. 也就是说，一个节点在自己的子树里大小是明确的，但有可能你这个整个子树都比其他的子树整体更小或更大。
 
 ### 大小关系的相邻性
-1. 对于任意节点 $k$，如果其他子树里有比 $k$ 更小的节点，这些节点也肯定小于以 $k$ 为根的子树里的所有节点，因为 $k$ 处在一个相对更大的子树里；同理，如果其他子树里有比 $k$ 更大的节点，这些节点也肯定大于以 $k$ 为根的子树里的所有节点，因为 $k$ 处在一个相对更小的子树里。
-2. 也就是说，如果 $k$ 有左子树，左子树里的节点是所有小于 $k$ 的节点里相对较大的；同理，如果 $k$ 有右子树，右子树里的节点想所有大于 $k$ 的节点里相对较小的。
+1. 对于任意节点 $k$，如果其他子树里有比 $k$ 更小的节点，这些节点也肯定小于以 $k$ 为根的子树里的所有节点。因为其他子树里比 $k$ 更小的节点是在 “更早的时候就比 $k$ 小了”，它们根本没有走到和 $k$ 比较的这一步就已经被归类的更小的子树里面了。同理，如果其他子树里有比 $k$ 更大的节点，这些节点也肯定大于以 $k$ 为根的子树里的所有节点。
+2. 也就是说，如果 $k$ 有左子树，左子树里的节点是所有小于 $k$ 的节点里相对较大的；同理，如果 $k$ 有右子树，右子树里的节点是所有大于 $k$ 的节点里相对较小的。
 3. 简单来说就是，$k$ 的左右子树里的节点在大小上都是和 $k$ 比较相邻的。
 
 ### 两种父节点
@@ -262,7 +262,7 @@
             while ( node.left ) {
                 node = node.left;               
             }
-            return node.key;
+            return node;
         }
         return null;
     }
@@ -278,7 +278,7 @@
             while ( node.right ) {
                 node = node.right;
             }
-            return node.key;
+            return node;
         }
         return null;
     }
@@ -311,35 +311,45 @@
 
 ## 搜索后继和前驱
 1. 这里的后继和前驱并不是值父子节点的关系，而是所有节点按照从小到大排序后（也就是中序遍历的顺序），后继节点就是当前节点的右侧节点，前驱节点就是当前节点的左侧节点。
-2. 根据节点左中右递增的关系，后继节点肯定是要比当前节点更 “右”。分为这么几种情况：
-    * 如果当前节点有右子树，则后继节点就是右子树的最小节点；
-    * 如果没有右子树：
-        * 当前节点如果是左侧子节点，则后继节点就是父节点；
-        * 当前节点是右侧子节点，那么它必须要位于某个节点的左子树上，它才能小于那个节点。因为如果它本身有没有比自己大的右子树，它还不位于一个小于某个节点的左子树上，那它就是整棵树的最大节点了，也就没有后继节点了。所以需要层层网上追溯父节点，如果某个祖先节点是左侧子节点了，则该祖先节点的父节点就是后继节点；如果追溯到 null 还不是，那就没有后继节点。
-2. 初步实现如下
+2. 根据上面节点关系的分析：
+    1. 如果当前节点有右子树，则后继节点就是右子树的最小节点；
+    2. else 如果有右父节点，后继节点就是该父节点；
+    3. else 就要找到更早就比当前节点大的节点，也就是不断找父节点，直到找到一个右父节点或者根节点。其实和第 2 种情况可以合并到一起。
+3. JS 实现
     ```cpp
-    Node* tree_successor(Node* node) {
-        if (node == NULL) {
-            return NULL;
+    predecessor (node) {
+        if (node === null) {
+            return null;
         }
-        if (node->right) {
-            return tree_minimun(node->right);
-        }
-        else if (node->parent && node->parent->left == node) {
-            return node->parent;
+        if (node.left) {
+            return maxNode(node.left);
         }
         else {
-            Node* parent = node->parent;
-            while (parent && parent->right == node ) {
-                node = parent;
-                parent = parent->parent;
+            let p = node.parent;
+            while (p && p.left === node) {
+                p = p.parent;
             }
-            return parent;
+            return p;
+        }
+    }
+
+    successor (node) {
+        if (node === null) {
+            return null;
+        }
+        if (node.right) {
+            return minNode(node.right);
+        }
+        else {
+            let p = node.parent;
+            while (p && p.right === node) {
+                p = p.parent;
+            }
+            return p;
         }
     }
     ```
-3. 然后再看 `else if` 和 `while` 的判断比较相似，能不能合并一下。而且，从逻辑上来讲，这两者其实都是在找 “左侧子节点的父节点”。
-4. 对比一下就会发现，`else if` 为真而返回值的情况，其实就是 `while` 的退出条件之一，并且返回的也都是同样的节点。所以 `else if` 就是没必要了。而且从逻辑上来讲，`while` 的退出条件是 “父节点不存在或者当前节点是父节点的左侧子节点”，确实包括了 `else if` 为真是的条件 “当前节点是父节点的左侧子节点”。最终如下
+4. C 实现
     ```cpp
     Node* tree_successor(Node* node) {
         if (node == NULL) {
@@ -382,29 +392,24 @@ TODO
 
 ## 搜索一个特定的值
 1. 类似于二分搜索的逻辑。
-2. 下面的 `search` 作为对象方法暴露，传递根节点作为起始搜索节点。内部通过实际的搜索函数 `searchNode` 的进行搜索
     ```js
     search (key) {
-        return searchNode(this.root, key);
-    }
-
-    function searchNode(node, key, parent = null) {
-        if (node === null) {
-            return null;
+        let curr = this.root;
+        while (curr && curr.key !== key) {
+            if (key < curr.key) {
+                curr = curr.left;
+            }
+            else if (key > curr.key) {
+                curr = curr.right;
+            }
+            else {
+                return curr;
+            }
         }
-
-        if (node.key > key) {
-            return searchNode(node.left, key, node);
-        } 
-        else if (node.key < key) {
-            return searchNode(node.right, key, node);
-        } 
-        else {
-            return node;
-        }
+        return curr;
     }
     ```
-3. C 实现
+2. C 递归实现
     ```cpp
     Node* tree_search(Node* root, int key) {
         if (root == NULL || key == root->key) {
@@ -419,7 +424,7 @@ TODO
         }
     }
     ```
-4. 对于大多数计算机，迭代版本的效率要高得多
+3. 对于大多数计算机，迭代版本的效率要高得多
     ```cpp
     Node* interative_tree_search(Node* root, int key) {
         while (root != NULL && key != root->key) {
