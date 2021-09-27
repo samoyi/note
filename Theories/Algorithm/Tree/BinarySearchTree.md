@@ -186,7 +186,37 @@
         }
     }
     ```
-4. C 迭代实现
+4. 迭代实现
+    ```js
+    insert (key) {
+        let curr = this.root;
+
+        if (curr === null) {
+            this.root = new Node(key);
+            return;
+        }
+
+        let p;
+        do {
+            p = curr;
+            if (key < curr.key) {
+                curr = curr.left;
+            }
+            else {
+                curr = curr.right;
+            }
+        } 
+        while (curr);
+
+        if (key < p.key) {
+            p.left = new Node(key, p);
+        }
+        else {
+            p.right = new Node(key, p);
+        }
+    }
+    ```
+5. C 迭代实现
     ```cpp
     void insert(int key) {
         Node* node = createNode(key);
@@ -217,7 +247,7 @@
         }
     }
     ```
-5. C 递归实现
+6. C 递归实现
     ```cpp
     static void insert_recursive(Node* node, Node* compared, Node* parent) {
         if (compared == NULL) {
@@ -447,6 +477,82 @@ TODO
     * y 有单侧子树：也比较简单，相当于删除链表的中间节点，移动子树让子节点替换 y 即可。
     * y 有双侧子树：这个比较麻烦，因为删除后导致一棵树断裂为两棵子树。
 3. 第三种情况中，由谁来连接两棵子树？肯定要由两棵子树的中间值，而中间值有两个：左子树的最大值和右子树的最小值，也就是 y 的前驱和后继。看到的实现都是使用后继来连接，但好像使用前驱也没什么不行。
+4. 初步实现如下
+    ```js   
+    delete (node) {
+        let left = node.left;
+        let right = node.right;
+        let p = node.parent;
+
+        if ( !left && !right ) {
+            if (p === null) {
+                root = null;
+            }
+            else if (p.left === node) {
+                p.left = null;
+            }
+            else {
+                p.right = null;
+            }
+        }
+        else if (right === null) {
+            if (p === null) {
+                root = left;
+                left.parent = null;
+            }
+            else if (p.left === node) {
+                p.left = left;
+            }
+            else {
+                p.right = left;
+            }
+        }
+        else if (left === null) {
+            if (p === null) {
+                root = right;
+                right.parent = null;
+            }
+            else if (p.left === node) {
+                p.left = right;
+            }
+            else {
+                p.right = right;
+            }
+        }
+        else {
+            let s = this.successor(node);
+            if (s === node.right) {
+                if (p === null) {
+                    root = s;
+                    s.parent = null;
+                }
+                else if (p.left === node) {
+                    p.left = s;
+                }
+                else {
+                    p.right = s;
+                }
+                s.left = node.left;
+            }
+            else {
+                s.parent.left = s.right;
+                s.right.parent = s.parent;
+                if (p === null) {
+                    root = s;
+                    s.parent = null;
+                }
+                else if (p.left === node) {
+                    p.left = s;
+                }
+                else {
+                    p.right = s;
+                }
+                s.left = node.left;
+                s.right = node.right;
+            }
+        }
+    }
+    ```
 4. 另外，前两种其实可以算是一种情况，因为都是通过移动子树把 y 的子节点连接到 y 的父节点上，只不过第一种情况中 y 的子节点是 null。
 5. 而且，第三种情况中，如果后继正好是 y 的右侧子节点，那么同样只需要简单的移动右子树就可以实现。、
 6. 最复杂的就是第三种情况中后继不是 y 的右侧子节点。这时要用后继替换 y。而且该后继可能还有右子树，所以替换之前还要先把右子树移到 y 的位置。
