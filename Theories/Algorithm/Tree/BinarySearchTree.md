@@ -484,33 +484,21 @@ TODO
         let right = node.right;
         let p = node.parent;
 
-        if ( !left && !right ) {
-            if (p === null) {
-                root = null;
+        if ( !left && !right ) { // node 是叶节点，没有子节点
+            if (p === null) { // node 是根节点，整个树就这一个节点
+                this.root = null;
             }
-            else if (p.left === node) {
+            else if (p.left === node) { // node 是左叶节点
                 p.left = null;
             }
-            else {
+            else { // node 是右叶节点
                 p.right = null;
             }
         }
-        else if (right === null) {
+        else if (left === null) { // node 只有右子节点
+            // 右子节点直接跳过 node 和 node 的父级连接
             if (p === null) {
-                root = left;
-                left.parent = null;
-            }
-            else if (p.left === node) {
-                p.left = left;
-            }
-            else {
-                p.right = left;
-            }
-        }
-        else if (left === null) {
-            if (p === null) {
-                root = right;
-                right.parent = null;
+                this.root = right;
             }
             else if (p.left === node) {
                 p.left = right;
@@ -518,13 +506,28 @@ TODO
             else {
                 p.right = right;
             }
+            right.parent = p;
         }
-        else {
+        else if (right === null) { // node 只有左子节点
+            // 左子节点直接跳过 node 和 node 的父级连接
+            if (p === null) {
+                this.root = left;
+            }
+            else if (p.left === node) {
+                p.left = left;
+            }
+            else {
+                p.right = left;
+            }
+            left.parent = p;
+        }
+        else { // node 有两侧子节点
             let s = this.successor(node);
-            if (s === node.right) {
+            if (s === node.right) { // 后继节点是 node 的右子节点
+                // 右子节点直接跳过 node 和 node 的父节点和左子节点建立关系
+                // 和 node 父节点建立关系
                 if (p === null) {
-                    root = s;
-                    s.parent = null;
+                    this.root = s;
                 }
                 else if (p.left === node) {
                     p.left = s;
@@ -532,11 +535,95 @@ TODO
                 else {
                     p.right = s;
                 }
+                s.parent = p;
+                // 和 node 的左子节点建立关系
+                s.left = node.left;
+                node.left.parent = s;
+            }
+            else { // 后继节点不是 node 的右子节点
+                // 后继节点如果有右子节点，覆盖后继节点，也就是和后继节点的父节点建立关系
+                s.parent.left = s.right;
+                if (s.right) {
+                    s.right.parent = s.parent;
+                }
+                // 后继节点覆盖被删除节点，也就是分别和被删除节点的父节点、两个子节点建立关系
+                // 后继节点和被删除节点的父节点建立关系
+                if (p === null) {
+                    this.root = s;
+                }
+                else if (p.left === node) {
+                    p.left = s;
+                }
+                else {
+                    p.right = s;
+                }
+                s.parent = p;
+                // 后继节点和被删除节点的左子节点建立关系
+                s.left = node.left;
+                node.left.parent = s;
+                // 后继节点和被删除节点的右子节点建立关系
+                s.right = node.right;
+                node.right.parent = s;
+            }
+        }
+    }
+    ```
+5. 因为三种情况下都有移动子树的操作，所以单独实现这个方法 `transplant (root, oldNode, newNode)`，用以 `newNode` 为根的子树替换以 `oldNode` 为根的子树。
+    ```js
+    // 写代码之前先理清楚要改哪些地方，以及哪些边界条件。
+    // 旧节点不需要修改；新节点的子指针不需要修改，父指针要修改；旧节点父节点的子指针需要修改。
+    // 旧节点不能为 null；旧节点可能是根节点；新节点可能为 null。
+    function transplant (root, oldNode, newNode) {
+        if (oldNode === null) {
+            throw new TypeError("oldNode is null.");
+        }
+
+        let p = oldNode.parent;
+
+        if (p === null) {
+            root = newNode;
+            // 这里不能直接返回，因为 newNode 的父节点指针很可能还指着其他节点
+            // return;
+        }
+
+        if (oldNode === p.left) {
+            p.left = newNode;
+        }
+        else {
+            p.right = newNode;
+        }
+
+        if (newNode) {
+            newNode.parent = p;
+        }
+    }
+    ```
+6. `transplant` 方法内部会判断 `oldNode` 是左侧还是右侧子节点，以及它是否是根节点，不用再像上面初步实现中每个分支里都各自判断。使用 `transplant` 后初步改写如下，前三个分支都是很简单的
+    ```js
+    delete (node) {
+        let left = node.left;
+        let right = node.right;
+        let p = node.parent;
+        let r = this.root;
+
+        if ( !left && !right ) {
+            transplant(r, node, null);
+        }
+        else if (left === null) {
+            transplant(r, node, right);
+        }
+        else if (right === null) {
+            transplant(r, node, left);
+        }
+        else {
+            let s = this.successor(node);
+            if (s === node.right) {
+                transplant(r, node, s);
+                node.left.parent = s;
                 s.left = node.left;
             }
             else {
-                s.parent.left = s.right;
-                s.right.parent = s.parent;
+                transplant(r, s, s.right);
                 if (p === null) {
                     root = s;
                     s.parent = null;
@@ -553,8 +640,9 @@ TODO
         }
     }
     ```
+7. 可以看到，第二层 `else` 里面还是手动移动了节点，因为这只是移动节点而不是子树，所以不能用 `transplant` 方法。但其实只要多移动一次，是可以只通过移动子树来完成的。
 4. 另外，前两种其实可以算是一种情况，因为都是通过移动子树把 y 的子节点连接到 y 的父节点上，只不过第一种情况中 y 的子节点是 null。
-5. 而且，第三种情况中，如果后继正好是 y 的右侧子节点，那么同样只需要简单的移动右子树就可以实现。、
+5. 而且，第三种情况中，如果后继正好是 y 的右侧子节点，那么同样只需要简单的移动右子树就可以实现。
 6. 最复杂的就是第三种情况中后继不是 y 的右侧子节点。这时要用后继替换 y。而且该后继可能还有右子树，所以替换之前还要先把右子树移到 y 的位置。
 7. 因为三种情况下都有移动子树的操作，所以单独实现这个方法。用 `z` 节点替换 `y` 节点，替换的过程其实就是重新处理父子关系的过程
     ```cpp
@@ -656,7 +744,7 @@ TODO
     ```js
     preOrderTraverseNode(node, callback) {
         if (node !== null) {
-            callback(node.key);
+            callback(node);
             this.preOrderTraverseNode(node.left, callback);
             this.preOrderTraverseNode(node.right, callback);
         }
@@ -674,7 +762,7 @@ TODO
         if (node !== null) {
             this.postOrderTraverseNode(node.left, callback);
             this.postOrderTraverseNode(node.right, callback);
-            callback(node.key);
+            callback(node);
         }
     }
     ```
@@ -690,7 +778,7 @@ TODO
     function inOrderTraverseNode(node, callback) {
         if (node !== null) {
             inOrderTraverseNode(node.left, callback); // 遍历左子树，先一路递归到左子树最小的一个节点
-            callback(node.key);
+            callback(node);
             inOrderTraverseNode(node.right, callback); // 遍历右子树，先一路递归到右子树最小的一个节点
         }
     }
