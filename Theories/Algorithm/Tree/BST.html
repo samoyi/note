@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+</head>
+<body>
+</body>
+<script>
+'use strict';
+
+
+class Node {
+    constructor(key, parent = null) {
+        this.key = key;
+        this.left = null;
+        this.right = null;
+        this.parent = parent;
+    }
+}
+
+
+class BinarySearchTree {
+    constructor() {
+        this.root = null;
+    }
+
+    insert(key) {
+        let curr = this.root;
+
+        if (curr === null) {
+            this.root = new Node(key);
+            return;
+        }
+
+        let p;
+        do {
+            p = curr;
+            if (key < curr.key) {
+                curr = curr.left;
+            }
+            else {
+                curr = curr.right;
+            }
+        }
+        while (curr);
+
+        if (key < p.key) {
+            p.left = new Node(key, p);
+        }
+        else {
+            p.right = new Node(key, p);
+        }
+    }
+
+
+    search(key) {
+        let curr = this.root;
+        while (curr && curr.key !== key) {
+            if (key < curr.key) {
+                curr = curr.left;
+            }
+            else if (key > curr.key) {
+                curr = curr.right;
+            }
+            else {
+                return curr;
+            }
+        }
+        return curr;
+    }
+
+    min() {
+        return minNode(this.root);
+    }
+
+    max() {
+        return maxNode(this.root);
+    }
+
+    predecessor(node) {
+        if (node === null) {
+            return null;
+        }
+        if (node.left) {
+            return maxNode(node.left);
+        }
+        else {
+            let p = node.parent;
+            while (p && p.left === node) {
+                p = p.parent;
+            }
+            return p;
+        }
+    }
+
+    successor(node) {
+        if (node === null) {
+            return null;
+        }
+        if (node.right) {
+            return minNode(node.right);
+        }
+        else {
+            let p = node.parent;
+            while (p && p.right === node) {
+                p = p.parent;
+            }
+            return p;
+        }
+    }
+
+    delete(node) {
+        let left = node.left;
+        let right = node.right;
+        let p = node.parent;
+
+        if (!left && !right) {
+            transplant(this, node, null);
+        }
+        else if (left === null) {
+            transplant(this, node, right);
+        }
+        else if (right === null) {
+            transplant(this, node, left);
+        }
+        else {
+            let s = this.successor(node);
+            if (s === node.right) {
+                // 以后继为根的子树直接替换 node 后，还要再把 node 之前的左子树连接上
+                transplant(this, node, s);
+                s.left = node.left;
+                node.left.parent = s;
+            }
+            else {
+                // 后继的右子节点覆盖后继
+                transplant(this, s, s.right);
+                // 后继分别连接 node 的左右子节点
+                s.left = node.left;
+                node.left.parent = s;
+                s.right = node.right;
+                node.right.parent = s;
+                // 连接好之后以后继为根的子树就可以直接替换 node
+                transplant(this, node, s);
+            }
+        }
+    }
+
+    preOrderTraverseNode(node, callback) {
+        if (node !== null) {
+            callback(node);
+            this.preOrderTraverseNode(node.left, callback);
+            this.preOrderTraverseNode(node.right, callback);
+        }
+    }
+
+    inOrderTraverseNode(node, callback) {
+        if (node !== null) {
+            this.inOrderTraverseNode(node.left, callback); // 遍历左子树，先一路递归到左子树最小的一个节点
+            callback(node);
+            this.inOrderTraverseNode(node.right, callback); // 遍历右子树，先一路递归到右子树最小的一个节点
+        }
+    }
+
+    postOrderTraverseNode(node, callback) {
+        if (node !== null) {
+            this.postOrderTraverseNode(node.left, callback);
+            this.postOrderTraverseNode(node.right, callback);
+            callback(node);
+        }
+    }
+}
+
+
+
+
+function minNode(node) {
+    if (node) {
+        while (node.left) {
+            node = node.left;
+        }
+        return node;
+    }
+    return null;
+}
+
+function maxNode(node) {
+    if (node) {
+        while (node.right) {
+            node = node.right;
+        }
+        return node;
+    }
+    return null;
+}
+
+
+// 写代码之前先理清楚要改哪些地方，以及哪些边界条件
+// 旧节点本身不需要修改；新节点的子指针不需要修改，但父指针要修改；旧节点父节点的子指针需要修改。
+// 旧节点不能为 null；旧节点可能是根节点；新节点可能为 null。
+function transplant(bst, oldNode, newNode) {
+    if (oldNode === null) {
+        throw new TypeError("oldNode is null.");
+    }
+
+    let p = oldNode.parent;
+
+    if (p === null) {
+        bst.root = newNode;
+        // 这里不能直接返回，因为 newNode 的父节点指针很可能还指着其他节点
+        // return;
+    }
+    else {
+        if (oldNode === p.left) {
+            p.left = newNode;
+        }
+        else {
+            p.right = newNode;
+        }
+    }
+
+    if (newNode) {
+        newNode.parent = p;
+    }
+}
+
+
+let bst = new BinarySearchTree();
+bst.insert(11);
+bst.insert(7);
+bst.insert(15);
+bst.insert(5);
+bst.insert(9);
+bst.insert(13);
+bst.insert(20);
+bst.insert(3);
+bst.insert(6);
+bst.insert(8);
+bst.insert(10);
+bst.insert(12);
+bst.insert(14);
+bst.insert(18);
+bst.insert(25);
+bst.delete(bst.search(25));
+bst.inOrderTraverseNode(bst.root, (node) => {
+    console.log(node.key, node.left && node.left.key,
+        node.right && node.right.key, node.parent && node.parent.key);
+});
+
+
+</script>
+
+</html>

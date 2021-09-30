@@ -35,6 +35,7 @@
             - [《算法导论》12.2-8](#算法导论122-8)
     - [搜索一个特定的值](#搜索一个特定的值)
     - [移除一个节点](#移除一个节点)
+        - [C 实现](#c-实现)
         - [复杂度](#复杂度-2)
         - [删除操作不可交换（12.3-4）](#删除操作不可交换123-4)
     - [树的遍历](#树的遍历)
@@ -89,7 +90,6 @@
 
 ## 用途
 ### 二叉搜索树和二叉堆
-
 
 
 ## 概述
@@ -573,7 +573,7 @@ TODO
     // 写代码之前先理清楚要改哪些地方，以及哪些边界条件。
     // 旧节点不需要修改；新节点的子指针不需要修改，父指针要修改；旧节点父节点的子指针需要修改。
     // 旧节点不能为 null；旧节点可能是根节点；新节点可能为 null。
-    function transplant (root, oldNode, newNode) {
+    function transplant(bst, oldNode, newNode) {
         if (oldNode === null) {
             throw new TypeError("oldNode is null.");
         }
@@ -581,16 +581,17 @@ TODO
         let p = oldNode.parent;
 
         if (p === null) {
-            root = newNode;
+            bst.root = newNode;
             // 这里不能直接返回，因为 newNode 的父节点指针很可能还指着其他节点
             // return;
         }
-
-        if (oldNode === p.left) {
-            p.left = newNode;
-        }
         else {
-            p.right = newNode;
+            if (oldNode === p.left) {
+                p.left = newNode;
+            }
+            else {
+                p.right = newNode;
+            }
         }
 
         if (newNode) {
@@ -600,130 +601,89 @@ TODO
     ```
 6. `transplant` 方法内部会判断 `oldNode` 是左侧还是右侧子节点，以及它是否是根节点，不用再像上面初步实现中每个分支里都各自判断。使用 `transplant` 后初步改写如下，前三个分支都是很简单的
     ```js
-    delete (node) {
+    delete(node) {
         let left = node.left;
         let right = node.right;
         let p = node.parent;
-        let r = this.root;
 
-        if ( !left && !right ) {
-            transplant(r, node, null);
+        if (!left && !right) {
+            transplant(this, node, null);
         }
         else if (left === null) {
-            transplant(r, node, right);
+            transplant(this, node, right);
         }
         else if (right === null) {
-            transplant(r, node, left);
+            transplant(this, node, left);
         }
         else {
             let s = this.successor(node);
             if (s === node.right) {
-                transplant(r, node, s);
+                // 以后继为根的子树直接替换 node 后，还要再把 node 之前的左子树连接上
+                transplant(this, node, s);
+                s.left = node.left;
                 node.left.parent = s;
-                s.left = node.left;
             }
             else {
-                transplant(r, s, s.right);
-                if (p === null) {
-                    root = s;
-                    s.parent = null;
-                }
-                else if (p.left === node) {
-                    p.left = s;
-                }
-                else {
-                    p.right = s;
-                }
+                // 后继的右子节点覆盖后继
+                transplant(this, s, s.right);
+                // 下面不再是直接手动的用单独的后继节点替换 node，那样仍然要判断node 父节点是否为 null 
+                // 以及 node 和父节点的关系，而是直接拼接好后继完成时的子树，然后通过 transplant 方法
+                // 覆盖到 node 的位置。
+                // 后继分别连接 node 的左右子节点
                 s.left = node.left;
+                node.left.parent = s;
                 s.right = node.right;
+                node.right.parent = s;
+                // 连接好之后以后继为根的子树就可以直接替换 node
+                transplant(this, node, s);
             }
         }
     }
     ```
-7. 可以看到，第二层 `else` 里面还是手动移动了节点，因为这只是移动节点而不是子树，所以不能用 `transplant` 方法。但其实只要多移动一次，是可以只通过移动子树来完成的。
-4. 另外，前两种其实可以算是一种情况，因为都是通过移动子树把 y 的子节点连接到 y 的父节点上，只不过第一种情况中 y 的子节点是 null。
-5. 而且，第三种情况中，如果后继正好是 y 的右侧子节点，那么同样只需要简单的移动右子树就可以实现。
-6. 最复杂的就是第三种情况中后继不是 y 的右侧子节点。这时要用后继替换 y。而且该后继可能还有右子树，所以替换之前还要先把右子树移到 y 的位置。
-7. 因为三种情况下都有移动子树的操作，所以单独实现这个方法。用 `z` 节点替换 `y` 节点，替换的过程其实就是重新处理父子关系的过程
-    ```cpp
-    void transplant(Node* y, Node* z) {
-        if (y->parent == NULL) { // y 是根节点
-            root = z;
-        }
-        else if (y->parent->left == y) { // y 是左侧子节点
-            y->parent->left = z;
-        }
-        else {
-            y->parent->right = z; // y 是左侧子节点
-        }
-        // 如果 z 等于 NULL，则是第一种情况，用 NULL 来替换 y
-        if (z != NULL) {
-            z->parent = y->parent;
-        }
-    }
-    ```
-8. 注意 `transplant` 并不负责更新 `z` 和它新的子节点的关系。
-9. 按照上面的思路实现移除
-    ```cpp
-    void tree_delete(Node* node) {
-        if (node->left == NULL) { // 这条分支包括两第一种情况以及第二种情况中只有右侧子节点的部分
-            transplant(node, node->right);
-        }
-        else if (node->right == NULL) { // 这条分支处理第二种情况中有左侧子节点的部分
-            transplant(node, node->left);
-        }
-        else { // 这条分支处理第三种情况
-            // 《算法导论》这里直接用的 tree_minimum，其实两者是一样的，不过我觉得写成后继的形式更好理解
-            Node* successor = tree_successor(node);
-            if (node->right == successor) {
-                transplant(node, successor);
-                // 这里在 transplant 之后，successor 的子节点发生了变化
-                successor->left = node->left;
-                node->left->parent = successor;
-            }
-            else {
-                // successor 要去替换 node，那这里要让 successor 的后继接任它的位置
-                // 因为 successor 不可能有左侧子节点，所以 successor->right 接任后不需要更新子节点
-                transplant(successor, successor->right);
+7. 可以按照《算法导论》中的实现合并一些相同的情况以减少代码量，但是运算速度并不会更快，而且理解起来难度会增加。
 
-                // successor 替换 node，并和 node 的子节点建立关系
-                transplant(node, successor);
-                successor->left = node->left;
-                node->left->parent = successor;
-                successor->right = node->right;
-                node->right->parent = successor;
-            }
-        }
-        free(node);
+### C 实现
+```cpp
+void transplant(Node* y, Node* z) {
+    if (y->parent == NULL) { // y 是根节点
+        root = z;
     }
-    ```
-10. 整理合并一下
-    ```cpp
-    void tree_delete(Node* node) {
-        if (node->left == NULL) {
-            transplant(node, node->right);
-        }
-        else if (node->right == NULL) {
-            transplant(node, node->left);
-        }
-        else {
-            Node* successor = tree_successor(node);
-            if (node->right != successor) {
-                transplant(successor, successor->right);
-                successor->right = node->right;
-                node->right->parent = successor;
-            }
-            transplant(node, successor);
-            successor->left = node->left;
-            node->left->parent = successor;
-        }
-        free(node);
+    else if (y->parent->left == y) { // y 是左侧子节点
+        y->parent->left = z;
     }
-    ```
+    else {
+        y->parent->right = z; // y 是左侧子节点
+    }
+    // 如果 z 等于 NULL，则是第一种情况，用 NULL 来替换 y
+    if (z != NULL) {
+        z->parent = y->parent;
+    }
+}
+
+void tree_delete(Node* node) {
+    if (node->left == NULL) {
+        transplant(node, node->right);
+    }
+    else if (node->right == NULL) {
+        transplant(node, node->left);
+    }
+    else {
+        Node* successor = tree_successor(node);
+        if (node->right != successor) {
+            transplant(successor, successor->right);
+            successor->right = node->right;
+            node->right->parent = successor;
+        }
+        transplant(node, successor);
+        successor->left = node->left;
+        node->left->parent = successor;
+    }
+    free(node);
+}
+```
 
 ### 复杂度
-1. `transplant` 是 $O(1)$，`tree_successor` 是 $O(h)$，剩下其他几行都是简单的 $O(1)$。
-2. 所以删除操作的时间复杂度是 $O(h)$。
+`transplant` 是 $O(1)$，`successor` 是 $O(h)$，所以删除操作的时间复杂度是 $O(h)$。
 
 ### 删除操作不可交换（12.3-4）
 1. 注意到删除操作最后一种情况中有右子树节点顺序变化的情况，比如说《算法导论》图 12-2 如果删除 15，那么 17 就会变到 18 上面。
