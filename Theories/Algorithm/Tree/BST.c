@@ -18,15 +18,13 @@ static Node* createNode (int key) {
     node->right = NULL;
 }
 
-void insert(int key) {
-    Node* node = createNode(key);
-
-    // 从根开始比较，找到新节点合适的位置
+void bst_insert (Node* newNode) {
     Node* curr = root;
-    Node* parent = NULL; // 用来追踪新节点要作为谁的子节点
-    while (curr) { // 新节点最终会被添加为一个叶节点
-        parent = curr;
-        if (key < curr->key) {
+    Node* p = NULL;
+
+    while (curr) {
+        p = curr;
+        if (newNode->key <= curr->key) {
             curr = curr->left;
         }
         else {
@@ -34,16 +32,16 @@ void insert(int key) {
         }
     }
 
-    // 设置新节点和父节点的关系
-    node->parent = parent;
-    if (parent == NULL) {
-        root = node;
+    newNode->parent = p;
+
+    if (p == NULL) {
+        root = newNode;
     }
-    else if (key < parent->key) {
-        parent->left = node;
+    else if (newNode->key <= p->key) {
+        p->left = newNode;
     }
     else {
-        parent->right = node;
+        p->right = newNode;
     }
 }
 
@@ -243,13 +241,14 @@ void tree_delete(Node* node) {
     free(node);
 }
 
-void inorder_walk(Node* node) {
+void bst_inorder_traverse (Node* node, void cb(Node*)) {
     if (node != NULL) {
-        inorder_walk(node->left);
-        printf("%d\n", node->key);
-        inorder_walk(node->right);
+        bst_inorder_traverse(node->left, cb);
+        cb(node);
+        bst_inorder_traverse(node->right, cb);
     }
 }
+
 void inorder_by_stack(Node* node) {
     Stack* s = malloc(sizeof(Stack));
     initStack(s);

@@ -151,6 +151,41 @@
 
 
 ## 插入节点
+1. 根据 BST 的节点大小关系，可以从根节点开始，使用二分搜索的方法来找到新节点应该插入的位置。
+2. 只要当前节点存在，那就用待插入节点和它进行大小比较，然后根据比较结果和当前节点的某个可能存在的子节点进行比较。
+3. 如果当前节点不存在，那当前位置就是新节点应该插入的位置。
+4. 但是如果当前节点不存在，就没法引用该位置的父节点了，所以还需要一个指针追踪当前节点的父节点。
+5. 当不断二分比较找到合适的空位后，将新节点放在该空位，也就是和此时引用的父节点建立父子关系
+    ```cpp
+    // 边界条件：root 可能为 NULL
+    void bst_insert (Node* newNode) {
+        Node* curr = root;
+        Node* p = NULL;
+
+        while (curr) {
+            p = curr;
+            if (newNode->key <= curr->key) {
+                curr = curr->left;
+            }
+            else {
+                curr = curr->right;
+            }
+        }
+
+        newNode->parent = p;
+
+        if (p == NULL) {
+            root = newNode;
+        }
+        else if (newNode->key <= p->key) {
+            p->left = newNode;
+        }
+        else {
+            p->right = newNode;
+        }
+    }
+    ```
+6. 因为每次都是进入下一级节点进行同样的比较，所以也很适合用递归实现
 1. 要验证这个插入操作是否为一种特殊情况，也就是要插入的节点是树的第一个节点。如果是，就将根节点指向新节点；如果不是，就要把它插入到合适的位置
 2. `Node` 构造函数调用时要设置父节点的引用：如果当前是空树，那么父节点就是 `null`；如果当前树非空，则要在递归比较的到目标位置时才能确定父节点是谁，才能调用 `Node` 创建新的节点
     ```js
@@ -733,13 +768,23 @@ void tree_delete(Node* node) {
 3. 下图描绘了 `inOrderTraverseNode` 方法的访问路径：
     <img src="images/In-Order.png" width="400" style="display: block; margin: 5px 0 10px;" />
     `callback` 所调用的节点依次为：3 5 6 7 8 9 10 11 12 13 14 15 18 20 25
-4. 实现
+4. C 实现
+    ```cpp
+    void bst_inorder_traverse (Node* node, void cb(Node*)) {
+        if (node != NULL) {
+            bst_inorder_traverse(node->left, cb); // 遍历左子树，先一路递归到左子树最小的一个节点
+            cb(node);
+            bst_inorder_traverse(node->right, cb); // 遍历右子树，先一路递归到右子树最小的一个节点
+        }
+    }
+    ```
+5. JS 实现
     ```js
     function inOrderTraverseNode(node, callback) {
         if (node !== null) {
-            inOrderTraverseNode(node.left, callback); // 遍历左子树，先一路递归到左子树最小的一个节点
+            inOrderTraverseNode(node.left, callback);
             callback(node);
-            inOrderTraverseNode(node.right, callback); // 遍历右子树，先一路递归到右子树最小的一个节点
+            inOrderTraverseNode(node.right, callback);
         }
     }
     ```
