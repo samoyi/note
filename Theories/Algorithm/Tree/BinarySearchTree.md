@@ -157,7 +157,7 @@
 4. 但是如果当前节点不存在，就没法引用该位置的父节点了，所以还需要一个指针追踪当前节点的父节点。
 5. 当不断二分比较找到合适的空位后，将新节点放在该空位，也就是和此时引用的父节点建立父子关系
     ```cpp
-    // 边界条件：root 可能为 NULL
+    // 边界条件：root 可能为 NULL，p 可能为 NULL
     void bst_insert (Node* newNode) {
         Node* curr = root;
         Node* p = NULL;
@@ -186,180 +186,88 @@
     }
     ```
 6. 因为每次都是进入下一级节点进行同样的比较，所以也很适合用递归实现
-1. 要验证这个插入操作是否为一种特殊情况，也就是要插入的节点是树的第一个节点。如果是，就将根节点指向新节点；如果不是，就要把它插入到合适的位置
-2. `Node` 构造函数调用时要设置父节点的引用：如果当前是空树，那么父节点就是 `null`；如果当前树非空，则要在递归比较的到目标位置时才能确定父节点是谁，才能调用 `Node` 创建新的节点
-    ```js
-    insert (key) {
-        if ( this.root === null ) {
-            this.root = new Node(key);
-        } 
-        else {
-            insertNode(this.root, key);
-        }
-    }
-    ```
-3. 使用辅助函数 `insertNode` 将寻找合适的位置
-    ```js
-    function insertNode(node, key) {
-        if ( key < node.key ) { // 如果新节点的键小于当前节点的键，
-            // 那么需要检查当前节点的左侧子节点
-            if ( node.left === null ) { // 如果它没有左侧子节点，就在那里插入新的节点
-                node.left = new Node(key, node);
-            } 
+    ```cpp
+    static void bst_insert_recursive_aux (Node* curr, Node* parent, Node* newNode) {
+        if (curr == NULL) {
+            newNode->parent = parent;
+            if (parent == NULL) {
+                root = newNode;
+            }
+            else if (newNode->key <= parent->key) {
+                parent->left = newNode;
+            }
             else {
-                // 如果有左侧子节点，需要通过递归调用 insertNode 方法继续找到树的下一层
-                insertNode( node.left, key );
-            }
-        } 
-        else {// 如果新节点的键大于等于当前节点的键
-            if ( node.right === null ) { // 当前节点没有右侧子节点则直接作为右侧子节点
-                node.right = new Node(key, node);
-            } 
-            else { // 有的话继续递归查找合适位置
-                insertNode( node.right, key );
+                parent->right = newNode;
             }
         }
+        else if (newNode->key <= curr->key) {
+            bst_insert_recursive_aux(curr->left, curr, newNode);
+        }
+        else {
+            bst_insert_recursive_aux(curr->right, curr, newNode);
+        }
     }
-    ```
-4. 迭代实现
-    ```js
-    insert (key) {
-        let curr = this.root;
+    void bst_insert_recursive (Node* newNode) {
+        bst_insert_recursive_aux(root, NULL, newNode);
+    }
 
-        if (curr === null) {
-            this.root = new Node(key);
+
+    void bst_inorder_traverse (Node* node, void cb(Node*)) {
+        if (node == NULL) {
             return;
         }
-
-        let p;
-        do {
-            p = curr;
-            if (key < curr.key) {
-                curr = curr.left;
-            }
-            else {
-                curr = curr.right;
-            }
-        } 
-        while (curr);
-
-        if (key < p.key) {
-            p.left = new Node(key, p);
-        }
-        else {
-            p.right = new Node(key, p);
-        }
-    }
-    ```
-5. C 迭代实现
-    ```cpp
-    void insert(int key) {
-        Node* node = createNode(key);
-
-        // 从根开始比较，找到新节点合适的位置
-        Node* curr = root;
-        Node* parent = NULL; // 用来追踪新节点要作为谁的子节点
-        while (curr) { // 新节点最终会被添加为一个叶节点
-            parent = curr;
-            if (key < curr->key) {
-                curr = curr->left;
-            }
-            else {
-                curr = curr->right;
-            }
-        }
-
-        // 设置新节点和父节点的关系
-        node->parent = parent;
-        if (parent == NULL) {
-            root = node;
-        }
-        else if (key < parent->key) {
-            parent->left = node;
-        }
-        else {
-            parent->right = node;
-        }
-    }
-    ```
-6. C 递归实现
-    ```cpp
-    static void insert_recursive(Node* node, Node* compared, Node* parent) {
-        if (compared == NULL) {
-            if (node->key < parent->key) {
-                parent->left = node;
-            }
-            else {
-                parent->right = node;
-            }
-            node->parent = parent;
-            return;
-        }
-        if (node->key < compared->key) {
-            insert_recursive(node, compared->left, compared);
-        }
-        else {
-            insert_recursive(node, compared->right, compared);
-        }
-    }
-    void recursive_insert(int key) {
-        Node* node = createNode(key);
-        if (root == NULL) {
-            root = node;
-        }
-        else {
-            insert_recursive(node, root, NULL);
-        }
+        bst_inorder_traverse(node->left, cb);
+        cb(node);
+        bst_inorder_traverse(node->right, cb);
     }
     ```
 
 
 ## 搜索最小值和最大值
-1. 根据二叉搜索树的规则，递归的查找到最后一个左侧子节点就是最小值，递归的查找到最后一个右侧子节点就是最大值。
-2. 下面的 `min` 作为对象方法暴露，传递根节点作为起始搜素节点。内部通过实际的搜索函数 `minNode` 的进行搜索
-    ```js
-    min () {
-        return minNode(this.root);
-    }
-
-    function minNode (node) {
-        if (node) {
-            while ( node.left ) {
-                node = node.left;               
-            }
-            return node;
-        }
-        return null;
-    }
-    ```
-3. 最大值搜索也是类似的实现
-    ```js
-    max () {
-        return maxNode(this.root);
-    }
-
-    function maxNode (node) {
-        if (node) {
-            while ( node.right ) {
-                node = node.right;
-            }
-            return node;
-        }
-        return null;
-    }
-    ```
-4. C 实现
+1. 根据二叉搜索树的规则，递归的查找到最后一个左侧子节点就是最小值，递归的查找到最后一个右侧子节点就是最大值
     ```cpp
-    Node* tree_minimun(Node* root) {
+    Node* bst_min (Node* root) {
         if (root == NULL) {
             return NULL;
         }
-        while (root->left != NULL) {
-            root = root->left;
+        Node* curr = root;
+        while (curr->left) {
+            curr = curr->left;
         }
-        return root;
+        return curr;
     }
-    Node* tree_maximun(Node* root) {
+    ```
+2. 因为是递归的逻辑结构，所以同样可以用递归实现，虽然没有必要
+    ```cpp
+    static Node* bst_min_recursive_aux (Node* curr) {
+        if (curr->left == NULL) {
+            return curr;
+        }
+        else {
+            bst_min_recursive_aux(curr->left);
+        }
+    }
+    Node* bst_min_recursive (Node* root) {
+        if (root == NULL) {
+            return NULL;
+        }
+        return bst_min_recursive_aux(root);
+    }
+    ```
+3. 最大值
+    ```cpp
+    Node* bst_max (Node* root) {
+        if (root == NULL) {
+            return NULL;
+        }
+        Node* curr = root;
+        while (curr->right) {
+            curr = curr->right;
+        }
+        return curr;
+    }
+
+    Node* tree_maximum(Node* root) {
         if (root == NULL) {
             return NULL;
         }
@@ -367,6 +275,17 @@
             root = root->right;
         }
         return root;
+    }
+    Node* recursive_tree_maximum(Node* root) {
+        if (root == NULL) {
+            return NULL;
+        }
+        if (root->right == NULL) {
+            return root;
+        }
+        else {
+            return recursive_tree_maximum(root->right);
+        }
     }
     ```
 

@@ -45,32 +45,38 @@ void bst_insert (Node* newNode) {
     }
 }
 
-static void insert_recursive(Node* node, Node* compared, Node* parent) {
-    if (compared == NULL) {
-        if (node->key < parent->key) {
-            parent->left = node;
+static void bst_insert_recursive_aux (Node* curr, Node* parent, Node* newNode) {
+    if (curr == NULL) {
+        newNode->parent = parent;
+        if (parent == NULL) {
+            root = newNode;
+        }
+        else if (newNode->key <= parent->key) {
+            parent->left = newNode;
         }
         else {
-            parent->right = node;
+            parent->right = newNode;
         }
-        node->parent = parent;
-        return;
     }
-    if (node->key < compared->key) {
-        insert_recursive(node, compared->left, compared);
+    else if (newNode->key <= curr->key) {
+        bst_insert_recursive_aux(curr->left, curr, newNode);
     }
     else {
-        insert_recursive(node, compared->right, compared);
+        bst_insert_recursive_aux(curr->right, curr, newNode);
     }
 }
-void recursive_insert(int key) {
-    Node* node = createNode(key);
-    if (root == NULL) {
-        root = node;
+void bst_insert_recursive (Node* newNode) {
+    bst_insert_recursive_aux(root, NULL, newNode);
+}
+
+
+void bst_inorder_traverse (Node* node, void cb(Node*)) {
+    if (node == NULL) {
+        return;
     }
-    else {
-        insert_recursive(node, root, NULL);
-    }
+    bst_inorder_traverse(node->left, cb);
+    cb(node);
+    bst_inorder_traverse(node->right, cb);
 }
 
 Node* tree_search(Node* root, int key) {
@@ -102,7 +108,7 @@ Node* tree_successor(Node* node) {
         return NULL;
     }
     if (node->right) {
-        return tree_minimum(node->right);
+        return bst_min(node->right);
     }
     else {
         Node* parent = node->parent;
@@ -118,7 +124,7 @@ Node* tree_predecessor(Node* node) {
         return NULL;
     }
     if (node->left) {
-        return tree_maximum(node->left);
+        return bst_max(node->left);
     }
     else {
         Node* parent = node->parent;
@@ -130,46 +136,56 @@ Node* tree_predecessor(Node* node) {
     }
 }
 
-Node* tree_minimum(Node* root) {
+Node* bst_min (Node* root) {
     if (root == NULL) {
         return NULL;
     }
-    while (root->left != NULL) {
-        root = root->left;
+    Node* curr = root;
+    while (curr->left) {
+        curr = curr->left;
     }
-    return root;
-}
-Node* recursive_tree_minimum(Node* root) {
-    if (root == NULL) {
-        return NULL;
-    }
-    if (root->left == NULL) {
-        return root;
-    }
-    else {
-        return recursive_tree_minimum(root->left);
-    }
+    return curr;
 }
 
-Node* tree_maximum(Node* root) {
-    if (root == NULL) {
-        return NULL;
-    }
-    while (root->right != NULL) {
-        root = root->right;
-    }
-    return root;
-}
-Node* recursive_tree_maximum(Node* root) {
-    if (root == NULL) {
-        return NULL;
-    }
-    if (root->right == NULL) {
-        return root;
+static Node* bst_min_recursive_aux (Node* curr) {
+    if (curr->left == NULL) {
+        return curr;
     }
     else {
-        return recursive_tree_maximum(root->right);
+        bst_min_recursive_aux(curr->left);
     }
+}
+Node* bst_min_recursive (Node* root) {
+    if (root == NULL) {
+        return NULL;
+    }
+    return bst_min_recursive_aux(root);
+}
+
+Node* bst_max (Node* root) {
+    if (root == NULL) {
+        return NULL;
+    }
+    Node* curr = root;
+    while (curr->right) {
+        curr = curr->right;
+    }
+    return curr;
+}
+
+static Node* bst_max_recursive_aux (Node* curr) {
+    if (curr->right == NULL) {
+        return curr;
+    }
+    else {
+        bst_max_recursive_aux(curr->right);
+    }
+}
+Node* bst_max_recursive (Node* root) {
+    if (root == NULL) {
+        return NULL;
+    }
+    return bst_max_recursive_aux(root);
 }
 
 void transplant(Node* y, Node* z) {
@@ -275,7 +291,7 @@ void inorder_by_stack(Node* node) {
     }
 }
 void inorder_by_successor(Node* root) {
-    Node* node = tree_minimum(root);
+    Node* node = bst_min(root);
     while (node) {
         printf("%d\n", node->key);
         node = tree_successor(node);
