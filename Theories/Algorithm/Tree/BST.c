@@ -206,80 +206,86 @@ Node* bst_max_recursive (Node* root) {
     return bst_max_recursive_aux(root);
 }
 
-void transplant(Node* y, Node* z) {
-    if (y->parent == NULL) { // y 是根节点
-        root = z;
+static void bst_transplant (Node* oldNode, Node* newNode) {
+    if (oldNode == NULL) {
+        printf("oldNode is NULL\n");
+        exit(EXIT_FAILURE);
     }
-    else if (y->parent->left == y) { // y 是左侧子节点
-        y->parent->left = z;
+
+    Node* p = oldNode->parent;
+    
+    if (p == NULL) {
+        root = newNode;
     }
     else {
-        y->parent->right = z; // y 是左侧子节点
-    }
-    // 如果 z 等于 NULL，则是第一种情况
-    if (z != NULL) {
-        z->parent = y->parent;
-    }
-}
-// void tree_delete(Node* node) {
-//     if (node->left == NULL) { // 这条分支包括两第一种情况以及第二种情况中只有右侧子节点的部分
-//         transplant(node, node->right);
-//     }
-//     else if (node->right == NULL) { // 这条分支处理第二种情况中有左侧子节点的部分
-//         transplant(node, node->left);
-//     }
-//     else { // 这条分支处理第三种情况
-//         // 《算法导论》这里直接用的 tree_minimum，其实两者是一样的，不过我觉得写成后继的形式更好理解
-//         Node* successor = bst_successor(node);
-//         if (node->right == successor) {
-//             transplant(node, successor);
-//             // 这里在 transplant 之后，successor 的子节点发生了变化
-//             successor->left = node->left;
-//             node->left->parent = successor;
-//         }
-//         else {
-//             // successor 要去替换 node，那这里要让 successor 的后继接任它的位置
-//             transplant(successor, successor->right);
-
-//             // successor 替换 node，并和 node 的子节点建立关系
-//             transplant(node, successor);
-//             successor->left = node->left;
-//             node->left->parent = successor;
-//             successor->right = node->right;
-//             node->right->parent = successor;
-//         }
-//     }
-//     free(node);
-// }
-void tree_delete(Node* node) {
-    if (node->left == NULL) { // 这条分支包括两第一种情况以及第二种情况中只有右侧子节点的部分
-        transplant(node, node->right);
-    }
-    else if (node->right == NULL) { // 这条分支处理第二种情况中有左侧子节点的部分
-        transplant(node, node->left);
-    }
-    else { // 这条分支处理第三种情况
-        // 《算法导论》这里直接用的 tree_minimum，其实两者是一样的，不过我觉得写成后继的形式更好理解
-        Node* successor = bst_successor(node);
-        if (node->right != successor) {
-            // successor 要去替换 node，那这里要让 successor 的后继接任它的位置
-            transplant(successor, successor->right);
-            // successor 替换 node，并和 node 的子节点建立关系
-            successor->right = node->right;
-            node->right->parent = successor;
+        if (p->left == oldNode) {
+            p->left = newNode;
         }
-        transplant(node, successor);
-        successor->left = node->left;
-        node->left->parent = successor;
+        else {
+            p->right = newNode;
+        }
     }
-    free(node);
+
+    if (newNode) {
+        newNode->parent = p;
+    }
+}
+void bst_delete (Node* root, Node* node) {
+    if (node == NULL) {
+        return;
+    }
+
+    Node* p = node->parent;
+
+    if (node->left == NULL && node->right == NULL) {
+        bst_transplant(node, NULL);
+    }
+    else if (node->right == NULL) {
+        bst_transplant(node, node->left);
+    }
+    else if (node->left == NULL) {
+        bst_transplant(node, node->right);
+    }
+    else {
+        Node* succ = bst_successor(node);
+        if (succ == node->right) {
+            bst_transplant(node, succ);
+            succ->left = node->left;
+            node->left->parent = succ;
+        }
+        else {
+            bst_transplant(succ, succ->right);
+            succ->left = node->left;
+            node->left->parent = succ;
+            succ->right = node->right;
+            node->right->parent = succ;
+            bst_transplant(node, succ);
+        }
+    }
+    free(node); // 通常删除操作还伴随着释放内存
 }
 
-void bst_inorder_traverse (Node* node, void cb(Node*)) {
-    if (node != NULL) {
-        bst_inorder_traverse(node->left, cb);
-        cb(node);
-        bst_inorder_traverse(node->right, cb);
+void bst_pre_order_traverse (Node* root, void cb(Node*)) {
+    if (root != NULL) {
+        cb(root);
+        bst_pre_order_traverse(root->left, cb);
+        bst_pre_order_traverse(root->right, cb);
+    }
+}
+
+void bst_in_order_traverse (Node* root, void cb(Node*)) {
+    if (root != NULL) {
+        bst_in_order_traverse(root->left, cb);
+        cb(root);
+        bst_in_order_traverse(root->right, cb);
+    }
+}
+
+void bst_post_order_traverse (Node* root, void cb(Node*)) {
+    if (root != NULL) {
+        bst_post_order_traverse(root->left, cb);
+        bst_post_order_traverse(root->right, cb);
+        cb(root);
     }
 }
 

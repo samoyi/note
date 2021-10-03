@@ -40,8 +40,8 @@
         - [删除操作不可交换（12.3-4）](#删除操作不可交换123-4)
     - [树的遍历](#树的遍历)
         - [先序遍历（Pre Order）](#先序遍历pre-order)
-        - [后序遍历（Post Order）](#后序遍历post-order)
         - [中序遍历（In Order）](#中序遍历in-order)
+        - [后序遍历（Post Order）](#后序遍历post-order)
         - [复杂度](#复杂度-3)
         - [非递归实现中序遍历（使用栈）](#非递归实现中序遍历使用栈)
             - [使用后继实现中序遍历](#使用后继实现中序遍历)
@@ -399,7 +399,12 @@ TODO
 3. 第三种情况中，由谁来连接两棵子树？肯定要由两棵子树的中间值，而中间值有两个：左子树的最大值和右子树的最小值，也就是 y 的前驱和后继。看到的实现都是使用后继来连接，但好像使用前驱也没什么不行。
 4. 初步实现如下
     ```js   
+    // 边界条件：node 可能为 null，node 父节点可能为 null（node 是根节点）
     delete (node) {
+        if (node === null) {
+            return;
+        }
+        
         let left = node.left;
         let right = node.right;
         let p = node.parent;
@@ -443,6 +448,7 @@ TODO
         }
         else { // node 有两侧子节点
             let s = this.successor(node);
+            // 后继肯定没有左侧子节点
             if (s === node.right) { // 后继节点是 node 的右子节点
                 // 右子节点直接跳过 node 和 node 的父节点和左子节点建立关系
                 // 和 node 父节点建立关系
@@ -521,7 +527,12 @@ TODO
     ```
 6. `transplant` 方法内部会判断 `oldNode` 是左侧还是右侧子节点，以及它是否是根节点，不用再像上面初步实现中每个分支里都各自判断。使用 `transplant` 后初步改写如下，前三个分支都是很简单的
     ```js
+    // 边界条件：node 可能为 NULL，node 父节点可能为 NULL（node 是根节点）
     delete(node) {
+        if (node === null) {
+            return;
+        }
+        
         let left = node.left;
         let right = node.right;
         let p = node.parent;
@@ -564,41 +575,63 @@ TODO
 
 ### C 实现
 ```cpp
-void transplant(Node* y, Node* z) {
-    if (y->parent == NULL) { // y 是根节点
-        root = z;
+static void bst_transplant (Node* oldNode, Node* newNode) {
+    if (oldNode == NULL) {
+        printf("oldNode is NULL\n");
+        exit(EXIT_FAILURE);
     }
-    else if (y->parent->left == y) { // y 是左侧子节点
-        y->parent->left = z;
+
+    Node* p = oldNode->parent;
+    
+    if (p == NULL) {
+        root = newNode;
     }
     else {
-        y->parent->right = z; // y 是左侧子节点
+        if (p->left == oldNode) {
+            p->left = newNode;
+        }
+        else {
+            p->right = newNode;
+        }
     }
-    // 如果 z 等于 NULL，则是第一种情况，用 NULL 来替换 y
-    if (z != NULL) {
-        z->parent = y->parent;
+
+    if (newNode) {
+        newNode->parent = p;
     }
 }
+void bst_delete (Node* root, Node* node) {
+    if (node == NULL) {
+        return;
+    }
 
-void tree_delete(Node* node) {
-    if (node->left == NULL) {
-        transplant(node, node->right);
+    Node* p = node->parent;
+
+    if (node->left == NULL && node->right == NULL) {
+        bst_transplant(node, NULL);
     }
     else if (node->right == NULL) {
-        transplant(node, node->left);
+        bst_transplant(node, node->left);
+    }
+    else if (node->left == NULL) {
+        bst_transplant(node, node->right);
     }
     else {
-        Node* successor = tree_successor(node);
-        if (node->right != successor) {
-            transplant(successor, successor->right);
-            successor->right = node->right;
-            node->right->parent = successor;
+        Node* succ = bst_successor(node);
+        if (succ == node->right) {
+            bst_transplant(node, succ);
+            succ->left = node->left;
+            node->left->parent = succ;
         }
-        transplant(node, successor);
-        successor->left = node->left;
-        node->left->parent = successor;
+        else {
+            bst_transplant(succ, succ->right);
+            succ->left = node->left;
+            node->left->parent = succ;
+            succ->right = node->right;
+            node->right->parent = succ;
+            bst_transplant(node, succ);
+        }
     }
-    free(node);
+    free(node); // 通常删除操作还伴随着释放内存
 }
 ```
 
@@ -617,32 +650,16 @@ void tree_delete(Node* node) {
 ## 树的遍历
 ### 先序遍历（Pre Order）
 1. 先处理当前节点，再处理左子树，再处理右子树。
-2. 下图描绘了 `preOrderTraverseNode` 方法的访问路径：
+2. 下图描绘了先序遍历的访问路径：
     <img src="./images/Pre-Order.png" width="400" style="display: block; margin: 5px 0 10px;" /> 
     `callback` 所调用的节点依次为：11 7 5 3 6 9 8 10 15 13 12 14 20 18 25
 3. 实现
-    ```js
-    preOrderTraverseNode(node, callback) {
-        if (node !== null) {
-            callback(node);
-            this.preOrderTraverseNode(node.left, callback);
-            this.preOrderTraverseNode(node.right, callback);
-        }
-    }
-    ```
-
-### 后序遍历（Post Order）
-1. 先处理左子树，再处理右子树，再处理当前节点。解析树就应用了后序遍历。
-3. 下图描绘了 `postOrderTraverse` 方法的访问路径：
-    <img src="./images/Post-Order.png" width="400" style="display: block; margin: 5px 0 10px;" />  
-    `callback` 所调用的节点依次为：3 6 5 8 10 9 7 12 14 13 18 25 20 15 11
-4. 实现
-    ```js
-    postOrderTraverseNode(node, callback) {
-        if (node !== null) {
-            this.postOrderTraverseNode(node.left, callback);
-            this.postOrderTraverseNode(node.right, callback);
-            callback(node);
+    ```cpp
+    void bst_pre_order_traverse (Node* root, void cb(Node*)) {
+        if (root != NULL) {
+            cb(root);
+            bst_pre_order_traverse(root->left, cb);
+            bst_pre_order_traverse(root->right, cb);
         }
     }
     ```
@@ -650,26 +667,32 @@ void tree_delete(Node* node) {
 ### 中序遍历（In Order）
 1. 先递归处理左子树，再处理当前节点，再递归处理右子树。
 2. 可以想到，这只是一种形式的中序遍历。也可能是先右侧子节点的，这样就是从大到小遍历节点了。或者在两个以上子节点时还有其他的方式。
-3. 下图描绘了 `inOrderTraverseNode` 方法的访问路径：
+3. 下图描绘了中序遍历的访问路径：
     <img src="images/In-Order.png" width="400" style="display: block; margin: 5px 0 10px;" />
     `callback` 所调用的节点依次为：3 5 6 7 8 9 10 11 12 13 14 15 18 20 25
 4. C 实现
     ```cpp
-    void bst_inorder_traverse (Node* node, void cb(Node*)) {
-        if (node != NULL) {
-            bst_inorder_traverse(node->left, cb); // 遍历左子树，先一路递归到左子树最小的一个节点
-            cb(node);
-            bst_inorder_traverse(node->right, cb); // 遍历右子树，先一路递归到右子树最小的一个节点
+    void bst_in_order_traverse (Node* root, void cb(Node*)) {
+        if (root != NULL) {
+            bst_in_order_traverse(root->left, cb);
+            cb(root);
+            bst_in_order_traverse(root->right, cb);
         }
     }
     ```
-5. JS 实现
-    ```js
-    function inOrderTraverseNode(node, callback) {
-        if (node !== null) {
-            inOrderTraverseNode(node.left, callback);
-            callback(node);
-            inOrderTraverseNode(node.right, callback);
+    
+### 后序遍历（Post Order）
+1. 先处理左子树，再处理右子树，再处理当前节点。解析树就应用了后序遍历。
+3. 下图描绘了后序遍历的访问路径：
+    <img src="./images/Post-Order.png" width="400" style="display: block; margin: 5px 0 10px;" />  
+    `callback` 所调用的节点依次为：3 6 5 8 10 9 7 12 14 13 18 25 20 15 11
+2. 实现
+    ```cpp
+    void bst_post_order_traverse (Node* root, void cb(Node*)) {
+        if (root != NULL) {
+            bst_post_order_traverse(root->left, cb);
+            bst_post_order_traverse(root->right, cb);
+            cb(root);
         }
     }
     ```
