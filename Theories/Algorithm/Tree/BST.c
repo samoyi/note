@@ -79,31 +79,36 @@ void bst_inorder_traverse (Node* node, void cb(Node*)) {
     bst_inorder_traverse(node->right, cb);
 }
 
-Node* tree_search(Node* root, int key) {
-    if (root == NULL || key == root->key) {
-        return root;
-    }
 
-    if (key < root->key) {
-        return tree_search(root->left, key);
-    }
-    else {
-        return tree_search(root->right, key);
-    }
-}
-Node* interative_tree_search(Node* root, int key) {
-    while (root != NULL && key != root->key) {
-        if (key < root->key) {
-            root = root->left;
+Node* bst_search (Node* root, int key) {
+    Node* curr = root;
+    while (curr && curr->key != key) {
+        if (key <= curr->key) {
+            curr = curr->left;
         }
         else {
-            root = root->right;
+            curr = curr->right;
         }
     }
-    return root;
+    return curr;
 }
 
-Node* tree_successor(Node* node) {
+Node* bst_search_recursive (Node* node, int key) {
+    if (node == NULL) {
+        return NULL;
+    }
+    if (node->key == key) {
+        return node;
+    }
+    else if (key <= node->key) {
+        bst_search_recursive(node->left, key);
+    }
+    else {
+        bst_search_recursive(node->right, key);
+    }
+}
+
+Node* bst_successor(Node* node) {
     if (node == NULL) {
         return NULL;
     }
@@ -119,21 +124,34 @@ Node* tree_successor(Node* node) {
         return parent;
     }
 }
-Node* tree_predecessor(Node* node) {
+Node* bst_predecessor (Node* node) {
     if (node == NULL) {
+        // TODO，这里其实不应该返回 NULL，因为最小的节点的后继就是 NULL，两者无法区分
         return NULL;
     }
+
     if (node->left) {
         return bst_max(node->left);
     }
-    else {
-        Node* parent = node->parent;
-        while (parent && parent->left == node) {
-            node = parent;
-            parent = parent->parent;
-        }
-        return parent;
+
+    Node* curr = node;
+    while (curr->parent && curr->parent->left == curr) {
+        curr = curr->parent;
     }
+    return curr->parent;
+}
+Node* bst_successor (Node* node) {
+    if (node == NULL) {
+        return NULL;
+    }
+    if (node->right) {
+        return bst_min(node->right);
+    }
+    Node* curr = node;
+    while (curr->parent && curr->parent->right == curr) {
+        curr = curr->parent;
+    }
+    return curr->parent;
 }
 
 Node* bst_min (Node* root) {
@@ -212,7 +230,7 @@ void transplant(Node* y, Node* z) {
 //     }
 //     else { // 这条分支处理第三种情况
 //         // 《算法导论》这里直接用的 tree_minimum，其实两者是一样的，不过我觉得写成后继的形式更好理解
-//         Node* successor = tree_successor(node);
+//         Node* successor = bst_successor(node);
 //         if (node->right == successor) {
 //             transplant(node, successor);
 //             // 这里在 transplant 之后，successor 的子节点发生了变化
@@ -242,7 +260,7 @@ void tree_delete(Node* node) {
     }
     else { // 这条分支处理第三种情况
         // 《算法导论》这里直接用的 tree_minimum，其实两者是一样的，不过我觉得写成后继的形式更好理解
-        Node* successor = tree_successor(node);
+        Node* successor = bst_successor(node);
         if (node->right != successor) {
             // successor 要去替换 node，那这里要让 successor 的后继接任它的位置
             transplant(successor, successor->right);
@@ -294,7 +312,7 @@ void inorder_by_successor(Node* root) {
     Node* node = bst_min(root);
     while (node) {
         printf("%d\n", node->key);
-        node = tree_successor(node);
+        node = bst_successor(node);
     }
 }
 

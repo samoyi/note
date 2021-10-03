@@ -12,10 +12,10 @@ typedef struct Node {
 
 void bst_insert (Node* newNode);
 void bst_insert_recursive (Node* newNode);
-Node* tree_search(Node* root, int key);
-Node* interative_tree_search(Node* root, int key);
-Node* tree_successor(Node* node);
-Node* tree_predecessor(Node* node);
+Node* bst_search(Node* root, int key);
+Node* bst_search_recursive(Node* root, int key);
+Node* bst_successor(Node* node);
+Node* bst_predecessor(Node* node);
 Node* bst_min(Node* root);
 Node* bst_min_recursive(Node* root);
 Node* bst_max(Node* root);

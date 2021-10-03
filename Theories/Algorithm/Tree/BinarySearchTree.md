@@ -299,73 +299,54 @@
     1. 如果当前节点有右子树，则后继节点就是右子树的最小节点；
     2. else 如果有右父节点，后继节点就是该父节点；
     3. else 就要找到更早就比当前节点大的节点，也就是不断找父节点，直到找到一个右父节点或者根节点。其实和第 2 种情况可以合并到一起。
-3. JS 实现
+3. 实现
     ```cpp
-    predecessor (node) {
-        if (node === null) {
-            return null;
+    // 边界条件：node 为 NULL，寻找左父节点找到根节点还没找到
+    Node* bst_predecessor (Node* node) {
+        if (node == NULL) {
+            // TODO，这里其实不应该返回 NULL，因为最小的节点的后继就是 NULL，两者无法区分
+            return NULL;
         }
-        if (node.left) {
-            return maxNode(node.left);
-        }
-        else {
-            let p = node.parent;
-            while (p && p.left === node) {
-                p = p.parent;
-            }
-            return p;
-        }
-    }
 
-    successor (node) {
-        if (node === null) {
-            return null;
+        if (node->left) {
+            return bst_max(node->left);
         }
-        if (node.right) {
-            return minNode(node.right);
+
+        Node* curr = node;
+        while (curr->parent && curr->parent->left == curr) {
+            curr = curr->parent;
         }
-        else {
-            let p = node.parent;
-            while (p && p.right === node) {
-                p = p.parent;
-            }
-            return p;
-        }
+        // 此时 curr->parent 要么为 NULL 要么为找到的前驱
+        return curr->parent;
     }
-    ```
-4. C 实现
-    ```cpp
-    Node* tree_successor(Node* node) {
+    Node* bst_successor (Node* node) {
         if (node == NULL) {
             return NULL;
         }
         if (node->right) {
-            return tree_minimun(node->right);
+            return bst_min(node->right);
         }
-        else {
-            Node* parent = node->parent;
-            while (parent && parent->right == node ) {
-                node = parent;
-                parent = parent->parent;
-            }
-            return parent;
+        Node* curr = node;
+        while (curr->parent && curr->parent->right == curr) {
+            curr = curr->parent;
         }
+        return curr->parent;
     }
     ```
 
 ### 复杂度
-`if` 里面的复杂度是 $O(h)$，`else` 里面的也是 $O(h)$。
+$O(h)$。
 
 ### 相关性质
 #### 《算法导论》12.2-5
-1. 如果一个节点 x 有两个子节点，那么它的后继没有左子节点，它的前驱没有右子节点
+1. 如果一个节点 x 有两个子节点，那么它的后继没有左子节点，它的前驱没有右子节点。
 2. 因为有右侧子节点，所以它的后继就是右子树的最小节点，再小的节点就是 x 了。
 3. 同理，前驱也没有右侧子节点。
 4. 如果 x 没有右侧子节点，那它要么是最大的而没有后继，如果它有后继的话，根据上面搜索后继的说明，后继肯定有左子节点。
 5. 同理，如果 x 没有左侧子节点，那它要么是是最小的，要么它的前驱一定有右子节点。
 
 #### 《算法导论》12.2-6
-1. 中文翻译的有问题，另外英文中的 lowest 是指最靠下，也就是最原理根节点。
+1. 中文翻译的有问题，另外英文中的 lowest 是指最靠下，也就是最远离根节点。
 2. 如果 x 没有右子树，则它的后继 y 肯定是 x 的祖先节点。当然 x 很可能不止一个祖先节点，而且这些祖先节点中，有一些满足以下性质：这个祖先节点有左子节点且这个左子节点也是 x 的祖先节点。一点说明是，这里要认为一个节点本身也是它自己的祖先节点。
 3. 要证明：在满足上述性质的 x 的祖先节点中，y 是最靠下的那个。
 4. y 当然是最靠下的，如果不是，那就说明还有一个节点比 y 小但是比 x 大，那这个节点才是 x 的后继。
@@ -375,51 +356,36 @@ TODO
 
 
 ## 搜索一个特定的值
-1. 类似于二分搜索的逻辑。
-    ```js
-    search (key) {
-        let curr = this.root;
-        while (curr && curr.key !== key) {
-            if (key < curr.key) {
-                curr = curr.left;
-            }
-            else if (key > curr.key) {
-                curr = curr.right;
+1. 类似于二分搜索的逻辑
+    ```cpp
+    Node* bst_search (Node* root, int key) {
+        Node* curr = root;
+        while (curr && curr->key != key) {
+            if (key <= curr->key) {
+                curr = curr->left;
             }
             else {
-                return curr;
+                curr = curr->right;
             }
         }
         return curr;
     }
     ```
-2. C 递归实现
+2. 也可以使用递归，但对于大多数计算机，还是迭代版本的效率要高得多
     ```cpp
-    Node* tree_search(Node* root, int key) {
-        if (root == NULL || key == root->key) {
-            return root;
+    Node* bst_search_recursive (Node* node, int key) {
+        if (node == NULL) {
+            return NULL;
         }
-
-        if (key < root->key) {
-            return tree_search(root->left, key);
+        if (node->key == key) {
+            return node;
+        }
+        else if (key <= node->key) {
+            bst_search_recursive(node->left, key);
         }
         else {
-            return tree_search(root->right, key);
+            bst_search_recursive(node->right, key);
         }
-    }
-    ```
-3. 对于大多数计算机，迭代版本的效率要高得多
-    ```cpp
-    Node* interative_tree_search(Node* root, int key) {
-        while (root != NULL && key != root->key) {
-            if (key < root->key) {
-                root = root->left;
-            }
-            else {
-                root = root->right;
-            }
-        }
-        return root;
     }
     ```
 
