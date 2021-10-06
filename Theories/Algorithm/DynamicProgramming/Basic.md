@@ -24,6 +24,8 @@
         - [自底向上方法](#自底向上方法)
     - [时间复杂度](#时间复杂度)
     - [子问题图](#子问题图)
+        - [自底向上的情况](#自底向上的情况)
+        - [子问题图和动态规划复杂度](#子问题图和动态规划复杂度)
     - [计算最优解](#计算最优解)
     - [如果切割有成本](#如果切割有成本)
     - [最少硬币找零问题](#最少硬币找零问题)
@@ -142,31 +144,30 @@
     ```
 8. 为了求解原问题，我们先求解形式完全一样但规模更小的子问题。通过组合每种可能中两个子问题的最优解，比较得出原问题的最优解。
 9. 原问题的最优解由子问题的最优解组合而成，这样的结构就是 **最优子结构**，而最优子结构就是可以使用动态规划求解的重要特种。
-3. 思路和阶乘类似：一个数的阶乘，是当前数乘以前一个数的阶乘。对于一定长度的钢条有若干种切割方案，每种方案都是先从左边切下来一段，然后剩下的部分再进行若干次。
-4. 那么根据先切下来一段的长度进行分类，如果是 4 英寸的钢条，那就有 4 种切法：
+10. 如果按照《算法导论》中的情况，钢条最长不会超过价格表里最长的长度，那就可以简化上面的算法。上面是把原问题分解为两个子问题分别求解，但如果切下来的第一段是表里的长度，那就可以直接查表得到结果，而不用再递归计算，只需要对剩下的部分递归计算。《算法导论》表达式 15.2。
+11. 假设是 4 英寸的钢条，那么根据先切下来一段的长度进行分类，那就有 4 种切法：
     * 先切掉 1 英寸，再对剩下的 3 英寸进行若干次切割
     * 先切掉 2 英寸，再对剩下的 2 英寸进行若干次切割
     * 先切掉 3 英寸，再对剩下的 1 英寸进行若干次切割（不用切割了）
     * 先切掉 4 英寸，也就是不用切割，直接出售这个 4 英寸的
-5. 所以这里解的结构就是 4 种先切一段的长度再加上对剩下部分的递归求解。我们只要比较这四种解中的最大值，就能获得最优解的值。进而也可以获得最优解。可以看看《算法导论》公式 15.2。
 
 ### 自顶向下的递归实现
 1. 实现如下
     ```cpp
-    #define PRICE_COUNT 10
+    #define PRICE_NUM 10
 
-    int prices[PRICE_COUNT+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
+    int prices[PRICE_NUM+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
 
-    int cut_rod(int rod_len) {
-        if (rod_len == 0) {
+    int cut_rod(int size) {
+        if (size == 0) {
             return 0;
         }
 
         int max = 0;
         int p;
 
-        for (int i=1; i<=rod_len; i++) {
-            p = prices[i] + cut_rod(rod_len - i);
+        for (int i=1; i<=size; i++) {
+            p = prices[i] + cut_rod(size - i);
             if (p > max) {
                 max = p;
             }
@@ -177,22 +178,22 @@
     ```
 2. 这个实现的问题是，一旦输入规模稍微变大，程序运行时间就会变得很长。实际上，每当将数组增加 1，程序运行时间差不多就会增加 1 倍
     ```cpp
-    #define PRICE_COUNT 10
-    int prices[PRICE_COUNT+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
+    #define PRICE_NUM 10
+    int prices[PRICE_NUM+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
 
     int times = 0;
 
-    int cut_rod(int rod_len) {
+    int cut_rod(int size) {
         times++;
-        if (rod_len == 0) {
+        if (size == 0) {
             return 0;
         }
 
         int max = 0;
         int p;
 
-        for (int i=1; i<=rod_len; i++) {
-            p = prices[i] + cut_rod(rod_len - i);
+        for (int i=1; i<=size; i++) {
+            p = prices[i] + cut_rod(size - i);
             if (p > max) {
                 max = p;
             }
@@ -221,10 +222,10 @@
     ```
 3. 因为自顶向下的实现会反复的使用相同的参数进行递归调用，也就是反复的求解相同的子问题。下图显示了 `cut_rod(4)` 的调用过程
     <img src="images/01.png" width="400" style="display: block; margin: 5px 0 10px;" />
-4. 从父节点到子节点的表表示从钢条左边切下一段，再往下就是递归的对剩下的部分进行切割。从根节点到叶节点的一条路径对应长度为 $n$ 的钢条的的 $2^{n-1}$ 中切割方案中的一种。TODO，证明。
+4. 从父节点到子节点的边表示从钢条左边切下一段，再往下就是递归的对剩下的部分进行切割。从根节点到叶节点的一条路径对应长度为 $n$ 的钢条的的 $2^{n-1}$ 中切割方案中的一种。TODO，证明。
 
 ### 使用动态规划的解决思路
-1. 动态规划方法对每个子问题值求解一次，并将结果保存下来，之后再求解时就不用重复计算。
+1. 动态规划方法对每个子问题只求解一次，并将结果保存下来，之后再求解时就不用重复计算。
 2. Dynamic programming thus uses additional memory to save computation time; it serves an example of a **time-memory trade-off**. 
 3. The savings may be dramatic: an exponential-time solution may be transformed into a polynomial-time solution. A dynamic-programming approach runs in polynomial time when the number of distinct subproblems involved is polynomial in the input size and we can solve each such subproblem in polynomial time.
 4. 动态规划有两种实现方法：一种是带备忘（memoization）的自顶向下方法，一种是自底向上方法。
@@ -232,30 +233,27 @@
 ### 带备忘的自顶向下方法
 其实就是给自顶向下的方法加上备忘缓存
 ```cpp
-#define PRICE_COUNT 10
-int prices[PRICE_COUNT+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
-int memo[PRICE_COUNT+1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+#define PRICE_NUM 10
+int prices[PRICE_NUM+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
+int cache[PRICE_NUM+1] = {0};
 
-int memoized_cut_rod(int rod_len) {
-    if (memo[rod_len] > 0) {
-        return memo[rod_len];
-    }
-
-    if (rod_len == 0) {
+int cached_cut_rod (int size) {
+    if (size <= 0) {
         return 0;
+    }
+    if (cache[size]) {
+        return cache[size];
     }
 
     int max = 0;
     int p;
-
-    for (int i=1; i<=rod_len; i++) {
-        p = prices[i] + cut_rod(rod_len - i);
+    for (int i=1; i<=size; i++) {
+        p = prices[i] + cached_cut_rod(size-i);
         if (p > max) {
             max = p;
         }
     }
-
-    memo[rod_len] = max;
+    cache[size] = max;
     return max;
 }
 ```
@@ -265,39 +263,43 @@ int memoized_cut_rod(int rod_len) {
 2. 我们将所有的子问题按照规模从小到大的顺序依次求解。这样，当解决一个子问题时，它所依赖的更小的子问题都已经求解完成并保存了结果。
 3. 对于钢条切割问题来说，子问题的规模就是钢条的长度。为了求解长度为 $n$ 的钢条的最优解，我们依次计算长度为 $1, 2, ..., n$ 的钢条的最优解。实现如下
     ```cpp
-    int bottom_up_cut_rod(int rod_len) {
-        if (rod_len == 0) {
+    int bottom_up_cut_rod (int size) {
+        if (size <= 0) {
             return 0;
         }
-        int p;
+        if (cache[size]) {
+            return cache[size];
+        }
 
-        for (int i=1; i<=rod_len; i++) {
-            // 求解长度为 i 的钢条的最优解。
-            // 这里的求解思路和自顶向下的一样，都是先切一刀的价格，然后再加上剩余部分的最优价格。
-            // 只不过剩余部分的最优价格不用再递归求解了，因为它的规模（$i-j$）小于 $i$，
-            // 而此时任何规模小于 $i$ 的子问题都已经求解并保存过了。
+        // 依次求解长度从 1 到 size 的钢条的最优解
+        for (int i=1; i<=size; i++) {
             int max = 0;
+            int p;
+            // 求解长度为 i 的钢条的最优解
             for (int j=1; j<=i; j++) {
-                p = prices[j] + memo[i - j];
+                // 此时小于 i 的钢条的最优解都已经求解过并保存了，
+                // 所以切完一刀后的剩余部分不需要再递归求解了。
+                p = prices[j] + cache[i-j];
                 if (p > max) {
                     max = p;
                 }
             }
-            memo[i] = max;
+            cache[i] = max;
         }
-
-        return memo[rod_len];
+        return cache[size];
     }
     ```
 
 
 ## 时间复杂度
-1. 自底向上方法和自顶向下方法拥有相同的渐进运行时间。区别在于，在某些特殊的情况下，自顶向下的方法不会递归的求解所有子问题。由于没有频繁的递归函数调用的开销，自底向上的方法的时间复杂性函数通常具有更小的系数。
-2. 自底向上方法的内部是一个嵌套的循环，不难看出运行时间为 $Θ(n^2)$。
-3. 自顶向下方法的分析稍微麻烦一下：
-    1. 当求解一个之前已经计算过的子问题时，函数会立刻返回备忘的结果，所以 `memoized_cut_rod` 对每个子问题只会求解依次；
+1. 自底向上方法和自顶向下方法拥有相同的渐进运行时间，因为对于每种尺寸的钢条最多只会求解一次。
+2. 区别在于，在某些特殊的情况下，自顶向下的方法不会递归的求解所有子问题。
+3. 由于没有频繁的递归函数调用的开销，自底向上的方法的时间复杂性函数通常具有更小的系数。
+4. 自底向上方法的内部是一个嵌套的循环，不难看出运行时间为 $Θ(n^2)$。
+5. 自顶向下方法的分析稍微麻烦一下：
+    1. 当求解一个之前已经计算过的子问题时，函数会立刻返回备忘的结果，所以 `cached_cut_rod` 对每个子问题只会求解一次；
     2. 它同样一共求解了 $1, 2, ..., n$ 一共 $n$ 个子问题；
-    3. 而在求解每个规模为 $m$ 的子问题时，`memoized_cut_rod` 中的 `for` 循环也会迭代 `m` 次，所以也是 $Θ(n^2)$。
+    3. 而在求解每个规模为 $m$ 的子问题时，`cached_cut_rod` 中的 `for` 循环也会迭代 `m` 次，所以也是 $Θ(n^2)$。
 
 
 ## 子问题图
@@ -306,7 +308,17 @@ int memoized_cut_rod(int rod_len) {
     <img src="images/02.png" width="100" style="display: block; margin: 5px 0 10px;" />
 3. 它是一个有向图，每个节点唯一的对应一个子问题。
 4. 如果要求子问题 x 的最优解时，需要用到子问题 y 的最优解，那么在子问题图中就会有一条从 x 到 y 的有向边。
-5. 我们可以将子问题图看作是自顶向下递归调用树的简化版或收缩版，因为树中所有对应相同子问题的节点都合并为子问题图中的单一节点。
+5. 我们可以将子问题图看作是上面自顶向下递归调用树的简化版或收缩版，因为树中所有对应相同子问题的节点都合并为子问题图中的单一节点。
+
+### 自底向上的情况
+1. 对于自底向上的情况，在求解子问题 x 之前，要先求解子问题 y。
+2. 如果使用图的术语来描述，对于动态规划的子问题图，自底向上的方法是按照逆拓扑序来处理图中的顶点。也就是对于任何子问题，要等待它依赖的所有子问题都求解完成后才会求解它。
+3. 类似的，对于自顶向下的方法，也可以用图算法中深度优先搜索的算法逻辑来描述。
+
+### 子问题图和动态规划复杂度
+1. 子问题图 $G=(V, E)$ 的规模可以帮助我们确定动态规划算法的运行时间。由于每个子问题只求解一次，因此算法运行时间等于每个子问题求解时间之和。
+2. 通常，一个子问题的求解时间与子问题图中对应顶点的度成正比，而子问题的数目等于子问题图的顶点数。
+3. 因此，通常情况下，动态规划算法的运行时间与顶点和边的数量呈线性关系。
 
 
 ## 计算最优解
