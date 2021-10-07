@@ -134,9 +134,9 @@
 
         // size-1 种二分切割方案
         for (int i=1; i<size; i++) {
-            int p = cut_rod(i) + cut_rod(size-i);
-            if (p > max) {
-                max = p;
+            int r = cut_rod(i) + cut_rod(size-i);
+            if (r > max) {
+                max = r;
             }
         }
         return max;
@@ -164,12 +164,12 @@
         }
 
         int max = 0;
-        int p;
+        int r;
 
         for (int i=1; i<=size; i++) {
-            p = prices[i] + cut_rod(size - i);
-            if (p > max) {
-                max = p;
+            r = prices[i] + cut_rod(size - i);
+            if (r > max) {
+                max = r;
             }
         }
 
@@ -190,12 +190,12 @@
         }
 
         int max = 0;
-        int p;
+        int r;
 
         for (int i=1; i<=size; i++) {
-            p = prices[i] + cut_rod(size - i);
-            if (p > max) {
-                max = p;
+            r = prices[i] + cut_rod(size - i);
+            if (r > max) {
+                max = r;
             }
         }
 
@@ -235,25 +235,25 @@
 ```cpp
 #define PRICE_NUM 10
 int prices[PRICE_NUM+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
-int cache[PRICE_NUM+1] = {0};
+int revenues[PRICE_NUM+1] = {0};
 
 int cached_cut_rod (int size) {
     if (size <= 0) {
         return 0;
     }
-    if (cache[size]) {
-        return cache[size];
+    if (revenues[size]) {
+        return revenues[size];
     }
 
     int max = 0;
-    int p;
+    int r;
     for (int i=1; i<=size; i++) {
-        p = prices[i] + cached_cut_rod(size-i);
-        if (p > max) {
-            max = p;
+        r = prices[i] + cached_cut_rod(size-i);
+        if (r > max) {
+            max = r;
         }
     }
-    cache[size] = max;
+    revenues[size] = max;
     return max;
 }
 ```
@@ -267,26 +267,26 @@ int cached_cut_rod (int size) {
         if (size <= 0) {
             return 0;
         }
-        if (cache[size]) {
-            return cache[size];
+        if (revenues[size]) {
+            return revenues[size];
         }
 
         // 依次求解长度从 1 到 size 的钢条的最优解
         for (int i=1; i<=size; i++) {
             int max = 0;
-            int p;
+            int r;
             // 求解长度为 i 的钢条的最优解
             for (int j=1; j<=i; j++) {
                 // 此时小于 i 的钢条的最优解都已经求解过并保存了，
                 // 所以切完一刀后的剩余部分不需要再递归求解了。
-                p = prices[j] + cache[i-j];
-                if (p > max) {
-                    max = p;
+                r = prices[j] + revenues[i-j];
+                if (r > max) {
+                    max = r;
                 }
             }
-            cache[i] = max;
+            revenues[i] = max;
         }
-        return cache[size];
+        return revenues[size];
     }
     ```
 
@@ -324,102 +324,136 @@ int cached_cut_rod (int size) {
 ## 计算最优解
 1. 上面的动态规划算法返回了最优解的收益值，但并未返回解本身。我们可以扩展算法，使之对每个子问题不仅保存最优解。
 2. 不过其实并不需要对每个子问题都保存完整的最优解（完整的切割方案列表），因为每个子问题的最优解都是一个最左侧的切割方法加上剩下的更小规模的最优解，所以对每个子问题只要记录最优解的最左侧切割长度，至于剩下的更小规模的最优解可以可以依次查看之前的结果。例如 5 的最优解是 2+3，那其实只要保存 2，然后剩下的部分长度为 3 就去查 3 的最优解。
-3. 实现如下
+3. 这也体现出了动态规划的递归感，也就是每次计算都是利用前一次计算的结果进行计算。
+4. 实现如下
     ```cpp
-    #define PRICE_COUNT 10
-    int times = 0;
-    int prices[PRICE_COUNT+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
-    int memo[PRICE_COUNT+1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    int solutions[PRICE_COUNT+1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // 记录最优解是左侧一段的长度
+    #define PRICE_NUM 10
 
-    int bottom_up_cut_rod(int rod_len) {
-        if (rod_len == 0) {
+    int prices[PRICE_NUM+1] = {0, 1, 5, 8, 9, 10, 17, 17, 20, 24, 30};
+
+
+    int revenues[PRICE_NUM+1] = {0};
+    int solutions[PRICE_NUM+1] = {0};
+
+    int bottom_up_cut_rod (int size) {
+        if (size <= 0) {
             return 0;
         }
-        int p;
+        if (revenues[size]) {
+            return revenues[size];
+        }
 
-        for (int i=1; i<=rod_len; i++) {
+        for (int i=1; i<=size; i++) {
             int max = 0;
-            int n = 0;
+            int p;
+            int r;
             for (int j=1; j<=i; j++) {
-                p = prices[j] + memo[i - j];
+                p = prices[j] + revenues[i-j];
                 if (p > max) {
                     max = p;
-                    n = j; // 最优解时左侧一段的长度
+                    r = j;
                 }
             }
-            memo[i] = max;
-            solutions[i] = n;
+            revenues[i] = max;
+            solutions[i] = r;
         }
+        return revenues[size];
+    }
 
-        return memo[rod_len];
+    void print_solution(int size) {
+        int p = revenues[size];
+        int n = size;
+        printf("solution %2d: ", size);
+        while (n > 0) {
+            printf("%d ", solutions[n]);
+            n = n - solutions[n];
+        }
+        printf("\n");
+    }
+
+
+    int main(void) {
+
+        bottom_up_cut_rod(10);
+
+        printf("revenues:  ");
+        for (int i=1; i<=PRICE_NUM; i++) {
+            printf("%3d ", revenues[i]);
+        }
+        printf("\n");
+
+        printf("solutions: ");
+        for (int i=1; i<=PRICE_NUM; i++) {
+            printf("%3d ", solutions[i]);
+        }
+        printf("\n");
+        printf("\n");
+
+        print_solution(10);
+        print_solution(9);
+        print_solution(8);
+        print_solution(7);
+        print_solution(6);
+        print_solution(5);
+        print_solution(4);
+        print_solution(3);
+        print_solution(2);
+        print_solution(1);
+
+        return 0;
     }
     ```
-4. 对长度为 10 钢条进行计算，得到的 `memo` 和 `solutions` 如下
+    输出如下：
     ```
-    1   5   8   10  13  17  18  22  25  30  
-    1   2   3   2   2   6   1   2   3   10
-    ```
-5. 自顶向下方法的情况
-    ```cpp
-    int memoized_cut_rod(int rod_len) {
-        if (memo[rod_len] > 0) {
-            return memo[rod_len];
-        }
-        if (rod_len == 0) {
-            return 0;
-        }
+    revenues:    1   5   8  10  13  17  18  22  25  30
+    solutions:   1   2   3   2   2   6   1   2   3  10
 
-        int max = 0;
-        int p;
-        int n = 0;
-        for (int i=1; i<=rod_len; i++) {
-            p = prices[i] + memoized_cut_rod(rod_len - i);
-            if (p > max) {
-                max = p;
-                n = i; // 最优解时左侧一段的长度
-            }
-        }
-
-        memo[rod_len] = max;
-        solutions[rod_len] = n;
-        
-        return max;
-    }
+    solution 10: 10
+    solution  9: 3 6
+    solution  8: 2 6
+    solution  7: 1 6
+    solution  6: 6
+    solution  5: 2 3
+    solution  4: 2 2
+    solution  3: 3
+    solution  2: 2
+    solution  1: 1
     ```
 
 
 ## 如果切割有成本
-1. 练习 15.1-3。每次切割成本为 `c`。
+1. 练习 15.1-3。每次切割成本为 `COST`。
 2. 每次切割时减去切割成本
     ```cpp
-    int bottom_up_cut_rod(int rod_len) {
-        if (rod_len == 0) {
+    int bottom_up_cut_rod (int size) {
+        if (size <= 0) {
             return 0;
         }
-        int p;
+        if (revenues[size]) {
+            return revenues[size];
+        }
 
-        for (int i=1; i<=rod_len; i++) {
+        for (int i=1; i<=size; i++) {
             int max = 0;
-            int n = 0;
+            int p;
+            int r;
             for (int j=1; j<=i; j++) {
-                p = prices[j] + memo[i - j];
-                if (i != j) { // i 等于 j 时没有发生切割
-                    p -= c;
+                p = prices[j] + revenues[i-j];
+                if (i != j) {
+                    p -= COST;
                 }
                 if (p > max) {
                     max = p;
-                    n = j;
+                    r = j;
                 }
             }
-            memo[i] = max;
-            solutions[i] = n;
+            revenues[i] = max;
+            solutions[i] = r;
         }
-
-        return memo[rod_len];
+        return revenues[size];
     }
     ```
-3. 现在对长度为 10 钢条进行计算，当 `c` 等于 1 时，得到的 `memo` 和 `solutions` 如下
+3. 现在对长度为 10 钢条进行计算，当 `COST` 等于 1 时，得到的 `revenues` 和 `solutions` 如下
     ```
     1   5   8   9   12  17  17  21  24  30
     1   2   3   2   2   6   1   2   3   10
