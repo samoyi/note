@@ -7,8 +7,13 @@
         - [数据结构的语义化](#数据结构的语义化)
     - [涉及的 bad codes](#涉及的-bad-codes)
     - [涉及的重构](#涉及的重构)
-        - [Moving Features](#moving-features)
         - [Dealing with Inheritance](#dealing-with-inheritance)
+        - [Encapsulation](#encapsulation)
+        - [Most Common Refactorings](#most-common-refactorings)
+        - [Moving Features](#moving-features)
+        - [Organizing Data](#organizing-data)
+        - [Refactoring APIs](#refactoring-apis)
+        - [Simplifying Conditional Logic](#simplifying-conditional-logic)
     - [References](#references)
 
 <!-- /TOC -->
@@ -29,6 +34,17 @@
 
 
 ## 涉及的重构
+### Dealing with Inheritance
+* Replace Subclass with Delegate
+* Replace Superclass with Delegate
+* Replace Type Code with Subclasses
+
+### Encapsulation
+* Replace Primitive with Object
+
+### Most Common Refactorings
+* 类型严格
+* 严格设置默认值
 * 用常量代替基础类型值
 * Change Function Declaration
 * Combine Functions Into Class
@@ -36,21 +52,21 @@
 * Combine Variables Into Record
 * Introduce Parameter Object
 * Rename Variable
-* Replace Primitive with Object
-* Rename Field
-* Split Variable
-* Introduce Assertion
-* Replace Nested Conditional with Guard Clauses
-* Preserve Whole Object
 
 ### Moving Features
 * Move Field
 * Slide Statements
 
-### Dealing with Inheritance
-* Replace Subclass with Delegate
-* Replace Superclass with Delegate
-* Replace Type Code with Subclasses
+### Organizing Data
+* Rename Field
+* Split Variable
+
+### Refactoring APIs
+* Preserve Whole Object
+
+### Simplifying Conditional Logic
+* Introduce Assertion
+* Replace Nested Conditional with Guard Clauses
 
 
 ## References

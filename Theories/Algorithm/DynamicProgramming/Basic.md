@@ -29,10 +29,12 @@
     - [计算最优解](#计算最优解)
     - [如果切割有成本](#如果切割有成本)
     - [最少硬币找零问题](#最少硬币找零问题)
-        - [思路](#思路-1)
+        - [最优子结构](#最优子结构)
         - [自顶向下的递归求解](#自顶向下的递归求解)
-        - [不严格的动态规划实现](#不严格的动态规划实现)
-        - [严格的动态规划实现](#严格的动态规划实现)
+        - [带备忘的自顶向下](#带备忘的自顶向下)
+            - [JS 实现](#js-实现)
+        - [自底向上的动态规划实现](#自底向上的动态规划实现)
+            - [JS 实现](#js-实现-1)
     - [Referecens](#referecens)
 
 <!-- /TOC -->
@@ -461,11 +463,10 @@ int cached_cut_rod (int size) {
     
 
 ## 最少硬币找零问题
-### 思路
-1. 给定一定的金额，找零方案可能有若干种，其中至少存在一个最优解。
-2. 我们现在需要描述出可能的解的结构，然后从其中找出最优解。
-3. 思路和阶乘类似：一个数的阶乘，是当前数乘以前一个数的阶乘。对于一定金额 $sum$ 有若干种找零方案，每种方案都是一种硬币加上其他若干枚硬币。这就是解的结构，其中存在着最优解。
-4. 那么，想知道最少找零硬币数，我只要找到 $sum$ 分别减去一种硬币面值之后的额度的最少找零硬币数。即如下思路（假定硬币面额为 `[1, 5, 10, 25]`）
+### 最优子结构
+1. 给定一定的金额，找零方案可能有若干种，其中至少存在一个最优解。我们现在需要描述出可能的解的结构，然后从其中找出最优解。
+2. 思路和钢条切割问题相同，对于一定金额 $sum$ 有若干种找零方案，每种方案都是一种硬币加上剩余金额的最优解的值。
+3. 假定硬币面额为 `[1, 5, 10, 25]`
     * 钱数为 0 时，找零硬币数为 0 个，即 $f(0) = 0$
     * 钱数为 1 时，找零硬币数为 1 个，即 $f(1) = 1 + f(0)$
     * 钱数为 $sum$ 时，找零方案最多有以下四种：
@@ -473,35 +474,132 @@ int cached_cut_rod (int size) {
         * $5$ 元硬币加上 $f(sum-5)$，即 $f(sum) = 1 + f(sum-5)$
         * $10$ 元硬币加上 $f(sum-10)$，即 $f(sum) = 1 + f(sum-10)$
         * $25$ 元硬币加上 $f(sum-25)$，即 $f(sum) = 1 + f(sum-25)$
-5. 上面四种递归方案对应着四种解法，我们找到里面结果最小，结果值就是最优解。
 
 ### 自顶向下的递归求解
-1. 实现
-    ```cpp
-    int coins[4] = {1, 5, 10, 25};
+```cpp
+#define COIN_NUM 4
 
-    int makeChange(int sum) {
-        if (sum < coins[0]) {
-            return 0;
-        }
+int coins[COIN_NUM] = {1, 5, 10, 25};
 
-        int min = sum;
-        int re;
-        for (int i=0; i<sizeof(coins)/sizeof(coins[0]); i++) {
-            if (sum < coins[i]) {
-                break;
-            }
-            re = 1 + makeChange(sum - coins[i]);
-            if (re < min) {
-                min = re;
-            }
-        }
-        return min;
+int make_change(int sum) {
+    if (sum < coins[0]) {
+        return 0;
     }
-    ```
+
+    int min = sum;
+    int n;
+
+    for (int i=0; i<COIN_NUM; i++) {
+        if (coins[i] > sum) {
+            // 如果确定 coins 是升序排列，那么这里可以直接 break
+            continue;
+        }
+        n = 1 + make_change(sum - coins[i]);
+        if (n < min) {
+            min = n;
+        }
+    }
+
+    return min;
+}
+```
+
+### 带备忘的自顶向下
+```cpp
+#define COIN_NUM 4
+
+int coins[COIN_NUM+1] = {0, 1, 5, 10, 25};
+
+int* cache;
+int* solutions; // 同时也记录最优解
+
+// 因为金额 sum 不确定，所以 cache 和 solutions 的大小也是不确定的，所以为这两个数组动态分配内存
+// cached_make_change 先进行上述分配内存用及初始化，然后再调用 make_change 进行实际的计算
+int cached_make_change (int sum) {
+    cache = calloc(sum+1, sizeof(int));
+    solutions = calloc(sum+1, sizeof(int));
+    if (cache == NULL || solutions == NULL) {
+        printf("calloc failed in cached_make_change\n");
+        exit(EXIT_FAILURE);
+    }
+    // 这里要初始化为 1，因为默认最坏的情况是全部用单位金额硬币找零
+    for (int i=1; i<=sum; i++) {
+        solutions[i] = 1;
+    }
+    return make_change(sum);
+}
+
+int make_change(int sum) {
+    if (sum < coins[0]) {
+        return 0;
+    }
+    if (cache[sum]) {
+        return cache[sum];
+    }
+
+    int min = sum;
+    int n;
+
+    for (int i=1; i<=COIN_NUM; i++) {
+        if (coins[i] > sum) {
+            continue;
+        }
+        n = 1 + make_change(sum - coins[i]);
+        if (n < min) {
+            min = n;
+            // 如果上面不初始化为 1 而保持 0 的话，5 以下的 sum（1 到 4）求得的 solution 就都是 0，
+            // 因为 1 到 4 的最优解就是默认的全部用单位面额找零的情况，所以根本进入不了这里的 if。
+            solutions[sum] = coins[i];
+        }
+    }
+    cache[sum] = min;
+    return min;
+}
+
+void print_solution (int sum) {
+    printf("[");
+    while (sum > 0) {
+        printf("%d ", solutions[sum]);
+        sum -= solutions[sum];
+    }   
+    printf("]");
+    printf("\n");
+}
 
 
-### 不严格的动态规划实现
+
+int main (void) {
+
+    int sum = 36;
+    cached_make_change(sum);
+
+    printf("caches: ");
+    for (int i=1; i<=sum; i++) {
+        printf("%d ", cache[i]);
+    }
+    printf("\n");
+
+    printf("solutios: ");
+    for (int i=1; i<=sum; i++) {
+        printf("%d ", solutions[i]);
+    }
+    printf("\n");
+
+    print_solution(36);
+    print_solution(8);
+
+    return 0;
+}
+```
+输出为：
+```
+caches: 1 2 3 4 1 2 3 4 5 1 2 3 4 5 2 3 4 5 6 2 3 4 5 6 1 2 3 4 5 2 3 4 5 6 2 3
+solutios: 1 1 1 1 5 1 1 1 1 10 1 1 1 1 5 1 1 1 1 10 1 1 1 1 25 1 1 1 1 5 1 1 1 1 10 1
+[1 10 25 ]
+[1 1 1 5 ]
+```
+
+#### JS 实现
 ```js
 class MinCoinChange {
     constructor ( coins=[] ) {
@@ -570,99 +668,138 @@ console.log(minCoinChange_4.cache);
 // }
 ```
 
-### 严格的动态规划实现
-1. 上面之所以是不严格的，可以从 `minCoinChange_4.makeChange(8)` 的缓存数据看到：求解 8 的找零时，并没有递归求解到 4 的结果。
-2. 事实上，我们所做的优化并不是动态规划，而是通过缓存的方法来优化程序的性能。
-3. 真正的动态规划算法会用更系统化的方法来解决问题。在解决找零问题时，动态规划算法会从 1 分找零开始，然后系统地一直计算到所需的找零金额。这样做可以保证在每一步都已经知道任何小于当前值的找零金额所需的最少硬币数。
-4. 实现如下
-    ```js
-    class MinCoinChange_DP {
-        // coins 为硬币种类
-        constructor ( coins=[] ) {
-            this.coins = coins.sort( (m, n) => m - n );
-            this.minCountList = [0]; // 所有金额的找零最小硬币数
-            this.lastCoinList = [0]; // 每种金额找零方案的最后一枚硬币金额，用于得出该方案的所有硬币
-        }
+### 自底向上的动态规划实现
+```cpp
+// 外层函数不变，就改了一下名字
+int bottom_up_make_change (int sum) {
+    cache = calloc(sum+1, sizeof(int));
+    solutions = calloc(sum+1, sizeof(int));
+    if (cache == NULL || solutions == NULL) {
+        printf("calloc failed in cached_make_change\n");
+        exit(EXIT_FAILURE);
+    }
+    for (int i=1; i<=sum; i++) {
+        solutions[i] = 1;
+    }
+    return make_change(sum);
+}
 
-        padMinCountList ( amount ) {
-            let oldLen = this.minCountList.length;
-            let padded = Array.from({length: amount + 1 - oldLen}, (item, index)=>index);
-            this.minCountList = [...this.minCountList, ...padded];
-        }
-
-        makeChange ( amount ) {
-            if ( amount > this.minCountList.length+1 ) {
-                this.padMinCountList ( amount );
-            }
-            
-
-            if ( amount < this.coins[0] ) { // 找零钱数小于最小硬币面额，无法找零
-                return [];
-            }
-
-            if ( this.coins.includes(amount) ) { // 找零钱数等于某个硬币面额
-                this.lastCoinList[amount] = amount;
-                return 1;
-            }
-
-            // 求解 amount 金额的最小找零方案时，动态规划算法会从最小单位金额开始，
-            // 递增计算每一个金额的找零方案直到 amount。
-            for ( let i=1; i<=amount; i++ ) {
-                let minCount = i; // 最少硬币数。初始值为金额数，即全部用单位金额硬币找零。
-                let lastCoin = 1; // 该找零方案的最后一枚硬币
-
-                // 遍历当前 amount 的若干种可能找零方案
-                this.coins.forEach((coin) => {
-                    if ( coin > amount ) {
-                        return;
-                    }
-                    let n = 1 + this.minCountList[i-coin];
-                    if ( n < minCount ) {
-                        minCount = n;
-                        lastCoin = coin;
-                    }
-                });
-
-                this.minCountList[i] = minCount;
-                // minCountList 存储的是从 1 到 amount 的每一个金额的最小找零方案的最后一个币值。
-                // 但我们是想知道每个方案具体有哪些币值，这里只为每个方案存储了最后一个币值有什么用？
-                //  从下面的 printCoins 的实现可以看到，只需要知道最后方案的最后一个币值。
-                //  就能依次推导出来该方案的所有币值。
-                this.lastCoinList[i] = lastCoin;
-            }
-
-            return this.minCountList[amount];
-        }
-
-        // 打印某个金额的最小找零方案
-        printCoins (amount) {
-            let arr = [];
-            //  知道了金额 amount 的找零方案的最后一个币值 x，所以我们知道该方案是金额 amount-x 的最优方案
-            // 再加上一个 x；于是就可以再看金额 amount-x 方案的最后一个币值，以此类推。
-            // 以 8 的找零方案 [5, 1, 1, 1] 为例
-            // 第一轮循环时，获取到 8 的最后一个找的硬币 1，coin 变成 8 的最优方案的上一轮基础，即 7
-            // 第二轮循环时，获取到 7 的最后一个找的硬币 1，coin 变成 7 的最优方案的上一轮基础，即 6
-            // 第三轮循环时，获取到 6 的最后一个找的硬币 1，coin 变成 6 的最优方案的上一轮基础，即 5
-            // 第四轮循环时，获取到 5 的最后一个找的硬币 5，coin 变成 0，退出循环
-            while ( amount > 0 ) {
-                let last = this.lastCoinList[amount];
-                arr.unshift( last );
-                amount -= last;
-            }
-            return arr;
-        }
+int make_change(int sum) {
+    if (sum < coins[0]) {
+        return 0;
+    }
+    if (cache[sum]) {
+        return cache[sum];
     }
 
+    for (int i=1; i<=sum; i++) {
+        int min = i;
+        int n;
+        for (int j=1; j<=COIN_NUM; j++) {
+            if (coins[j] > i) {
+                continue;
+            }
+            n = 1 + cache[i - coins[j]];
+            if (n < min) {
+                min = n;
+                solutions[i] = coins[j];
+            }
+        }
+        cache[i] = min;
+    }
+    return cache[sum];
+}
+```
 
-    let minCoinChange_4 = new MinCoinChange_DP([1, 5, 10, 25]);
-    console.log(minCoinChange_4.makeChange(36)); // 3
-    console.log(minCoinChange_4.makeChange(8)); // 4
-    console.log( minCoinChange_4.printCoins(8) ); // [5, 1, 1, 1]
+#### JS 实现
+```js
+class MinCoinChange_DP {
+    // coins 为硬币种类
+    constructor ( coins=[] ) {
+        this.coins = coins.sort( (m, n) => m - n );
+        this.minCountList = [0]; // 所有金额的找零最小硬币数
+        this.lastCoinList = [0]; // 每种金额找零方案的最后一枚硬币金额，用于得出该方案的所有硬币
+    }
 
-    let minCoinChange_3 = new MinCoinChange_DP([1, 3, 4]);
-    console.log(minCoinChange_3.makeChange(6)); // 2
-    console.log(minCoinChange_3.printCoins(6)); // [3, 3]
-    ```
+    padMinCountList ( amount ) {
+        let oldLen = this.minCountList.length;
+        let padded = Array.from({length: amount + 1 - oldLen}, (item, index)=>index);
+        this.minCountList = [...this.minCountList, ...padded];
+    }
+
+    makeChange ( amount ) {
+        if ( amount > this.minCountList.length+1 ) {
+            this.padMinCountList ( amount );
+        }
+        
+
+        if ( amount < this.coins[0] ) { // 找零钱数小于最小硬币面额，无法找零
+            return [];
+        }
+
+        if ( this.coins.includes(amount) ) { // 找零钱数等于某个硬币面额
+            this.lastCoinList[amount] = amount;
+            return 1;
+        }
+
+        // 求解 amount 金额的最小找零方案时，动态规划算法会从最小单位金额开始，
+        // 递增计算每一个金额的找零方案直到 amount。
+        for ( let i=1; i<=amount; i++ ) {
+            let minCount = i; // 最少硬币数。初始值为金额数，即全部用单位金额硬币找零。
+            let lastCoin = 1; // 该找零方案的最后一枚硬币
+
+            // 遍历当前 amount 的若干种可能找零方案
+            this.coins.forEach((coin) => {
+                if ( coin > amount ) {
+                    return;
+                }
+                let n = 1 + this.minCountList[i-coin];
+                if ( n < minCount ) {
+                    minCount = n;
+                    lastCoin = coin;
+                }
+            });
+
+            this.minCountList[i] = minCount;
+            // minCountList 存储的是从 1 到 amount 的每一个金额的最小找零方案的最后一个币值。
+            // 但我们是想知道每个方案具体有哪些币值，这里只为每个方案存储了最后一个币值有什么用？
+            //  从下面的 printCoins 的实现可以看到，只需要知道最后方案的最后一个币值。
+            //  就能依次推导出来该方案的所有币值。
+            this.lastCoinList[i] = lastCoin;
+        }
+
+        return this.minCountList[amount];
+    }
+
+    // 打印某个金额的最小找零方案
+    printCoins (amount) {
+        let arr = [];
+        //  知道了金额 amount 的找零方案的最后一个币值 x，所以我们知道该方案是金额 amount-x 的最优方案
+        // 再加上一个 x；于是就可以再看金额 amount-x 方案的最后一个币值，以此类推。
+        // 以 8 的找零方案 [5, 1, 1, 1] 为例
+        // 第一轮循环时，获取到 8 的最后一个找的硬币 1，coin 变成 8 的最优方案的上一轮基础，即 7
+        // 第二轮循环时，获取到 7 的最后一个找的硬币 1，coin 变成 7 的最优方案的上一轮基础，即 6
+        // 第三轮循环时，获取到 6 的最后一个找的硬币 1，coin 变成 6 的最优方案的上一轮基础，即 5
+        // 第四轮循环时，获取到 5 的最后一个找的硬币 5，coin 变成 0，退出循环
+        while ( amount > 0 ) {
+            let last = this.lastCoinList[amount];
+            arr.unshift( last );
+            amount -= last;
+        }
+        return arr;
+    }
+}
+
+
+let minCoinChange_4 = new MinCoinChange_DP([1, 5, 10, 25]);
+console.log(minCoinChange_4.makeChange(36)); // 3
+console.log(minCoinChange_4.makeChange(8)); // 4
+console.log( minCoinChange_4.printCoins(8) ); // [5, 1, 1, 1]
+
+let minCoinChange_3 = new MinCoinChange_DP([1, 3, 4]);
+console.log(minCoinChange_3.makeChange(6)); // 2
+console.log(minCoinChange_3.printCoins(6)); // [3, 3]
+```
 
 
 ## Referecens
