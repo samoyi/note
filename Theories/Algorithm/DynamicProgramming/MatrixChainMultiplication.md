@@ -4,7 +4,8 @@
 <!-- TOC -->
 
 - [Matrix Chain Multiplication](#matrix-chain-multiplication)
-    - [完全括号化的（fully parenthesized）矩阵乘积链](#完全括号化的fully-parenthesized矩阵乘积链)
+    - [完全括号化的（fully parenthesized）矩阵乘积链及成本](#完全括号化的fully-parenthesized矩阵乘积链及成本)
+        - [矩阵乘法实现及成本](#矩阵乘法实现及成本)
         - [矩阵链乘法问题](#矩阵链乘法问题)
     - [描述最优解的结构](#描述最优解的结构)
     - [递归求解方案](#递归求解方案)
@@ -28,11 +29,14 @@
 <!-- /TOC -->
 
 
-## 完全括号化的（fully parenthesized）矩阵乘积链
-1. A product of matrices is fully parenthesized if it is either a single matrix or the product of two fully parenthesized matrix products, surrounded by parentheses.
+## 完全括号化的（fully parenthesized）矩阵乘积链及成本
+1. A product of matrices is **fully parenthesized** if it is either a single matrix or the product of two fully parenthesized matrix products, surrounded by parentheses.
 2. 注意这个定义就是递归的。初始状态的单个矩阵是完全括号化的；然后两个单个矩阵加上括号相乘也是完全括号化的；相乘的结果再加上括号乘以单个矩阵或者乘以其他相乘的结果，还是完全括号化的。
-3. 矩阵相乘是满足交换律的，所以一个矩阵序列不管按照什么顺序相乘结果都一样。但是，按照不同的顺序相乘的成本可能是不同的。
-4. 矩阵相乘算法如下
+3. 矩阵相乘是满足结合律的，所以一个矩阵序列不管按照什么先后顺序相乘（不同的括号化方案），结果都一样。
+4. 但是，按照不同的先后顺序相乘的成本可能是不同的（两个矩阵相乘的成本在下面的矩阵乘法实现中）。例如三个矩阵的规模为 $10*100$、$100*5$ 和 $5*50$。如果先计算前两个，则最终成本是 7500；而如果先计算前两个，则最终成本是 75000。
+
+### 矩阵乘法实现及成本
+1. 实现
     ```cpp
     #include <stdio.h>
 
@@ -52,9 +56,9 @@
     };
 
     void matrix_multiply(int A[p][q], int B[q][r], int C[p][r]) {
-        for (int i=0; i<p; i++) {
-            for (int j=0; j<r; j++) {
-                for (int k=0; k<q; k++) {
+        for (int i=0; i<p; i++) { // 先选出 A 的一行（遍历 A 的行）
+            for (int j=0; j<r; j++) { // 再选出 B 的一列（遍历 B 的列）
+                for (int k=0; k<q; k++) { // 再遍历 B 的这一列，同时也是遍历 A 的这一行，进行运算
                     C[i][j] += A[i][k] * B[k][j];
                 }
             }
@@ -71,9 +75,13 @@
             }
             printf("\n");
         }
+        // 24 30 36 42 
+        // 24 30 36 42
+
+        return 0;
     }
     ```
-5. 因为有三层循环，所以两个矩阵相乘的成本是 $p*q*r$。
+2. 因为有三层循环，所以两个矩阵相乘的成本是 $p*q*r$。
 
 ### 矩阵链乘法问题
 1. 看书，《算法导论》211 页。
@@ -82,8 +90,10 @@
 
 ## 描述最优解的结构
 1. 动态规划方法的第一步是寻找最优子结构，然后就可以利用这种子结构从子问题的最优解构造出原问题的最优解。
-2. 在钢条切割和硬币找零问题时，我们设想的最优解结构的两部分是一块钢条（一枚硬币）和剩下部分的最优解；但是在这里，最优解的结构不一定就是一个矩阵和剩下的矩阵的最优解，也可能是若干个矩阵的最优解和剩下的若干个矩阵的最优解。也就是说最优解不是一对多，而是多对多。
-3. 看《算法导论》212 页的数学描述。
+2. 在钢条切割和硬币找零问题时，我们设想的最优解结构的两部分是一块钢条（一枚硬币）和剩下部分的最优解；但是在这里，最优解的结构不一定就是一个矩阵和剩下的矩阵的最优解，也可能是若干个矩阵的最优解和剩下的若干个矩阵的最优解。
+3. 实际上，钢条切割问题的最优子结构的标准描述中，其实就是把原问题拆分为两个子问题，所以自顶向下的方法中是要递归调用两次。只不过经过简化后，可以让第一个子问题直接取表里的确定值。但本质上仍然是对原问题一分为二，甚至一分为多。
+4. 在矩阵链问题中，很难说最优解最后一步就是最左侧的单个矩阵乘以余下的所有所有矩阵的乘积，很可能是左右两个子矩阵链乘积的乘积。所以原问题必须要分割为两个需要继续求解的子问题。
+5. 看《算法导论》212 页的数学描述。
 
 
 ## 递归求解方案
@@ -93,6 +103,51 @@
     * 前后两个乘积矩阵相乘的计算成本
 2. 再考虑平凡和非平凡的情况：如果矩阵链就只有一个矩阵，那没有成本；如果有超过一个矩阵，那就要按照上面三部分的结构来计算。
 3. 看《算法导论》212 页的数学描述。
+4. 直接的递归实现
+    ```cpp
+    #define CHAIN_SIZE 6
+
+
+    int chain[CHAIN_SIZE][2] = {
+        {30, 35},
+        {35, 15},
+        {15, 5 },
+        {5,  10},
+        {10, 20},
+        {20, 25},
+    };
+
+    int matrix_chain_multiply (int start, int end) {
+        if (start == end) {
+            return 0;
+        }
+        else if (start == end - 1) {
+            return chain[start][0] * chain[start][1] * chain[end][1];
+        }
+        else {
+            int min = INT_MAX;
+            int c;
+            int m, n;
+            for (int i=start+1; i<=end; i++) {
+                m = matrix_chain_multiply(start, i-1);
+                n = matrix_chain_multiply(i, end);
+                c = chain[start][0] * chain[i][0] * chain[end][1];
+                if (m + n + c < min) {
+                    min = m + n + c;
+                }
+            }
+            return min;
+        }
+    }
+
+
+    int main (void) {
+
+        printf("%d\n", matrix_chain_multiply(0, CHAIN_SIZE-1)); // 15125
+
+        return 0;
+    }
+    ```
 
 
 ## 自底向上计算最优代价
