@@ -121,17 +121,12 @@
         if (start == end) {
             return 0;
         }
-        else if (start == end - 1) {
-            return chain[start][0] * chain[start][1] * chain[end][1];
-        }
         else {
             int min = INT_MAX;
-            int c;
-            int m, n;
             for (int i=start+1; i<=end; i++) {
-                m = matrix_chain_multiply(start, i-1);
-                n = matrix_chain_multiply(i, end);
-                c = chain[start][0] * chain[i][0] * chain[end][1];
+                int m = matrix_chain_multiply(start, i-1);
+                int n = matrix_chain_multiply(i, end);
+                int c = chain[start][0] * chain[i][0] * chain[end][1];
                 if (m + n + c < min) {
                     min = m + n + c;
                 }
@@ -148,8 +143,140 @@
         return 0;
     }
     ```
+5. 现在可以求出最优解的值了，但怎么求最优解呢？也就是说怎么确定最优的括括号方案呢？
+6. 上面的算法中会记录每次的切割位置。最后一个切割位置是讲整个链划分为两个子链的位置，倒数第二第三个是讲这两个子链进一步划分为子子链的位置。但实际情况中并不能保证按照 1、2、4、8 这样的结构，因为可能某一级的子链只是一个单矩阵，因此不会记录位置。
+7. 不过，每次的划分都唯一对应一个子链，也就是对应唯一的一组 `start` 和 `end`，因此可以用这两个值为坐标的二维数组记录对应的划分位置
+    ```cpp
+    #define CHAIN_SIZE 6
 
 
+    int chain[CHAIN_SIZE][2] = {
+        {30, 35},
+        {35, 15},
+        {15, 5 },
+        {5,  10},
+        {10, 20},
+        {20, 25},
+    };
+
+    int resolutions[CHAIN_SIZE][CHAIN_SIZE]; // 所有可能的子链排列（包括完整的链）
+
+    int matrix_chain_multiply (int start, int end) {
+        if (start == end) {
+            return 0;
+        }
+        else {
+            int min = INT_MAX;
+            int min_i; // 用来记录当前子链最优划分方案时的划分位置
+            for (int i=start+1; i<=end; i++) {
+                int m = matrix_chain_multiply(start, i-1);
+                int n = matrix_chain_multiply(i, end);
+                int c = chain[start][0] * chain[i][0] * chain[end][1];
+                if (m + n + c < min) {
+                    min = m + n + c;
+                    min_i = i;
+                }
+            }
+            resolutions[start][end] = min_i;
+            return min;
+        }
+    }
+
+
+    int main (void) {
+
+        printf("%d\n", matrix_chain_multiply(0, CHAIN_SIZE-1)); // 15125
+
+        for (int i=0; i<CHAIN_SIZE; i++) {
+            for (int j=0; j<CHAIN_SIZE; j++) {
+                printf("%d ", resolutions[i][j]);
+            }
+            printf("\n");
+        }
+        // 0 1 1 3 3 3
+        // 0 0 2 3 3 3
+        // 0 0 0 3 3 3
+        // 0 0 0 0 4 5
+        // 0 0 0 0 0 5
+        // 0 0 0 0 0 0
+
+
+        return 0;
+    }
+    ```
+8. 有了表 `resolutions`，就可以确定最优解的划分方案。可以递归的计算每次划分的位置
+    ```cpp
+    void resolution (int start, int end) {
+        if (end > start + 1) { // 子链只剩一个或两个矩阵就不用括号了
+            int k = resolutions[start][end];
+            printf("%d ", k);
+            resolution(start, k-1);
+            resolution(k, end);
+        }
+    }
+    ```
+    使用上面的矩阵链计算输出的划分位置为 3 1 5，也就是 `( 0 ( 1 2 ) ) ( ( 3 4 ) 5 )`。
+9. 还希望直接打印出带序号和括号的结果，稍微麻烦一些。每一组子链（`start` 和 `end`）对应一组括号，但是如果子链只有一个矩阵就不需要括号了。最初是这样实现
+    ```cpp
+    void print_resolution (int start, int end) {
+        if (start != end) {
+            printf("( ");
+            printf("%d", start);
+            int k = resolutions[start][end];
+            print_resolution(start, k-1);
+            print_resolution(k, end);
+            printf("%d", end);
+            printf(") ");
+        }
+    }
+    ```
+    但打印出来有问题，因为看预期的效果中，并不是任何一组子链都要打印数字的，而是只有在子链长度为一个或两个时。因此改为
+    ```cpp
+    void print_resolution (int start, int end) {
+        if (start == end) { // 子链长度为两个时会进一步递归为只有一个然后打印数字
+            printf("%d ", start);
+        }
+        else {
+            printf("( ");
+            int k = resolutions[start][end];
+            print_resolution(start, k-1);
+            print_resolution(k, end);
+            printf(") ");
+        }
+    }
+    ```
+10. 如《算法导论》211 页所分析的，这种递归的算法复杂度是指数级的，因为会有很多重叠子问题（应该使用动态规划的标志之一）。因此可以加上缓存来减少递归的次数
+    ```cpp
+    // 省略其他代码
+    int cache[CHAIN_SIZE][CHAIN_SIZE] = {0};
+
+    int matrix_chain_multiply (int start, int end) {
+        if (start == end) {
+            return 0;
+        }
+        else if (cache[start][end]) {
+            return cache[start][end];
+        }
+        else {
+            int min = INT_MAX;
+            int min_i;
+            for (int i=start+1; i<=end; i++) {
+                int m = matrix_chain_multiply(start, i-1);
+                int n = matrix_chain_multiply(i, end);
+                int c = chain[start][0] * chain[i][0] * chain[end][1];
+                if (m + n + c < min) {
+                    min = m + n + c;
+                    min_i = i;
+                }
+            }
+            resolutions[start][end] = min_i;
+            cache[start][end] = min;
+            return min;
+        }
+    }
+    ```
+
+    
 ## 自底向上计算最优代价
 1. 怎么自底向上？为了计算一个矩阵链的代价，我们可能需要它内部所有组合的代价。
 2. 也就是说为了计算 $m[1, n]$，对于 $1 \leq i \leq j \leq n$，我们需要计算 $C_n^2$ 种可能的 `[i, j]` 组合。
