@@ -4,11 +4,14 @@
 <!-- TOC -->
 
 - [Matrix Chain Multiplication](#matrix-chain-multiplication)
+    - [设计思想](#设计思想)
+        - [自顶向下的复杂度分析](#自顶向下的复杂度分析)
     - [完全括号化的（fully parenthesized）矩阵乘积链及成本](#完全括号化的fully-parenthesized矩阵乘积链及成本)
         - [矩阵乘法实现及成本](#矩阵乘法实现及成本)
         - [矩阵链乘法问题](#矩阵链乘法问题)
     - [描述最优解的结构](#描述最优解的结构)
     - [递归求解方案](#递归求解方案)
+        - [时间复杂度](#时间复杂度)
     - [自底向上计算最优代价](#自底向上计算最优代价)
         - [子问题图](#子问题图)
         - [下面列出子矩阵链长度为 2 和 3 时的计算过程](#下面列出子矩阵链长度为-2-和-3-时的计算过程)
@@ -19,14 +22,14 @@
                 - [$m[3, 5]$](#m3-5)
                 - [$m[4, 6]$](#m4-6)
         - [复杂度](#复杂度)
-        - [构造最优解](#构造最优解)
         - [实际计算矩阵链乘积](#实际计算矩阵链乘积)
-    - [自顶向下带备忘](#自顶向下带备忘)
-        - [实现](#实现)
-        - [时间复杂度](#时间复杂度)
     - [Referecens](#referecens)
 
 <!-- /TOC -->
+
+
+## 设计思想
+### 自顶向下的复杂度分析
 
 
 ## 完全括号化的（fully parenthesized）矩阵乘积链及成本
@@ -245,6 +248,25 @@
         }
     }
     ```
+    JS 实现
+    ```js
+    let str = "";
+    function printOptimalSolution (i, j) {
+        if (i < j) {
+            str += " ( ";
+            let pos = splitPoints[i][j];
+            printOptimalSolution(i, pos);
+            printOptimalSolution(pos+1, j);
+            str += " ) ";
+        }
+        else {
+            str += ` A${i} `;
+        }
+    }
+
+    printOptimalSolution(1, 6);
+    console.log(str); //  (  (  A1  (  A2  A3  )  )  (  (  A4  A5  )  A6  )  )
+    ```
 10. 如《算法导论》211 页所分析的，这种递归的算法复杂度是指数级的，因为会有很多重叠子问题（应该使用动态规划的标志之一）。因此可以加上缓存来减少递归的次数
     ```cpp
     // 省略其他代码
@@ -275,23 +297,123 @@
         }
     }
     ```
+11. JS 实现
+    ```js
+    function memoized_matrix_chain (chain, i, j) {
+        if (i === j) {
+            return 0;
+        }
+        else if (costs[i][j]) {
+            return costs[i][j];
+        }
+
+        let min = Number.POSITIVE_INFINITY;
+        let cost = 0;
+        for (let k=i; k<=j-1; k++) {
+            cost = memoized_matrix_chain(chain, i, k)
+                    + memoized_matrix_chain(chain, k+1, j)
+                    + subchainMultiplyCost(chain, i, k, j);
+            if (cost < min) {
+                min = cost;
+            }
+        }
+        return costs[i][j] = min;
+    }
+
+
+    const chain = [
+        {r: 30, c: 35},
+        {r: 35, c: 15},
+        {r: 15, c: 5 },
+        {r: 5,  c: 10},
+        {r: 10, c: 20},
+        {r: 20, c: 25},
+    ];
+
+    initTables(chain.length, costs, splitPoints);
+    let _chain = chain.slice(0);
+    _chain.unshift({});
+    console.log(memoized_matrix_chain(_chain, 1, 6)); // 15125
+    ```
+
+### 时间复杂度
+1. `memoized_matrix_chain` 的调用分为两种：一种是没有命中缓存然后发生后面的递归调用，一种是命中缓存直接返回。
+2. 第一种没有命中缓存的次数是 $Θ(n^2)$，因为每个表项对应一次。
+3. 第二种命中缓存的调用，都是第一种所产生的递归，因为要递归已有的结果来获得未知的结果。
+4. 第一种每次调用时，循环会从 `i` 到 `j-1`，$O(n)$ 次，所以产生的递归调用也是 $O(n)$ 次。也就是说，每次第一种的 `memoized_matrix_chain` 调用都会发生 $O(n)$ 的第二种 `memoized_matrix_chain` 调用。因此第二种的调用次数是 $O(n^3)$。
+5. 综合起来，时间复杂度是 $O(n^3)$ 级别。
 
     
 ## 自底向上计算最优代价
 1. 怎么自底向上？为了计算一个矩阵链的代价，我们可能需要它内部所有组合的代价。
-2. 也就是说为了计算 $m[1, n]$，对于 $1 \leq i \leq j \leq n$，我们需要计算 $C_n^2$ 种可能的 `[i, j]` 组合。
-3. 因此，我们自底向上的：
+2. 刚开始的时候写出了这样的循环
+    ```cpp
+    for (int i=0; i<CHAIN_SIZE-1; i++) {
+        for (int j=i+1; j<CHAIN_SIZE; j++) {
+            int min = INT_MAX;
+            int min_i;
+            for (int k=i+1; k<=j; k++) {
+                int m = cache[i][k-1];
+                int n = cache[k][j];
+                int c = chain[i][0] * chain[k][0] * chain[j][1];
+                if (m + n + c < min) {
+                    min = m + n + c;
+                    min_i = k;
+                }
+            }
+            resolutions[i][j] = min_i;
+            cache[i][j] = min;
+        }   
+    }
+    ```
+3. 前两个 `for` 确实可以保证遍历所有可能的子链，但问题是，动态规划要求遇到一个子问题时，它需要的子子问题已经解决过了，而这里显然不满足这个要求。
+4. 这种遍历只是遍历所有可能的组合，但并不是动态规划要求自底向上的遍历。
+5. 按照自底向上的遍历原则，我们应该先解决最小的子问题，然后逐步解决更大的子问题，直到解决原问题。
+6. 因此，我们自底向上的：
     1. 先计算所有两个矩阵相乘的代价；
     2. 再计算所有三个矩阵相乘的代价；
     3. 再计算所有四个矩阵相乘的代价；
     4. ……
     5. 再计算所有 $n-1$ 个矩阵相乘的代价；
-    6. 最后的出 $n$ 个矩阵相乘的代价。
-4. 上面除了第一步计算两个矩阵相乘的代价以外，每一步的计算都会用到之前计算的结果。所以要把每次计算你的结果存入表中。
-5. 注意因为矩阵链的顺序是固定的，所以在计算几个矩阵相乘时候，它们肯定是连在一起的。例如两个矩阵相乘肯定只有 $n-1$ 中可能。如果我们不固定矩阵的顺序，也考虑进去顺序的变化，也就是说矩阵位置可以任意调整，那两个矩阵相乘就有更多的可能性了。
-6. 根据第三步的描述：我们要循环 $2...n$，在每轮循环里面遍历当前所有可能的组合；通过不同的分隔位置计算每种组合的最优代价，并保存最优代价。
-7. 看《算法导论》213 页的数学描述。
-8. 实现如下
+    6. 最后得出 $n$ 个矩阵相乘的代价。
+7. 上面除了第一步计算两个矩阵相乘的代价以外，每一步的计算都会用到之前计算的结果。所以要把每次计算的结果存入表中。
+8. 因为矩阵链的顺序是固定的，所以在计算几个矩阵相乘时候，它们肯定是连在一起的。例如两个矩阵相乘肯定只有 $n-1$ 中可能。如果我们不固定矩阵的顺序，也考虑进去顺序的变化，也就是说矩阵位置可以任意调整，那两个矩阵相乘就有更多的可能性了。
+9. 根据第 6 步的描述：我们要循环 $2...n$ 的子链长度，然后在每轮循环里面通过不同的分隔位置遍历当前所有可能的组合，计算每种组合的代价，并保存最优代价。
+10. 看《算法导论》213 页的数学描述。
+11. 实现如下
+    ```cpp
+    int bottom_up_matrix_chain_multiply (int start, int end) {
+        if (start == end) {
+            return 0;
+        }
+        else if (cache[start][end]) {
+            return cache[start][end];
+        }
+        else { 
+            int chainLen = end-start+1;
+            // 单个矩阵的代价是 0，所以从两个矩阵的矩阵链开始计算
+            for (int subChainLen=2; subChainLen<=chainLen; subChainLen++) {
+                for (int i=0; i<=end-subChainLen+1; i++) {
+                    int min = INT_MAX;
+                    int min_i;
+                    for (int k=i+1; k<=i+subChainLen-1; k++) {
+                        int m = cache[i][k-1];
+                        int n = cache[k][i+subChainLen-1];
+                        int c = chain[i][0] * chain[k][0] * chain[i+subChainLen-1][1];
+                        if (m + n + c < min) {
+                            min = m + n + c;
+                            min_i = k;
+                        }
+                    }
+                    resolutions[i][i+subChainLen-1] = min_i;
+                    cache[i][i+subChainLen-1] = min;
+                }
+            }
+            return cache[start][end];
+        }
+    }
+    ```
+12. JS 实现
     ```js
     const costs = [];
     const splitPoints = [];
@@ -374,7 +496,7 @@
     initTables(chain.length, costs, splitPoints);
     matrix_chain_order(chain);
     ```
-9. 下图展示了对于上面示例的矩阵链，每个子矩阵链的相乘最优代价和对应的分割位置
+13. 下图展示了对于上面示例的矩阵链，每个子矩阵链的相乘最优代价和对应的分割位置
     <img src="images/03.png" width="600" style="display: block; margin: 5px 0 10px;" />
 
 ### 子问题图
@@ -419,46 +541,6 @@
 * 时间复杂度为 $O(n^3)$
 * 存储表的空间复杂度为 $Θ(n^2)$
 
-### 构造最优解
-1. 根据分割位置的表格来递归的构造一个最优解
-    1. `splitPoints[1][6]` 的值是最外层的分隔位置，值为 3；
-    2. 因此 `splitPoints[1][3]` 和 `splitPoints[4][6]` 是第二层的分隔位置，值为 1 和 5；
-    3. 因此 `splitPoints[2][3]` 和 `splitPoints[4][5]` 是第三层的分隔位置；
-2. 实现如下
-    ```js
-    let optimalPositions = [];
-    function optimalSolution (i, j) {
-        if (i < j) { // i 等于 j 的时候就是分割到只剩一个矩阵了
-            let pos = splitPoints[i][j];
-            optimalPositions.push(pos);
-            optimalSolution(i, pos);
-            optimalSolution(pos+1, j);
-        }
-    }
-
-    optimalSolution(1, 6);
-    console.log(optimalPositions); // [3, 1, 2, 5, 4]
-    ```
-3. 改造一下还可以直接打印出来结果的示意
-    ```js
-    let str = "";
-    function printOptimalSolution (i, j) {
-        if (i < j) {
-            str += " ( ";
-            let pos = splitPoints[i][j];
-            printOptimalSolution(i, pos);
-            printOptimalSolution(pos+1, j);
-            str += " ) ";
-        }
-        else {
-            str += ` A${i} `;
-        }
-    }
-
-    printOptimalSolution(1, 6);
-    console.log(str); //  (  (  A1  (  A2  A3  )  )  (  (  A4  A5  )  A6  )  )
-    ```
-
 ### 实际计算矩阵链乘积
 《算法导论》练习 15.2-2。实现如下，两个矩阵相乘的方法 `matrix_multiply` 没有实现
 ```js
@@ -472,54 +554,6 @@ function matrix_chain_multiply (chain, splitPoints, i, j) {
     return chain[i];
 }
 ```
-
-
-## 自顶向下带备忘
-### 实现
-```js
-function memoized_matrix_chain (chain, i, j) {
-    if (i === j) {
-        return 0;
-    }
-    else if (costs[i][j]) {
-        return costs[i][j];
-    }
-
-    let min = Number.POSITIVE_INFINITY;
-    let cost = 0;
-    for (let k=i; k<=j-1; k++) {
-        cost = memoized_matrix_chain(chain, i, k)
-                + memoized_matrix_chain(chain, k+1, j)
-                + subchainMultiplyCost(chain, i, k, j);
-        if (cost < min) {
-            min = cost;
-        }
-    }
-    return costs[i][j] = min;
-}
-
-
-const chain = [
-    {r: 30, c: 35},
-    {r: 35, c: 15},
-    {r: 15, c: 5 },
-    {r: 5,  c: 10},
-    {r: 10, c: 20},
-    {r: 20, c: 25},
-];
-
-initTables(chain.length, costs, splitPoints);
-let _chain = chain.slice(0);
-_chain.unshift({});
-console.log(memoized_matrix_chain(_chain, 1, 6)); // 15125
-```
-
-### 时间复杂度
-1. `memoized_matrix_chain` 的调用分为两种：一种是没有命中缓存然后发生后面的递归调用，一种是命中缓存直接返回。
-2. 第一种没有命中缓存的次数是 $Θ(n^2)$，因为每个表项对应一次。
-3. 第二种命中缓存的调用，都是第一种所产生的递归，因为要递归已有的结果来获得未知的结果。
-4. 第一种每次调用时，循环会从 `i` 到 `j-1`，$O(n)$ 次，所以产生的递归调用也是 $O(n)$ 次。也就是说，每次第一种的 `memoized_matrix_chain` 调用都会发生 $O(n)$ 的第二种 `memoized_matrix_chain` 调用。因此第二种的调用次数是 $O(n^3)$。
-5. 综合起来，时间复杂度是 $O(n^3)$ 级别。
 
 
 ## Referecens
