@@ -11,7 +11,7 @@
         - [矩阵链乘法问题](#矩阵链乘法问题)
     - [描述最优解的结构](#描述最优解的结构)
     - [递归求解方案](#递归求解方案)
-        - [时间复杂度](#时间复杂度)
+        - [时间复杂度 TODO](#时间复杂度-todo)
     - [自底向上计算最优代价](#自底向上计算最优代价)
         - [子问题图](#子问题图)
         - [下面列出子矩阵链长度为 2 和 3 时的计算过程](#下面列出子矩阵链长度为-2-和-3-时的计算过程)
@@ -22,7 +22,6 @@
                 - [$m[3, 5]$](#m3-5)
                 - [$m[4, 6]$](#m4-6)
         - [复杂度](#复杂度)
-        - [实际计算矩阵链乘积](#实际计算矩阵链乘积)
     - [Referecens](#referecens)
 
 <!-- /TOC -->
@@ -120,15 +119,15 @@
         {20, 25},
     };
 
-    int matrix_chain_multiply (int start, int end) {
+    int matrix_chain_order (int start, int end) {
         if (start == end) {
             return 0;
         }
         else {
             int min = INT_MAX;
             for (int i=start+1; i<=end; i++) {
-                int m = matrix_chain_multiply(start, i-1);
-                int n = matrix_chain_multiply(i, end);
+                int m = matrix_chain_order(start, i-1);
+                int n = matrix_chain_order(i, end);
                 int c = chain[start][0] * chain[i][0] * chain[end][1];
                 if (m + n + c < min) {
                     min = m + n + c;
@@ -141,7 +140,7 @@
 
     int main (void) {
 
-        printf("%d\n", matrix_chain_multiply(0, CHAIN_SIZE-1)); // 15125
+        printf("%d\n", matrix_chain_order(0, CHAIN_SIZE-1)); // 15125
 
         return 0;
     }
@@ -162,9 +161,9 @@
         {20, 25},
     };
 
-    int resolutions[CHAIN_SIZE][CHAIN_SIZE]; // 所有可能的子链排列（包括完整的链）
+    int solutions[CHAIN_SIZE][CHAIN_SIZE]; // 所有可能的子链排列（包括完整的链）
 
-    int matrix_chain_multiply (int start, int end) {
+    int matrix_chain_order (int start, int end) {
         if (start == end) {
             return 0;
         }
@@ -172,15 +171,15 @@
             int min = INT_MAX;
             int min_i; // 用来记录当前子链最优划分方案时的划分位置
             for (int i=start+1; i<=end; i++) {
-                int m = matrix_chain_multiply(start, i-1);
-                int n = matrix_chain_multiply(i, end);
+                int m = matrix_chain_order(start, i-1);
+                int n = matrix_chain_order(i, end);
                 int c = chain[start][0] * chain[i][0] * chain[end][1];
                 if (m + n + c < min) {
                     min = m + n + c;
                     min_i = i;
                 }
             }
-            resolutions[start][end] = min_i;
+            solutions[start][end] = min_i;
             return min;
         }
     }
@@ -188,11 +187,11 @@
 
     int main (void) {
 
-        printf("%d\n", matrix_chain_multiply(0, CHAIN_SIZE-1)); // 15125
+        printf("%d\n", matrix_chain_order(0, CHAIN_SIZE-1)); // 15125
 
         for (int i=0; i<CHAIN_SIZE; i++) {
             for (int j=0; j<CHAIN_SIZE; j++) {
-                printf("%d ", resolutions[i][j]);
+                printf("%d ", solutions[i][j]);
             }
             printf("\n");
         }
@@ -207,27 +206,27 @@
         return 0;
     }
     ```
-8. 有了表 `resolutions`，就可以确定最优解的划分方案。可以递归的计算每次划分的位置
+8. 有了表 `solutions`，就可以确定最优解的划分方案。可以递归的计算每次划分的位置
     ```cpp
-    void resolution (int start, int end) {
+    void solution (int start, int end) {
         if (end > start + 1) { // 子链只剩一个或两个矩阵就不用括号了
-            int k = resolutions[start][end];
+            int k = solutions[start][end];
             printf("%d ", k);
-            resolution(start, k-1);
-            resolution(k, end);
+            solution(start, k-1);
+            solution(k, end);
         }
     }
     ```
     使用上面的矩阵链计算输出的划分位置为 3 1 5，也就是 `( 0 ( 1 2 ) ) ( ( 3 4 ) 5 )`。
 9. 还希望直接打印出带序号和括号的结果，稍微麻烦一些。每一组子链（`start` 和 `end`）对应一组括号，但是如果子链只有一个矩阵就不需要括号了。最初是这样实现
     ```cpp
-    void print_resolution (int start, int end) {
+    void print_solution (int start, int end) {
         if (start != end) {
             printf("( ");
             printf("%d", start);
-            int k = resolutions[start][end];
-            print_resolution(start, k-1);
-            print_resolution(k, end);
+            int k = solutions[start][end];
+            print_solution(start, k-1);
+            print_solution(k, end);
             printf("%d", end);
             printf(") ");
         }
@@ -235,15 +234,15 @@
     ```
     但打印出来有问题，因为看预期的效果中，并不是任何一组子链都要打印数字的，而是只有在子链长度为一个或两个时。因此改为
     ```cpp
-    void print_resolution (int start, int end) {
+    void print_solution (int start, int end) {
         if (start == end) { // 子链长度为两个时会进一步递归为只有一个然后打印数字
             printf("%d ", start);
         }
         else {
             printf("( ");
-            int k = resolutions[start][end];
-            print_resolution(start, k-1);
-            print_resolution(k, end);
+            int k = solutions[start][end];
+            print_solution(start, k-1);
+            print_solution(k, end);
             printf(") ");
         }
     }
@@ -272,7 +271,7 @@
     // 省略其他代码
     int cache[CHAIN_SIZE][CHAIN_SIZE] = {0};
 
-    int matrix_chain_multiply (int start, int end) {
+    int matrix_chain_order (int start, int end) {
         if (start == end) {
             return 0;
         }
@@ -283,15 +282,15 @@
             int min = INT_MAX;
             int min_i;
             for (int i=start+1; i<=end; i++) {
-                int m = matrix_chain_multiply(start, i-1);
-                int n = matrix_chain_multiply(i, end);
+                int m = matrix_chain_order(start, i-1);
+                int n = matrix_chain_order(i, end);
                 int c = chain[start][0] * chain[i][0] * chain[end][1];
                 if (m + n + c < min) {
                     min = m + n + c;
                     min_i = i;
                 }
             }
-            resolutions[start][end] = min_i;
+            solutions[start][end] = min_i;
             cache[start][end] = min;
             return min;
         }
@@ -336,7 +335,7 @@
     console.log(memoized_matrix_chain(_chain, 1, 6)); // 15125
     ```
 
-### 时间复杂度
+### 时间复杂度 TODO
 1. `memoized_matrix_chain` 的调用分为两种：一种是没有命中缓存然后发生后面的递归调用，一种是命中缓存直接返回。
 2. 第一种没有命中缓存的次数是 $Θ(n^2)$，因为每个表项对应一次。
 3. 第二种命中缓存的调用，都是第一种所产生的递归，因为要递归已有的结果来获得未知的结果。
@@ -361,7 +360,7 @@
                     min_i = k;
                 }
             }
-            resolutions[i][j] = min_i;
+            solutions[i][j] = min_i;
             cache[i][j] = min;
         }   
     }
@@ -382,7 +381,7 @@
 10. 看《算法导论》213 页的数学描述。
 11. 实现如下
     ```cpp
-    int bottom_up_matrix_chain_multiply (int start, int end) {
+    int bottom_up_matrix_chain_order (int start, int end) {
         if (start == end) {
             return 0;
         }
@@ -405,7 +404,7 @@
                             min_i = k;
                         }
                     }
-                    resolutions[i][i+subChainLen-1] = min_i;
+                    solutions[i][i+subChainLen-1] = min_i;
                     cache[i][i+subChainLen-1] = min;
                 }
             }
@@ -540,20 +539,6 @@
 ### 复杂度
 * 时间复杂度为 $O(n^3)$
 * 存储表的空间复杂度为 $Θ(n^2)$
-
-### 实际计算矩阵链乘积
-《算法导论》练习 15.2-2。实现如下，两个矩阵相乘的方法 `matrix_multiply` 没有实现
-```js
-function matrix_chain_multiply (chain, splitPoints, i, j) {
-    if (i < j) { // i 等于 j 的时候就是分割到只剩一个矩阵了
-        let pos = splitPoints[i][j];
-        let a1 = optimalSolution(i, pos);
-        let a2 = optimalSolution(pos+1, j);
-        return matrix_multiply(a1, a2);
-    }
-    return chain[i];
-}
-```
 
 
 ## Referecens
