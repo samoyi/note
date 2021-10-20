@@ -1,9 +1,9 @@
-# Dynamic Programming
+# Fibonacci
 
 
 <!-- TOC -->
 
-- [Dynamic Programming](#dynamic-programming)
+- [Fibonacci](#fibonacci)
     - [最直白的递归求解](#最直白的递归求解)
     - [使用缓存来解决重复接计算的问题](#使用缓存来解决重复接计算的问题)
     - [使用动态规划来避免调用栈堆积的问题](#使用动态规划来避免调用栈堆积的问题)
@@ -24,6 +24,7 @@
     }
     ```
 2. 问题就是性能太差，会进行巨量的重复计算。
+3. 但可以看出来明显的具有最优子结构和重叠子问题。
 
 
 ## 使用缓存来解决重复接计算的问题
@@ -40,12 +41,10 @@
             return memo[n];
         }
 
-        int re = memo_fibonacci(n-1) + memo_fibonacci(n-2);
-        
-        return memo[n] = re;
+        return memo[n] = fibonacci(n-1) + fibonacci(n-2);
     }
     ```
-2. 性能问题解决了，而且其实就是个很好的方案。但是在极端的情况下，因为还是使用递归，所以会出现栈溢出
+2. 性能问题解决了。但是在极端的情况下，因为还是使用递归，所以会出现栈溢出
     ```js
     fibonacci(20000); // Uncaught RangeError: Maximum call stack size exceeded
     ```
@@ -59,12 +58,12 @@
 5. 比如不管是求 `fibonacci(20000)` 还是 `fibonacci(20)`，动态规划都是按照 `fibonacci(0)`、`fibonacci(1)`、`fibonacci(2)`、`fibonacci(3)` 这样的顺序推导完整的斐波那契数列，只是最后停止在问题的那个数。
 6. 实现
     ```cpp
-    long long memo[20] = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    long long memo[20] = {0, 1}; // 要正确初始化前两项
 
     long long fibonacci(int n) {
         int i;
         for (i=2; i<=n; i++) {
-            memo[i] = memo[i - 1] + memo[i - 2];
+            memo[i] = memo[i-1] + memo[i-2];
         }
 
         return memo[n];
