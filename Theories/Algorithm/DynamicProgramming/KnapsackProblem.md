@@ -14,14 +14,10 @@
     - [新的最优子结构](#新的最优子结构)
         - [递归实现](#递归实现)
         - [自底向上的实现](#自底向上的实现)
+        - [C 实现](#c-实现)
     - [重叠子问题](#重叠子问题)
-        - [两种递归式本质区别](#两种递归式本质区别)
-        - [实现](#实现)
     - [分数背包问题](#分数背包问题)
         - [和 0-1 背包问题的区别](#和-0-1-背包问题的区别)
-    - [0-1 背包](#0-1-背包)
-        - [实现](#实现-1)
-    - [0-1 背包问题的递归解法](#0-1-背包问题的递归解法)
 
 <!-- /TOC -->
 
@@ -64,7 +60,9 @@
 3. 因为物品可以无限取，所以 `weights` 和 `values` 是永远不变的，而不会像下面第一次的递归解法中每次递归都要更新这两个数组。
 
 ### 两种最优子结构
-
+1. 两种最优子结构本身来说都是正确的，只不过第一个最优子结构所构造出的子问题无法使用表来缓存。
+2. 那么在其他时候构建最优子结构时，就可以先考虑一下该最优子结构对于后序计算是否够简单。
+3. 钢条切割问题最初的最优子结构可以被优化，背包问题最初的最优子结构必须被优化。
 
 
 ## 有问题的最优子结构
@@ -360,11 +358,11 @@
                 else {
                     let m = table[i-1][c];
                     let n = item.value + table[i-1][c-item.weight];
-                    let max = m > n ? m : n;
-                    table[i][c] = max;
+                    table[i][c] = m > n ? m : n;
                 }
             }
         }
+        
         return table[itemNum][capacity];
     }
 
@@ -378,67 +376,64 @@
     // [0, 2000, 3500, 3500, 4000]
     ```
 
-
-## 重叠子问题
-1. 问题的递归算法是否会反复的求解相同的子问题？如果递归算法反复求解相同的子问题，我们就说最优化问题具有重叠子问题性质，也就可以自底向上并配合表的方法来解决。或者使用自顶向下带备忘的方法。
-2. 0-1 背包问题问题中，在做出第一次选择后，产生的若干种子问题中，而每个子问题又会有各自的若干子子问题，不同子问题会有相同的子子问题，这就满足了重叠子问题的性质。
-
-
-
-### 两种递归式本质区别
-
-### 实现
+### C 实现
 ```cpp
-#include <stdio.h>
-
 #define N 4 // 物品数量
-#define V 4 // 背包容量 
+#define V 4 // 背包容量
+
 int weights[N+1] = {0, 1, 4, 3, 1}; // 物品重量
 int values[N+1] = {0, 1500, 3000, 2000, 2000}; // 物品价值
-int table[N+1][V+1]; // 一行对应一个物品，一列对应一种容量
+int table[N+1][N+1];
 
-int knapsack_01 () {
-    for (int i=1; i<=N; i++) {
-        int currVal = 0;
-        for (int j=1; j<=V; j++) {
-            if (weights[i] > j) {
-                if (i > 1) {
-                    table[i][j] = table[i-1][j];
-                }
+int knapsack_01 (int itemNum, int capacity) {
+    if (itemNum <= 0 || capacity <= 0) {
+        return 0;
+    }
+
+    for (int i=1; i<=itemNum; i++) {
+        for (int c=1; c<=capacity; c++) {
+            if (weights[i] > c) {
+                table[i][c] = table[i-1][c];
             }
             else {
-                if (i == 1) {
-                    table[i][j] = values[i];
-                }
-                else {
-                    int currVal = values[i] + table[i-1][j-weights[i]];
-                    table[i][j] = currVal > table[i-1][j] ? currVal : table[i-1][j];
-                }
+                int m = table[i-1][c];
+                int n = values[i] + table[i-1][c-weights[i]];
+                table[i][c] = m > n ? m : n;
             }
         }
     }
-    return table[N][V];
+
+    return table[itemNum][capacity];
 }
 
-void print_table () {
+void printTable (int table[N+1][N+1]) {
     for (int i=1; i<=N; i++) {
-        for (int j=1; j<=V; j++) {
+        for (int j=1; j<=N; j++) {
             printf("%d ", table[i][j]);
-        }
+        }   
         printf("\n");
     }
 }
-int main(void) {
-    int result = knapsack_01();
-    printf("%d\n", result); // 4000
-    printf("\n");
-    print_table();
+
+
+int main (void) {
+
+    printf("%d\n", knapsack_01(N, V)); // 4000
+
+    printTable(table);
     // 1500 1500 1500 1500 
     // 1500 1500 1500 3000 
     // 1500 1500 2000 3500 
     // 2000 3500 3500 4000
+
+    return 0;
 }
 ```
+
+
+## 重叠子问题
+1. 问题的递归算法是否会反复的求解相同的子问题？如果递归算法反复求解相同的子问题，我们就说最优化问题具有重叠子问题性质，也就可以自底向上并配合表的方法来解决。或者使用自顶向下带备忘的方法。
+2. 0-1 背包问题问题中，在做出第一次选择后，产生的若干种子问题中，而每个子问题又会有各自的若干子子问题，不同子问题会有相同的子子问题，这就满足了重叠子问题的性质。
 
 
 ## 分数背包问题
@@ -447,133 +442,3 @@ int main(void) {
 2. 即使不是贪心的选择最大价值的物品而是选择 $\frac{价值}{重量}$ 最高的物品仍然会有这个问题。
 3. 而分数背包问题中，看起来仍然是有好几种物品，但因为拿的时候是一磅一磅的拿，所以每次拿的东西所占的容积都是一样的。
 4. 既然容积一样，那就可以根据每一磅的价值进行贪心选择，优先选择单位重量最贵的。
-
-
-
-
-
-## 0-1 背包
-### 实现
-```js
-class Knapsack_DP {
-    constructor (capacity, goods=[]) {
-        this.capacity = capacity;
-        this.goods = goods;
-    }
-
-    addGoods (goods) {
-        this.goods = this.goods.concat(goods)
-    }
-
-    calc () {
-        let index = 0;
-        let result = [];
-
-        // 下面通过两个循环，而矩阵进行遍历
-        // 矩阵的行是每次新增的物品，列是背包不同的容量
-
-        // 逐一增加物品时
-        this.goods.forEach((item, index) => {
-            // 记录每行加入新物品时各个容量的最大价值
-            let currRow = [];
-
-            // 上一轮新增物品时，所有背包容量可装的最大物品价值
-            // 例如，本轮如果是电脑，则 lastRow 是：
-            // [empty, 1500, 1500, 1500, 3000]
-            // 本轮的计算会用到上一轮的结果
-            let lastRow = result[result.length-1];
-           
-            // 每种背包容量
-            for ( let currCapa=1; currCapa<=this.capacity; currCapa++ ) {
-
-                // 上一轮该容量的最大价值
-                // 如果本轮该容量的价值没有更大，那就还沿用上一轮的
-                // 第一轮时，没有 lastRow
-                let maxVal = (lastRow && lastRow[currCapa]) || 0;
-
-                // 本轮新的物品重量如果大于当前容量，则当前容量不能装该物品，继续沿用上一轮的重量
-                if ( item.weight <= currCapa ) {
-                    // 当前容量的空背包放入本轮新的物品后剩余的容量可以装的最大价值
-                    let lastRowPad = lastRow ? ( lastRow[currCapa-item.weight] || 0 ) : 0;
-                    
-                    // 本轮新物品的价值加上空余容量的最大价值，
-                    let currVal = item.value + lastRowPad;
-                    // 和上一轮该容量的最大价值比较，确定新的最大价值
-                    if ( currVal > maxVal ) {
-                        maxVal = currVal;
-                    }
-                }
-
-                // 记录本轮当前容量下的最大价值
-                currRow[currCapa] = maxVal;
-            }
-
-            // 经过 for 循环，currRow 记录了加入本轮物品时各个容量的最大价值
-            // 经过 forEach 循环，result 记录了每轮加入新物品时各个容量的最大价值
-            result.push(currRow)
-        });
-
-        return result;
-    }
-}
-
-
-const goods = [
-    { // 吉他
-        weight: 1,
-        value: 1500,
-    },
-    { // 音响
-        weight: 4,
-        value: 3000,
-    },
-    { // 电脑
-        weight: 3,
-        value: 2000,
-    },
-];
-
-let knapsack = new Knapsack_DP(4, goods);
-console.log( knapsack.calc() );
-// [empty, 1500, 1500, 1500, 1500]
-// [empty, 1500, 1500, 1500, 3000]
-// [empty, 1500, 1500, 2000, 3500]
-
-knapsack.addGoods([[1, 2000]]); // 重量 1 价值 2000 的手机
-console.log( knapsack.calc() );
-// [empty, 1500, 1500, 1500, 1500]
-// [empty, 1500, 1500, 1500, 3000]
-// [empty, 1500, 1500, 2000, 3500]
-// [empty, 2000, 3500, 3500, 4000]
-```
-
-
-## 0-1 背包问题的递归解法
-```js
-function knapsack_01 (weights, values, capacity) {
-    if (weights.length === 0 || values.length === 0) {
-        return 0;
-    }
-
-    let max = 0;
-    for (let i=0; i<weights.length; i++) {
-        if (weights[i] > capacity) {
-            continue;
-        }
-        let newWeights = [...weights.slice(0, i), ...weights.slice(i+1)];
-        let newValues = [...values.slice(0, i), ...values.slice(i+1)];
-        let val = values[i] + knapsack_01(newWeights, newValues, capacity-weights[i]);
-        if (val > max) {
-            max = val;
-        }
-    }
-    return max;
-}
-
-let result1 = knapsack_01([1, 4, 3], [1500, 3000, 2000], 4);
-console.log(result1); // 3500
-let result2 = knapsack_01([1, 4, 3, 1], [1500, 3000, 2000, 2000], 4);
-console.log(result2); // 4000
-let result3 = knapsack_01([2, 3, 4, 5], [3, 4, 5, 6], 8);
-console.log(result3); // 10
-```
