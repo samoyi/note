@@ -46,12 +46,13 @@
 
 ## 思路
 
+
 ## 适合使用动态规划
 ### 最优子结构
 看下面最优解的结构的描述，两个序列的 LCS 是基于它们前缀序列的 LCS。
 
 ### 重叠子问题
-求任何一个公共子序列时，都要求比它更小的所有的公共子序列。
+求任何一个公共子序列时，都要求比它更小的公共子序列。
 
 
 ## 第一步：描绘最优解的结构
@@ -94,80 +95,209 @@
 
     console.log( LCS(X.length-1, Y.length-1) ); // BCBA
     ```
-
-
-## 第三步：自底向上求解
-1. 书上的伪代码中序列的序号从 1 开始，然后把表格中序号包含 0 的值都设定为 0，作为下溢出的值，所以它可以放心的使用 `csl[i-1][j-1]`。
-2. 但下面实际实现中，序列的序号从 0 开始，因此表格中序号包含 0 的值就是实际的解的值，不存在作为下溢出的值，所以使用 `csl[i-1][j-1]` 必须要先判断，以免序号出现 -1。
-3. 实现如下
+3. TODO，C 实现不会
     ```cpp
-    #include <stdio.h>
-
     #define M 7
     #define N 6
 
-    char c1[M] = {'A', 'B', 'C', 'B', 'D', 'A', 'B'};
-    char c2[N] = {'B', 'D', 'C', 'A', 'B', 'A'};
+    char* X[M] = {"A", "B", "C", "B", "D", "A", "B"};
+    char* Y[N] = {"B", "D", "C", "A", "B", "A"};
 
-    int csl[M][N] = {}; 
 
-    int LCS_length (char c1[], char c2[]) {
-        for (int i=0; i<M; i++) {
-            for (int j=0; j<N; j++) {
-                if (c1[i] == c2[j]) {
-                    // 这里不能像书上递归式那样直接使用 csl[i-1][j-1] + 1，
-                    // 因为这里的序号是从 0 开始
-                    if (i == 0 || j == 0) { 
-                        csl[i][j] = 1;
-                    }
-                    else {
-                        csl[i][j] = csl[i-1][j-1] + 1;
-                    }
+    char* LCS (int m, int n) {
+        if (m == 0 || n == 0) {
+            return "";
+        }
+
+        if ( X[m] == Y[n] ) {
+            char* s = calloc(N+1, sizeof(char));
+            strcpy(s, LCS(m-1, n-1));
+            strcpy(s, X[m]);
+            // printf("1: %s\n", s);
+            return s;
+        }
+        else {
+            char* s1 = calloc(N+1, sizeof(char));
+            char* s2 = calloc(N+1, sizeof(char));
+            strcpy(s1, LCS(m, n-1));
+            strcpy(s2, LCS(m-1, n));
+            // printf("2: %s\n", s1);
+            // printf("3: %s\n", s2);
+            return strlen(s1) > strlen(s2) ? s1 : s2;
+        }
+    }
+
+    int main (void) {
+
+        char* lcs = LCS(M-1, N-1);
+        
+        printf("%d\n", strlen(lcs));
+        
+        for (int i=0; i<N-1; i++) {
+            printf("%c ", lcs[i]);
+        }
+        printf("\n");
+        
+        return 0;
+    }
+    ```
+4. 加入缓存。注意，在上面的实现中，`m` 和 `n` 都是可以为 0 的，所以其中的 `m-1` 和 `n-1` 都可能为是 -1。但是缓存的数组序号不能为 -1。因此修改一下两个序列，让它们从 1 开始，这样 `m-1` 和 `n-1` 最小就只能为 0
+    ```js
+
+    const X = [null, 'A', 'B', 'C', 'B', 'D', 'A', 'B'];
+    const Y = [null, 'B', 'D', 'C', 'A', 'B', 'A'];
+    // 缓存表的长宽相应的也要包括 0 的情况，也是从 1 开始保存
+    const memo = Array.from(Array(X.length), ()=>Array(Y.length));
+
+
+    function LCS (m, n) {
+        // 因为从 1 开始计数，所以 m 和 n 的合理最小值只能是 1
+        if (m < 1 || n < 1) {
+            return "";
+        }
+
+        // 这里必须要判断是否为 `undefined` 不能直接 `if (memo[m][n])`，因为有的公共子序列就是空字符串
+        if (memo[m][n] !== undefined) {
+            return memo[m][n];
+        }
+
+        if ( X[m] === Y[n] ) {
+            // 如果 m 和 n 都是最小的合理值 1，那下面的递归就是 LCS(0, 0)，
+            // 返回空字符串，保存到 memo[0][0]
+            let s = LCS(m-1, n-1);
+            memo[m-1][n-1] = s;
+            return s + X[m];
+        }
+        else {
+            // 如果 n 是最小的合理值 1，那下面的递归就是 LCS(m, 0)，返回空字符串，保存到 memo[m][0]
+            let s1 = LCS(m, n-1);
+            memo[m][n-1] = s1;
+            let s2 = LCS(m-1, n);
+            memo[m-1][n] = s2;
+            return s1.length > s2.length ? s1 : s2;
+        }
+    }
+
+
+    console.log( LCS(X.length-1, Y.length-1) ); // BCBA
+    console.log(memo);
+    // 0: (7) [empty, '', '', '', empty × 3]
+    // 1: (7) ['', '', '', '', 'A', empty × 2]
+    // 2: (7) [empty, 'B', 'B', 'B', 'A', empty × 2]
+    // 3: (7) ['', 'B', 'B', 'BC', 'BC', empty × 2]
+    // 4: (7) [empty, 'B', 'B', 'BC', 'BC', 'BCB', empty]
+    // 5: (7) [empty × 2, 'BD', 'BC', 'BC', 'BCB', empty]
+    // 6: (7) [empty × 4, 'BCA', empty, 'BCBA']
+    // 7: (7) [empty × 5, 'BCAB', empty]
+    ```
+
+## 第三步：自底向上求解
+1. JS 实现
+    ```js
+    const X = [null, 'A', 'B', 'C', 'B', 'D', 'A', 'B'];
+    const Y = [null, 'B', 'D', 'C', 'A', 'B', 'A'];
+    const table = Array.from(Array(X.length), ()=>Array(Y.length));
+    // 最开始会读取到行或列为 0 的位置，必须要返回字符串而非 `undefined` 
+    // 才能进行字符串拼接和读取 `length` 属性
+    for (let i=0; i<X.length; i++) {
+        for (let j=0; j<Y.length; j++) {
+            if (i === 0 || j === 0) {
+                table[i][j] = "";
+            }
+        }    
+    }
+
+    function LCS (m, n) {
+        if (m < 1 || n < 1) {
+            return "";
+        }
+
+        for (let i=1; i<=m; i++) {
+            for (let j=1; j<=n; j++) {
+                if ( X[i] === Y[j] ) {
+                    table[i][j] = table[i-1][j-1] + X[i];
                 }
                 else {
-                    // 同样要对序号包含 0 的特殊处理
-                    if (i == 0 && j == 0) {
-                        csl[i][j] = 0;
-                    }
-                    else if (i == 0) {
-                        csl[i][j] = csl[i][j-1];
-                    }
-                    else if (j == 0) {
-                        csl[i][j] = csl[i-1][j];
-                    }
-                    else {
-                        int sub1Len = csl[i][j-1];
-                        int sub2Len = csl[i-1][j];
-                        csl[i][j] = (sub1Len > sub2Len) ? sub1Len : sub2Len;
-                    }
+                    let s1 = table[i][j-1];
+                    let s2 = table[i-1][j];
+                    table[i][j] = s1.length > s2.length ? s1 : s2;
                 }
             }
         }
-        return csl[M-1][N-1];
+        return table[m][n];
     }
 
-    void print_csl_table () {
-        for (int i=0; i<M; i++) {
-            for (int j=0; j<N; j++) {
-                printf("%d ", csl[i][j]);
+
+    console.log( LCS(X.length-1, Y.length-1) ); // BCBA
+    console.log(table);
+    // 0: (7) ['', '', '', '', '', '', '']
+    // 1: (7) ['', '', '', '', 'A', 'A', 'A']
+    // 2: (7) ['', 'B', 'B', 'B', 'A', 'AB', 'AB']
+    // 3: (7) ['', 'B', 'B', 'BC', 'BC', 'AB', 'AB']
+    // 4: (7) ['', 'B', 'B', 'BC', 'BC', 'BCB', 'BCB']
+    // 5: (7) ['', 'B', 'BD', 'BC', 'BC', 'BCB', 'BCB']
+    // 6: (7) ['', 'B', 'BD', 'BC', 'BCA', 'BCB', 'BCBA']
+    // 7: (7) ['', 'B', 'BD', 'BC', 'BCA', 'BCAB', 'BCBA']
+    ```
+2. C 实现，计算最优解，不包括最优解的值
+    ```cpp
+    #define M 7
+    #define N 6
+
+    char X[M+1] = {' ', 'A', 'B', 'C', 'B', 'D', 'A', 'B'};
+    char Y[N+1] = {' ', 'B', 'D', 'C', 'A', 'B', 'A'};
+    char table[M+1][N+1] = {0};
+
+
+
+    int LCS (int m, int n) {
+        if (m<1 || n<1) {
+            return 0;
+        }
+
+        for (int i=1; i<=m; i++) {
+            for (int j=1; j<=n; j++) {
+                if (X[i] == Y[j]) {
+                    table[i][j] = table[i-1][j-1] + 1;
+                }
+                else {
+                    int a = table[i][j-1];
+                    int b = table[i-1][j];
+                    table[i][j] = a > b ? a : b;
+                }
+            }       
+        }
+
+        return table[m][n];
+    }
+
+    void print_table () {
+        for (int i=0; i<=M; i++) {
+            for (int j=0; j<=N; j++) {
+                printf("%d ", table[i][j]);
             }
             printf("\n");
         }
     }
 
-    int main(void) {
-        int n = LCS_length(c1, c2);
-        printf("%d\n", n); // 4
 
-        printf("\n");
-        print_csl_table();
-        // 0 0 0 1 1 1
-        // 1 1 1 1 2 2
-        // 1 1 2 2 2 2
-        // 1 1 2 2 3 3
-        // 1 2 2 2 3 3
-        // 1 2 2 3 3 4
-        // 1 2 2 3 4 4
+    int main (void) {
+
+        int len = LCS(M, N);
+        
+        printf("%d\n\n", len); // 4
+        
+        print_table();
+        // 0 0 0 0 0 0 0 
+        // 0 0 0 0 1 1 1 
+        // 0 1 1 1 1 2 2 
+        // 0 1 1 2 2 2 2 
+        // 0 1 1 2 2 3 3 
+        // 0 1 2 2 2 3 3 
+        // 0 1 2 2 3 3 4 
+        // 0 1 2 2 3 4 4 
+        
+        return 0;
     }
     ```
 
