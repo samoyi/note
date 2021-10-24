@@ -239,14 +239,14 @@
     // 6: (7) ['', 'B', 'BD', 'BC', 'BCA', 'BCB', 'BCBA']
     // 7: (7) ['', 'B', 'BD', 'BC', 'BCA', 'BCAB', 'BCBA']
     ```
-2. C 实现，计算最优解，不包括最优解的值
+2. C 实现。由于 C 不能像 JS 那样方便的操作字符串，所以这里只是计算最优解，不包括最优解的值，也就是只计算 LCS 的长度
     ```cpp
     #define M 7
     #define N 6
 
     char X[M+1] = {' ', 'A', 'B', 'C', 'B', 'D', 'A', 'B'};
     char Y[N+1] = {' ', 'B', 'D', 'C', 'A', 'B', 'A'};
-    char table[M+1][N+1] = {0};
+    int table[M+1][N+1] = {0};
 
 
 
@@ -301,144 +301,164 @@
     }
     ```
 
-## 第四步：计算最优解的值
-1. 根据《算法导论》定理 15.1，每一个位置（两个子序列）的 LCS 都是依赖之前某个位置（更小的两个子序列）的 LCS。
-2. 所以为了得到最末尾位置 `(M-1, N-1)`（两个完整序列）的 LCS，只需要找到它依赖的前一个位置（两个子序列）。这个位置可能是 `(M-2, N-2)`、`(M-2, N-1)` 或 `(M-1, N-2)` 中的一个。
-3. 因此我们需要在第三步的基础上，记录每个位置依赖的前一个位置
-    ```cpp
-    #include <stdio.h>
-    #include <string.h>
 
+## 第四步：计算最优解的值
+1. 两个完整序列的 LCS 会不断递归的依赖子序列的 LCS，所以我们可以追踪完整的 LCS 依次依赖了哪些子序列对的 LCS。
+2. 另外，从上面的计算可以看出来，真正构建 LCS 的步骤，只有在两个子序列满足 `X[i] == Y[j]` 时；而此时的 `X[i]` 就是 LCS 新加上的一个元素。
+3. 所以结合上面两个特征，我们追踪依赖的子序列对的同时，记录那些满足 `X[i] == Y[j]` 的子序列对，就可以构建出完整的 LCS。
+4. 依赖的子序列分为三种情况：`table[i-1][j-1]`、`table[i][j-1]` 和 `table[i-1][j]`。从 `table` 表的位置来说，就是依赖当前位置的左上、左侧和上侧。
+5. 我们新建一个表来记录依赖关系，并使用 `"↖"`、`"←"` 和 `"↑"` 来记录三种依赖
+    ```cpp
     #define M 7
     #define N 6
 
-    char c1[M] = {'A', 'B', 'C', 'B', 'D', 'A', 'B'};
-    char c2[N] = {'B', 'D', 'C', 'A', 'B', 'A'};
+    char X[M+1] = {' ', 'A', 'B', 'C', 'B', 'D', 'A', 'B'};
+    char Y[N+1] = {' ', 'B', 'D', 'C', 'A', 'B', 'A'};
+    int table[M+1][N+1] = {0};
+    char* result[M+1][N+1] = {}; // 因为 "↖" 是多字符，所以只能使用字符串而不能使用字符类型
 
-    int csl[M][N] = {}; 
-    char* last_csl[M][N] = {}; // 记录每个位置依赖的上一个位置
 
-    int LCS_length (char c1[], char c2[]) {
-        for (int i=0; i<M; i++) {
-            for (int j=0; j<N; j++) {
-                if (c1[i] == c2[j]) {
-                    if (i == 0 || j == 0) { 
-                        csl[i][j] = 1;
-                        // 这种情况下并没有依赖的前一个位置，当前位置就是一个 CS 的开始位置
-                        last_csl[i][j] = "*";
-                    }
-                    else {
-                        csl[i][j] = csl[i-1][j-1] + 1;
-                        // 用箭头记录依赖的前一个位置
-                        last_csl[i][j] = "↖";
-                    }
+    int LCS (int m, int n) {
+        if (m<1 || n<1) {
+            return 0;
+        }
+
+        for (int i=1; i<=m; i++) {
+            for (int j=1; j<=n; j++) {
+                if (X[i] == Y[j]) {
+                    table[i][j] = table[i-1][j-1] + 1;
+                    result[i][j] = "↖";
                 }
                 else {
-                    if (i == 0 && j == 0) {
-                        csl[i][j] = 0;
-                        // 这种情况下同样没有依赖的前一个位置，但当前位置也并不是一个 CS 的开始
-                        last_csl[i][j] = " ";
-                    }
-                    else if (i == 0) {
-                        csl[i][j] = csl[i][j-1];
-                        last_csl[i][j] = "←";
-                    }
-                    else if (j == 0) {
-                        csl[i][j] = csl[i-1][j];
-                        last_csl[i][j] = "↑";
+                    int a = table[i][j-1];
+                    int b = table[i-1][j];
+                    if (a > b) {
+                        table[i][j] = a;
+                        result[i][j] = "←";
                     }
                     else {
-                        int sub1Len = csl[i][j-1];
-                        int sub2Len = csl[i-1][j];
-                        if (sub1Len > sub2Len) {
-                            csl[i][j] = sub1Len;
-                            last_csl[i][j] = "←";
-                        }
-                        else {
-                            csl[i][j] = sub2Len;
-                            last_csl[i][j] = "↑";
-                        }
+                        table[i][j] = b;
+                        result[i][j] = "↑";
                     }
                 }
-            }
+            }       
         }
-        return csl[M-1][N-1];
+
+        return table[m][n];
     }
 
-    void print_csl_table () {
-        for (int i=0; i<M; i++) {
-            for (int j=0; j<N; j++) {
-                printf("%d ", csl[i][j]);
-            }
-            printf("\n");
-        }
-    }
-
-    void print_last_csl_table () {
-        for (int i=0; i<M; i++) {
-            for (int j=0; j<N; j++) {
-                printf("%s ", last_csl[i][j]);
+    void print_table () {
+        for (int i=0; i<=M; i++) {
+            for (int j=0; j<=N; j++) {
+                printf("%d ", table[i][j]);
             }
             printf("\n");
         }
     }
 
-    int main(void) {
-        int n = LCS_length(c1, c2);
-        printf("%d\n", n); // 4
+    void print_result () {
+        for (int i=0; i<=M; i++) {
+            for (int j=0; j<=N; j++) {
+                if (i == 0) {
+                    printf("%5d", j);
+                }
+                else if (j == 0) {
+                    printf("%5d", i);
+                }
+                else {
+                    printf("%7s", result[i][j]);
+                }
+            }
+            printf("\n");
+        }
+    }
 
+    void print_LCS () {
+        char lcs[N+1]; 
+        int idx = 0;
+        int m = M;
+        int n = N;
+        while (m && n) {
+            if ( strcmp(result[m][n], "←") == 0 ) {
+                n--;
+            }
+            else  if  ( strcmp(result[m][n], "↑") == 0 ){
+                m--;
+            }
+            else {
+                lcs[idx++] = X[m];
+                m--;
+                n--;
+            }
+        }
+        while (--idx >= 0) {
+            printf("%c", lcs[idx]);
+        }
         printf("\n");
-        print_csl_table();
-        // 0 0 0 1 1 1
-        // 1 1 1 1 2 2
-        // 1 1 2 2 2 2
-        // 1 1 2 2 3 3
-        // 1 2 2 2 3 3
-        // 1 2 2 3 3 4
-        // 1 2 2 3 4 4
+    }
 
-        printf("\n\n");
-        print_last_csl_table();
-        //   ← ← * ← *
-        // * ← ← ↑ ↖ ←
-        // ↑ ↑ ↖ ← ↑ ↑
-        // * ↑ ↑ ↑ ↖ ←
-        // ↑ ↖ ↑ ↑ ↑ ↑
-        // ↑ ↑ ↑ ↖ ↑ ↖
-        // * ↑ ↑ ↑ ↖ ↑
+
+    int main (void) {
+
+        int len = LCS(M, N);
+        
+        printf("%d\n\n", len); // 4
+        
+        print_table();
+        // 0 0 0 0 0 0 0 
+        // 0 0 0 0 1 1 1 
+        // 0 1 1 1 1 2 2 
+        // 0 1 1 2 2 2 2 
+        // 0 1 1 2 2 3 3 
+        // 0 1 2 2 2 3 3 
+        // 0 1 2 2 3 3 4 
+        // 0 1 2 2 3 4 4 
+
+        print_result();
+        // 0    1    2    3    4    5    6
+        // 1    ↑    ↑    ↑    ↖    ←    ↖
+        // 2    ↖    ←    ←    ↑    ↖    ←
+        // 3    ↑    ↑    ↖    ←    ↑    ↑
+        // 4    ↖    ↑    ↑    ↑    ↖    ←
+        // 5    ↑    ↖    ↑    ↑    ↑    ↑
+        // 6    ↑    ↑    ↑    ↖    ↑    ↖
+        // 7    ↖    ↑    ↑    ↑    ↖    ↑
+
+        print_LCS(); // BCBA
+
+        return 0;
     }
     ```
-4. 现在，为了获得两个完整序列的 LCS，需要从表格的右下角开始，不断追溯前一个依赖的位置，然后记录下其中 `↖` 位置和最后的 `*` 位置的字符，因为这两个位置都是 LCS 的字符
+6. `print_LCS` 的递归实现。注意要把 `printf` 放在递归调用后面，使用递归的栈式结构保证最后访问到的元素最先打印
     ```cpp
-    // 省略已有代码
-
-    void print_csl (int i, int j) {
-        if ( strcmp(last_csl[i][j], " ") == 0 ) {
-            
+    void print_LCS (int m, int n) {
+        if (m <= 0 || n <= 0) {
+            return;
         }
-        if ( strcmp(last_csl[i][j], "*") == 0 ) {
-            printf("%c", c1[i]);
+        if ( strcmp(result[m][n], "←") == 0 ) {
+            print_LCS (m, n-1);
         }
-        else if ( strcmp(last_csl[i][j], "↖") == 0 ) {
-            print_csl(i-1, j-1);
-            printf("%c", c1[i]);
+        else  if  ( strcmp(result[m][n], "↑") == 0 ){
+            print_LCS (m-1, n);
         }
-        else if ( strcmp(last_csl[i][j], "↑") == 0 ) {
-            print_csl(i-1, j);
+        else {
+            print_LCS (m-1, n-1);
+            printf("%c", X[m]);
         }
-        else if ( strcmp(last_csl[i][j], "←") == 0 ) {
-            print_csl(i, j-1);
-        }
-    }
-
-    int main(void) {
-        // 省略已有代码
-
-        printf("\n\n");
-        print_csl(M-1, N-1); // BCBA
     }
     ```
-5. 上面这一过程的运行时间为 $O(M+N)$，因为每次递归调用 `print_csl` 时 `i` 和 `j` 至少有一个会减一
+7. `print_LCS` 的运行时间为 $O(M+N)$，因为每次循环或递归时 `i` 和 `j` 至少有一个会减一。
+
+
+
+1. 如果 `table[i][j]` 和 `table[i-1][j]` 一样，那说明对于当前的两个子序列，`X[i]` 并不是公共元素；
+2. 如果 `table[i][j]` 和 `table[i][j-1]` 一样，那说明对于当前的两个子序列，`Y[j]` 并不是公共元素；
+3. 如果 `table[i][j]` 和 `table[i-1][j-1]` 一样，那说明对于当前的两个子序列，`X[i]` 和 `Y[j]` 并不是公共元素；
+4. 如果 `table[i][j]` 比 `table[i-1][j]` 大 1，那说明对于当前的两个子序列，`X[i]` 是公共元素；
+5. 如果 `table[i][j]` 比 `table[i][j-1]` 大 1，那说明对于当前的两个子序列，`Y[j]` 是公共元素；
+6. 如果 `table[i][j]` 比 `table[i-1][j]` 和 `table[i][j-1]` 都大 1，那说明对于当前的两个子序列，`X[i]` 和 `Y[j]` 是公共元素，且 `X[i]` 等于 `Y[j]`；此时 `table[i][j]` 也肯定比 `table[i-1][j-1]` 大 1；
+7. 如果 `table[i][j]` 和 `table[i-1][j]`、`table[i][j-1]` 都一样，但是比 `table[i-1][j-1]` 大 1，那说明对于当前的两个子序列，`X[i]` 和 `Y[j]` 相等；
+
 
 
 ## 算法改进
