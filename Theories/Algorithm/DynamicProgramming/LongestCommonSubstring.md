@@ -16,11 +16,11 @@
     - [第三步：自底向上求解](#第三步自底向上求解)
     - [第四步：计算最优解的值](#第四步计算最优解的值)
     - [算法改进](#算法改进)
-    - [自顶向下的带备忘版本](#自顶向下的带备忘版本)
     - [练习](#练习)
         - [《算法导论》15.4-5](#算法导论154-5)
     - [《图解算法》中的思路](#图解算法中的思路)
     - [最长公共子串](#最长公共子串)
+        - [非动态规划实现](#非动态规划实现)
         - [思路](#思路-1)
         - [实现](#实现)
     - [公共子序列](#公共子序列)
@@ -450,131 +450,35 @@
 7. `print_LCS` 的运行时间为 $O(M+N)$，因为每次循环或递归时 `i` 和 `j` 至少有一个会减一。
 
 
-
-1. 如果 `table[i][j]` 和 `table[i-1][j]` 一样，那说明对于当前的两个子序列，`X[i]` 并不是公共元素；
-2. 如果 `table[i][j]` 和 `table[i][j-1]` 一样，那说明对于当前的两个子序列，`Y[j]` 并不是公共元素；
-3. 如果 `table[i][j]` 和 `table[i-1][j-1]` 一样，那说明对于当前的两个子序列，`X[i]` 和 `Y[j]` 并不是公共元素；
-4. 如果 `table[i][j]` 比 `table[i-1][j]` 大 1，那说明对于当前的两个子序列，`X[i]` 是公共元素；
-5. 如果 `table[i][j]` 比 `table[i][j-1]` 大 1，那说明对于当前的两个子序列，`Y[j]` 是公共元素；
-6. 如果 `table[i][j]` 比 `table[i-1][j]` 和 `table[i][j-1]` 都大 1，那说明对于当前的两个子序列，`X[i]` 和 `Y[j]` 是公共元素，且 `X[i]` 等于 `Y[j]`；此时 `table[i][j]` 也肯定比 `table[i-1][j-1]` 大 1；
-7. 如果 `table[i][j]` 和 `table[i-1][j]`、`table[i][j-1]` 都一样，但是比 `table[i-1][j-1]` 大 1，那说明对于当前的两个子序列，`X[i]` 和 `Y[j]` 相等；
-
-
-
 ## 算法改进
 1. 一旦设计出一个算法，通常情况下你都会发现它在时空开销上有改进的余地。
 2. 一些改进可以将性能提升常数倍，但并不会有渐进性的提升；而另一些改进则可以带来时空上巨大的渐进性提升。
-3. 例如在 LCS 算法中，我们可以不使用 `last_csl`，给定表 `csl` 中的任意值 `csl[i][j]`，我们可以通过比较它和 `csl[i-1][j]`、`csl[i][j-1]` 的关系就能得出它依赖的前一项是哪一个。
-4. 这样的比较是 $O(1)$ 的复杂度。因此这种情况下实现的 `print_csl` 仍然可以保证 $O(M+N)$ 的运行时间
+3. 例如在 LCS 算法中，我们可以不使用 `result`，给定表 `table` 中的任意值 `table[i][j]`，我们可以通过比较它和 `table[i-1][j]`、`table[i][j-1]` 的关系就能得出它依赖的前一项是哪一个。规律如下：
+    1. 如果 `table[i][j]` 比 `table[i-1][j]` 和 `table[i][j-1]` 都大 1（此时也一定比 `table[i-1][j-1]`），那么 `result[i][j]` 为 `"↖"`；
+    2. 如果 `table[i-1][j]` 比 `table[i][j-1]` 大 1，那么 `result[i][j]` 为 `"↑"`；
+    3. 如果 `table[i][j-1]` 比 `table[i-1][j]` 大 1，那么 `result[i][j]` 为 `"←"`；
+    4. 如果 `table[i][j]`、 `table[i-1][j]` 和 `table[i][j-1]` 相同呢？这就说明这两对子序列都可以达到相同长度的公共子序列。例如本例中 `table` 右下角三个值都是 4，因为 `ABCBDA` 和 `BDCABA` 拥有 LCS `BCBA`，`ABCBDAB` 和 `BDCAB` 也拥有 LCS `BDAB`。
+4. 实现
     ```cpp
-    void print_csl_no_last_csl (int i, int j) {
-        if (c1[i] == c2[j]) {
-            if (i == 0 || j == 0) { 
-                printf("%c", c1[i]);
-            }
-            else {
-                print_csl_no_last_csl(i-1, j-1);
-                printf("%c", c1[i]);
-            }
+    void print_LCS (int m, int n) {
+        if (m <= 0 || n <= 0) {
+            return;
+        }
+        if ( table[m][n] > table[m-1][n] && table[m][n] > table[m][n-1] ) {
+            print_LCS (m-1, n-1);
+            printf("%c", X[m]);      
+        }
+        else if ( table[m-1][n] > table[m][n-1] ) {
+            print_LCS (m-1, n);
         }
         else {
-            if (i == 0 && j == 0) {
-                
-            }
-            else if (i == 0) {
-                print_csl_no_last_csl(i, j-1);
-            }
-            else if (j == 0) {
-                print_csl_no_last_csl(i-1, j);
-            }
-            else {
-                int sub1Len = csl[i][j-1];
-                int sub2Len = csl[i-1][j];
-                if (sub1Len > sub2Len) {
-                    print_csl_no_last_csl(i, j-1);
-                }
-                else {
-                    print_csl_no_last_csl(i-1, j);
-                }
-            }
+            print_LCS (m, n-1);
         }
     }
     ```
-5. 这个方法通过移除 `last_csl` 而节省了 $Θ(MN)$ 的空间，但 `csl` 也需要 $Θ(MN)$ 的空间，所以整体的空间渐进性并没有改变。
-6. TODO，《算法导论》练习 15.4-4
-
-
-## 自顶向下的带备忘版本
-1. 数组现在作为备忘，需要进行初始化
-    ```cpp
-    void initCSL () {
-        for (int i=0; i<M; i++) {
-            for (int j=0; j<N; j++) {
-                csl[i][j] = -1;
-            }
-        }
-    }
-    ```
-2. `LCS_length` 改为自顶向下的带备忘版本
-    ```cpp
-    int memoized_LCS_length (char c1[], char c2[], int i, int j) {
-        if (c1[i] == c2[j]) {
-            if (i == 0 || j == 0) { 
-                return 1;
-            }
-            else {
-                if (csl[i-1][j-1] == -1) {
-                    csl[i-1][j-1] = memoized_LCS_length(c1, c2, i-1, j-1);
-                }
-                return csl[i-1][j-1] + 1;
-            }
-        }
-        else {
-            if (i == 0 && j == 0) {
-                return 0;
-            }
-            else if (i == 0) {
-                if (csl[i][j-1] == -1) {
-                    csl[i][j-1] = memoized_LCS_length(c1, c2, i, j-1);
-                }
-                return csl[i][j-1];
-            }
-            else if (j == 0) {
-                if (csl[i-1][j] == -1) {
-                    csl[i-1][j] = memoized_LCS_length(c1, c2, i-1, j);
-                }
-                return csl[i-1][j];
-            }
-            else {
-                (csl[i][j-1] == -1) && (csl[i][j-1] = memoized_LCS_length(c1, c2, i, j-1));
-                (csl[i-1][j] == -1) && (csl[i-1][j] = memoized_LCS_length(c1, c2, i-1, j));
-                return (csl[i][j-1] > csl[i-1][j]) ? csl[i][j-1] : csl[i-1][j];
-            }
-        }
-    }
-    ```
-3. 调用
-    ```cpp
-    int main(void) {
-        initCSL();
-
-        int n = memoized_LCS_length(c1, c2, M-1, N-1);
-        printf("%d\n", n); // 4
-
-        printf("\n");
-        print_csl_table();
-        //  0  0  0  1 -1 -1
-        //  1  1  1  1 -1 -1
-        //  1  1  2  2 -1 -1
-        //  1  1  2  2  3 -1
-        // -1  2  2  2  3 -1
-        // -1 -1 -1  3 -1  4
-        // -1 -1 -1 -1  4 -1
-
-        printf("\n\n");
-        print_csl_no_last_csl(M-1, N-1); // BCBA
-    }
-    ```
+5. 这样的比较是 $O(1)$ 的复杂度。因此这种情况下实现的 `print_LCS` 仍然可以保证 $O(M+N)$ 的运行时间
+6. 这个方法通过移除 `result` 而节省了 $Θ(MN)$ 的空间，但 `table` 也需要 $Θ(MN)$ 的空间，所以整体的空间渐进性并没有改变。
+7. TODO，《算法导论》练习 15.4-4
 
 
 ## 练习
@@ -584,6 +488,51 @@ TODO
 
 ## 《图解算法》中的思路
 ## 最长公共子串
+### 非动态规划实现
+1. 最长公共子串可能起始位置位于两个字符串的任意位置，因此遍历两个字符串的所有位置，如果找到相同的字符，就是一个公共子串的其实位置。
+2. 从这个其实位置开始向后查找相同的元素知道找到不同的元素，记录相同元素的数量，就是当前子串的长度。如果长度大于之前记录的最长公共子串，那就把当前的子串记为最长公共子串。
+3. 遍历完所有可能的公共子串那之后，就会得到最长的公共子串
+    ```js
+    let str1 = "habcwxopqrt";
+    let str2 = "fabcgtopqrz";
+    // let str1 = "hish";
+    // let str2 = "fish";
+    // let str2 = "vista";
+
+
+    function LCStr (str1, str2) {
+        let len1 = str1.length;
+        let len2 = str2.length;
+        if (len1 < 1 || len2 < 1) {
+            return "";
+        }
+
+        let maxStr = "";
+        for (let i=0; i<len1; i++) {
+            for (let j=0; j<len2; j++) {
+                if (str1[i] === str2[j]) {
+                    let m = i+1;
+                    let n = j+1;
+                    let str = str1[i];
+                    while ( m < len1 && n < len2 && str1[m] === str2[n] ) {
+                        str += str1[m];
+                        m++;
+                        n++;
+                    }
+                    if (str.length > maxStr.length) {
+                        maxStr = str;
+                    }
+                }
+            }
+        }
+        return maxStr;
+    }
+
+
+    console.log( LCStr(str1, str2) ); // opqr
+    ```
+
+
 ### 思路
 1. 因为最长公共子串可能出现在两个字符串的不同的任意位置，所以需要对两个字符串的每个字符都一一比较。
 2. 当两个字符比较结果为相同时，它们就是处于长度至少为 1 的公共子串里。
