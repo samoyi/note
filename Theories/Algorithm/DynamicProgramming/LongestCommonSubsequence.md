@@ -24,12 +24,6 @@
         - [非动态规划实现](#非动态规划实现)
         - [TODO 自顶向下的递归解法](#todo-自顶向下的递归解法)
         - [自底向上方法](#自底向上方法)
-            - [实现](#实现)
-    - [公共子序列](#公共子序列)
-        - [思路](#思路-1)
-        - [长度值的单调性](#长度值的单调性)
-        - [长度值的计算](#长度值的计算)
-        - [实现](#实现-1)
     - [Referecens](#referecens)
 
 <!-- /TOC -->
@@ -52,11 +46,10 @@
 
 
 ### 最长公共子串中非动态规划实现的两种方法
-1. 四个序号的方法是最直观的
+TODO
 
 
 ## 本质
-
 
 
 ## 思路
@@ -572,219 +565,191 @@ TODO
 
     console.log( LCStr(str1, str2) ); // opqr
     ```
+5. C 实现
+    ```cpp
+    const char* str1 = "habcwxopqrt";
+    const char* str2 = "fabcgtopqrz";
+    // const char* str1 = "hish";
+    // const char* str2 = "fish";
+
+
+    void LCStr (int* start, int* end) {
+        *start = -1;
+        *end = -1;
+        int size1 = strlen(str1) / sizeof(char);
+        int size2 = strlen(str2) / sizeof(char);
+        if (size1 < 1 || size2 < 1) {
+            return;
+        }
+        int maxLen = 0;
+        for (int i=0; i<size1; i++) {
+            for (int j=0; j<size2; j++) {
+                if (str1[i] == str2[j]) {
+                    int len = 1;
+                    int m = i+1;
+                    int n = j+1;
+                    while ( m < size1 && n < size2 && str1[m] == str2[n] ) {
+                        len++;
+                        m++;
+                        n++;
+                    }
+                    if (len > maxLen) {
+                        maxLen = len;
+                        *start = i;
+                        *end = m-1;
+                    }
+                }
+            }   
+        }
+    }
+
+    int main (void) {
+        int start;
+        int end;
+        LCStr(&start, &end);
+
+        for (int i=start; i<=end; i++) {
+            printf("%c", str1[i]);
+        }
+        printf("\n");
+
+
+        return 0;
+    }
+    ```
 
 ### TODO 自顶向下的递归解法
 
 ### 自底向上方法
-1. 因为最长公共子串可能出现在两个字符串的不同的任意位置，所以需要对两个字符串的每个字符都一一比较。
-2. 当两个字符比较结果为相同时，它们就是处于长度至少为 1 的公共子串里。
-3. 这个相同的字符可能是公共子串的第一个字符，也可能是之后的某个字符。要确定它到底是公共子串的第几个字符，就要看它 “前面” 还有没匹配结果相同的字符。这个 “前面” 是哪儿？
-4. 如果当前相同的这个字符的坐标位置是 $(3, 4)$，即第一个字符串的第 3 个字符和第二个字符串的第 4 个字符，那 “前面” 比较的字符就应该是第一个字符串的第 2 个字符和第二个字符串的第 3 个字符，即 $(2, 3)$。
-5. 所以，如果 $(2, 3)$ 是公共子串的第一个字符，那 $(3, 4)$ 就是公共子串的第二个字符。也即是说，当前的公共子串长度为 2。
-6. 所以，如果一个字符 $(x, y)$ 是匹配结果相同的，那它的长度值就应该是它前面字符 $(x-1, y-1)$ 的长度值加一。当然 $x-1$ 和 $y-1$ 都要大于零，否则 $(x, y)$ 的长度值就只能是 1。
+1. 最长公共子串的长度，等于它前面的公共子串的长度加一。
+2. 例如 `str1[i]` 和 `str2[j]` 是最长公共子串的最后一个字符，那这个最长公共子串的长度，就是以 `str1[i-1]` 和 `str2[j-1]` 为结尾的公共子串的长度再加一。
+3. 当然，如果 `str1[i-1]` 和 `str2[j-1]` 不相等，那这个最长公共子串其实就一个字符，也就是 `str1[i]` 和 `str2[j]` 的那个字符。
+4. 因此我们从两个字符串的开始出依次比较每对字符，记录以当前字符对为结尾的公共子串长度，就能找到最长公共子串
+    ```cpp
+    #define M 4
+    #define N 4
+    const char* str1 = "hish";
+    const char* str2 = "fish";
 
-#### 实现
-```js
-function mls (str1, str2) {
-    let len1 = str1.length;
-    let len2 = str2.length;
 
-    let arr = [];
+    int table[M][N] = {0};
 
-    for ( let i=0; i<len1; i++ ) {
-        arr[i] = [];
 
-        for ( let j=0; j<len2; j++ ) {
-            if ( str1[i] === str2[j] ) {
-                if ( i>0 && j>0 ) {
-                    arr[i][j] = arr[i-1][j-1] + 1;
+    void LCStr (int* maxLen, int* maxEnd) {
+        *maxLen = 0; // 记录当前最长的公共子串
+        *maxEnd = -1; // 记录当前最长的公共子串在 str1 中的结束位置
+
+        for (int i=0; i<=M; i++) {
+            for (int j=0; j<=N; j++) {
+                // 考察以 `str1[i]` 和 `str2[j]` 为结尾的公共子串的长度
+                if (str1[i] == str2[j]) {
+                    // 如果两个字符相同，它该字符在公共子串中的序号就是前一个字符的序号加一
+                    if (i == 0 || j == 0) {
+                        table[i][j] = 1;    
+                    }
+                    else {
+                        table[i][j] = table[i-1][j-1] + 1;
+                    }
                 }
                 else {
-                    arr[i][j] = 1;
+                    // 如果两个字符不相同，那当前位置就不处于公共子串中
+                    table[i][j] = 0;
                 }
-            }
-            else {
-                arr[i][j] = 0;
-            }
-        }   
+                
+                if (table[i][j] > *maxLen) {
+                    *maxLen = table[i][j];
+                    *maxEnd = i;
+                }
+            }   
+        }
     }
 
-    return arr;
-}
-
-
-let str0 = 'fish';
-let str1 = 'hish';
-let str2 = 'vista';
-
-console.log( mls(str0, str1) );
-// [0, 0, 0, 0]
-// [0, 1, 0, 0]
-// [0, 0, 2, 0]
-// [1, 0, 0, 3]
-
-console.log( mls(str0, str2) );
-// [0, 0, 0, 0, 0]
-// [0, 1, 0, 0, 0]
-// [0, 0, 2, 0, 0]
-// [0, 0, 0, 0, 0]
-
-console.log( mls(str0, str0) );
-// [1, 0, 0, 0]
-// [0, 2, 0, 0]
-// [0, 0, 3, 0]
-// [0, 0, 0, 4]
-```
-
-
-## 公共子序列
-### 思路
-### 长度值的单调性
-1. 公共子串的情况中，因为要求必须是连续的，所以一个字符串中可能会出现多个不连续的公共子串。
-2. 所以，随着矩阵坐标的增加，每个位置的长度值不一定是单调的。比如前面有一个长度为 3 的公共子串，所以最大的长度值为 3。但到 3 就中断，之后可能又会有新的子串，这时就又出现了长度值 1。
-3. 而公共子序列则不需要连续，所以长度值就会随着坐标值单调递增的。也就是说，在矩阵中，一个节点的长度值肯定是小于等于它下方和右方的节点长度值。
-4. 也就是说，在一个区域内，最大的值一定是右下角的那一个。
-
-### 长度值的计算
-1. 一个节点可能有两种比较结果：字符不同和字符相同。
-2. 字符不同时，公共子序列长度不变，还是之前子序列最大的长度值。这个最大的长度值，要么是当前位置的左边，要么是当前位置的上面。所以当前位置的长度值应该是取这两个位置中较大的那一个。
-3. 如果字符相同，这时我的第一反应是：因为又出现了一个相同的，所以公共子序列的长度又要加一了，大概就是从那两个位置中较大的值再加一。
-4. 但是下面的情况显然不符合预期的
-    <table>
-        <tr>
-            <td></td>
-            <th>A</th>
-            <th>B</th>
-            <th>B</th>
-        </tr>
-        <tr>
-            <th>A</th>
-            <td>1</td>
-            <td>1</td>
-            <td>1</td>
-        </tr>
-        <tr>
-            <th>B</th>
-            <td>1</td>
-            <td>2</td>
-            <td>?</td>
-        </tr>
-    </table>
-5. $(2, 3)$ 这个位置的值应该是 2 而不是 3。$(2, 3)$ 的比较结果是相同，它要基于本次比较之前的结果加一，而本次比较之前的结果肯定是不能包括本次的第二行和第三列这两个 B 的，因为如果要计算这两个 B 相同时的长度值，那么这两个就不能同时再和其他的 B 相同了。
-6. 也就是说，第二行的那个 B，它可以和第二列的 B 相同从而组成一个公共子序列，也可以和第三列的 B 相同从而组成另一个公共子序列，但它不能同时和这两个 B 相同。你计算第二个公共子序列的长度时，不能基于第一个公共子序列。
-7. 所以 $(2, 3)$ 只能基于下面情况的最大值，也就是 $(1, 2)$
-    <table>
-        <tr>
-            <td></td>
-            <th>A</th>
-            <th>B</th>
-        </tr>
-        <tr>
-            <th>A</th>
-            <td>1</td>
-            <td>1</td>
-        </tr>
-    </table>
-8. 也就是说，如果 $(x, y)$ 比较结果相同，那它的长度值应该是它的左上角 $(x-1, y-1)$ 的长度值加一。
-9. 但比较结果为不同的时候并不需要考虑这个情况，并不需要使用左上角的值
-    <table>
-        <tr>
-            <td></td>
-            <th>A</th>
-            <th>B</th>
-            <th>C</th>
-        </tr>
-        <tr>
-            <th>A</th>
-            <td>1</td>
-            <td>1</td>
-            <td>1</td>
-        </tr>
-        <tr>
-            <th>B</th>
-            <td>1</td>
-            <td>2</td>
-            <td>?</td>
-        </tr>
-    </table>
-10. 因为不同时，当前长度值的意义是：之前所有公共子序列的最大值；而相同时长度值的意义是：当前公共子序列的最大值。
-
-### 实现
-```js
-function lcs (str1, str2) {
-    let len1 = str1.length;
-    let len2 = str2.length;
-
-    let arr= [];
-
-    for ( let i=0; i<len1; i++ ) {
-        arr[i] = [];
-
-        for ( let j=0; j<len2; j++ ) {
-            if ( str1[i] === str2[j] ) {
-                if ( i>0 && j>0 ) {
-                    arr[i][j] = arr[i-1][j-1] + 1;
-                }
-                else {
-                    arr[i][j] = 1;
-                }
+    void print_table () {
+        for (int i=0; i<M; i++) {
+            for (int j=0; j<N; j++) {
+                printf("%-2d", table[i][j]);
             }
-            else {
-                if ( i>0 && j>0 ) {
-                    arr[i][j] = Math.max(arr[i-1][j], arr[i][j-1]);    
-                }
-                else if ( i>0 ) {
-                    arr[i][j] = arr[i-1][j];
-                }
-                else if ( j>0 ){
-                    arr[i][j] = arr[i][j-1];
-                }
-                else {
-                    arr[i][j] = 0;
-                }
-            }
-        }   
+            printf("\n");
+        }
     }
 
-    return arr;
-}
+    void print_LCStr (int maxLen, int maxEnd) {
+        for (int i=maxEnd-maxLen+1; i<=maxEnd; i++) {
+            printf("%c", str1[i]);
+        }
+        printf("\n");
+    }
 
 
-let str0 = 'fish';
-let str1 = 'hish';
-let str2 = 'vista';
+    int main (void) {
 
-console.log( lcs(str0, str1) );
-// [0, 0, 0, 0]
-// [0, 1, 1, 1]
-// [0, 1, 2, 2]
-// [1, 1, 2, 3]
+        int maxLen;
+        int maxEnd;
+        LCStr(&maxLen, &maxEnd);
 
-console.log( lcs(str0, str2) );
-// [0, 0, 0, 0, 0]
-// [0, 1, 1, 1, 1]
-// [0, 1, 2, 2, 2]
-// [0, 1, 2, 2, 2]
+        print_table();
+        // 0 0 0 1 
+        // 0 1 0 0 
+        // 0 0 2 0 
+        // 0 0 0 3 
 
-console.log( lcs(str0, str0) );
-// [1, 1, 1, 1]
-// [1, 2, 2, 2]
-// [1, 2, 3, 3]
-// [1, 2, 3, 4]
+        print_LCStr(maxLen, maxEnd); // ish
 
-console.log( lcs('fort', 'fosh') );
-// [1, 1, 1, 1]
-// [1, 2, 2, 2]
-// [1, 2, 2, 2]
-// [1, 2, 2, 2]
 
-console.log( lcs('fish', 'fosh') );
-// [1, 1, 1, 1]
-// [1, 1, 1, 1]
-// [1, 1, 2, 2]
-// [1, 1, 2, 3]
-```
+        return 0;
+    }
+    ```
+5. JS 实现
+    ```js
 
+    let str1 = "habcwxopqrt";
+    let str2 = "fabcgtopqrz";
+    // let str1 = "hish";
+    // let str2 = "fish";
+    // let str2 = "vista";
+
+    let table = Array.from(Array(str1.length), ()=>Array(str2.length));
+
+    function LCStr (str1, str2) {
+        let len1 = str1.length;
+        let len2 = str2.length;
+        if (len1 < 1 || len2 < 1) {
+            return "";
+        }
+
+        let maxLen = 0;
+        let maxEnd = -1;
+        
+        for (let i=0; i<len1; i++) { 
+            for (let j=0; j<len2; j++) {
+                if (str1[i] === str2[j]) {
+                    if (i === 0 || j === 0) {
+                        table[i][j] = 1;
+                    }
+                    else {
+                            table[i][j] = table[i-1][j-1] + 1;
+                        }
+                }
+                else {
+                    table[i][j] = 0;
+                }
+                if (table[i][j] > maxLen) {
+                    maxLen = table[i][j];
+                    maxEnd = i;
+                }
+            }
+        }
+
+        let LCStr = "";
+        for (let i=maxEnd-maxLen+1; i<=maxEnd; i++) {
+            LCStr += str1[i];
+        }
+        return LCStr;
+    }
+
+    console.log( LCStr(str1, str2) );
+    console.log( table );
+    ```
 
 
 ## Referecens
