@@ -55,6 +55,102 @@
 3. 我们选定的这个活动，再加上两个递归求解得出的两组活动，加在一起就是一组兼容的活动集合。
 4. 当然这一组兼容的活动集合不一定是最优的。所以我们在从 n 个活动里面选定一个活动时，就要遍历 n 个活动，对每种情况都按照上面的方法求解，得出 n 个兼容的活动集合，然后就可以从里面选出一个最优的。
 5. 按照这个算法，我们会求解所有可能的子问题。
+6. 不过更方便的是，最大兼容活动集的最优子结构包括两部分：
+    * 活动集的最后一个活动（选择）
+    * 最后这个活动开始之前的所有活动的最大兼容活动集（子问题）
+7. 因此最优子结构要做出的选择就是选择哪一个活动作为最优解的最后一个活动，然后做出这个选择后，再递归的求解该活动之前的活动的最优解
+    ```js
+
+    const acts = [
+        [1, 4],
+        [3, 5],
+        [0, 6],
+        [5, 7],
+        [3, 9],
+        [5, 9],
+        [6, 10],
+        [8, 11],
+        [8, 12],
+        [2, 14],
+        [12, 16],
+    ];
+
+    // function isCom (act1, act2) {
+    //     return act1[1] <= act2[0] || act2[1] <= act1[0];
+    // }
+
+    const memo = {};
+
+    // 参数表示求解在时间 finishBefore 之前结束的所有活动的最优解
+    function activity_selector (finishBefore) {
+        if (finishBefore < 1) {
+            return [];
+        }
+        if (memo[finishBefore]) {
+            return memo[finishBefore];
+        }
+        let max = [];
+        for (let i=0; i<acts.length; i++) {
+            if (acts[i][1] <= finishBefore) {
+                let arr = [...activity_selector(acts[i][0]), acts[i]];
+                memo[finishBefore] = arr;
+                if (arr.length > max.length) {
+                    max = arr;
+                }
+            }
+        }
+        return max;
+    }
+
+
+    let result = activity_selector(acts[acts.length-1][1]);
+    console.log(result);
+    // 0: (2) [3, 5]
+    // 1: (2) [5, 7]
+    // 2: (2) [8, 11]
+    // 3: (2) [12, 16]
+    ```
+8. 这里的最优解是最多的活动数量，还有一种需求是最多的使用时间，也就是要选出总用时最多的若干个活动。因此需要计算和比较每种选择的活动的总用时
+    ```js
+    function calcHours (actList) {
+        let n = 0;
+        actList.forEach((act)=>{
+            n += act[1] - act[0];
+        });
+        return n;
+    }
+
+
+    function activity_selector (finishBefore) {
+        if (finishBefore < 1) {
+            return [];
+        }
+        if (memo[finishBefore]) {
+            return memo[finishBefore];
+        }
+        let maxHours = 0;
+        let maxList = [];
+        for (let i=0; i<acts.length; i++) {
+            if (acts[i][1] <= finishBefore) {
+                let arr = [...activity_selector(acts[i][0]), acts[i]];
+                let hours = calcHours(arr);
+                memo[finishBefore] = arr;
+                if (hours > maxHours) {
+                    maxList = arr;
+                    maxHours = hours;
+                }
+            }
+        }
+        return maxList;
+    }
+
+
+    let result = activity_selector(acts[acts.length-1][1]);
+    console.log(result);
+    // 0: (2) [0, 6]
+    // 1: (2) [6, 10]
+    // 2: (2) [12, 16]
+    ```
 
 
 ## 贪心选择
