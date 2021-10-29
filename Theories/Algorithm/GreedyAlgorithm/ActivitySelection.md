@@ -10,6 +10,7 @@
     - [调度竞争共享资源的多个活动](#调度竞争共享资源的多个活动)
     - [如果使用动态规划](#如果使用动态规划)
     - [活动选择问题的最优子结构](#活动选择问题的最优子结构)
+        - [自底向上解法](#自底向上解法)
     - [贪心选择](#贪心选择)
     - [递归贪心算法](#递归贪心算法)
     - [迭代贪心算法](#迭代贪心算法)
@@ -74,10 +75,6 @@
         [2, 14],
         [12, 16],
     ];
-
-    // function isCom (act1, act2) {
-    //     return act1[1] <= act2[0] || act2[1] <= act1[0];
-    // }
 
     const memo = {};
 
@@ -150,6 +147,65 @@
     // 0: (2) [0, 6]
     // 1: (2) [6, 10]
     // 2: (2) [12, 16]
+    ```
+
+### 自底向上解法
+1. 在最优子结构的递归式中，我们会不断的在更早的时间段里找到最大兼容活动集。例如最开始我们会在前 16 个小时里找到最大兼容活动集，然后递归的子问题中，我们就要在前 12 个小时里找到最大兼容活动集。
+2. 因此自底向上的解法中，我们就可以从最小的时间段开始逐个计算每个时间段的最大兼容活动集，一直计算到最终的前 16 个小时的最大兼容活动集
+    ```js
+    const acts = [
+        {start:  1,  finish:   4},
+        {start:  3,  finish:   5},
+        {start:  0,  finish:   6},
+        {start:  5,  finish:   7},
+        {start:  3,  finish:   9},
+        {start:  5,  finish:   9},
+        {start:  6,  finish:  10},
+        {start:  8,  finish:  11},
+        {start:  8,  finish:  12},
+        {start:  2,  finish:  14},
+        {start: 12,  finish:  16},
+    ];
+
+    const table = [];
+
+
+    function activity_selector (idx) {
+        if (idx < 0) {
+            return [];
+        }
+        let lastAct = acts[idx];
+        // 计算所有时间段里的子最大兼容活动集
+        for (let f=1; f<=lastAct.finish; f++) {
+            let max = [];
+            // 每个子最大兼容活动集中，仍然选择其中一个作为该子活动集的最后一个活动
+            for (let i=0; i<=idx; i++) {
+                // 因为我们是考察逐小时递增时间段的，所以并不是每个时间段都有活动
+                if (acts[i]) {
+                    // 如果选中的活动已经超过考察的时间段范围了
+                    if (acts[i].finish > f) {
+                        break;
+                    }
+                    // 子最大兼容活动集的活动就是选定的最后一个活动再加上该活动之前时间段里的子最大兼容活动集
+                    let arr = [...(table[acts[i].start] || []), acts[i]];
+                    if (arr.length > max.length) {
+                        max = arr;
+                    }
+                }
+            }
+            table[f] = max;
+        }
+        return table[acts[idx].finish];
+    }
+
+
+    let result = activity_selector(acts.length-1);
+    console.log(result);
+    // 0: {start: 1, finish: 4}
+    // 1: {start: 5, finish: 7}
+    // 2: {start: 8, finish: 11}
+    // 3: {start: 12, finish: 16}
+    console.log(table);
     ```
 
 
