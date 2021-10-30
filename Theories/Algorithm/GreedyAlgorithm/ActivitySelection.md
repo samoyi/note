@@ -9,7 +9,9 @@
     - [适用场景](#适用场景)
     - [调度竞争共享资源的多个活动](#调度竞争共享资源的多个活动)
     - [如果使用动态规划](#如果使用动态规划)
-    - [活动选择问题的最优子结构](#活动选择问题的最优子结构)
+    - [活动选择问题的最优子结构及动态规划解法](#活动选择问题的最优子结构及动态规划解法)
+        - [产生两个子问题的最优子结构](#产生两个子问题的最优子结构)
+        - [产生一个子问题的最优子结构](#产生一个子问题的最优子结构)
         - [自底向上解法](#自底向上解法)
     - [贪心选择](#贪心选择)
     - [递归贪心算法](#递归贪心算法)
@@ -50,108 +52,13 @@
 5. 基于这些观察，我们将找到一种递归贪心算法来解决活动调度问题，并将递归算法转化为迭代算法，以完成贪心算法的过程。
 
 
-## 活动选择问题的最优子结构
-1. 如果使用动态规划，我们就要分析出子结构，找到子问题。
-2. 在面对 n 个活动时，我们需要先选定一个活动，假定它就是兼容活动集中的一个。然后，在对它之前的活动（结束时间小于等于它的开始时间）和它之后的活动（开始时间大于等于它的结束时间）递归求解。
-3. 我们选定的这个活动，再加上两个递归求解得出的两组活动，加在一起就是一组兼容的活动集合。
-4. 当然这一组兼容的活动集合不一定是最优的。所以我们在从 n 个活动里面选定一个活动时，就要遍历 n 个活动，对每种情况都按照上面的方法求解，得出 n 个兼容的活动集合，然后就可以从里面选出一个最优的。
-5. 按照这个算法，我们会求解所有可能的子问题。
-6. 不过更方便的是，最大兼容活动集的最优子结构包括两部分：
-    * 活动集的最后一个活动（选择）
-    * 最后这个活动开始之前的所有活动的最大兼容活动集（子问题）
-7. 因此最优子结构要做出的选择就是选择哪一个活动作为最优解的最后一个活动，然后做出这个选择后，再递归的求解该活动之前的活动的最优解
-    ```js
-
-    const acts = [
-        [1, 4],
-        [3, 5],
-        [0, 6],
-        [5, 7],
-        [3, 9],
-        [5, 9],
-        [6, 10],
-        [8, 11],
-        [8, 12],
-        [2, 14],
-        [12, 16],
-    ];
-
-    const memo = {};
-
-    // 参数表示求解在时间 finishBefore 之前结束的所有活动的最优解
-    function activity_selector (finishBefore) {
-        if (finishBefore < 1) {
-            return [];
-        }
-        if (memo[finishBefore]) {
-            return memo[finishBefore];
-        }
-        let max = [];
-        for (let i=0; i<acts.length; i++) {
-            if (acts[i][1] <= finishBefore) {
-                let arr = [...activity_selector(acts[i][0]), acts[i]];
-                memo[finishBefore] = arr;
-                if (arr.length > max.length) {
-                    max = arr;
-                }
-            }
-        }
-        return max;
-    }
-
-
-    let result = activity_selector(acts[acts.length-1][1]);
-    console.log(result);
-    // 0: (2) [3, 5]
-    // 1: (2) [5, 7]
-    // 2: (2) [8, 11]
-    // 3: (2) [12, 16]
-    ```
-8. 这里的最优解是最多的活动数量，还有一种需求是最多的使用时间，也就是要选出总用时最多的若干个活动。因此需要计算和比较每种选择的活动的总用时
-    ```js
-    function calcHours (actList) {
-        let n = 0;
-        actList.forEach((act)=>{
-            n += act[1] - act[0];
-        });
-        return n;
-    }
-
-
-    function activity_selector (finishBefore) {
-        if (finishBefore < 1) {
-            return [];
-        }
-        if (memo[finishBefore]) {
-            return memo[finishBefore];
-        }
-        let maxHours = 0;
-        let maxList = [];
-        for (let i=0; i<acts.length; i++) {
-            if (acts[i][1] <= finishBefore) {
-                let arr = [...activity_selector(acts[i][0]), acts[i]];
-                let hours = calcHours(arr);
-                memo[finishBefore] = arr;
-                if (hours > maxHours) {
-                    maxList = arr;
-                    maxHours = hours;
-                }
-            }
-        }
-        return maxList;
-    }
-
-
-    let result = activity_selector(acts[acts.length-1][1]);
-    console.log(result);
-    // 0: (2) [0, 6]
-    // 1: (2) [6, 10]
-    // 2: (2) [12, 16]
-    ```
-
-### 自底向上解法
-1. 在最优子结构的递归式中，我们会不断的在更早的时间段里找到最大兼容活动集。例如最开始我们会在前 16 个小时里找到最大兼容活动集，然后递归的子问题中，我们就要在前 12 个小时里找到最大兼容活动集。
-2. 因此自底向上的解法中，我们就可以从最小的时间段开始逐个计算每个时间段的最大兼容活动集，一直计算到最终的前 16 个小时的最大兼容活动集
+## 活动选择问题的最优子结构及动态规划解法
+### 产生两个子问题的最优子结构
+1. 原问题的解决包含做出某种选择或者处于某种不同状态。这里做出的选择是：选择某个活动包含在可能的最大兼容活动集中。
+2. 为了得出最优解而要选择的活动，肯定是所有选择的可能性中的一种，因此需要遍历所有活动。
+3. 每种选择出的活动会产生两个子问题：在这个活动之前的时间段里的子最大兼容活动集，和在这个活动之后的时间段里的子最大兼容活动集。
+4. 两个子问题的活动集的数量再加上当前选择的活动的数量一，就是当前选择的兼容活动集的数量。
+5. 对比每种选择的产生的兼容活动集的数量，就能找到最大兼容活动集
     ```js
     const acts = [
         {start:  1,  finish:   4},
@@ -167,39 +74,203 @@
         {start: 12,  finish:  16},
     ];
 
-    const table = [];
+    // 从活动列表 actList 中筛选出活动时间在 sHour 和 fHour 之间的活动
+    function getListByHours (actList, sHour, fHour) {
+        return actList.filter((a) => {
+            return a.start >= sHour && a.finish <= fHour;
+        });
+    }
 
+    // 找到活动列表 actList 中最早开始的活动的开始时间
+    function firstStartHour(actList) {
+        let h = 24;
+        actList.forEach((a) => {
+            if (a.start < h) {
+                h = a.start;
+            }
+        });
+        return h;
+    }
 
-    function activity_selector (idx) {
-        if (idx < 0) {
+    // 找到活动列表 actList 中最晚结束的活动的结束时间
+    // 这里因为活动已经按照结束时间排序了所以直接是最后一个活动的
+    function lastFinishHour(actList) {
+        return actList[actList.length-1].finish;
+    }
+
+    function activity_selector (actList) {
+        if (actList.length <= 1) {
+            return actList;
+        }
+
+        let maxList = [];
+
+        for (let i=0; i<actList.length; i++) {
+            let currAct = actList[i];
+            
+            // actList 中在 currAct 之前和之后进行的所有活动
+            let beforeList = getListByHours(actList, firstStartHour(actList), currAct.start);
+            let afterList = getListByHours(actList, currAct.finish, lastFinishHour(actList));
+
+            // 递归求解子问题
+            let beforeSubResult = activity_selector(beforeList);
+            let afterSubResult =  activity_selector(afterList);
+
+            // 当前选择的兼容活动集
+            let list = [...beforeSubResult, currAct, ...afterSubResult];
+
+            if (list.length > maxList.length) {
+                maxList = list;
+            }
+        }
+
+        return maxList;
+    }
+
+    let result = activity_selector(acts)
+    console.log(result);
+    // 0: {start: 1, finish: 4}
+    // 1: {start: 5, finish: 7}
+    // 2: {start: 8, finish: 11}
+    // 3: {start: 12, finish: 16}
+    ```
+
+### 产生一个子问题的最优子结构
+1. 如同钢条切割问题对初始的两个子问题的最优子结构进行的优化一样，这里也可以进行同样的优化。
+2. 也就是，每次选择一个活动，作为兼容活动集的最后一个活动。这样，在这个活动之前的所有活动，就可以组成唯一的子问题
+    ```js
+    function activity_selector (actList) {
+        if (actList.length <= 1) {
+            return actList;
+        }
+
+        let maxList = [];
+
+        for (let i=0; i<actList.length; i++) {
+            let lastAct = actList[i];
+            let beforeList = getListByHours(actList, firstStartHour(actList), lastAct.start);
+            let beforeSubResult = activity_selector(beforeList);
+            if ( beforeSubResult.length + 1 > maxList.length ) {
+                maxList = [...beforeSubResult, lastAct];
+            }
+        }
+
+        return maxList;
+    }
+    ```
+3. 加上缓存。可以看到现在函数的参数是数组，如果使用缓存，很难用数组作为缓存的索引。那子问题如何表示出 “当前活动之前的所有活动” 呢？
+4. 其实要找到当前活动之前的所有活动也是通过时间来找的，所以可以直接使用时间来做标志，也就是 “当前活动开始时间之前” 作为标记。所以函数的参数和缓存的索引可以使用某个小时数，求解或保存该小时数之前的活动的的最大兼容活动集
+    ```js
+    const memo = [];
+
+    function activity_selector (actList, beforeHour) {
+        if (actList.length < 1 || beforeHour < 1) {
             return [];
         }
-        let lastAct = acts[idx];
-        // 计算所有时间段里的子最大兼容活动集
-        for (let f=1; f<=lastAct.finish; f++) {
-            let max = [];
-            // 每个子最大兼容活动集中，仍然选择其中一个作为该子活动集的最后一个活动
-            for (let i=0; i<=idx; i++) {
-                // 因为我们是考察逐小时递增时间段的，所以并不是每个时间段都有活动
-                if (acts[i]) {
-                    // 如果选中的活动已经超过考察的时间段范围了
-                    if (acts[i].finish > f) {
-                        break;
-                    }
-                    // 子最大兼容活动集的活动就是选定的最后一个活动再加上该活动之前时间段里的子最大兼容活动集
-                    let arr = [...(table[acts[i].start] || []), acts[i]];
-                    if (arr.length > max.length) {
-                        max = arr;
-                    }
-                }
-            }
-            table[f] = max;
+        
+        if (memo[beforeHour]) {
+            return memo[beforeHour];
         }
-        return table[acts[idx].finish];
+        
+        let maxList = [];
+        
+        // 循环继续条件的后半部分要求选择的最后一个活动的结束时间不能超过参数指定的结束时间；
+        // 不能只写后半部分条件，因为循环到 actList[i] 是最后一个活动时，
+        // actList[i].finish 等于 beforeHour，因此循环还会继续，但下一轮 i 就等于 actList.length 了，
+        // 这就导致 actList[i] 变成了 undefiend。
+        for (let i=0; i<actList.length && actList[i].finish<=beforeHour; i++) {
+            let lastAct = actList[i];
+            let beforeList = getListByHours(actList, firstStartHour(actList), lastAct.start);
+            let beforeSubResult = activity_selector(beforeList, lastAct.start);
+            if ( beforeSubResult.length + 1 > maxList.length ) {
+                maxList = [...beforeSubResult, lastAct];
+            }
+        }
+        memo[beforeHour] = maxList;
+
+        return maxList;
+    }
+
+    
+    let result = activity_selector(acts, lastFinishHour(acts));
+    console.log(result);
+    ```
+5. 这里的最优解是要求最多的活动数量，还有一种需求是最多的使用时间，也就是要选出总用时最多的若干个活动。因此需要计算和比较每种选择的活动的总用时
+    ```js
+    // 增加一个辅助方法，用来计算活动列表 actList 中所有活动总的小时数
+    function actsHours (actList) {
+        let hours = 0;
+        actList.forEach((act) => {
+            hours += act.finish - act.start;
+        });
+        return hours;
+    }
+
+    function activity_selector (actList) {
+        if (actList.length <= 1) {
+            return actList;
+        }
+
+        let maxList = [];
+        let maxHours = 0;
+
+        for (let i=0; i<actList.length; i++) {
+            let lastAct = actList[i];
+            let beforeList = getListByHours(actList, firstStartHour(actList), lastAct.start);
+            let beforeSubResult = activity_selector(beforeList);
+            let resultList = [...beforeSubResult, lastAct];
+            // 计算当前选择的总小时数
+            let hours = actsHours(resultList)
+            if (hours > maxHours) {
+                maxHours = hours;
+                maxList = resultList;
+            }
+        }
+
+        return maxList;
     }
 
 
-    let result = activity_selector(acts.length-1);
+    let result = activity_selector(acts)
+    console.log(result);
+    // 0: (2) [0, 6]
+    // 1: (2) [6, 10]
+    // 2: (2) [12, 16]
+    ```
+
+### 自底向上解法
+1. 在产生一个子问题的最优子结构的递归式中，随着递归的深入，我们会不断的求解更早时间段的最大兼容活动集。例如最开始我们会在前 16 个小时里找到最大兼容活动集，然后递归的子问题中，我们就要在前 12 个小时里找到最大兼容活动集。
+2. 因此自底向上的解法中，我们就可以从最小的时间段（一小时）开始，逐个增加时间段长度（增加小时数）并计算每个时间段的最大兼容活动集，一直计算到最终的前 16 个小时时间段的最大兼容活动集。
+    ```js
+    const table = [];
+
+    function activity_selector (actList, lastHour) {
+        // 下面的遍历填表从 1 开始，所以不会填 table[0]，但有活动的开始时间是 0，
+        // 不过不设置为空数组则 table[0] 会是 undefined
+        table[0] = []; 
+
+        // 计算逐小时递增的时间段的最大兼容活动集
+        for (let h=1; h<=lastHour; h++) {
+            // 当前时间段里的所有活动
+            let currList = getListByHours(actList, firstStartHour(actList), h);
+            
+            // 根据最优子结构，求出当前时间段的最大兼容活动集
+            let maxList = [];
+            for (let i=0; i<currList.length; i++) {
+                let lastAct = currList[i];
+                let result = [...table[lastAct.start], lastAct];
+                if (result.length > maxList.length) {
+                    maxList = result;
+                }
+            }
+            table[h] = maxList;
+        }
+
+        return table[lastHour];
+    }
+
+
+    let result = activity_selector(acts, lastFinishHour(acts));
     console.log(result);
     // 0: {start: 1, finish: 4}
     // 1: {start: 5, finish: 7}
