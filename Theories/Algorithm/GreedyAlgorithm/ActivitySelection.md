@@ -13,6 +13,7 @@
         - [产生两个子问题的最优子结构](#产生两个子问题的最优子结构)
         - [产生一个子问题的最优子结构](#产生一个子问题的最优子结构)
         - [自底向上解法](#自底向上解法)
+            - [C 实现](#c-实现)
     - [贪心选择](#贪心选择)
     - [递归贪心算法](#递归贪心算法)
     - [迭代贪心算法](#迭代贪心算法)
@@ -278,6 +279,111 @@
     // 3: {start: 12, finish: 16}
     console.log(table);
     ```
+
+#### C 实现
+```cpp
+#define ACT_COUNT 11
+#define MAX_FINISH 16
+
+int acts[ACT_COUNT+1][2] = {
+    {-1, -1}, // 从 1 开始计数
+    {1,   4},
+    {3,   5},
+    {0,   6},
+    {5,   7},
+    {3,   9},
+    {5,   9},
+    {6,  10},
+    {8,  11},
+    {8,  12},
+    {2,  14},
+    {12, 16},
+};
+
+// 记录每个时间段的最大兼容活动集的活动数量
+int actCountTable[MAX_FINISH+1] = {0};
+// 记录每个时间段的最大兼容活动集的最后一个活动在 acts 中的 index
+int resultLastIdxTable[MAX_FINISH+1] = {0};
+
+
+int activity_selector (int actList[][2], int lastHour) {
+    // 从小到大遍历每个时间段，记录每个时间段的最大兼容活动集
+    for (int h=1; h<=lastHour; h++) {
+        int maxCount = 0;
+        // 对于每个时间段，选择该时间段内的一个活动最为最大兼容活动集的最后一个活动
+        for (int i=1; i<=ACT_COUNT; i++) {
+            // 活动已经按结束时间递增排序了，所以如果选中的一个活动的结束时间超过了时间段范围，
+            // 那后序的活动肯定也会超过。
+            // 因为下面这个判断，所以在本例中，h 小于 4 时即使 i 为 1 也会直接 break，
+            // 因为本例第一个活动的的结束时间是 4。
+            if (actList[i][1] > h) { 
+                break;
+            }
+            // 最后一个活动开始前的时间段的最大兼容活动集数量再加上当前最后一个活动的数量 1
+            if (actCountTable[actList[i][0]] + 1 > maxCount) {
+                maxCount = actCountTable[actList[i][0]] + 1;
+                // 记录当前时间段的最大兼容活动集最后一个活动在 acts 中的 index    
+                resultLastIdxTable[h] = i;
+            }
+        }
+        // 记录当前时间段的最大兼容活动集数量
+        actCountTable[h] = maxCount;
+    }
+
+    return actCountTable[lastHour];
+}
+
+void print_act_count_table () {
+    for (int i=1; i<=MAX_FINISH; i++) {
+        printf("%d ", actCountTable[i]);
+    }
+    printf("\n");
+}
+void print_result_last_index_table () {
+    for (int i=1; i<=MAX_FINISH; i++) {
+        printf("%d ", resultLastIdxTable[i]);
+    }
+    printf("\n");
+}
+
+// 通过 resultLastIdxTable 可以知道 MAX_FINISH 时间段里最大兼容活动集最后一个活动，以及它的开始时间 s；
+// 根据问题的最优子机构，可以继续从 resultLastIdxTable 查到 s 时间段里最大兼容活动集的最后一个活动；
+// 以此类推，知道要查找的时间段小于 1；
+void print_result (int finishHour) {
+    // finishHour 时间段的最大兼容活动集最后一个活动在 acts 中的 index
+    int lastActIdx = resultLastIdxTable[finishHour];
+    // 要查找的时间段小于 1 当然要停止；
+    // 另外如果 lastActIdx 为 0，就说明当前时间段不存在兼容活动集；
+    // 在本例中，4 小时之前的时间段都不存在兼容活动集。
+    if (finishHour > 0 && lastActIdx > 0) {
+        // 获得前一个时间段
+        int prevFinishHour = acts[lastActIdx][0];
+        // 递归的求解前一个时间段里的最大兼容活动集的最后一个活动
+        print_result(prevFinishHour);
+        // 在递归之后打印，因此优先打印调用栈最顶层的活动，也就是活动集中最前面的活动
+        printf("{%d %d} ", acts[lastActIdx][0], acts[lastActIdx][1]);
+    }
+}
+
+int main (void) {
+
+    int count = activity_selector(acts, MAX_FINISH);
+
+    printf("%d\n", count); // 4
+
+    print_act_count_table();
+    // 0 0 0 1 1 1 2 2 2 2 3 3 3 3 3 4
+
+    print_result_last_index_table();
+    // 0 0 0 1 1 1 4 4 4 4 8 8 8 8 8 11
+
+    print_result(MAX_FINISH); // {1 4} {5 7} {8 11} {12 16} 
+    
+    printf("\n");
+
+    return 0;
+}
+```
 
 
 ## 贪心选择
