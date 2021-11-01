@@ -17,8 +17,8 @@
     - [贪心选择](#贪心选择)
     - [递归贪心算法](#递归贪心算法)
     - [迭代贪心算法](#迭代贪心算法)
-    - [动态规划算法 TODO](#动态规划算法-todo)
     - [TODO](#todo)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -34,7 +34,6 @@
 
 
 ## 适用场景
-
 
 
 ## 调度竞争共享资源的多个活动
@@ -389,55 +388,58 @@ int main (void) {
 ## 贪心选择
 1. 假如我们不需要求解所有的子问题会怎样？如果每次选择一个活动不需要遍历当前的所有活动而是确定的选择一个。
 2. 对于活动选择问题，我们其实每次不需要遍历当前的所有活动，而只需要考虑一个选择，就是贪心选择。
-3. 我想到的贪心选择是时长最短的活动。但实际上正确的贪心选择是结束时间最早的活动。不懂，为什么不能是时长最短的。一个不算是理由的原因是，如果选择了时长最短的，那么它之前和之后都可能要安排其他活动；而如果选择结束时间最早的，那它之前就没时间安排其他活动了，只要考虑往后面安排活动就行了。
-4. TODO，不懂。《算法导论》证明选择最早结束的活动是正确的。《算法导论》练习 16.1-3
-5. 既然现在可以贪心的选择最早结束的活动，那就先从排好序的所有活动里选择第一个，也就是最早结束的；然后再从剩下的活动里面，选择与第一个活动兼容的且最早结束的；然后以此类推直到没有活动可选。
-6. 求解活动选择问题的算法不必像基于表格的动态规划算法那样自底向上进行计算，而是可以自顶向下的计算：选择一个活动方法最优解的活动列表中，然后对剩下的活动再递归选择。
-7. 贪心算法通常都是这种自顶向下的设计：做出一个选择，然后求解剩下的子问题。而不是自底向上的求解出很多子问题，然后在通过比较做出选择。
+3. 我开始想到的贪心选择是时长最短的活动。但实际上正确的贪心选择是结束时间最早的活动。《算法导论》练习 16.1-3。虽然不知道怎么证明，但可以随便举出一个反例：$\{(1,9),(8,11),(10,20)\}$，显然如果选择 $(8, 11)$ 将不会得到最大兼容活动集。
+4. 另外，贪心的择与其他活动冲突最少的活动也不行，反例是 ${(−1,1),(2,5),(0,3),(0,3),(0,3),(4,7),(6,9),(8,11),(8,11),(8,11),(10,12)}$，和其他活动冲突最少的是 $(4,7)$，但唯一的最大兼容子集是 $ (−1,1), (2,5), (6,9), (10,12)$。
+5. 《算法导论》证明选择最早结束的活动是正确的。如果最早结束的活动不在最大兼容子集里，那它的结束时间肯定小于等于最大兼容子集里的第一个活动，那么它就至少可以替换掉这个活动，从而构成另一个最大兼容子集。
+6. 或者这么想，你如果选择了一个结束更晚的作为第一个，那剩下的时间肯定更短了，所以显然应该选结束更早的作为第一个；又如果你说选一个结束更晚的可能开始的也更晚，这样前面就可以再插一个。那显然前面插入的这个就成了结束更早的那个。
+7. 既然现在可以贪心的选择最早结束的活动，那就先从排好序的所有活动里选择第一个，也就是最早结束的；然后再从剩下的活动里面，选择与第一个活动兼容的且最早结束的；然后以此类推直到没有活动可选。
+8. 求解活动选择问题的算法不必像基于表格的动态规划算法那样自底向上进行计算，而是可以自顶向下的计算：选择一个活动方法最优解的活动列表中，然后对剩下的活动再递归选择。
+9. 贪心算法通常都是这种自顶向下的设计：做出一个选择，然后求解剩下的子问题。而不是自底向上的求解出很多子问题，然后在通过比较做出选择。
 
 
 ## 递归贪心算法
-1. 假定 `N` 个活动已经按照结束时间递增的顺序排好。
-2. 实现
+1. 实现
     ```cpp
-    #include <stdio.h>
+    #define ACT_COUNT 11
 
-    #define N 11
+    int acts[ACT_COUNT][2] = {
+        {1,   4},
+        {3,   5},
+        {0,   6},
+        {5,   7},
+        {3,   9},
+        {5,   9},
+        {6,  10},
+        {8,  11},
+        {8,  12},
+        {2,  14},
+        {12, 16},
+    };
 
-    int start_time[N] = {1, 3, 0, 5, 3, 5, 6, 8, 8, 2, 12};
-    int finish_time[N] = {4, 5, 6, 7, 9, 9, 10, 11, 12, 14, 16};
-    int activity[N];
 
-    void recursive_activity_selector (int lastIdx, int lastFinishTime) {
-        int idx = lastIdx + 1;
-        // 找到最早结束的、开始时间大于等于上次活动结束时间的活动
-        while ( start_time[idx] < lastFinishTime && idx < N ) {   
-            idx++;
-        }
-        if (idx == N) {
-            return;
-        }
-        activity[idx] = 1; // 标记选中上面找到的活动
-        recursive_activity_selector(idx, finish_time[idx]);
-    }
-
-    void printSelectedIndexes(int activity[]) {
-        for (int i=0; i<N; i++) {
-            if (activity[i] == 1) {
-                printf("%d ", i);
+    void activity_selector (int idx) {
+        printf("{%d %d} ", acts[idx][0], acts[idx][1]);
+        int i = idx;
+        do {
+            if (++i == ACT_COUNT) {
+                return;
             }
         }
-        printf("\n");
+        while (acts[i][0] < acts[idx][1]);
+        activity_selector(i);
     }
 
 
-    int main(void) {
-        recursive_activity_selector(0, 0);
-        printSelectedIndexes(activity); // 0 3 7 10
+    int main (void) {
+
+        activity_selector(0);
+        // {1 4} {5 7} {8 11} {12 16}
+
+        return 0;
     }
     ```
-3. 运行时间为 $Θ(N)$。假如所有活动都是兼容的，那么 `while` 不会被执行，`recursive_activity_selector` 会被递归调用 N 次；假如所有活动都不兼容，那么 `recursive_activity_selector` 只会初始调用一次，它里面的 `while` 循环会被执行 N 次；其他的情况就是，`while` 少执行一次，而 `recursive_activity_selector` 多调用一次。
-4. 如果按照最晚开始时间来设计贪心算法
+2. 运行时间为 $Θ(N)$。假如所有活动都是兼容的，那么 `while` 永远是假，`recursive_activity_selector` 会被调用 N 次；假如所有活动都不兼容，那么 `recursive_activity_selector` 只会初始调用一次，它里面的 `while` 循环会被执行 N 次；其他的情况就是，`while` 少循环一次，而 `recursive_activity_selector` 多调用一次。
+3. 如果按照最晚开始时间来设计贪心算法
     ```cpp
     #include <stdio.h>
 
@@ -482,43 +484,27 @@ int main (void) {
 
 ## 迭代贪心算法
 1. 我们可以很容易的将 `recursive_activity_selector` 转换为迭代形式。`recursive_activity_selector` 几乎就是尾递归，将一个尾递归改为迭代形式通常是很直接的。实际上，某些语言的编译器可以自动完成这一工作。
-2. 一次迭代对应着一次递归调用：新一层的递归调用时传递新的参数，对应新一轮的迭代设置新的值，都是新一轮的新数据；递归的结束条件就是就是迭代的结束条件。
-3. 直接改写如下
+2. 上面的递归调用中，每次调用内部会递增更新 `i`，每次递归调用时会更新 `idx`。因此在迭代中，使用 `i` 来遍历列表，使用 `idx` 来更新每次最早结束的活动
     ```cpp
-    void greedy_activity_selector (int lastFinishTime, int startIdx) {
-        while (startIdx < N) { // 结束条件
-            if ( start_time[startIdx] >= lastFinishTime ) {
-                activity[startIdx] = 1;
-                lastFinishTime = finish_time[startIdx]; // 设置新的值
+    void activity_selector (int idx) {
+        printf("{%d %d} ", acts[idx][0], acts[idx][1]);
+        int i = idx + 1;
+        while (i < ACT_COUNT) {
+            if (acts[i][0] >= acts[idx][1]) {
+                printf("{%d %d} ", acts[i][0], acts[i][1]);
+                idx = i;
             }
-            startIdx++; // 设置新的值
+            i++;
         }
     }
     ```
-4. 另外，`recursive_activity_selector` 函数需要参数，是因为每轮递归调用时要通过参数来设置新的值。现在改为迭代后，不需要用该参数来设置新值了，函数值调用一次，即使有参数也是作为初始化的值，所以函数的参数也就没必要了
-    ```cpp
-    void greedy_activity_selector () {
-        activity[0] = 1;
-        int finishTime = finish_time[0]; 
-        int startIdx = 1;
-
-        while (startIdx < N) {
-            if ( start_time[startIdx] >= finishTime ) {
-                activity[startIdx] = 1;
-                finishTime = finish_time[startIdx];
-            }
-            startIdx++;
-        }
-    }
-    ```
-5. 运行时间也是 $Θ(N)$。
-
-
-
-## 动态规划算法 TODO
+3. 运行时间也是 $Θ(N)$。
 
 
 ## TODO
-* 《算法导论》练习 16.1-1
 * 《算法导论》练习 16.1-4
 * 《算法导论》练习 16.1-5
+
+
+## References
+* [CLRS Solutions](https://walkccc.me/CLRS)
