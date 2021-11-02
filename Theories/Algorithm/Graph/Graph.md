@@ -25,10 +25,12 @@
         - [有向图和无向图](#有向图和无向图)
         - [加权性](#加权性)
     - [图的表示](#图的表示)
-        - [邻接矩阵](#邻接矩阵)
         - [邻接表](#邻接表)
+        - [邻接矩阵](#邻接矩阵)
         - [关联矩阵](#关联矩阵)
     - [使用邻接表创建图](#使用邻接表创建图)
+        - [JS 实现](#js-实现)
+        - [C 实现](#c-实现)
     - [转置图](#转置图)
         - [邻接表实现](#邻接表实现)
         - [邻接矩阵实现](#邻接矩阵实现)
@@ -142,18 +144,25 @@
 
 
 ## 图的表示
-### 邻接矩阵
-1. 我们用一个二维数组来表示节点之间的连接。如果索引为 `i` 的节点和索引为 `j` 的节点相邻，则 `array[i][j] === 1`，否则 `array[i][j] === 0`
-    <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px;" />
-2. 不是强连通的图（**稀疏图**，边数远远小于顶点数的平方）如果用邻接矩阵来表示，则矩阵中将会有很多 0，这意味着我们浪费了计算机存储空间来表示根本不存在的边。例如，找给定节点的相邻节点，即使该节点只有一个相邻节点，我们也不得不迭代一整行。
-3. 邻接矩阵表示法不够好的另一个理由是，图中节点的数量可能会改变，而 2 维数组不太灵活。
+1. 邻接表因为在表示 **稀疏图**（边的条数 $E$ 远远小于 $V^2$ 的图）时非常紧凑而成为通常的选择。因为链表节点数等于实际的图顶点数，空间利用率很高。
+2. 不过，在 **稠密图**（$E$ 接近 $V^2$ 的图）的情况下，我们可能倾向于使用邻接矩阵表示。
+3. 另外，如果要快速判断任意两个节点之间是否有边相连，可能也需要使用邻接矩阵表示法，因为二维数组数组项的访问时间是常数级别的。
 
 ### 邻接表
-1. 我们也可以使用一种叫作邻接表的动态数据结构来表示图。邻接表由图中每个节点的相邻节点列表所组成。
+1. 邻接表由图中每个节点的相邻节点列表所组成。
 2. 存在好几种方式来表示这种数据结构。我们可以用列表（数组）、链表，甚至是散列表或是字典来表示相邻节点列表。
     <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px;" />
-3. 尽管邻接表可能对大多数问题来说都是更好的选择，但以上两种表示法都很有用，且它们有着不同的性质。例如，要找出节点 v 和 w 是否相邻，使用邻接矩阵会比较快。另外如果是 **稠密图**（边的数量接近顶点数的平方），我们可能也会倾向于使用邻接矩阵。
-4. 空间复杂度为什么是 $O(V+E)$？有向图是这个可以理解，无向图为什么不是 $O(V+2E)$？
+3. 如果 $G$ 是一个有向图，那么所有链接表的长度之和等于 $E$；如果 $G$ 是一个无向图，那么所有链接表的长度之和等于 $2E$。但不管是有向图还是无向图，邻接链表表示法的空间需求均为 $O(V+E)$。不懂有向图是这个可以理解，无向图为什么不是 $O(V+2E)$？
+4. 相比于邻接矩阵，邻接表不能快速的查询给定的两个节点是否连通。
+
+### 邻接矩阵
+1. 我们用一个二维数组来表示节点之间的连接。如果索引为 `i` 的节点和索引为 `j` 的节点相邻，则 `array[i][j] == 1`，否则 `array[i][j] == 0`
+    <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px;" />
+2. 稀疏图如果用邻接矩阵来表示，则矩阵中将会有很多 0，这意味着我们浪费了计算机存储空间来表示根本不存在的边。例如，找给定节点的相邻节点，即使该节点只有一个相邻节点，我们也不得不迭代一整行。
+3. 无向图的邻接矩阵是一个对称矩阵，无向图的邻接矩阵就是自己的转置。因此在某些应用中，可能只需要存放对角线及其以上的这部分邻接矩阵，从而将图存储空间需求减少几乎一半。
+4. 邻接矩阵表示法不够好的另一个理由是，图中节点的数量可能会改变，而 2 维数组不太灵活。
+5. 邻接矩阵表示法更简单，因此在图的规模比较小时，可能更倾向于使用邻接矩阵。
+6. 而且，对于无向图来说，邻接矩阵还有一个优势，就是每个记录项只需要 1 位的空间。
 
 ### 关联矩阵
 1. 我们还可以用关联矩阵来表示图。在关联矩阵中，矩阵的行表示节点，列表示边。如下图所示，我们使用二维数组来表示两者之间的连通性
@@ -162,88 +171,235 @@
 
 
 ## 使用邻接表创建图
-1. 整体分两步：
-    1. 创建节点
-    2. 创建连接节点之间的边
-2. 先初始化
-    ```js
+### JS 实现
+```js
+class Node {
+    constructor (key, value) {
+        if ( !key ) {
+            throw new TypeError("Initiatint Node must have a key.");
+        }
+        this.key = key;
+        this.value = value;
+    }
+}
+
+
+class Graph {
     constructor(isDirected=false) {
         this.vertices = [];
         this.adjacencyList = new Map(); // 会使用顶点的名字作为键，邻接顶点列表作为值
         this.isDirected = isDirected; // 是否为有向图
     }
-    ```
-3. 添加节点
-    ```js
-    addVertex (v) {
-        this.vertices.push(v);
+
+    addVertex (node) {
+        if (this.vertices.includes(node)) return;
+        this.vertices.push(node);
         // 在邻接表中为新添加的节点建一个列表，用来保存与它相连接的节点
         // 使用 Set 而不是数组的原因，见 addEdge 方法
-        this.adjacencyList.set(v, new Set());
+        this.adjacencyList.set(node, new Set());
     }
-    ```
-4. 添加边
-    ```js
-    addEdge (v, w) {
-        this.adjacencyList.get(v).add(w); // 给节点 v 添加一个与它相邻的节点 w
-        // 如果是有向图，那只是从 v 到 w 单方向的边；如果不是，就要双向添加
+
+    getVertex (key) {
+        return this.vertices.find((v) => v.key === key);
+    }
+
+    addEdge (key1, key2) {
+        let node1 = this.vertices.find((v) => v.key === key1);
+        let node2 = this.vertices.find((v) => v.key === key2);
+        if ( !node1 ) {
+            throw new TypeError(`First argument ${key1} in addEdge is not a key of added node.`);
+        }
+        if ( !node2 ) {
+            throw new TypeError(`Second argument ${key2} in addEdge is not a key of added node.`);
+        }
+        this.adjacencyList.get(node1).add(node2); // 给节点 node1 添加一个与它相邻的节点 node2
+        // 如果是有向图，那只是从 node1 到 node2 单方向的边；如果不是，就要双向添加
         if (!this.isDirected) {
-            this.adjacencyList.get(w).add(v);
+            this.adjacencyList.get(node2).add(node1);
         }
         // 相邻的节点列表之所有用 Set 而不用数组，就是因为这里的双向添加。如果使用数组，
         // 比如调用方法 addEdge('A', 'B') 会双向添加，之后如果再调用 addEdge('B', 'A')，
         // 那就会重复添加了，导致 A 的相邻节点里就会有两个 B，B 的相邻节点里也会有两个 A。
     }
-    ```
-5. 创建一个打印的函数来查看邻接表
-    ```js
+
     toString () {
         let str = '';
         this.vertices.forEach(vertex=>{
             let neighbors = this.adjacencyList.get(vertex);
             if ( neighbors.size ) {
-                str += vertex + ' -> ';
+                str += vertex.key + ' -> ';
                 neighbors.forEach(neighbor=>{
-                    str += neighbor + ' ';
+                    str += neighbor.key + ' ';
                 });
                 str += '\n';
             }
         });
         return str;
     }
-    ```
-6. 测试
-    ```js
-    let graph = new Graph();
-    let vertices = ['A','B','C','D','E','F','G','H','I'];
-
-    vertices.forEach(vertex=>{
-        graph.addVertex(vertex);
-    });
-
-    graph.addEdge('A', 'B');
-    graph.addEdge('A', 'C');
-    graph.addEdge('A', 'D');
-    graph.addEdge('B', 'E');
-    graph.addEdge('B', 'F');
-    graph.addEdge('C', 'D');
-    graph.addEdge('C', 'G');
-    graph.addEdge('D', 'G');
-    graph.addEdge('D', 'H');
-    graph.addEdge('E', 'I');
+}
 
 
-    console.log(graph.toString());
-    // A -> B C D 
-    // B -> A E F 
-    // C -> A D G 
-    // D -> A C G H 
-    // E -> B I 
-    // F -> B 
-    // G -> C D 
-    // H -> D 
-    // I -> E 
-    ```
+let graph = new Graph();
+let vertexKeys = ['A','B','C','D','E','F','G','H','I'];
+
+vertexKeys.forEach(key=>{
+    graph.addVertex(new Node(key));
+});
+
+
+graph.addEdge('A', 'B');
+graph.addEdge('A', 'C');
+graph.addEdge('A', 'D');
+graph.addEdge('B', 'E');
+graph.addEdge('B', 'F');
+graph.addEdge('C', 'D');
+graph.addEdge('C', 'G');
+graph.addEdge('D', 'G');
+graph.addEdge('D', 'H');
+graph.addEdge('E', 'I');
+
+
+console.log(graph.toString());
+// A -> B C D 
+// B -> A E F 
+// C -> A D G 
+// D -> A C G H 
+// E -> B I 
+// F -> B 
+// G -> C D 
+// H -> D 
+// I -> E 
+```
+
+### C 实现
+```cpp
+#define VERTEX_SIZE 10
+
+
+typedef struct Node {
+    int key;
+    int value;
+    struct Node* next;
+} Node;
+
+
+static Node* vertices[VERTEX_SIZE] = {};
+// static adjacencyList
+
+static int vertexCount = 0;
+
+bool hasVertex (int key) {
+    for (int i=0; i<vertexCount; i++) {
+        if (vertices[i]->key == key) return true;
+    }
+    return false;
+}
+
+void addVertex (Node* node) {
+    if (vertexCount == 10 || hasVertex(node->key)) return;
+
+    vertices[vertexCount] = node;
+    vertexCount++;
+}
+
+Node* getVertex (int key) {
+    for (int i=0; i<vertexCount; i++) {
+        if (vertices[i]->key == key) return vertices[i];
+    }
+    return NULL;
+}
+
+void addEdge (int key1, int key2) {
+    if ( !hasVertex(key1) ) {
+        printf("First argument %d in addEdge is not a key of added node.\n", key1);
+        exit(EXIT_FAILURE);
+    }
+    if ( !hasVertex(key2) ) {
+        printf("Second argument %d in addEdge is not a key of added node.\n", key2);
+        exit(EXIT_FAILURE);
+    }
+
+    Node* vertex1 = getVertex(key1);
+    Node* vertex2 = getVertex(key2);
+
+    Node* curr1 = vertex1;
+    while ( curr1->next ) {
+        curr1 = curr1->next;
+    }
+    curr1->next = vertex2;
+
+    
+    Node* curr2 = vertex2;
+    while ( curr2->next ) {
+        curr2 = curr2->next;
+    }
+    curr2->next = vertex1;
+
+}
+
+void printVertexKeys () {
+    for (int i=0; i<vertexCount; i++) {
+        printf("%d ", vertices[i]->key);
+    }
+    printf("\n");
+}
+
+void adjacencyList () {
+    for (int i=0; i<vertexCount; i++) {
+        Node* curr = vertices[i];
+        printf("%d: ", curr->key);
+        while (curr->next) {
+            curr = curr->next;
+            printf("%d ", curr->key);
+        }
+        printf("\n");
+    }
+}
+
+
+int main (void) {
+
+    Node vertex1 = {1, 111, NULL};
+    addVertex(&vertex1);
+
+    Node vertex2 = {2, 222, NULL};
+    addVertex(&vertex2);
+
+    Node vertex3 = {3, 333, NULL};
+    addVertex(&vertex3);
+
+    Node vertex4 = {4, 444, NULL};
+    addVertex(&vertex4);
+
+    Node vertex5 = {5, 555, NULL};
+    addVertex(&vertex5);
+    
+    Node vertex6 = {6, 666, NULL};
+    addVertex(&vertex6);
+    
+    Node vertex7 = {7, 777, NULL};
+    addVertex(&vertex7);
+    
+    Node vertex8 = {8, 888, NULL};
+    addVertex(&vertex8);
+
+    Node vertex9 = {9, 999, NULL};
+    addVertex(&vertex9);
+
+    Node vertex10 = {10, 1000, NULL};
+    addVertex(&vertex10);
+
+    Node vertex11 = {11, 1111, NULL};
+    addVertex(&vertex11);
+
+    printVertexKeys();
+
+    addEdge(1, 3);
+
+    adjacencyList();
+    return 0;
+}
+```
 
 
 ## 转置图
