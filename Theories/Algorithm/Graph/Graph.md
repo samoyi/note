@@ -273,131 +273,118 @@ console.log(graph.toString());
 
 ### C 实现
 ```cpp
-#define VERTEX_SIZE 10
-
-
+// 邻接表的节点
 typedef struct Node {
-    int key;
+	int key;
     int value;
-    struct Node* next;
+	struct Node* next;
 } Node;
 
+// 邻接表的一个链表
+typedef struct List {
+	Node* head;
+} List;
 
-static Node* vertices[VERTEX_SIZE] = {};
-// static adjacencyList
+// 以邻接表表示的图
+typedef struct Graph {
+	int V; // 节点数，也就是链表数
+	List* listArray; // 指向链表组成的数组
+} Graph;
 
-static int vertexCount = 0;
 
-bool hasVertex (int key) {
-    for (int i=0; i<vertexCount; i++) {
-        if (vertices[i]->key == key) return true;
-    }
-    return false;
-}
-
-void addVertex (Node* node) {
-    if (vertexCount == 10 || hasVertex(node->key)) return;
-
-    vertices[vertexCount] = node;
-    vertexCount++;
-}
-
-Node* getVertex (int key) {
-    for (int i=0; i<vertexCount; i++) {
-        if (vertices[i]->key == key) return vertices[i];
-    }
-    return NULL;
-}
-
-void addEdge (int key1, int key2) {
-    if ( !hasVertex(key1) ) {
-        printf("First argument %d in addEdge is not a key of added node.\n", key1);
+// 该函数实例化一个节点并初始化，然后返回该节点的指针
+Node* createNode(int key, int value) {
+	Node* newNode = (Node*) malloc(sizeof(Node));
+    if (newNode == NULL) {
+        printf("malloc failed in function createNode.\n");
         exit(EXIT_FAILURE);
     }
-    if ( !hasVertex(key2) ) {
-        printf("Second argument %d in addEdge is not a key of added node.\n", key2);
+	newNode->key = key;
+	newNode->value = value;
+	newNode->next = NULL;
+	return newNode;
+}
+
+// 该函数实例化一个使用邻接表表示的图并初始化，然后返回该图的指针
+Graph* createGraph(int V) {
+	Graph* graph = (Graph*) malloc(sizeof(Graph));
+    if (graph == NULL) {
+        printf("malloc failed in function createGraph.\n");
+        exit(EXIT_FAILURE);
+    }
+	graph->V = V;
+
+    // 为 V 个链表分配内存，graph->listArray 指向这些链表组成的数组
+	graph->listArray = (List*) malloc(V * sizeof(List));
+    if (graph->listArray == NULL) {
+        printf("malloc failed in function createGraph.\n");
         exit(EXIT_FAILURE);
     }
 
-    Node* vertex1 = getVertex(key1);
-    Node* vertex2 = getVertex(key2);
-
-    Node* curr1 = vertex1;
-    while ( curr1->next ) {
-        curr1 = curr1->next;
+    // 每个链表初始化为空
+	for (int i = 0; i < V; i++) {
+		graph->listArray[i].head = NULL;
     }
-    curr1->next = vertex2;
 
-    
-    Node* curr2 = vertex2;
-    while ( curr2->next ) {
-        curr2 = curr2->next;
-    }
-    curr2->next = vertex1;
-
+	return graph;
 }
 
-void printVertexKeys () {
-    for (int i=0; i<vertexCount; i++) {
-        printf("%d ", vertices[i]->key);
-    }
-    printf("\n");
+// 无向图添加边
+void addEdge(Graph* graph, int node1Key, int node1Value, int node2Key, int node2Value) {
+	Node* node2 = createNode(node2Key, node2Value);
+    // 新加的节点作为链表的 head
+	node2->next = graph->listArray[node1Key].head;
+	graph->listArray[node1Key].head = node2;
+    
+    // 双向添加
+	Node* node1 = createNode(node1Key, node1Value);
+	node1->next = graph->listArray[node2Key].head;
+	graph->listArray[node2Key].head = node1;
 }
 
-void adjacencyList () {
-    for (int i=0; i<vertexCount; i++) {
-        Node* curr = vertices[i];
-        printf("%d: ", curr->key);
-        while (curr->next) {
-            curr = curr->next;
-            printf("%d ", curr->key);
-        }
-        printf("\n");
-    }
+Node* getNode (Graph* graph, int key) {
+    return graph->listArray[key].head;
 }
 
+void printGraph(Graph* graph) {
+	for (int i = 0; i < graph->V; i++) {
+		Node* pCurr = graph->listArray[i].head;
+		printf("\n Adjacency list of vertex %d\n head ", i);
+		while (pCurr) {
+			printf("-> %d", pCurr->key);
+			pCurr = pCurr->next;
+		}
+		printf("\n");
+	}
+}
 
-int main (void) {
+int main() {
+	struct Graph* graph = createGraph(5);
 
-    Node vertex1 = {1, 111, NULL};
-    addVertex(&vertex1);
+	addEdge(graph, 0, 10, 1, 21);
+	addEdge(graph, 0, 10, 4, 24);
+	addEdge(graph, 1, 11, 2, 22);
+	addEdge(graph, 1, 11, 3, 23);
+	addEdge(graph, 1, 11, 4, 24);
+	addEdge(graph, 2, 12, 3, 23);
+	addEdge(graph, 3, 13, 4, 24);
 
-    Node vertex2 = {2, 222, NULL};
-    addVertex(&vertex2);
+	printGraph(graph);
+    // Adjacency list of vertex 0
+    // head -> 4-> 1
 
-    Node vertex3 = {3, 333, NULL};
-    addVertex(&vertex3);
+    // Adjacency list of vertex 1
+    // head -> 4-> 3-> 2-> 0
 
-    Node vertex4 = {4, 444, NULL};
-    addVertex(&vertex4);
+    // Adjacency list of vertex 2
+    // head -> 3-> 1
 
-    Node vertex5 = {5, 555, NULL};
-    addVertex(&vertex5);
-    
-    Node vertex6 = {6, 666, NULL};
-    addVertex(&vertex6);
-    
-    Node vertex7 = {7, 777, NULL};
-    addVertex(&vertex7);
-    
-    Node vertex8 = {8, 888, NULL};
-    addVertex(&vertex8);
+    // Adjacency list of vertex 3
+    // head -> 4-> 2-> 1
 
-    Node vertex9 = {9, 999, NULL};
-    addVertex(&vertex9);
-
-    Node vertex10 = {10, 1000, NULL};
-    addVertex(&vertex10);
-
-    Node vertex11 = {11, 1111, NULL};
-    addVertex(&vertex11);
-
-    printVertexKeys();
-
-    addEdge(1, 3);
-
-    adjacencyList();
-    return 0;
+    // Adjacency list of vertex 4
+    // head -> 3-> 1-> 0
+	return 0;
 }
 ```
 
@@ -814,3 +801,4 @@ TODO 《算法导论》说 BFS 的前驱子图是一棵树，DFS 的前驱子图
 * [算法（第4版）](https://book.douban.com/subject/19952400/)
 * [Python数据结构与算法分析（第2版）](https://book.douban.com/subject/34785178/)
 * [算法导论（原书第3版）](https://book.douban.com/subject/20432061/)
+* [Graph and its representations](https://www.geeksforgeeks.org/graph-and-its-representations/)
