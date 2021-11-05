@@ -272,122 +272,413 @@ console.log(graph.toString());
 ```
 
 ### C 实现
-```cpp
-// 邻接表的节点
-typedef struct Node {
-	int key;
-    int value;
-	struct Node* next;
-} Node;
-
-// 邻接表的一个链表
-typedef struct List {
-	Node* head;
-} List;
-
-// 以邻接表表示的图
-typedef struct Graph {
-	int V; // 节点数，也就是链表数
-	List* listArray; // 指向链表组成的数组
-} Graph;
+1. 最初实现如下
+    ```cpp
+    #define GRAPH_SIZE 10 // 最大节点数量
 
 
-// 该函数实例化一个节点并初始化，然后返回该节点的指针
-Node* createNode(int key, int value) {
-	Node* newNode = (Node*) malloc(sizeof(Node));
-    if (newNode == NULL) {
-        printf("malloc failed in function createNode.\n");
-        exit(EXIT_FAILURE);
-    }
-	newNode->key = key;
-	newNode->value = value;
-	newNode->next = NULL;
-	return newNode;
-}
+    typedef struct Node {
+        int key;
+        int value;
+        struct Node* next;
+    } Node;
 
-// 该函数实例化一个使用邻接表表示的图并初始化，然后返回该图的指针
-Graph* createGraph(int V) {
-	Graph* graph = (Graph*) malloc(sizeof(Graph));
-    if (graph == NULL) {
-        printf("malloc failed in function createGraph.\n");
-        exit(EXIT_FAILURE);
-    }
-	graph->V = V;
 
-    // 为 V 个链表分配内存，graph->listArray 指向这些链表组成的数组
-	graph->listArray = (List*) malloc(V * sizeof(List));
-    if (graph->listArray == NULL) {
-        printf("malloc failed in function createGraph.\n");
-        exit(EXIT_FAILURE);
+    static Node* nodes[GRAPH_SIZE] = {}; // 所有节点组成的数组
+
+    static int nodeCount = 0; // 当前节点数量
+
+    // 当前 key 所在的节点是否存在
+    bool hasNode (int key) {
+        nodes[0]->key == key;
+        for (int i=0; i<nodeCount; i++) {
+            if (nodes[i]->key == key) return true;
+        }
+        return false;
     }
 
-    // 每个链表初始化为空
-	for (int i = 0; i < V; i++) {
-		graph->listArray[i].head = NULL;
+    // 根据 key 获得节点
+    Node* getNode (int key) {
+        for (int i=0; i<nodeCount; i++) {
+            if (nodes[i]->key == key) return nodes[i];
+        }
+        return NULL;
     }
 
-	return graph;
-}
+    // 向图的节点列表里添加一个节点，但还没有建立边
+    void addNode (int key, int value) {
+        if (key < 0 || key >= GRAPH_SIZE) {
+            printf("Function addNode: key must in range [0, %d]\n", GRAPH_SIZE-1);
+            exit(EXIT_FAILURE);
+        }
+        if (nodeCount == GRAPH_SIZE) {
+            printf("Function addNode: graph is full\n");
+            exit(EXIT_FAILURE);
+        }
+        if (hasNode(key)) {
+            getNode(key)->value = value;
+            return;
+        }
+        Node* node = (Node*) malloc(sizeof(Node));
+        if (node == NULL) {
+            printf("malloc fails in addNode\n");
+            exit(EXIT_FAILURE);
+        }
+        node->key = key;
+        node->value = value;
+        node->next = NULL;
+        nodes[key] = node;
+        nodeCount++;   
+    }
 
-// 无向图添加边
-void addEdge(Graph* graph, int node1Key, int node1Value, int node2Key, int node2Value) {
-	Node* node2 = createNode(node2Key, node2Value);
-    // 新加的节点作为链表的 head
-	node2->next = graph->listArray[node1Key].head;
-	graph->listArray[node1Key].head = node2;
-    
-    // 双向添加
-	Node* node1 = createNode(node1Key, node1Value);
-	node1->next = graph->listArray[node2Key].head;
-	graph->listArray[node2Key].head = node1;
-}
+    // 将两个节点连为边，无向图
+    void addEdge (int key1, int key2) {
+        if ( !hasNode(key1) ) {
+            printf("First argument %d in addEdge is not a key of added node.\n", key1);
+            exit(EXIT_FAILURE);
+        }
+        if ( !hasNode(key2) ) {
+            printf("Second argument %d in addEdge is not a key of added node.\n", key2);
+            exit(EXIT_FAILURE);
+        }
 
-Node* getNode (Graph* graph, int key) {
-    return graph->listArray[key].head;
-}
+        Node* node1 = getNode(key1);
+        Node* node2 = getNode(key2);
 
-void printGraph(Graph* graph) {
-	for (int i = 0; i < graph->V; i++) {
-		Node* pCurr = graph->listArray[i].head;
-		printf("\n Adjacency list of vertex %d\n head ", i);
-		while (pCurr) {
-			printf("-> %d", pCurr->key);
-			pCurr = pCurr->next;
-		}
-		printf("\n");
-	}
-}
+        Node* curr1 = node1;
+        while ( curr1->next ) {
+            curr1 = curr1->next;
+        }
+        curr1->next = node2;
+        
+        Node* curr2 = node2;
+        while ( curr2->next ) {
+            curr2 = curr2->next;
+        }
+        curr2->next = node1;
+    }
 
-int main() {
-	struct Graph* graph = createGraph(5);
+    // 打印所有节点的 key
+    void printNodeKeys () {
+        for (int i=0; i<nodeCount; i++) {
+            printf("%d ", nodes[i]->key);
+        }
+        printf("\n");
+    }
 
-	addEdge(graph, 0, 10, 1, 21);
-	addEdge(graph, 0, 10, 4, 24);
-	addEdge(graph, 1, 11, 2, 22);
-	addEdge(graph, 1, 11, 3, 23);
-	addEdge(graph, 1, 11, 4, 24);
-	addEdge(graph, 2, 12, 3, 23);
-	addEdge(graph, 3, 13, 4, 24);
+    // 打印整个邻接表
+    void printAdjacencyList () {
+        for (int i=0; i<nodeCount; i++) {
+            Node* curr = nodes[i];
+            printf("%d: ", curr->key);
+            while (curr->next) {
+                curr = curr->next;
+                printf("%d ", curr->key);
+            }
+            printf("\n");
+        }
+    }
 
-	printGraph(graph);
-    // Adjacency list of vertex 0
-    // head -> 4-> 1
 
-    // Adjacency list of vertex 1
-    // head -> 4-> 3-> 2-> 0
+    int main (void) {
 
-    // Adjacency list of vertex 2
-    // head -> 3-> 1
+        addNode(0, 0);
+        addNode(1, 111);
+        addNode(2, 222);
+        addNode(3, 333);
+        addNode(4, 444);
+        addNode(5, 555);
+        addNode(6, 666);
+        addNode(7, 777);
+        addNode(8, 888);
+        addNode(9, 999);
 
-    // Adjacency list of vertex 3
-    // head -> 4-> 2-> 1
+        printNodeKeys();
 
-    // Adjacency list of vertex 4
-    // head -> 3-> 1-> 0
-	return 0;
-}
-```
+        addEdge(1, 3);
 
+        printAdjacencyList();
+
+        return 0;
+    }
+    ```
+2. 运行的时候，`printAdjacencyList` 中的 `while` 会陷入无限循环，反复的打印 1 和 3。因为 1 是和 3 连接的节点，3 也是和 1 连接的节点。按照 `addEdge` 的逻辑，它们互为 `next`。
+3. 而且还有一个问题是，如果同一个节点出现在不同的列表里，它们的 `next` 指向会是不同的的。比如一个链表是 `3->5->6->9`，另一个链表表示 `4->5->7>8`。在这里，5 既和 3 相连也和 4 相连，所以它出现在两个链表里。但因为 5 之后分别添加了 `3-6` 的边和 `4-7` 的边，所以在两个李安表示 5 的 `next` 是不同的。
+4. 从 GeeksforGeeks 上找到的一个实现，它的解决方法是，不单独的添加顶点，而是直接添加边，并且每次添加边时的两个顶点都会独立实例化。
+5. 例如上面的例子中，添加边 `3-5` 和 `4-5` 时，会独立的实例化节点 5。虽然可以解决上面的问题，不过感觉也挺奇怪，因为从语义上来说节点就应该只有一个。实现如下
+    ```cpp
+    // 邻接表的节点
+    typedef struct Node {
+        int key;
+        int value;
+        struct Node* next;
+    } Node;
+
+    // 邻接表的一个链表
+    typedef struct List {
+        Node* head;
+    } List;
+
+    // 以邻接表表示的图
+    typedef struct Graph {
+        int V; // 节点数，也就是链表数
+        List* listArray; // 指向链表组成的数组
+    } Graph;
+
+
+    // 该函数实例化一个节点并初始化，然后返回该节点的指针
+    Node* createNode(int key, int value) {
+        Node* newNode = (Node*) malloc(sizeof(Node));
+        if (newNode == NULL) {
+            printf("malloc failed in function createNode.\n");
+            exit(EXIT_FAILURE);
+        }
+        newNode->key = key;
+        newNode->value = value;
+        newNode->next = NULL;
+        return newNode;
+    }
+
+    // 该函数实例化一个使用邻接表表示的图并初始化，然后返回该图的指针
+    Graph* createGraph(int V) {
+        Graph* graph = (Graph*) malloc(sizeof(Graph));
+        if (graph == NULL) {
+            printf("malloc failed in function createGraph.\n");
+            exit(EXIT_FAILURE);
+        }
+        graph->V = V;
+
+        // 为 V 个链表分配内存，graph->listArray 指向这些链表组成的数组
+        graph->listArray = (List*) malloc(V * sizeof(List));
+        if (graph->listArray == NULL) {
+            printf("malloc failed in function createGraph.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // 每个链表初始化为空
+        for (int i = 0; i < V; i++) {
+            graph->listArray[i].head = NULL;
+        }
+
+        return graph;
+    }
+
+    // 无向图添加边
+    void addEdge(Graph* graph, int node1Key, int node1Value, int node2Key, int node2Value) {
+        Node* node2 = createNode(node2Key, node2Value);
+        // 新加的节点作为链表的 head
+        node2->next = graph->listArray[node1Key].head;
+        graph->listArray[node1Key].head = node2;
+        
+        // 双向添加
+        Node* node1 = createNode(node1Key, node1Value);
+        node1->next = graph->listArray[node2Key].head;
+        graph->listArray[node2Key].head = node1;
+    }
+
+    Node* getNode (Graph* graph, int key) {
+        return graph->listArray[key].head;
+    }
+
+    void printGraph(Graph* graph) {
+        for (int i = 0; i < graph->V; i++) {
+            Node* pCurr = graph->listArray[i].head;
+            printf("\n Adjacency list of vertex %d\n head ", i);
+            while (pCurr) {
+                printf("-> %d", pCurr->key);
+                pCurr = pCurr->next;
+            }
+            printf("\n");
+        }
+    }
+
+    int main() {
+        struct Graph* graph = createGraph(5);
+
+        addEdge(graph, 0, 10, 1, 21);
+        addEdge(graph, 0, 10, 4, 24);
+        addEdge(graph, 1, 11, 2, 22);
+        addEdge(graph, 1, 11, 3, 23);
+        addEdge(graph, 1, 11, 4, 24);
+        addEdge(graph, 2, 12, 3, 23);
+        addEdge(graph, 3, 13, 4, 24);
+
+        printGraph(graph);
+        // Adjacency list of vertex 0
+        // head -> 4-> 1
+
+        // Adjacency list of vertex 1
+        // head -> 4-> 3-> 2-> 0
+
+        // Adjacency list of vertex 2
+        // head -> 3-> 1
+
+        // Adjacency list of vertex 3
+        // head -> 4-> 2-> 1
+
+        // Adjacency list of vertex 4
+        // head -> 3-> 1-> 0
+        return 0;
+    }
+    ```
+6. 我后来想到一个方法，就是每个链表的 `head` 单独实现，与普通的节点不同类型。这样遍历邻接表的时候只是遍历链表的 `head`，而不遍历具体的节点。
+7. 实现如下
+    ```cpp
+    #define GRAPH_SIZE 10 // 最大节点数量
+
+
+    typedef struct Head {
+        int key;
+        int value;
+        struct Node* next;
+    } Head;
+
+    typedef struct Node {
+        int key;
+        int value;
+        struct Node* next;
+    } Node;
+
+
+    static Head* heads[GRAPH_SIZE] = {};
+
+    static Node* nodes[GRAPH_SIZE] = {}; // 所有节点组成的数组
+
+    static int nodeCount = 0; // 当前节点数量
+
+    // 当前 key 所在的节点是否存在
+    bool hasNode (int key) {
+        heads[0]->key == key;
+        for (int i=0; i<nodeCount; i++) {
+            if (heads[i]->key == key) return true;
+        }
+        return false;
+    }
+
+    // 根据 key 获得节点
+    static Head* getHead (int key) {
+        for (int i=0; i<nodeCount; i++) {
+            if (heads[i]->key == key) return heads[i];
+        }
+        return NULL;
+    }
+    Node* getNode (int key) {
+        for (int i=0; i<nodeCount; i++) {
+            if (nodes[i]->key == key) return nodes[i];
+        }
+        return NULL;
+    }
+
+    // 向图的节点列表里添加一个节点，但还没有建立边
+    void addNode (int key, int value) {
+        if (key < 0 || key >= GRAPH_SIZE) {
+            printf("Function addNode: key must in range [0, %d]\n", GRAPH_SIZE-1);
+            exit(EXIT_FAILURE);
+        }
+        if (nodeCount == GRAPH_SIZE) {
+            printf("Function addNode: graph is full\n");
+            exit(EXIT_FAILURE);
+        }
+        if (hasNode(key)) {
+            getNode(key)->value = value;
+            return;
+        }
+        Node* node = (Node*) malloc(sizeof(Node));
+        Head* head = (Head*) malloc(sizeof(Head));
+        if (node == NULL || head == NULL) {
+            printf("malloc fails in addNode\n");
+            exit(EXIT_FAILURE);
+        }
+        node->key = key;
+        node->value = value;
+        node->next = NULL;
+        nodes[key] = node;
+        head->key = key;
+        head->value = value;
+        head->next = NULL;
+        heads[key] = head;
+        nodeCount++;   
+    }
+
+    // 将两个节点连为边，无向图
+    void addEdge (int key1, int key2) {
+        if ( !hasNode(key1) ) {
+            printf("First argument %d in addEdge is not a key of added node.\n", key1);
+            exit(EXIT_FAILURE);
+        }
+        if ( !hasNode(key2) ) {
+            printf("Second argument %d in addEdge is not a key of added node.\n", key2);
+            exit(EXIT_FAILURE);
+        }
+
+        Head* head1 = getHead(key1);
+        Head* head2 = getHead(key2);
+        Node* node1 = getNode(key1);
+        Node* node2 = getNode(key2);
+
+        Node* next1 = head1->next;
+        head1->next = node2;
+        node2->next = next1;
+        Node* next2 = head2->next;
+        head2->next = node1;
+        node1->next = next2;
+    }
+
+    // 打印所有节点的 key
+    void printNodeKeys () {
+        for (int i=0; i<nodeCount; i++) {
+            printf("%d ", heads[i]->key);
+            printf("\n");
+        }
+        printf("\n");
+    }
+
+    int c = 0;
+    // 打印整个邻接表
+    void printAdjacencyList () {
+        for (int i=0; i<nodeCount; i++) {
+            printf("%d : ", heads[i]->key);
+            Node* node = heads[i]->next;
+            while (node) {
+                printf("%d ", node->key);
+                node = node->next;
+                if (c++ > 10) {
+                    break;
+                }
+            }
+            printf("\n");
+        }
+    }
+
+
+    int main (void) {
+
+        addNode(0, 0);
+        addNode(1, 111);
+        addNode(2, 222);
+        addNode(3, 333);
+        addNode(4, 444);
+        addNode(5, 555);
+        addNode(6, 666);
+        addNode(7, 777);
+        addNode(8, 888);
+        addNode(9, 999);
+
+        printNodeKeys();
+
+        addEdge(0, 1);
+        addEdge(0, 4);
+        addEdge(1, 2);
+        addEdge(1, 3);
+        addEdge(1, 4);
+        addEdge(2, 3);
+        addEdge(3, 4);
+
+        printAdjacencyList();
+
+        return 0;
+    }
+    ```
 
 ## 转置图
 ### 邻接表实现
