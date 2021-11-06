@@ -521,8 +521,9 @@ console.log(graph.toString());
         return 0;
     }
     ```
-6. 我后来想到一个方法，就是每个链表的 `head` 单独实现，与普通的节点不同类型。这样遍历邻接表的时候只是遍历链表的 `head`，而不遍历具体的节点。
-7. 实现如下
+6. 我后来想到一个方法，就是每个链表的头部单独实现新的类型 `Head`，与普通的节点 `Node` 不同类型。这样遍历邻接表的时候只是遍历链表的 `Head`，而不遍历具体的节点。
+7. 比如 `addEdge(1, 3)` 之后，是在 `key` 为 1 的 `Head` 的链表里添加了 `key` 为 3 的 `Node`，并且在  `key` 为 3 的 `Head` 的链表里添加了 `key` 为 3 的 `Node`。
+8. 实现如下
     ```cpp
     #define GRAPH_SIZE 10 // 最大节点数量
 
@@ -664,49 +665,147 @@ console.log(graph.toString());
         addNode(8, 888);
         addNode(9, 999);
 
-        printNodeKeys();
+        // printNodeKeys();
 
-        addEdge(0, 1);
-        addEdge(0, 4);
-        addEdge(1, 2);
         addEdge(1, 3);
-        addEdge(1, 4);
-        addEdge(2, 3);
-        addEdge(3, 4);
+        // 1 : 3 
+        // 2 : 
+        // 3 : 1 
 
         printAdjacencyList();
 
         return 0;
     }
     ```
+9. 这里解决了第一个那个 1-3 边的问题。但是第二个问题还是没有解决。现在尝试继续添加第二条边
+    ```cpp
+    addEdge(1, 3);
+    // 1 : 3 
+    // 2 : 
+    // 3 : 1 
+    addEdge(2, 1);
+    // 1 : 2 3 
+    // 2 : 1
+    // 3 : 1 
+    ```
+    看起来还是正常的。
+10. 不过如果在添加一个就不正常了
+    ```cpp
+    addEdge(1, 3);
+    // 1 : 3 
+    // 2 : 
+    // 3 : 1 
+    addEdge(2, 1);
+    // 1 : 2 3 
+    // 2 : 1
+    // 3 : 1 
+    addEdge(3, 2);
+    // 1 : 2 1 
+    // 2 : 3 1
+    // 3 : 2 1
+    ```
+11. 看一下添加第三条边时发生了什么。按照上面 `addEdge` 的逻辑，首先会在 `key` 为 3 的 `Head` 后面插入 `key` 为 2 的 `Node`。注意，插入逻辑有一步是 `node2->next = next1`，所以 2 的 next 要变成 1，而且是所有的 2！如下
+    ```cpp
+    // 1 : 2 1 // 这里 2 的 next 也会变成 1
+    // 2 : 1
+    // 3 : 2 1 
+    ```
+    之后反过来在 `key` 为 2 的 `Head` 后面插入 `key` 为 3 的 `Node` 时倒是没有冲突。因为这个冲突已经通过新添加的 `Head` 来解决了
+    ```cpp
+    // 1 : 2 1
+    // 2 : 3 1
+    // 3 : 2 1 
+    ```
+
 
 ## 转置图
 ### 邻接表实现
-1. 实现
+1. 本来我是可以按照定义，直接构建转置的邻接表
     ```js
     transpose () {
-        if (!this.isDirected) {
-            throw new Error("无向图没有转置");
-        }
-
-        let g = new Graph(true);
+        if ( !this.isDirected ) return this;
         
-        this.adjacencyList.forEach((set, oldV) => {
-            set.forEach((newV) => {
-                if ( g.vertices.indexOf(newV) === -1 ) {
-                    g.addVertex(newV);
+        let newG = new Graph(true);
+        newG.vertices = this.vertices;
+
+        // 遍历每个节点
+        this.vertices.forEach((v) => {
+            // 为每个节点建立相邻节点列表
+            newG.adjacencyList.set(v, new Set());
+            // 在原来的邻接表里查找当前节点和哪些节点相连
+            this.adjacencyList.forEach((set, headV) => {
+                if (set.has(v)) {
+                    // 建立反向连接
+                    newG.adjacencyList.get(v).add(headV);
                 }
-                g.addEdge(newV, oldV)
             });
         });
 
-        return g;
+        return newG;
     }
     ```
-2. 复杂度是 $O(E+V)$。
+2. 不过其实既然已经实现了邻接表的接口，那就可以直接调用接口添加节点和边
+    ```js
+    transpose () {
+        if ( !this.isDirected ) return this;
+        let newG = new Graph(true);
+
+        this.vertices.forEach((v) => {
+            newG.addVertex(v);
+            this.adjacencyList.forEach((set, headV) => {
+                if (set.has(v)) {
+                    newG.addEdge(v.key, headV.key);
+                }
+            });
+        });
+        return newG;
+    }
+    ```
+3. 测试
+    ```js
+    let graph = new Graph(true); // 有向图
+    let vertexKeys = ['A','B','C','D','E','F','G','H','I'];
+
+    vertexKeys.forEach(key=>{
+        graph.addVertex(new Node(key));
+    });
+
+
+    graph.addEdge('A', 'B');
+    graph.addEdge('A', 'C');
+    graph.addEdge('A', 'D');
+    graph.addEdge('B', 'E');
+    graph.addEdge('B', 'F');
+    graph.addEdge('C', 'D');
+    graph.addEdge('C', 'G');
+    graph.addEdge('D', 'G');
+    graph.addEdge('D', 'H');
+    graph.addEdge('E', 'I');
+
+
+    let newGraph = graph.transpose();
+    console.log(newGraph.toString());
+    // B -> A 
+    // C -> A 
+    // D -> A C 
+    // E -> B 
+    // F -> B 
+    // G -> C D 
+    // H -> D 
+    // I -> E 
+
+    console.log(graph.toString()); // 原来的图不受影响
+    // A -> B C D 
+    // B -> E F 
+    // C -> D G 
+    // D -> G H 
+    // E -> I 
+    ```
+4. `new Graph` 是常数时间；两个 `forEach` 实际上是遍历了所有的边并反向添加，数量是 $E$；添加所有的节点，节点数量是 $V$。所以整体时间复杂度是 $O(E+V)$。
 
 ### 邻接矩阵实现
 矩阵转置，复杂度是$O(V*V)$。
+
 
 ## 图的遍历综述
 1. 和树数据结构类似，我们可以访问图的所有节点。
