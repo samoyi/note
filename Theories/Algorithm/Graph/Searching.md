@@ -5,6 +5,9 @@
 
 - [Searching](#searching)
     - [设计思想](#设计思想)
+        - [设计思想和用途](#设计思想和用途)
+            - [逐层探索，剥洋葱](#逐层探索剥洋葱)
+            - [获得层级距离关系](#获得层级距离关系)
     - [抽象本质——基于现实关系的抽象](#抽象本质基于现实关系的抽象)
         - [广度优先遍历](#广度优先遍历)
             - [广度优先——强调先完成一层再处理下一层](#广度优先强调先完成一层再处理下一层)
@@ -21,11 +24,9 @@
         - [遍历的关键逻辑](#遍历的关键逻辑)
         - [不规则的遍历](#不规则的遍历)
     - [广度优先搜索](#广度优先搜索)
-        - [设计思想和用途](#设计思想和用途)
-            - [逐层探索，剥洋葱](#逐层探索剥洋葱)
-            - [获得层级距离关系](#获得层级距离关系)
-        - [逻辑顺序](#逻辑顺序)
-            - [关键点](#关键点)
+        - [遍历逻辑](#遍历逻辑)
+            - [标记已遍历节点](#标记已遍历节点)
+            - [记录节点更多信息](#记录节点更多信息)
         - [实现](#实现)
         - [有向图的 BFS](#有向图的-bfs)
             - [实现](#实现-1)
@@ -47,6 +48,13 @@
 
 ## 设计思想
 
+### 设计思想和用途
+#### 逐层探索，剥洋葱
+希望完全探索完一层再进入下一层，或者说是按批次执行任务。执行完第一批的所有任务，才能执行第二批的。
+
+#### 获得层级距离关系
+1. 根据层次的多少来获得两个对象的层级距离。
+2. 正是这种逐层且具有层级距离关系的特点，所以广度优先可以计算关系网中两个点的最短距离。
 
 ## 抽象本质——基于现实关系的抽象
 ### 广度优先遍历
@@ -104,63 +112,197 @@ TODO 为什么要三种颜色，两种行不行？黑色好像没什么用处
 ## 广度优先搜索
 <img src="./images/06.png" width="400" style="display: block; margin: 5px 0 10px;" />
 
-### 设计思想和用途
-#### 逐层探索，剥洋葱
-希望完全探索完一层再进入下一层，或者说是按批次执行任务。执行完第一批的所有任务，才能执行第二批的。
-
-#### 获得层级距离关系
-1. 根据层次的多少来获得两个对象的层级距离。
-2. 正是这种逐层且具有层级距离关系的特点，所以广度优先可以计算关系网中两个点的最短距离。
-
-### 逻辑顺序
+### 遍历逻辑
 1. 选中图中的一个节点作为遍历的起点，记为 V。
-2. 访问并记录 V 的所有相邻点。完成了从起点开始向外辐射的第一层节点遍历。
-3. 之所以在访问的同时还要记录，是因为下一步还要访问与这些节点相邻的新的节点。
-4. 再从第一层的节点开始，访问并记录每一个节点的相邻节点。注意这一次寻找相邻节点时，要排除 V 以及相邻的其他已发现第一层节点。虽然第一层的节点都和 V 相连，但 V 已经访问过了。
-5. 经过上一步的遍历记录，我们获得了第二层的节点。下一步就是访问并记录第二层中每一个节点的相邻节点。同样，这一波在访问相邻节点时，要排除已经访问过的第一层节点。
-6. 以此类推，直到我们记录的节点都已经访问过了。
+2. 遍历并保存 V 的所有相邻节点，这是从起点向外辐射的第一层节点。
+3. 再从上面第一层的节点开始，遍历并保存其中每一个节点的相邻节点。注意这一次寻找相邻节点时，要排除 V 以及相邻的其他已遍历的第一层节点（通过下面标记已遍历节点中的方法）。例如上图中再遍历 D 的相邻节点时，要排除掉已经遍历过的 A 和 C。
+4. 经过上一步的遍历，我们保存了第二层的节点。下一步就是用同样的防范遍历第二层中每一个节点的为遍历相邻节点。
+5. 以此类推，直到我们记录的节点都已经访问过了。
 
-#### 关键点
-1. 先访问完一层的所有节点，才能访问靠外的一层。在你没访问完第一层的所有节点时，不能访问第二层的节点。
-2. 但是，访问第一层的时候，却需要记录与它相邻的第二层节点。把它们加入到队列中，等待第一层节点访问完之后再被访问。
+#### 标记已遍历节点
+1. 一个惯例是使用颜色属性。初始时所有的节点的颜色属性都是 `white`；遍历到之后就变成 `gray`，然后加入到队列；从队列里取出一个 `gray` 节点后，遍历它的相邻节点中仍然是 `white` 的节点并加入队列；当一个 `gray` 节点的所有 `white` 节点都遍历完成后，这个 `gray` 节点会变成 `black` 节点。
+2. 不过其实，最后让节点变成 `black` 从功能上来说是没有必要的，因为只要是 `gray` 就不会被再次遍历和加入队列了。只不过黑色状态更明确的说明这个节点的所有相邻节点都已经被遍历了。
+3. 如果不适用 `black`，那就有两种状态了，所以也可以用一个布尔值之类的来记录节点是否被遍历和加入队列。
+
+#### 记录节点更多信息
+1. 遍历的过程中，可以记录每个节点到源节点的距离。每向外遍历一层，该层的节点距离就加一。因此每层节点的距离可以根据上一层节点的距离来获得。源节点的距离为 0。
+2. 每次从一个 `gray` 节点遍历它的 `white` 相邻节点时，我们称这个 `gray` 节点是它的 `white` 相邻节点的 **前驱**（predecessor）或者 **父节点**（parent）。我们因此可以记录每个节点的前驱是谁。源节点的前驱为空。
 
 ### 实现
-```js
-bfs (v, callback) {
-    let colorMapping = initializeColorMapping(this.vertices);
-    let queue = [];
-    queue.push(v); // 遍历起始节点
+1. 使用三种颜色的实现
+    ```js
+    // 定义三种颜色常量
+    const COLORS = {
+        WHITE: "white",
+        GRAY:  "gray",
+        BLACK: "black",
+    };
 
-    // 遍历每一个节点
-    while ( queue.length !== 0 ) {
-        let u = queue.shift();
-        let neighbors = this.adjacencyList.get(u);
-        colorMapping[u] = 'grey'; // 该节点现在已经访问
-        // 访问该节点的相邻节点
-        neighbors.forEach((item) => {
-            if (colorMapping[item] === 'white') {
-                colorMapping[item] = 'grey';
-                // 被访问的节点加入队列，之后会被探索
-                queue.push(item);
+    class Graph {
+        // 省略其他方法
+
+        bfs (sourceKey, cb) {
+            if ( !this.vertices.includes(sourceKey) ) {
+                throw new Error(`Key ${sourceKey} is not a graph vertex key.`);
             }
-        });
-        // 该节点的所有相邻节点都已经被访问，现在该节点就是被完全探索的状态
-        colorMapping[u] = 'black'; 
-        if (callback) {
-            callback(u);
+
+            let bfsQueue = []; // 遍历时保存节点的队列
+            let vertexColors = {}; // 记录节点的颜色
+
+            let searchingKeyList = []; // 遍历顺序的 key 列表
+            let distances = {}; // 记录节点距离源节点的距离
+            let predecessors = {}; // 记录节点的前驱节点
+
+            // 初始化
+            this.vertices.forEach((key) => {
+                vertexColors[key] = COLORS.WHITE;
+                distances[key] = 0;
+                predecessors[key] = null;
+
+            });
+
+            // 源节点默认被发现并首先被加入队列
+            vertexColors[sourceKey] = COLORS.GRAY;
+            bfsQueue.push(sourceKey);
+            
+            while (bfsQueue.length) {
+                let vertex = bfsQueue.shift();
+                let neighbors = this.adjacencyList.get(vertex);
+                neighbors.forEach((key) => {
+                    // 筛选出尚未被加入队列的节点，加入队列并标记，同时记录距离和前驱
+                    if (vertexColors[key] === COLORS.WHITE) {
+                        bfsQueue.push(key);
+                        vertexColors[key] = COLORS.GRAY;
+                        distances[key] = distances[vertex] + 1;
+                        predecessors[key] = vertex;
+                    }
+                });
+                vertexColors[vertex] = COLORS.BLACK;
+                searchingKeyList.push(vertex);
+                cb && cb(vertex);
+            }
+
+            return {
+                searchingKeyList,
+                distances,
+                predecessors,
+            }
         }
     }
-}
-...
 
-function initializeColorMapping (vertices) {
-    let colorMapping = {};
-    vertices.forEach(vertex=>{
-        colorMapping[vertex] = 'white';
+
+
+    let graph = new Graph();
+
+    graph.addEdge('A', 'B');
+    graph.addEdge('A', 'C');
+    graph.addEdge('A', 'D');
+    graph.addEdge('B', 'E');
+    graph.addEdge('B', 'F');
+    graph.addEdge('C', 'D');
+    graph.addEdge('C', 'G');
+    graph.addEdge('D', 'G');
+    graph.addEdge('D', 'H');
+    graph.addEdge('E', 'I');
+
+    // console.log(graph.toString());
+    // A -> B C D 
+    // B -> A E F 
+    // C -> A D G 
+    // D -> A C G H 
+    // E -> B I 
+    // F -> B 
+    // G -> C D 
+    // H -> D 
+    // I -> E 
+
+
+    let result= graph.bfs('A', (key)=>{
+        console.log(key);
     });
-    return colorMapping;
-}
-```
+    // console.log(JSON.stringify(result, null, 4));
+    // {
+    //     "searchingKeyList": [
+    //         "A",
+    //         "B",
+    //         "C",
+    //         "D",
+    //         "E",
+    //         "F",
+    //         "G",
+    //         "H",
+    //         "I"
+    //     ],
+    //     "distances": {
+    //         "A": 0,
+    //         "B": 1,
+    //         "C": 1,
+    //         "D": 1,
+    //         "E": 2,
+    //         "F": 2,
+    //         "G": 2,
+    //         "H": 2,
+    //         "I": 3
+    //     },
+    //     "predecessors": {
+    //         "A": null,
+    //         "B": "A",
+    //         "C": "A",
+    //         "D": "A",
+    //         "E": "B",
+    //         "F": "B",
+    //         "G": "C",
+    //         "H": "D",
+    //         "I": "E"
+    //     }
+    // }
+    ```
+2. 不使用颜色，也不实用第三种对应 `black` 的状态
+    ```js
+    bfs (sourceKey, cb) {
+        if ( !this.vertices.includes(sourceKey) ) {
+            throw new Error(`Key ${sourceKey} is not a graph vertex key.`);
+        }
+
+        let bfsQueue = [];
+        let searchedStates = {}; // 是否被遍历到，保存布尔值
+
+        let searchingKeyList = [];
+        let distances = {};
+        let predecessors = {};
+
+        this.vertices.forEach((key) => {
+            searchedStates[key] = false;
+            distances[key] = 0;
+            predecessors[key] = null;
+
+        });
+
+        bfsQueue.push(sourceKey);
+        searchedStates[sourceKey] = true;
+        
+        while (bfsQueue.length) {
+            let vertex = bfsQueue.shift();
+            let neighbors = this.adjacencyList.get(vertex);
+            neighbors.forEach((key) => {
+                if (searchedStates[key] === false) {
+                    bfsQueue.push(key);
+                    searchedStates[key] = true;
+                    distances[key] = distances[vertex] + 1;
+                    predecessors[key] = vertex;
+                }
+            });
+            searchingKeyList.push(vertex);
+            cb && cb(vertex);
+        }
+
+        return {
+            searchingKeyList,
+            distances,
+            predecessors,
+        }
+    }
+    ```
 
 ### 有向图的 BFS
 1. 对于无向图来说，从任何一个节点开始遍历，都可以遍历所有的节点。
