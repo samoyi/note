@@ -92,8 +92,8 @@ to the height of the tree and thus take $O(lgN)$ time.
     8. 如果 $p$ 从 0 开始计，则两个子节点是 $2p+1$ 和 $2p+2$，父节点就是 $\lfloor (p-1)/2 \rfloor$。
 10. 证明含有 $n$ 个元素的堆的高度是 $\lfloor \lg n \rfloor$:
     1. 先用行数来计算。根据上面第 6 点，第 x 行的元素数量范围是 $[2^{x-1}, 2^x)$。
-    2. 现在就假设 $n$ 个元素的堆有 $x$ 行，所以 $2^{x-1} \leq n < 2^x$。
-    3. 取对数，有 $x-1 \leq \lg n < x$。所以 $x-1 = \lfloor \lg n \rfloor$。
+    2. 现在就假设 $n$ 个元素的堆有 $x$ 行，所以 $2^{x-1} \leqslant n < 2^x$。
+    3. 取对数，有 $x-1 \leqslant \lg n < x$。所以 $x-1 = \lfloor \lg n \rfloor$。
     4. 因为 $x$ 是堆的行数，所以 $x - 1$ 就是堆的高度。
 11. 证明当用数组表示存储 $n$ 个元素的堆时，叶节点下标分别是 $\lfloor n/2 \rfloor + 1, \lfloor n/2 \rfloor + 2, ..., n$
     1. 这里可以通过观察一个二叉堆的图的方法。

@@ -26,7 +26,7 @@
 
 #### 例1
 1. 求解 $\lim\limits_{x\rightarrow\\∞}\frac{sin(x)}{x}$。
-2. 因为 $-1 \leq sin(x) \leq 1$ 且 $x>0$，所以 $\frac{-1}{x} \leq \frac{sin(x)}{x} \leq \frac{1}{x}$ 
+2. 因为 $-1 \leqslant sin(x) \leqslant 1$ 且 $x>0$，所以 $\frac{-1}{x} \leqslant \frac{sin(x)}{x} \leqslant \frac{1}{x}$ 
 3. 根据夹逼法则，可以证得。
 
 #### 例2

@@ -28,11 +28,10 @@
             - [标记已遍历节点](#标记已遍历节点)
             - [记录节点更多信息](#记录节点更多信息)
         - [实现](#实现)
-        - [有向图的 BFS](#有向图的-bfs)
-            - [实现](#实现-1)
-        - [记录更多信息的广度遍历](#记录更多信息的广度遍历)
         - [复杂度](#复杂度)
         - [广度优先树和前驱子图](#广度优先树和前驱子图)
+        - [有向图的 BFS](#有向图的-bfs)
+            - [实现](#实现-1)
     - [使用 `BFSWidthMoreInfo` 寻找最短路径](#使用-bfswidthmoreinfo-寻找最短路径)
     - [深度优先遍历](#深度优先遍历-1)
         - [设计思想和用途](#设计思想和用途-1)
@@ -257,7 +256,7 @@ TODO 为什么要三种颜色，两种行不行？黑色好像没什么用处
     //     }
     // }
     ```
-2. 不使用颜色，也不实用第三种对应 `black` 的状态
+2. 不使用颜色，也不使用第三种对应 `black` 的状态
     ```js
     bfs (sourceKey, cb) {
         if ( !this.vertices.includes(sourceKey) ) {
@@ -303,7 +302,144 @@ TODO 为什么要三种颜色，两种行不行？黑色好像没什么用处
         }
     }
     ```
+3. C 实现
+    ```cpp
+    void bfs (Graph* graph, int sourceKey, 
+                int* searchingKeyList, int* predecessors, int* distances) {
+        Node* sourceNode = getNode(graph, sourceKey);
+        if (sourceNode == NULL) {
+            printf("Key %d is not a graph vertex key.\n", sourceKey);
+            exit(EXIT_FAILURE);
+        }
+        int* searchedStates = calloc(graph->V, sizeof(int));
+        if (searchedStates == NULL) {
+            printf("calloc failed in function createGraph.\n");
+            exit(EXIT_FAILURE);
+        }
 
+        Queue q;
+        initQueue(&q, graph->V);
+
+        enqueue(&q, sourceKey);
+        searchedStates[sourceKey] = 1;
+        predecessors[sourceKey] = -1;
+        distances[sourceKey] = 0;
+
+        int index = 0; // searchingKeyList 用到的序号
+
+        while ( !isEmpty(&q) ) {
+            int key = dequeue(&q);
+            List* neighborList = &(graph->listArray[key]);
+            Node* curr = neighborList->head;
+            while (curr) {
+                if (searchedStates[curr->key] == 0) {
+                    enqueue(&q, curr->key);
+                    searchedStates[curr->key] = 1;
+                    predecessors[curr->key] = key;
+                    distances[curr->key] = distances[key] + 1;
+                }
+                curr = curr->next;
+            }
+            searchingKeyList[index++] = key;
+        }
+    }
+
+
+
+    int main() {
+
+        int graphSize = 9;
+        struct Graph* graph = createGraph(graphSize);
+
+        // 因为前面 JS 实现的节点是使用字母，而且上面配图也是使用字母，
+        // 而前面 C 实现是使用整数，所以这里把字母转换为整数进行计算，最后输出时再转回字母
+        addEdge(graph, 'A'-'A', 'B'-'A');
+        addEdge(graph, 'A'-'A', 'C'-'A');
+        addEdge(graph, 'A'-'A', 'D'-'A');
+        addEdge(graph, 'B'-'A', 'E'-'A');
+        addEdge(graph, 'B'-'A', 'F'-'A');
+        addEdge(graph, 'C'-'A', 'D'-'A');
+        addEdge(graph, 'C'-'A', 'G'-'A');
+        addEdge(graph, 'D'-'A', 'G'-'A');
+        addEdge(graph, 'D'-'A', 'H'-'A');
+        addEdge(graph, 'E'-'A', 'I'-'A');
+
+
+        int searchingKeyList[graphSize];
+        int predecessors[graphSize];
+        int distances[graphSize];
+        bfs(graph, 'A'-'A', searchingKeyList, predecessors, distances);
+
+        printf("Searching key list:\n");
+        for (int i=0; i<graphSize; i++) {
+            printf("%c ", searchingKeyList[i] + 'A');
+        }
+        printf("\n\n");
+
+        printf("Predecessor:\n");
+        for (int i=0; i<graphSize; i++) {
+            int key = searchingKeyList[i]; // 按照 searchingKeyList 的顺序遍历
+            if (i == 0) {
+                printf("%c: %c\n", key + 'A', ' ');
+            }
+            else {
+                printf("%c: %c\n", key + 'A', predecessors[key] + 'A');
+            }
+        }
+        printf("\n\n");
+
+        printf("Distances:\n");
+        for (int i=0; i<graphSize; i++) {
+            int key = searchingKeyList[i];
+            printf("%c: %d\n", key + 'A', distances[key]);
+        }
+        printf("\n");
+
+
+        // 完整输出：
+
+        // Searching key list:
+        // A D C B H G F E I
+
+        // Predecessor:
+        // A:
+        // D: A
+        // C: A
+        // B: A
+        // H: D
+        // G: D
+        // F: B
+        // E: B
+        // I: E
+
+
+        // Distances:
+        // A: 0
+        // D: 1
+        // C: 1
+        // B: 1
+        // H: 2
+        // G: 2
+        // F: 2
+        // E: 2
+        // I: 3
+
+        return 0;
+    }
+    ```
+
+### 复杂度
+1. 根据 C 的实现来计算。
+2. 初始化操作的时间复杂度是 $O(1)$；
+3. 每次 `while` 对应一次 `dequeue`，而每个节点只会一次 `enqueue`，所以 `while` 内部的执行次数是节点数，时间复杂度为 $O(V)$；
+4. 每个 dequeue 的节点，要遍历它的链表；因此会遍历所有的链表，每个链表只遍历一次；
+TODO
+
+### 广度优先树和前驱子图
+1. BFS 搜索的过程会创建一棵以源节点为根节点的 **广度优先树**。或者说，我们以 BFS 的角度来看待这个图，那么它就变成了一棵广度优先树。
+2. 现在，这棵树的每一条边被称为 **树边**。可以看到，并不是图的每条边都是树边，只有沿着 BFS 的过程的边才是广度优先树的树边。
+3. 《算法导论》上在这里讲到的 **前驱子图**，实际上是和本来的图一样的，有着一样的节点和边，只不过因为 BFS 的存在，让我们从前驱属性来看待这个图。也就是，让我们理解每个节点的前驱节点是什么。
+    
 ### 有向图的 BFS
 1. 对于无向图来说，从任何一个节点开始遍历，都可以遍历所有的节点。
 2. 而对于有向图来说，因为某些路径是单向的，所以如果只从一个节点出发进行遍历，很可变无法到达所有的节点。
@@ -344,57 +480,6 @@ bfsCompatibleWithDirected (callback) {
     });
 }
 ```
-
-### 记录更多信息的广度遍历
-遍历获得每个节点和起始节点的距离以及每个节点的前溯节点
-```js
-BFSWidthMoreInfo (v) {
-    let colorMapping = initializeColorMapping(this.vertices);
-    let queue = [];
-    queue.push(v);
-
-    let distances = {};   // 记录每个节点距离起始节点的距离
-    let predecessors = {}; // 记录每个节点的前溯节点
-
-    // 初始化每个节点距离起始节点的距离和前溯节点
-    this.vertices.forEach((vertex) => {
-        distances[vertex] = 0;
-        predecessors[vertex] = null;
-    });
-
-    while ( queue.length !== 0 ) {
-        let u = queue.shift();
-        colorMapping[u] = 'grey';
-
-        this.adjacencyList.get(u).forEach((item) => {
-            if (colorMapping[item] === 'white') {
-                colorMapping[item] = 'grey';
-
-                // 因为节点 item 是 u 的相邻节点，所以距离起始节点的距离就比 u 大一
-                distances[item] = distances[u] + 1;
-                predecessors[item] = u;
-                queue.push(item);
-            }
-        });
-
-        colorMapping[u] = 'black';
-    }
-
-    return {
-        distances,
-        predecessors,
-    };
-}
-```
-
-### 复杂度
-1. 每次 `while` 对应一次 `dequeue`，而每个节点只会一次 `enqueue`，所以 `while` 内部的执行次数是节点数，时间复杂度记为 $O(V)$。
-TODO
-
-### 广度优先树和前驱子图
-1. BFS 搜索的过程会创建一棵以源节点为根节点的 **广度优先树**。或者说，我们以 BFS 的角度来看待这个图，那么它就变成了一棵广度优先树。
-2. 现在，这棵树的每一条边被称为 **树边**。可以看到，并不是图的每条边都是树边，只有沿着 BFS 的过程的边才是广度优先树的树边。
-3. 《算法导论》上在这里讲到的 **前驱子图**，实际上是和本来的图一样的，有着一样的节点和边，只不过因为 BFS 的存在，让我们从前驱属性来看待这个图。也就是，让我们理解每个节点的前驱节点是什么。
 
 
 ## 使用 `BFSWidthMoreInfo` 寻找最短路径
