@@ -32,8 +32,7 @@
         - [广度优先树和前驱子图](#广度优先树和前驱子图)
         - [有向图的 BFS](#有向图的-bfs)
             - [实现](#实现-1)
-    - [使用 `BFSWidthMoreInfo` 寻找最短路径](#使用-bfswidthmoreinfo-寻找最短路径)
-    - [深度优先遍历](#深度优先遍历-1)
+    - [深度优先搜索](#深度优先搜索)
         - [设计思想和用途](#设计思想和用途-1)
             - [尝试树状逻辑结构的每一条路径](#尝试树状逻辑结构的每一条路径)
             - [纵深型的逻辑结构](#纵深型的逻辑结构)
@@ -317,12 +316,17 @@ TODO 为什么要三种颜色，两种行不行？黑色好像没什么用处
             exit(EXIT_FAILURE);
         }
 
+        for (int i=0; i<graph->V; i++) {
+            searchedStates[i] = 0;
+            predecessors[i] = -1;
+            distances[i] = -1;
+        }
+
         Queue q;
         initQueue(&q, graph->V);
 
         enqueue(&q, sourceKey);
         searchedStates[sourceKey] = 1;
-        predecessors[sourceKey] = -1;
         distances[sourceKey] = 0;
 
         int index = 0; // searchingKeyList 用到的序号
@@ -343,7 +347,6 @@ TODO 为什么要三种颜色，两种行不行？黑色好像没什么用处
             searchingKeyList[index++] = key;
         }
     }
-
 
 
     int main() {
@@ -430,15 +433,26 @@ TODO 为什么要三种颜色，两种行不行？黑色好像没什么用处
 
 ### 复杂度
 1. 根据 C 的实现来计算。
-2. 初始化操作的时间复杂度是 $O(1)$；
+2. 初始化操作的时间复杂度是 $O(V)$；
 3. 每次 `while` 对应一次 `dequeue`，而每个节点只会一次 `enqueue`，所以 `while` 内部的执行次数是节点数，时间复杂度为 $O(V)$；
-4. 每个 dequeue 的节点，要遍历它的链表；因此会遍历所有的链表，每个链表只遍历一次；
-TODO
+4. 每个 dequeue 的节点，要遍历它的链表；因此会遍历所有的链表，每个链表只遍历一次；每个链表节点对应一个边，一共有 2E 个边，所以遍历所有链表的时间是 $O(E)$。
+5. 因此广度优先搜索的总运行时间为 $O(V+E)$。
 
 ### 广度优先树和前驱子图
 1. BFS 搜索的过程会创建一棵以源节点为根节点的 **广度优先树**。或者说，我们以 BFS 的角度来看待这个图，那么它就变成了一棵广度优先树。
 2. 现在，这棵树的每一条边被称为 **树边**。可以看到，并不是图的每条边都是树边，只有沿着 BFS 的过程的边才是广度优先树的树边。
 3. 《算法导论》上在这里讲到的 **前驱子图**，实际上是和本来的图一样的，有着一样的节点和边，只不过因为 BFS 的存在，让我们从前驱属性来看待这个图。也就是，让我们理解每个节点的前驱节点是什么。
+4. 打印一个节点距离源节点的最短路径
+    ```cpp
+    void print_path (Graph* graph, int* predecessors, int key) {
+        int currKey = key;
+        do {
+            printf("%d ", currKey);
+            currKey = predecessors[currKey];
+        }
+        while (currKey >= 0);
+    }
+    ```
     
 ### 有向图的 BFS
 1. 对于无向图来说，从任何一个节点开始遍历，都可以遍历所有的节点。
@@ -482,28 +496,7 @@ bfsCompatibleWithDirected (callback) {
 ```
 
 
-## 使用 `BFSWidthMoreInfo` 寻找最短路径
-1. 因为 BFS 是逐层往外搜索，并不会有跳跃的情况，所以就可以确定任意一个节点相对于顶点来说关系最近的层数，或者说要几步才能把顶点和某个节点连接起来。
-2. 使用 `BFSWidthMoreInfo` 中记录的每个节点的前溯节点，来查找某个节点到顶点的最短路径
-    ```js
-    getShortestPaths (v) {
-        let {predecessors} = this.BFSWidthMoreInfo(v); // 获得每个节点的前溯节点
-        let pathes = {};
-        for (let key in predecessors) { // 遍历记录每个节点距离顶点的最短路径
-            let predecessor = predecessors[key];
-            if (predecessor === null) continue;
-            pathes[key] = key;
-            while (predecessor) {
-                pathes[key] = predecessor + '-' + pathes[key];
-                predecessor = predecessors[predecessor];
-            }
-        }
-        return pathes;
-    }
-    ```
-
-
-## 深度优先遍历
+## 深度优先搜索
 <img src="./images/07.png" width="400" style="display: block; margin: 5px 0 10px;" />
 
 ### 设计思想和用途
