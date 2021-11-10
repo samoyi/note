@@ -8,6 +8,9 @@
         - [设计思想和用途](#设计思想和用途)
             - [逐层探索，剥洋葱](#逐层探索剥洋葱)
             - [获得层级距离关系](#获得层级距离关系)
+        - [设计思想和用途](#设计思想和用途-1)
+            - [尝试树状逻辑结构的每一条路径](#尝试树状逻辑结构的每一条路径)
+            - [纵深型的逻辑结构](#纵深型的逻辑结构)
     - [抽象本质——基于现实关系的抽象](#抽象本质基于现实关系的抽象)
         - [广度优先遍历](#广度优先遍历)
             - [广度优先——强调先完成一层再处理下一层](#广度优先强调先完成一层再处理下一层)
@@ -32,13 +35,9 @@
         - [广度优先树和前驱子图](#广度优先树和前驱子图)
         - [有向图的 BFS](#有向图的-bfs)
             - [实现](#实现-1)
-    - [深度优先搜索](#深度优先搜索)
-        - [设计思想和用途](#设计思想和用途-1)
-            - [尝试树状逻辑结构的每一条路径](#尝试树状逻辑结构的每一条路径)
-            - [纵深型的逻辑结构](#纵深型的逻辑结构)
+    - [Depth-first search](#depth-first-search)
+        - [规则](#规则)
         - [实现](#实现-2)
-        - [记录更多信息的深度遍历](#记录更多信息的深度遍历)
-        - [前驱子图](#前驱子图)
     - [References](#references)
 
 <!-- /TOC -->
@@ -53,6 +52,14 @@
 #### 获得层级距离关系
 1. 根据层次的多少来获得两个对象的层级距离。
 2. 正是这种逐层且具有层级距离关系的特点，所以广度优先可以计算关系网中两个点的最短距离。
+
+### 设计思想和用途
+#### 尝试树状逻辑结构的每一条路径
+比如说简单棋类游戏的穷举法，可以在每一步都穷举不同下法的最终结果。
+
+#### 纵深型的逻辑结构
+与广度优先剥洋葱的行为模式相对
+
 
 ## 抽象本质——基于现实关系的抽象
 ### 广度优先遍历
@@ -496,66 +503,102 @@ bfsCompatibleWithDirected (callback) {
 ```
 
 
-## 深度优先搜索
+## Depth-first search
 <img src="./images/07.png" width="400" style="display: block; margin: 5px 0 10px;" />
 
-### 设计思想和用途
-#### 尝试树状逻辑结构的每一条路径
-比如说简单棋类游戏的穷举法，可以在每一步都穷举不同下法的最终结果。
+### 规则
+<img src="./images/08.png" width="800" style="display: block; margin: 5px 0 10px;" />
+<img src="./images/22.png" width="800" style="display: block; margin: 5px 0 10px;" />
 
-#### 纵深型的逻辑结构
-与广度优先剥洋葱的行为模式相对
+1. The strategy followed by depth-first search is, as its name implies, to search “deeper” in the graph whenever possible. 递归感。
+2. Depth-first search explores edges out of the most recently discovered vertex $v$ that still has unexplored edges leaving it. 
+3. 例如最新发现了 B 之后，就先访问它的相邻节点 E 和 F，而不是像宽度优先那样先访问 C 和 D。
+4. 那么，接下来访问 E 时，E 就成了当前最新发现的，所以要先访问 E 的相邻节点 I。就像是不断的递归调用。
+5. Once all of $v$’s edges have been explored, the search “backtracks” to explore edges leaving the vertex from which $v$ was discovered. 
+6. 当 B 的相邻节点 E、F 访问完成后（在此过程中已经递归的访问了 I），就返回到 B 的前溯节点 A（相当于 B 对应的函数调用返回，返回到外层函数的调用），接下来访问 A 的第二个相邻节点 C。
+7. This process continues until we have discovered all the vertices that are reachable from the original source vertex.
+8. If any undiscovered vertices remain, then depth-first search selects one of them as a new source, and it repeats the search from that source. 
+9. 如果是有向图，有可能无法一次遍历到所有的节点。那么一次遍历结束后，还要从其他没遍历的节点中选一个起点继续第二轮的遍历。例如上面的有向图遍历中，完成第 (m) 步之后，本轮遍历就结束了，因为无法连接到右边的两个边。
+10. 实现方法是尝试从每个节点作为起点进行深度优先搜索，但只在节点未被标记为已遍历时才开启深度优先搜索。例如在第一次深度优先搜索结束后，会有很多节点的状态变为已遍历，那接下来就从一个之前深度优先搜索没有遍历到的节点开始第二轮的深度优先搜索。
+11. 因为可能有多个起点的多次遍历，所以就可能会形成多棵 **深度优先树**（depth-first trees），进而组成 **深度优先森林**（depth-first forest）。
+12. The algorithm repeats this entire process until it has discovered every vertex.
+13. 深度优先算法还会记录每个节点的发现时间和完成（完成发现该节点的所有相邻节点）时间，使用序号来表示。这些时间戳提供了图结构的重要信息，通常能够帮助推断深度优先搜素算法的行为
+    <img src="./images/09.png" width="400" style="display: block; margin: 5px 0 10px;" />
 
 ### 实现
-<img src="./images/08.png" width="800" style="display: block; margin: 5px 0 10px;" />
-
-1. 类的实例方法，遍历的入口
+1. 类的接口方法，内部会进行初始化，并启动递归调用
     ```js
-    normalDFS (callback) {
-        let colorMapping = initializeColorMapping(this.vertices);
-        // 遍历每一个节点，如果某个节点还未被探索，则对它进行深度探索。
-        // 但因为是递归遍历，如果图是无向的，那么从一个节点开始的第一轮 forEach 里面，
-        // 就会遍历了所有后代节点，所以其实之后轮的 forEach 里面 vertex 都已经不是 white 了。
-        // 但是在有向图中，从一个节点开始并不一定会遍历到所有节点。所以还是要用 forEach，
-        // 在一次遍历到无可遍历但还有节点没有遍历到的时候，再从其他没有遍历的节点新开一轮遍历。
-        this.vertices.forEach((vertex)=>{
-            if (colorMapping[vertex] === 'white') {
-                exploreForNormalDFS(vertex, this.adjacencyList, colorMapping, callback);
+    // 可以传两个回调函数，一个在节点发现时调用，一个在节点完成时调用
+    dfs (discoveredCB, finishedCB) {
+        // 递归调用时需要传递的遍历信息
+        let info = {
+            searchedStates: {},
+            // 发现时间序号和完成时间序号
+            time: { 
+                discoveredTime: {},
+                finishedTime: {},
+                index: 0,
+            },
+            predecessors: {}, 
+        };
+
+        // 初始化
+        this.vertices.forEach((v) => {
+            info.searchedStates[v] = false;
+            info.predecessors[v] = null;
+        });
+        
+        // 尝试从每个节点开始深度优先搜索
+        this.vertices.forEach((v) => {
+            // 只有上一轮没有遍历到的节点，才能开启新一轮的深度优先搜索
+            if ( !info.searchedStates[v] ) {
+                this._dfs(v, info, discoveredCB, finishedCB); // 递归的深度优先搜索
             }
         });
+
+        return {
+            discoveredTime: info.time.discoveredTime, 
+            finishedTime: info.time.finishedTime, 
+            predecessors: info.predecessors,
+        };
     }
     ```
-2. 用来递归的私有方法。里面的两个 `console.log` 可以直观的显示递归关系
+2. 实际的递归调用方法
     ```js
-    let normalDFS_indent = 0;
-    function exploreForNormalDFS (vertex, adjacencyList, colorMapping, callback) {
-        colorMapping[vertex] = 'grey';
+    _dfs (vertex, info, discoveredCB, finishedCB) {
+        discoveredCB && discoveredCB(vertex);
+
+        // 记录 vertex 发现时间
+        info.time.discoveredTime[vertex] = info.time.index++;
+
+        // 找到 vertex 未被遍历到的相邻节点
+        // 下面本来是找到相邻节点后直接筛选掉已经被遍历过的，而不是在下面的 neighbors.forEach 中筛选；
+        // 但这样是有问题的。例如 vertex 是 A 时，这里的 neighbors 就是 [B, C, D]，三个都是没被遍历的，// 所以之后三个都会被遍历一边；
+        // 但是在下面 forEach 遍历 C 的时候，D 作为 C 的相邻节点就会被遍历了，之后再遍历就是重复遍历了；
+        // 所以还是应该在下面 forEach 实际准备遍历的时候在进行筛选，而不是在这里提前筛选。
+        // let neighbors = [...this.adjacencyList.get(vertex)].filter((v)=>!info.searchedStates[v]);
+        let neighbors = this.adjacencyList.get(vertex);
         
-        callback && callback(vertex);
-
-        console.log(' '.repeat(normalDFS_indent) + 'Discovered ' + vertex);
-        normalDFS_indent += 4;
-
-        let neighborList = adjacencyList.get(vertex);
-        neighborList.forEach((neighbor) => {
-            if ( colorMapping[neighbor] === 'white' ) {
-                exploreForNormalDFS( neighbor, adjacencyList, colorMapping, callback );
+        // 标记为已遍历
+        info.searchedStates[vertex] = true;
+        
+        // 对每个相邻节点，递归的深度优先搜索
+        neighbors.forEach((n)=>{
+            if ( !info.searchedStates[n] ) {
+                info.predecessors[n] = vertex;
+                this._dfs(n, info, discoveredCB, finishedCB);
             }
         });
-        colorMapping[vertex] = 'black';
-
-        normalDFS_indent -= 4;
-        console.log(' '.repeat(normalDFS_indent) + 'Explored ' + vertex);
-    }
+        
+        // 记录 vertex 的完成时间
+        info.time.finishedTime[vertex] = info.time.index++;
+        
+        finishedCB && finishedCB(vertex);
+    }  
     ```
 3. 测试
     ```js
     let graph = new Graph();
-    let vertices = ['A','B','C','D','E','F','G','H','I'];
-
-    vertices.forEach(vertex=>{
-        graph.addVertex(vertex);
-    });
 
     graph.addEdge('A', 'B');
     graph.addEdge('A', 'C');
@@ -568,107 +611,60 @@ bfsCompatibleWithDirected (callback) {
     graph.addEdge('D', 'H');
     graph.addEdge('E', 'I');
 
+    // 两个回调缩进的显示节点的发现时间和结束时间，体现出递归结构
+    let indent = 0;
+    function discoveredCB (key) {
+        console.log(`${' '.repeat(indent)}Discovered ${key}`);
+        indent += 4;
+    }
+    function finishedCB (key) {
+        indent -= 4;
+        console.log(`${' '.repeat(indent)}Finished ${key}`);
+    }
 
-    graph.normalDFS();
+    let info = graph.dfs(discoveredCB, finishedCB);
     // Discovered A
     //     Discovered B
     //         Discovered E
     //             Discovered I
-    //             Explored I
-    //         Explored E
+    //             Finished I
+    //         Finished E
     //         Discovered F
-    //         Explored F
-    //     Explored B
+    //         Finished F
+    //     Finished B
     //     Discovered C
     //         Discovered D
     //             Discovered G
-    //             Explored G
+    //             Finished G
     //             Discovered H
-    //             Explored H
-    //         Explored D
-    //     Explored C
-    // Explored A
-    ```
+    //             Finished H
+    //         Finished D
+    //     Finished C
+    // Finished A
 
-### 记录更多信息的深度遍历
-1. 通过 `discoveredTime` 记录每个节点的发现时间，通过 `exploredTime` 记录每个节点的探索完成时间；通过 `predecessors` 记录每个节点的前溯节点，从而可以构建出递归的顺序图
-    <img src="./images/09.png" width="400" style="display: block; margin: 5px 0 10px;" />
-2. 类的实例方法，遍历的入口
-    ```js
-    DFSWidthMoreInfo () {
-        let colorMapping = initializeColorMapping(this.vertices);
-        const info = {
-            discoveredTime: {},
-            exploredTime: {},
-            predecessors: {},
-        }
-        DFSWidthMoreInfo_time = 0;
-
-        // 初始化每个顶点的发现时间、探索完成时间和前溯节点
-        this.vertices.forEach((vertex) => {
-            info.exploredTime[vertex] = 0;
-            info.discoveredTime[vertex] = 0;
-            info.predecessors[vertex] = null;
-        });
-
-        this.vertices.forEach((vertex) => {
-            if (colorMapping[vertex] === 'white') {
-                exploreForDFSWidthMoreInfo(vertex, this.adjacencyList, colorMapping, info);
-            }
-        });
-        return info;
-    }
-    ```
-3. 用来递归的私有方法
-    ```js
-    let DFSWidthMoreInfo_indent = 0;
-    let DFSWidthMoreInfo_time = 0;
-    function exploreForDFSWidthMoreInfo (vertex, adjacencyList, colorMapping, info) {
-        colorMapping[vertex] = 'grey';
-
-        info.discoveredTime[vertex] = ++DFSWidthMoreInfo_time;
-
-        let neighborList = adjacencyList.get(vertex);
-        neighborList.forEach((neighbor) => {
-            if (colorMapping[neighbor] === 'white') {
-                // 记录 vertex 为其相邻节点的前溯节点
-                info.predecessors[neighbor] = vertex; 
-                // 递归
-                exploreForDFSWidthMoreInfo(neighbor, adjacencyList, colorMapping, info);
-            }
-        });
-
-        // vertex 节点的所有子节点都遍历完成
-        colorMapping[vertex] = 'black';
-        info.exploredTime[vertex] = ++DFSWidthMoreInfo_time;
-    };
-    ```
-4. 测试
-    ```js
-    let info = graph.DFSWidthMoreInfo();
-    console.log( JSON.stringify(info, null, 4));
+    console.log(JSON.stringify(info, null, 4));
     // {
     //     "discoveredTime": {
-    //         "A": 1,
-    //         "B": 2,
-    //         "C": 10,
-    //         "D": 11,
-    //         "E": 3,
+    //         "A": 0,
+    //         "B": 1,
+    //         "E": 2,
+    //         "I": 3,
+    //         "F": 6,
+    //         "C": 9,
+    //         "D": 10,
+    //         "G": 11,
+    //         "H": 13
+    //     },
+    //     "finishedTime": {
+    //         "I": 4,
+    //         "E": 5,
     //         "F": 7,
+    //         "B": 8,
     //         "G": 12,
     //         "H": 14,
-    //         "I": 4
-    //     },
-    //     "exploredTime": {
-    //         "A": 18,
-    //         "B": 9,
-    //         "C": 17,
-    //         "D": 16,
-    //         "E": 6,
-    //         "F": 8,
-    //         "G": 13,
-    //         "H": 15,
-    //         "I": 5
+    //         "D": 15,
+    //         "C": 16,
+    //         "A": 17
     //     },
     //     "predecessors": {
     //         "A": null,
@@ -683,9 +679,6 @@ bfsCompatibleWithDirected (callback) {
     //     }
     // }
     ```
-
-### 前驱子图
-TODO 《算法导论》说 BFS 的前驱子图是一棵树，DFS 的前驱子图可能是多棵树。为什么可能是多棵树？如果是无向图那只需要一个起点就能遍历完成了吧，而如果是有向图，那 DFS 也同样可能需要多个起点。
 
 
 ## References
