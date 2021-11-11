@@ -38,6 +38,7 @@
     - [Depth-first search](#depth-first-search)
         - [规则](#规则)
         - [实现](#实现-2)
+        - [复杂度](#复杂度-1)
     - [References](#references)
 
 <!-- /TOC -->
@@ -573,7 +574,8 @@ bfsCompatibleWithDirected (callback) {
 
         // 找到 vertex 未被遍历到的相邻节点
         // 下面本来是找到相邻节点后直接筛选掉已经被遍历过的，而不是在下面的 neighbors.forEach 中筛选；
-        // 但这样是有问题的。例如 vertex 是 A 时，这里的 neighbors 就是 [B, C, D]，三个都是没被遍历的，// 所以之后三个都会被遍历一边；
+        // 但这样是有问题的。例如 vertex 是 A 时，这里的 neighbors 就是 [B, C, D]，三个都是没被遍历的，
+        // 所以之后三个都会被遍历一遍；
         // 但是在下面 forEach 遍历 C 的时候，D 作为 C 的相邻节点就会被遍历了，之后再遍历就是重复遍历了；
         // 所以还是应该在下面 forEach 实际准备遍历的时候在进行筛选，而不是在这里提前筛选。
         // let neighbors = [...this.adjacencyList.get(vertex)].filter((v)=>!info.searchedStates[v]);
@@ -679,6 +681,118 @@ bfsCompatibleWithDirected (callback) {
     //     }
     // }
     ```
+4. C 实现
+```cpp
+void _dfs (Graph* graph, int key, int* index,
+            int* discoveredTime, int* finishedTime, 
+            int* predecessors, int* searchedStates) {
+    discoveredTime[key] = (*index)++;
+    searchedStates[key] = 1;
+    List* neighbors = &(graph->listArray[key]);
+    Node* curr = neighbors->head;
+    while (curr) {
+        int k = curr->key;
+        if (searchedStates[k] == 0) {
+            predecessors[k] = key;
+            searchedStates[k] = 1;
+            _dfs(graph, k, index,
+                    discoveredTime, finishedTime, 
+                    predecessors, searchedStates);
+        } 
+        curr = curr->next;  
+    }
+    finishedTime[key] = (*index)++;
+}
+void dfs (Graph* graph, int* discoveredTime, int* finishedTime, int* predecessors) {
+    int searchedStates[graph->V];
+    for (int i=0; i<graph->V; i++) {
+        searchedStates[i] = 0;
+        predecessors[i] = -1;
+    }
+    int index = 0;
+    for (int key=0; key<graph->V; key++) {
+        if (searchedStates[key] == 0) {
+            _dfs(graph, key, &index,
+                    discoveredTime, finishedTime, 
+                    predecessors, searchedStates);
+        }
+    }
+}
+
+
+int main() {
+
+    int graphSize = 9;
+    struct Graph* graph = createGraph(graphSize);
+
+    addEdge(graph, 'A'-'A', 'B'-'A');
+    addEdge(graph, 'A'-'A', 'C'-'A');
+    addEdge(graph, 'A'-'A', 'D'-'A');
+    addEdge(graph, 'B'-'A', 'E'-'A');
+    addEdge(graph, 'B'-'A', 'F'-'A');
+    addEdge(graph, 'C'-'A', 'D'-'A');
+    addEdge(graph, 'C'-'A', 'G'-'A');
+    addEdge(graph, 'D'-'A', 'G'-'A');
+    addEdge(graph, 'D'-'A', 'H'-'A');
+    addEdge(graph, 'E'-'A', 'I'-'A');
+
+    int discoveredTime[graphSize];
+    int finishedTime[graphSize];
+    int predecessors[graphSize];
+    dfs (graph, discoveredTime, finishedTime, predecessors);
+    
+    printf("DiscoveredTime: \n");
+    for (int i=0; i<graphSize; i++) {
+        printf("%c: %2d\n", i+'A', discoveredTime[i]);
+    }
+    // DiscoveredTime:
+    // A:  0
+    // B:  9
+    // C:  5
+    // D:  1
+    // E: 12
+    // F: 10
+    // G:  4
+    // H:  2
+    // I: 13
+    printf("\n\n");
+    
+    printf("FinishedTime: \n");
+    for (int i=0; i<graphSize; i++) {
+        printf("%c %2d\n", i+'A', finishedTime[i]);
+    }
+    // FinishedTime:
+    // A 17
+    // B 16
+    // C  6
+    // D  8
+    // E 15
+    // F 11
+    // G  7
+    // H  3
+    // I 14
+    printf("\n\n");
+    
+    printf("Predecessors: \n");
+    for (int i=0; i<graphSize; i++) {
+        printf("Predecessor of %c is: %c \n", i+'A', predecessors[i]+'A');
+    }
+    // Predecessors:
+    // Predecessor of A is: @
+    // Predecessor of B is: A
+    // Predecessor of C is: G
+    // Predecessor of D is: A
+    // Predecessor of E is: B
+    // Predecessor of F is: B
+    // Predecessor of G is: D
+    // Predecessor of H is: D
+    // Predecessor of I is: E
+    printf("\n\n");
+
+    return 0;
+}
+```
+### 复杂度
 
 
 ## References
