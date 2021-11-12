@@ -32,6 +32,7 @@
             - [记录节点更多信息](#记录节点更多信息)
         - [实现](#实现)
         - [复杂度](#复杂度)
+            - [如果用邻接矩阵实现](#如果用邻接矩阵实现)
         - [广度优先树和前驱子图](#广度优先树和前驱子图)
         - [有向图的 BFS](#有向图的-bfs)
             - [实现](#实现-1)
@@ -39,6 +40,9 @@
         - [规则](#规则)
         - [实现](#实现-2)
         - [复杂度](#复杂度-1)
+        - [Properties of depth-first search](#properties-of-depth-first-search)
+        - [Classification of edges](#classification-of-edges)
+        - [栈实现](#栈实现)
     - [References](#references)
 
 <!-- /TOC -->
@@ -442,9 +446,15 @@ TODO 为什么要三种颜色，两种行不行？黑色好像没什么用处
 ### 复杂度
 1. 根据 C 的实现来计算。
 2. 初始化操作的时间复杂度是 $O(V)$；
-3. 每次 `while` 对应一次 `dequeue`，而每个节点只会一次 `enqueue`，所以 `while` 内部的执行次数是节点数，时间复杂度为 $O(V)$；
+3. 每次外层 `while` 对应一次 `dequeue`，而每个节点只会一次 `enqueue`，所以 `while` 内部的执行次数是节点数，时间复杂度为 $O(V)$；
 4. 每个 dequeue 的节点，要遍历它的链表；因此会遍历所有的链表，每个链表只遍历一次；每个链表节点对应一个边，一共有 2E 个边，所以遍历所有链表的时间是 $O(E)$。
 5. 因此广度优先搜索的总运行时间为 $O(V+E)$。
+
+#### 如果用邻接矩阵实现
+1. 初始化操作的时间复杂度仍然是 $O(V)$；
+2. 外层 `while` 仍然是 $O(V)$；
+3. 但是遍历一个节点的相邻节点时，需要完整的遍历邻接矩阵的一行，也就是 $O(V)$；也就是说，内层 `while` 时间仍然是 $O(V)$；
+4. 因此整体时间是 $O(V+V^2)$；
 
 ### 广度优先树和前驱子图
 1. BFS 搜索的过程会创建一棵以源节点为根节点的 **广度优先树**。或者说，我们以 BFS 的角度来看待这个图，那么它就变成了一棵广度优先树。
@@ -792,8 +802,89 @@ int main() {
     return 0;
 }
 ```
-### 复杂度
 
+### 复杂度
+1. 以 C 实现分析。
+2. 初始化所需的时间是 $Θ(V)$。
+3. 每个节点对应一次 `_dfs` 调用。
+4. 每次 `_dfs` 调用时，内部的 `while` 会遍历当前节点的边；因此所有的 `_dfs` 调用中所有的 `while` 加起来会遍历图的所有边，时间为 $Θ(E)$。
+5. 因此深度优先搜索的总时间为 $Θ(V+E)$。
+
+### Properties of depth-first search
+1. 看《算法导论》351 页。
+2. 其中的一些性质需要将节点划分为三种状态（例如白、灰、黑），只有未发现和已发现两种状态不够。
+
+### Classification of edges
+1. 看《算法导论》3535 页。
+2. 其中的一些性质需要将节点划分为三种状态（例如白、灰、黑），只有未发现和已发现两种状态不够。
+3. 结合定理 22.7 和 练习 22.3-5。
+
+### 栈实现
+1. 深度优先搜索的结构有着明显的栈结构特性，可以使用栈而非递归实现。参考《算法导论》352 页的图。
+2. 每次发现一个节点，接下来要入栈的，就是这个节点的第一个未遍历相邻节点。入栈就标志着该节点被发现。
+3. 这个过程会递归的进行，知道一个节点没有未遍历的相邻节点。此时这个节点称为完成状态，出栈，栈顶变为该节点的父节点。
+4. 外层方法不变，内层修改如下
+    ```js
+    _dfs (vertex, info, discoveredCB, finishedCB) {
+        let stack = [];
+
+        stack.push(vertex); // 遍历起点
+
+        // 起点已被发现
+        discoveredCB && discoveredCB(vertex);
+        info.searchedStates[vertex] = true;
+        info.time.discoveredTime[vertex] = info.time.index++;
+
+        // 只要栈不清空，那就是在同一棵深度优先树
+        while (stack.length) {
+            let top = stack[stack.length-1];
+            let neighbors = [...this.adjacencyList.get(top)];
+            let firstUnsearchedNeighbor = neighbors.find((key)=>!info.searchedStates[key]);
+            if (firstUnsearchedNeighbor) {
+                stack.push(firstUnsearchedNeighbor);
+                discoveredCB && discoveredCB(firstUnsearchedNeighbor);
+                info.searchedStates[firstUnsearchedNeighbor] = true;
+                info.predecessors[firstUnsearchedNeighbor] = top;
+                info.time.discoveredTime[firstUnsearchedNeighbor] = info.time.index++;
+            }
+            else {
+                stack.pop();
+                info.time.finishedTime[top] = info.time.index++;
+                finishedCB && finishedCB(top);
+            }
+        }
+    }
+    ```
+5. 使用《算法导论》351 页的有向图测试
+```js
+
+let graph = new Graph(true);
+
+
+graph.addEdge('u', 'v');
+graph.addEdge('u', 'x');
+graph.addEdge('x', 'v');
+graph.addEdge('v', 'y');
+graph.addEdge('y', 'x');
+graph.addEdge('w', 'y');
+graph.addEdge('w', 'z');
+graph.addEdge('z', 'z');
+
+// 两个回调缩进的显示节点的发现时间和结束时间，体现出递归结构
+let indent = 0;
+function discoveredCB (key) {
+    console.log(`${' '.repeat(indent)}Discovered ${key}`);
+    indent += 4;
+}
+function finishedCB (key) {
+    indent -= 4;
+    console.log(`${' '.repeat(indent)}Finished ${key}`);
+}
+
+let info = graph.dfs(discoveredCB, finishedCB);
+
+console.log(JSON.stringify(info, null, 4));
+```
 
 ## References
 * [学习JavaScript数据结构与算法](https://book.douban.com/subject/26639401/)
