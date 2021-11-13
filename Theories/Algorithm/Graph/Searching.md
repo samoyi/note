@@ -4,11 +4,12 @@
 <!-- TOC -->
 
 - [Searching](#searching)
+    - [TODO](#todo)
     - [设计思想](#设计思想)
-        - [设计思想和用途](#设计思想和用途)
+        - [深度优先搜索](#深度优先搜索)
             - [逐层探索，剥洋葱](#逐层探索剥洋葱)
             - [获得层级距离关系](#获得层级距离关系)
-        - [设计思想和用途](#设计思想和用途-1)
+        - [广度优先搜索](#广度优先搜索)
             - [尝试树状逻辑结构的每一条路径](#尝试树状逻辑结构的每一条路径)
             - [纵深型的逻辑结构](#纵深型的逻辑结构)
     - [抽象本质——基于现实关系的抽象](#抽象本质基于现实关系的抽象)
@@ -26,7 +27,7 @@
     - [图的遍历综述](#图的遍历综述)
         - [遍历的关键逻辑](#遍历的关键逻辑)
         - [不规则的遍历](#不规则的遍历)
-    - [广度优先搜索](#广度优先搜索)
+    - [广度优先搜索](#广度优先搜索-1)
         - [遍历逻辑](#遍历逻辑)
             - [标记已遍历节点](#标记已遍历节点)
             - [记录节点更多信息](#记录节点更多信息)
@@ -48,9 +49,12 @@
 <!-- /TOC -->
 
 
-## 设计思想
+## TODO 
+* 练习 22.3-8
 
-### 设计思想和用途
+
+## 设计思想
+### 深度优先搜索
 #### 逐层探索，剥洋葱
 希望完全探索完一层再进入下一层，或者说是按批次执行任务。执行完第一批的所有任务，才能执行第二批的。
 
@@ -58,12 +62,12 @@
 1. 根据层次的多少来获得两个对象的层级距离。
 2. 正是这种逐层且具有层级距离关系的特点，所以广度优先可以计算关系网中两个点的最短距离。
 
-### 设计思想和用途
+### 广度优先搜索
 #### 尝试树状逻辑结构的每一条路径
 比如说简单棋类游戏的穷举法，可以在每一步都穷举不同下法的最终结果。
 
 #### 纵深型的逻辑结构
-与广度优先剥洋葱的行为模式相对
+与广度优先剥洋葱的行为模式相对。
 
 
 ## 抽象本质——基于现实关系的抽象
@@ -822,8 +826,10 @@ int main() {
 ### 栈实现
 1. 深度优先搜索的结构有着明显的栈结构特性，可以使用栈而非递归实现。参考《算法导论》352 页的图。
 2. 每次发现一个节点，接下来要入栈的，就是这个节点的第一个未遍历相邻节点。入栈就标志着该节点被发现。
-3. 这个过程会递归的进行，知道一个节点没有未遍历的相邻节点。此时这个节点称为完成状态，出栈，栈顶变为该节点的父节点。
-4. 外层方法不变，内层修改如下
+3. 这个过程会递归的进行，直到一个节点没有未遍历的相邻节点。也就是说这个节点没有后代节点了，因此此时这个节点成为完成状态，出栈，栈顶变为该节点的前溯节点。
+4. 这个前溯节点继续找它现在的第一个未遍历相邻节点进行入栈；或者已经没有未遍历相邻节点了，那就也出栈。
+5. 当最后一个节点出栈，也就是最后一个节点完成后，当前的深度优先树就遍历完成了。如果还有节点没有遍历，那就开启第二个深度优先树的遍历。
+6. 外层 `dfs` 方法不变，内层修改如下
     ```js
     _dfs (vertex, info, discoveredCB, finishedCB) {
         let stack = [];
@@ -837,17 +843,23 @@ int main() {
 
         // 只要栈不清空，那就是在同一棵深度优先树
         while (stack.length) {
+            // 获取栈顶元素的第一个未遍历相邻节点
             let top = stack[stack.length-1];
             let neighbors = [...this.adjacencyList.get(top)];
             let firstUnsearchedNeighbor = neighbors.find((key)=>!info.searchedStates[key]);
+            
+            // 如果有未遍历相邻节点
             if (firstUnsearchedNeighbor) {
+                // 递归的发现该相邻节点，也就是该相邻节点入栈
                 stack.push(firstUnsearchedNeighbor);
                 discoveredCB && discoveredCB(firstUnsearchedNeighbor);
                 info.searchedStates[firstUnsearchedNeighbor] = true;
                 info.predecessors[firstUnsearchedNeighbor] = top;
                 info.time.discoveredTime[firstUnsearchedNeighbor] = info.time.index++;
             }
+            // 如果没有未遍历相邻节点
             else {
+                // 该节点称为完成状态，出栈，下一轮循环检查前溯节点
                 stack.pop();
                 info.time.finishedTime[top] = info.time.index++;
                 finishedCB && finishedCB(top);
@@ -855,36 +867,72 @@ int main() {
         }
     }
     ```
-5. 使用《算法导论》351 页的有向图测试
-```js
+7. 使用《算法导论》351 页的有向图测试。这个图是不连通的，因此会形成两棵深度优先树
+    ```js
+    let graph = new Graph(true);
 
-let graph = new Graph(true);
+    graph.addEdge('u', 'v');
+    graph.addEdge('u', 'x');
+    graph.addEdge('x', 'v');
+    graph.addEdge('v', 'y');
+    graph.addEdge('y', 'x');
+    graph.addEdge('w', 'y');
+    graph.addEdge('w', 'z');
+    graph.addEdge('z', 'z');
 
+    let indent = 0;
+    function discoveredCB (key) {
+        console.log(`${' '.repeat(indent)}Discovered ${key}`);
+        indent += 4;
+    }
+    function finishedCB (key) {
+        indent -= 4;
+        console.log(`${' '.repeat(indent)}Finished ${key}`);
+    }
 
-graph.addEdge('u', 'v');
-graph.addEdge('u', 'x');
-graph.addEdge('x', 'v');
-graph.addEdge('v', 'y');
-graph.addEdge('y', 'x');
-graph.addEdge('w', 'y');
-graph.addEdge('w', 'z');
-graph.addEdge('z', 'z');
+    let info = graph.dfs(discoveredCB, finishedCB);
+    // Discovered u
+    //     Discovered v
+    //         Discovered y
+    //             Discovered x
+    //             Finished x
+    //         Finished y
+    //     Finished v
+    // Finished u
+    // Discovered w
+    //     Discovered z
+    //     Finished z
+    // Finished w
 
-// 两个回调缩进的显示节点的发现时间和结束时间，体现出递归结构
-let indent = 0;
-function discoveredCB (key) {
-    console.log(`${' '.repeat(indent)}Discovered ${key}`);
-    indent += 4;
-}
-function finishedCB (key) {
-    indent -= 4;
-    console.log(`${' '.repeat(indent)}Finished ${key}`);
-}
+    console.log(JSON.stringify(info, null, 4));
+    // {
+    //     "discoveredTime": {
+    //         "u": 0,
+    //         "v": 1,
+    //         "y": 2,
+    //         "x": 3,
+    //         "w": 8,
+    //         "z": 9
+    //     },
+    //     "finishedTime": {
+    //         "x": 4,
+    //         "y": 5,
+    //         "v": 6,
+    //         "u": 7,
+    //         "z": 10,
+    //         "w": 11
+    //     },
+    //     "predecessors": {
+    //         "u": null,
+    //         "v": "u",
+    //         "x": "y",
+    //         "y": "v",
+    //         "w": null,
+    //         "z": "w"
+    //     }
+    // }
+    ```
 
-let info = graph.dfs(discoveredCB, finishedCB);
-
-console.log(JSON.stringify(info, null, 4));
-```
 
 ## References
 * [学习JavaScript数据结构与算法](https://book.douban.com/subject/26639401/)
