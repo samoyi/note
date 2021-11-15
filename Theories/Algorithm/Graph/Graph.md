@@ -355,8 +355,8 @@
         nodeCount++;   
     }
 
-    // 将两个节点连为边，无向图
-    void addEdge (int key1, int key2) {
+    // 将两个节点连为边
+    void addEdge (int key1, int key2, bool isDirected) {
         if ( !hasNode(key1) ) {
             printf("First argument %d in addEdge is not a key of added node.\n", key1);
             exit(EXIT_FAILURE);
@@ -375,11 +375,13 @@
         }
         curr1->next = node2;
         
-        Node* curr2 = node2;
-        while ( curr2->next ) {
-            curr2 = curr2->next;
+        if ( !isDirected ) {
+            Node* curr2 = node2;
+            while ( curr2->next ) {
+                curr2 = curr2->next;
+            }
+            curr2->next = node1;
         }
-        curr2->next = node1;
     }
 
     // 打印所有节点的 key
@@ -504,8 +506,8 @@
         return false;
     }
 
-    // 无向图添加边
-    void addEdge(Graph* graph, int key1, int key2) {
+    // 添加边
+    void addEdge(Graph* graph, int key1, int key2, bool isDirected) {
         // 避免重复添加
         if ( isEdge(graph, key1, key2) ) {
             return;
@@ -517,9 +519,11 @@
         graph->listArray[key1].head = node2;
         
         // 双向添加
-        Node* node1 = createNode(key1);
-        node1->next = graph->listArray[key2].head;
-        graph->listArray[key2].head = node1;
+        if ( !isDirected ) {
+            Node* node1 = createNode(key1);
+            node1->next = graph->listArray[key2].head;
+            graph->listArray[key2].head = node1;
+        }
     }
 
     void printGraph(Graph* graph) {
@@ -646,7 +650,7 @@
     }
 
     // 将两个节点连为边，无向图
-    void addEdge (int key1, int key2) {
+    void addEdge (int key1, int key2, bool isDirected) {
         if ( !hasNode(key1) ) {
             printf("First argument %d in addEdge is not a key of added node.\n", key1);
             exit(EXIT_FAILURE);
@@ -664,9 +668,11 @@
         Node* next1 = head1->next;
         head1->next = node2;
         node2->next = next1;
-        Node* next2 = head2->next;
-        head2->next = node1;
-        node1->next = next2;
+        if ( !isDirected ) {
+            Node* next2 = head2->next;
+            head2->next = node1;
+            node1->next = next2;
+        }
     }
 
     // 打印所有节点的 key

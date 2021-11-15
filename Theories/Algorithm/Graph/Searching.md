@@ -372,16 +372,16 @@ TODO 为什么要三种颜色，两种行不行？黑色好像没什么用处
 
         // 因为前面 JS 实现的节点是使用字母，而且上面配图也是使用字母，
         // 而前面 C 实现是使用整数，所以这里把字母转换为整数进行计算，最后输出时再转回字母
-        addEdge(graph, 'A'-'A', 'B'-'A');
-        addEdge(graph, 'A'-'A', 'C'-'A');
-        addEdge(graph, 'A'-'A', 'D'-'A');
-        addEdge(graph, 'B'-'A', 'E'-'A');
-        addEdge(graph, 'B'-'A', 'F'-'A');
-        addEdge(graph, 'C'-'A', 'D'-'A');
-        addEdge(graph, 'C'-'A', 'G'-'A');
-        addEdge(graph, 'D'-'A', 'G'-'A');
-        addEdge(graph, 'D'-'A', 'H'-'A');
-        addEdge(graph, 'E'-'A', 'I'-'A');
+        addEdge(graph, 'A'-'A', 'B'-'A', false);
+        addEdge(graph, 'A'-'A', 'C'-'A', false);
+        addEdge(graph, 'A'-'A', 'D'-'A', false);
+        addEdge(graph, 'B'-'A', 'E'-'A', false);
+        addEdge(graph, 'B'-'A', 'F'-'A', false);
+        addEdge(graph, 'C'-'A', 'D'-'A', false);
+        addEdge(graph, 'C'-'A', 'G'-'A', false);
+        addEdge(graph, 'D'-'A', 'G'-'A', false);
+        addEdge(graph, 'D'-'A', 'H'-'A', false);
+        addEdge(graph, 'E'-'A', 'I'-'A', false);
 
 
         int searchingKeyList[graphSize];
@@ -739,16 +739,16 @@ int main() {
     int graphSize = 9;
     struct Graph* graph = createGraph(graphSize);
 
-    addEdge(graph, 'A'-'A', 'B'-'A');
-    addEdge(graph, 'A'-'A', 'C'-'A');
-    addEdge(graph, 'A'-'A', 'D'-'A');
-    addEdge(graph, 'B'-'A', 'E'-'A');
-    addEdge(graph, 'B'-'A', 'F'-'A');
-    addEdge(graph, 'C'-'A', 'D'-'A');
-    addEdge(graph, 'C'-'A', 'G'-'A');
-    addEdge(graph, 'D'-'A', 'G'-'A');
-    addEdge(graph, 'D'-'A', 'H'-'A');
-    addEdge(graph, 'E'-'A', 'I'-'A');
+    addEdge(graph, 'A'-'A', 'B'-'A', false);
+    addEdge(graph, 'A'-'A', 'C'-'A', false);
+    addEdge(graph, 'A'-'A', 'D'-'A', false);
+    addEdge(graph, 'B'-'A', 'E'-'A', false);
+    addEdge(graph, 'B'-'A', 'F'-'A', false);
+    addEdge(graph, 'C'-'A', 'D'-'A', false);
+    addEdge(graph, 'C'-'A', 'G'-'A', false);
+    addEdge(graph, 'D'-'A', 'G'-'A', false);
+    addEdge(graph, 'D'-'A', 'H'-'A', false);
+    addEdge(graph, 'E'-'A', 'I'-'A', false);
 
     int discoveredTime[graphSize];
     int finishedTime[graphSize];
@@ -871,14 +871,14 @@ int main() {
     ```js
     let graph = new Graph(true);
 
-    graph.addEdge('u', 'v');
-    graph.addEdge('u', 'x');
-    graph.addEdge('x', 'v');
-    graph.addEdge('v', 'y');
-    graph.addEdge('y', 'x');
-    graph.addEdge('w', 'y');
-    graph.addEdge('w', 'z');
-    graph.addEdge('z', 'z');
+    graph.addEdge('u', 'v', true);
+    graph.addEdge('u', 'x', true);
+    graph.addEdge('x', 'v', true);
+    graph.addEdge('v', 'y', true);
+    graph.addEdge('y', 'x', true);
+    graph.addEdge('w', 'y', true);
+    graph.addEdge('w', 'z', true);
+    graph.addEdge('z', 'z', true);
 
     let indent = 0;
     function discoveredCB (key) {

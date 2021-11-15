@@ -5,6 +5,7 @@
 
 - [拓扑排序](#拓扑排序)
     - [定义](#定义)
+    - [判断是否有环](#判断是否有环)
     - [算法](#算法)
     - [实现](#实现)
     - [复杂度](#复杂度)
@@ -21,6 +22,92 @@
 4. A **topological sort** of a DAG $G=(V,E)$ is a linear ordering of all its vertices such that if $G$ contains an edge $(u, v)$, then $u$ appears before $v$ in the ordering.
 5. If the graph contains a cycle, then no linear ordering is possible. 所以拓扑排序只能应用于 DAG。
 6. 所以拓扑排序可以满足上面的任务要求。也就是当要执行一个节点之前，必须要先执行完该节点的所有前溯节点。
+
+
+## 判断是否有环
+1. 《算法导论》356 页引理 22.11。
+2. 因此可以根据 DFS 时是否有后向边来判断是否有环。也就是首次探索边 $(u, v)$ 时，$v$ 是否为灰色。
+3. 但是对于无向图来说，可以说任何两个的边都是一个环。所以不仅需要 $v$ 是否为灰色，还需要 $v$ 不是 $u$ 的前溯节点
+    ```js
+    isCyclic () {
+        let adjacencyList = this.adjacencyList;
+        let isDirected = this.isDirected;
+
+        let searchedStateColors = {};
+        let predecessors = {};
+        this.vertices.forEach((v) => {
+            searchedStateColors[v] = "white";
+            predecessors[v] = null;
+        });
+
+        let hasBackEdge = false;
+
+        this.vertices.forEach((v) => {
+            if (hasBackEdge) {
+                return;
+            }
+            if ( searchedStateColors[v] === "white") {
+                _dfs(v, searchedStateColors);
+            }
+        });
+
+        function _dfs (vertex, searchedStateColors) {
+            searchedStateColors[vertex] = "gray";
+            let neighbors = adjacencyList.get(vertex);
+            neighbors.forEach((n)=>{
+                if ( searchedStateColors[n] === "gray" ) {
+                    if (isDirected) {
+                        hasBackEdge = true;
+                        return;
+                    }
+                    else if (n !== predecessors[vertex]) {
+                        hasBackEdge = true;
+                        return;
+                    }
+                }
+                if ( searchedStateColors[n] === "white" ) {
+                    predecessors[n] = vertex;
+                    _dfs(n, searchedStateColors);
+                }
+            });
+            searchedStateColors[vertex] = "black";
+        }
+
+        return hasBackEdge
+    }
+    ```
+3. 测试有向图。《算法导论》351 页的图本来是有环的，但是删掉两个边就是无环的了
+    ```js
+    let graph = new Graph(true);
+
+    graph.addEdge('u', 'v');
+    graph.addEdge('u', 'x');
+    // graph.addEdge('x', 'v');
+    graph.addEdge('v', 'y');
+    graph.addEdge('y', 'x');
+    graph.addEdge('w', 'y');
+    graph.addEdge('w', 'z');
+    // graph.addEdge('z', 'z');
+
+    console.log(graph.isCyclic()); // false
+    ```
+4. 测试无向图
+    ```js
+    let graph = new Graph();
+
+    graph.addEdge('A', 'B');
+    graph.addEdge('A', 'C');
+    graph.addEdge('A', 'D');
+    graph.addEdge('B', 'E');
+    graph.addEdge('B', 'F');
+    // graph.addEdge('C', 'D');
+    graph.addEdge('C', 'G');
+    // graph.addEdge('D', 'G');
+    graph.addEdge('D', 'H');
+    graph.addEdge('E', 'I');
+
+    console.log(graph.isCyclic()); // false
+    ```
 
 
 ## 算法
