@@ -696,116 +696,116 @@ bfsCompatibleWithDirected (callback) {
     // }
     ```
 4. C 实现
-```cpp
-void _dfs (Graph* graph, int key, int* index,
-            int* discoveredTime, int* finishedTime, 
-            int* predecessors, int* searchedStates) {
-    discoveredTime[key] = (*index)++;
-    searchedStates[key] = 1;
-    List* neighbors = &(graph->listArray[key]);
-    Node* curr = neighbors->head;
-    while (curr) {
-        int k = curr->key;
-        if (searchedStates[k] == 0) {
-            predecessors[k] = key;
-            searchedStates[k] = 1;
-            _dfs(graph, k, index,
-                    discoveredTime, finishedTime, 
-                    predecessors, searchedStates);
-        } 
-        curr = curr->next;  
+    ```cpp
+    void _dfs (Graph* graph, int key, int* index,
+                int* discoveredTime, int* finishedTime, 
+                int* predecessors, int* searchedStates) {
+        discoveredTime[key] = (*index)++;
+        searchedStates[key] = 1;
+        List* neighbors = &(graph->listArray[key]);
+        Node* curr = neighbors->head;
+        while (curr) {
+            int k = curr->key;
+            if (searchedStates[k] == 0) {
+                predecessors[k] = key;
+                searchedStates[k] = 1;
+                _dfs(graph, k, index,
+                        discoveredTime, finishedTime, 
+                        predecessors, searchedStates);
+            } 
+            curr = curr->next;  
+        }
+        finishedTime[key] = (*index)++;
     }
-    finishedTime[key] = (*index)++;
-}
-void dfs (Graph* graph, int* discoveredTime, int* finishedTime, int* predecessors) {
-    int searchedStates[graph->V];
-    for (int i=0; i<graph->V; i++) {
-        searchedStates[i] = 0;
-        predecessors[i] = -1;
-    }
-    int index = 0;
-    for (int key=0; key<graph->V; key++) {
-        if (searchedStates[key] == 0) {
-            _dfs(graph, key, &index,
-                    discoveredTime, finishedTime, 
-                    predecessors, searchedStates);
+    void dfs (Graph* graph, int* discoveredTime, int* finishedTime, int* predecessors) {
+        int searchedStates[graph->V];
+        for (int i=0; i<graph->V; i++) {
+            searchedStates[i] = 0;
+            predecessors[i] = -1;
+        }
+        int index = 0;
+        for (int key=0; key<graph->V; key++) {
+            if (searchedStates[key] == 0) {
+                _dfs(graph, key, &index,
+                        discoveredTime, finishedTime, 
+                        predecessors, searchedStates);
+            }
         }
     }
-}
 
 
-int main() {
+    int main() {
 
-    int graphSize = 9;
-    struct Graph* graph = createGraph(graphSize);
+        int graphSize = 9;
+        struct Graph* graph = createGraph(graphSize);
 
-    addEdge(graph, 'A'-'A', 'B'-'A', false);
-    addEdge(graph, 'A'-'A', 'C'-'A', false);
-    addEdge(graph, 'A'-'A', 'D'-'A', false);
-    addEdge(graph, 'B'-'A', 'E'-'A', false);
-    addEdge(graph, 'B'-'A', 'F'-'A', false);
-    addEdge(graph, 'C'-'A', 'D'-'A', false);
-    addEdge(graph, 'C'-'A', 'G'-'A', false);
-    addEdge(graph, 'D'-'A', 'G'-'A', false);
-    addEdge(graph, 'D'-'A', 'H'-'A', false);
-    addEdge(graph, 'E'-'A', 'I'-'A', false);
+        addEdge(graph, 'A'-'A', 'B'-'A', false);
+        addEdge(graph, 'A'-'A', 'C'-'A', false);
+        addEdge(graph, 'A'-'A', 'D'-'A', false);
+        addEdge(graph, 'B'-'A', 'E'-'A', false);
+        addEdge(graph, 'B'-'A', 'F'-'A', false);
+        addEdge(graph, 'C'-'A', 'D'-'A', false);
+        addEdge(graph, 'C'-'A', 'G'-'A', false);
+        addEdge(graph, 'D'-'A', 'G'-'A', false);
+        addEdge(graph, 'D'-'A', 'H'-'A', false);
+        addEdge(graph, 'E'-'A', 'I'-'A', false);
 
-    int discoveredTime[graphSize];
-    int finishedTime[graphSize];
-    int predecessors[graphSize];
-    dfs (graph, discoveredTime, finishedTime, predecessors);
-    
-    printf("DiscoveredTime: \n");
-    for (int i=0; i<graphSize; i++) {
-        printf("%c: %2d\n", i+'A', discoveredTime[i]);
+        int discoveredTime[graphSize];
+        int finishedTime[graphSize];
+        int predecessors[graphSize];
+        dfs (graph, discoveredTime, finishedTime, predecessors);
+        
+        printf("DiscoveredTime: \n");
+        for (int i=0; i<graphSize; i++) {
+            printf("%c: %2d\n", i+'A', discoveredTime[i]);
+        }
+        // DiscoveredTime:
+        // A:  0
+        // B:  9
+        // C:  5
+        // D:  1
+        // E: 12
+        // F: 10
+        // G:  4
+        // H:  2
+        // I: 13
+        printf("\n\n");
+        
+        printf("FinishedTime: \n");
+        for (int i=0; i<graphSize; i++) {
+            printf("%c %2d\n", i+'A', finishedTime[i]);
+        }
+        // FinishedTime:
+        // A 17
+        // B 16
+        // C  6
+        // D  8
+        // E 15
+        // F 11
+        // G  7
+        // H  3
+        // I 14
+        printf("\n\n");
+        
+        printf("Predecessors: \n");
+        for (int i=0; i<graphSize; i++) {
+            printf("Predecessor of %c is: %c \n", i+'A', predecessors[i]+'A');
+        }
+        // Predecessors:
+        // Predecessor of A is: @
+        // Predecessor of B is: A
+        // Predecessor of C is: G
+        // Predecessor of D is: A
+        // Predecessor of E is: B
+        // Predecessor of F is: B
+        // Predecessor of G is: D
+        // Predecessor of H is: D
+        // Predecessor of I is: E
+        printf("\n\n");
+
+        return 0;
     }
-    // DiscoveredTime:
-    // A:  0
-    // B:  9
-    // C:  5
-    // D:  1
-    // E: 12
-    // F: 10
-    // G:  4
-    // H:  2
-    // I: 13
-    printf("\n\n");
-    
-    printf("FinishedTime: \n");
-    for (int i=0; i<graphSize; i++) {
-        printf("%c %2d\n", i+'A', finishedTime[i]);
-    }
-    // FinishedTime:
-    // A 17
-    // B 16
-    // C  6
-    // D  8
-    // E 15
-    // F 11
-    // G  7
-    // H  3
-    // I 14
-    printf("\n\n");
-    
-    printf("Predecessors: \n");
-    for (int i=0; i<graphSize; i++) {
-        printf("Predecessor of %c is: %c \n", i+'A', predecessors[i]+'A');
-    }
-    // Predecessors:
-    // Predecessor of A is: @
-    // Predecessor of B is: A
-    // Predecessor of C is: G
-    // Predecessor of D is: A
-    // Predecessor of E is: B
-    // Predecessor of F is: B
-    // Predecessor of G is: D
-    // Predecessor of H is: D
-    // Predecessor of I is: E
-    printf("\n\n");
-
-    return 0;
-}
-```
+    ```
 
 ### 复杂度
 1. 以 C 实现分析。

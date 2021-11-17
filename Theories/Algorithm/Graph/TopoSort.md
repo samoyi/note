@@ -4,14 +4,20 @@
 <!-- TOC -->
 
 - [拓扑排序](#拓扑排序)
+    - [TODO](#todo)
     - [定义](#定义)
     - [判断是否有环](#判断是否有环)
     - [算法](#算法)
     - [实现](#实现)
     - [复杂度](#复杂度)
+    - [根据入度实现拓扑排序](#根据入度实现拓扑排序)
     - [References](#references)
 
 <!-- /TOC -->
+
+
+## TODO
+* 练习 22.4-2
 
 
 ## 定义
@@ -27,7 +33,7 @@
 ## 判断是否有环
 1. 《算法导论》356 页引理 22.11。
 2. 因此可以根据 DFS 时是否有后向边来判断是否有环。也就是首次探索边 $(u, v)$ 时，$v$ 是否为灰色。
-3. 但是对于无向图来说，可以说任何两个的边都是一个环。所以不仅需要 $v$ 是否为灰色，还需要 $v$ 不是 $u$ 的前溯节点
+3. 但是对于无向图来说，可以说任何两个节点的边都是一个环。所以不仅需要 $v$ 为灰色，还需要 $v$ 不是 $u$ 的前溯节点
     ```js
     isCyclic () {
         let adjacencyList = this.adjacencyList;
@@ -76,7 +82,7 @@
         return hasBackEdge
     }
     ```
-3. 测试有向图。《算法导论》351 页的图本来是有环的，但是删掉两个边就是无环的了
+4. 测试有向图。《算法导论》351 页的图本来是有环的，但是删掉两个边就是无环的了
     ```js
     let graph = new Graph(true);
 
@@ -148,8 +154,53 @@
 用 $O(V+E)$ 的时间完成深度优先搜索，再用 $O(V)$ 的时间反转列表。
 
 
+## 根据入度实现拓扑排序
+1. 根据拓扑排序的要求，当前可以执行的节点就是不依赖其他节点的，也就是没有前溯节点的，也就是入度为 0 的节点。
+2. 那么我们可以先执行当前入度为 0 的节点，然后再把这些节点以及它们的边删掉，这样，它们的相邻节点就没有这些前溯节点了，也就不依赖它们了。
+3. 删除了当前入度为 0 的节点后，肯定就会有一些之前入度不为 0 的节点变为 0 了，也就是说这些节点要依赖的节点已经执行完成了。
+4. 那么我们就再次按照前面的步骤删除当前入度为 0 的节点。以此类推，直到删除所有的节点。
+5. 其实这种算法感觉上更符合拓扑排序的语义，就是先执行并移除不依赖其他节点的节点，以此类推。
+6. 实现
+    ```js
+    in_degree_topological_sort () {
+        let sortedList = [];
+
+        // 计算各个节点的入度
+        let indegrees = {};
+        this.vertices.forEach((v) => {
+            indegrees[v] = 0;
+        });
+        this.adjacencyList.forEach((list)=>{
+            list.forEach((key) => {
+                indegrees[key]++;
+            });
+        })
+
+        let vertices = this.vertices; // 计算的时候要不断删除节点，所以拷贝一份
+        while (vertices.length) {
+            vertices.forEach((v) => {
+                if ( indegrees[v] === 0 ) {
+                    sortedList.push(v);
+                    vertices.splice(vertices.indexOf(v), 1);
+
+                    // 删除入度为 0 的节点后不需要重新计算图的入度，直接把相邻的节点入度减一即可
+                    let neighbors = this.adjacencyList.get(v);
+                    neighbors.forEach((n)=>{
+                        indegrees[n]--;
+                    });
+                }
+            });
+        }
+
+        return sortedList;
+    }
+    ```
+7. 计算入度的时间为 $O(E)$；删除节点时要用时 $O(V)$ 遍历每一个节点，还要用时 $O(E)$ 删除所有的边；因此总的用时为 $O(V+E)$。
+
+
 ## References
 * [学习JavaScript数据结构与算法](https://book.douban.com/subject/26639401/)
 * [算法（第4版）](https://book.douban.com/subject/19952400/)
 * [Python数据结构与算法分析（第2版）](https://book.douban.com/subject/34785178/)
 * [算法导论（原书第3版）](https://book.douban.com/subject/20432061/)
+* [github.com/gzc/CLRS](https://github.com/gzc/CLRS/blob/master/C22-Elementary-Graph-Algorithms/22.4.md)
