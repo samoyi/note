@@ -34,7 +34,7 @@
     <img src="./images/actual-array.png" width="400" style=" display: block; margin: 5px 0 10px;" />
 3. An memory representation of an array has been provided in the picture above. So it is made to hold 4 elements of 4 bits each. Thus it is taking 16 bits memory blocks, all in the same order.
 4. Suppose, I’ve declared `tinyInt arr[4];` and it has captured a series of memory blocks, starting from address `1201`. 
-5. Now at some point if I try to read `a[2]`, what it will do is a simple mathematical calculation to find out the address of `a[2]`. Something like $1201 + (2 X 4)$ and will directly read from address `1209`.
+5. Now at some point if I try to read `a[2]`, what it will do is a simple mathematical calculation to find out the address of `a[2]`. Something like $1201 + (2 * 4)$ and will directly read from address `1209`.
 
 ### JavaScript arrays
 1. In JavaScript, an array is a **hash-map**. It can be implemented using various data structures, one of them is linked-list. 
@@ -42,6 +42,7 @@
 2. So in JavaScript if you declare an array `var arr = new Array(4);` it will make a structure like the picture above. 
 3. Thus, if you want to read from `a[2]` at any point in your program, it has to traverse starting from `1201` to find the address of `a[2]`.
 4. So this is how JavaScript arrays are different from actual arrays. Obviously a mathematical calculation will take way lesser time than an linked-list traversal. For long arrays, life will be more tough.
+5. 这是 JS 中数组的基础实现。但是如下面所说，在具体的 JS 引擎中，会对 JS 的数组实现进行优化，使得在多数时候，JS 的数组更像是真实的数组。
 
 
 ## Evolution of JavaScript arrays  
@@ -55,7 +56,7 @@
     //    - slow, backing storage is a HashTable with numbers as keys.
     ```
 2. 快数组类似于真正的数组，慢数组是用哈希表的实现的。正是因为可以用哈希表实现慢数组，所以 JS 的数组才可能保存不同类型的数据。
-3. 快速组的内存空间也是变的，也就是扩容和收缩。但它并不能像哈希表那样每次增删元素时都单独的为该元素分配空间，而是要批量的增加或删除空间。
+3. 不过，快数组的内存空间也是变的，也就是扩容和收缩。但它并不能像哈希表那样每次增删元素时都单独的为该元素分配空间，而是要批量的增加或删除空间。
 4. 快数组的扩容，会是比如说发现快满了，就把存储空间增大到当前的 1.5 倍；收缩也是比如说发现当前数组项很少，数组内存用了 1/3，那就让内存空间缩减到原来的一般。当然实际的比例要看具体的实现。
 5. 因此快数组总是会有一些多出来的还没有用到的数组内存。所以从这一点上来说，快数组使用空间换时间，而慢数组是用时间换空间。
 
@@ -78,7 +79,6 @@
 ## 避免非预期的转换为慢数组
 ### Using homogeneous array
 1. JavaScript engines these days actually allocate contiguous memory for its arrays; if the array if **homogeneous** (all elements of same type). 
-
 2. Good programmers always keep their array homogeneous and JIT (just in time compiler) taking the advantage of that does all its array reading calculation just like the way `C` compiler does. 
 3. But, the moment you want to insert an element of different type on that homogeneous array, JIT de-structure the entire array and recreate with the old-days style. 
 4. So, if you are not writing bad codes, JavaScript `Array` objects maintains an actual array behind the scene.
