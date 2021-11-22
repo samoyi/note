@@ -5,15 +5,27 @@
 
 - [Plain Object clone](#plain-object-clone)
     - [TODO](#todo)
+    - [设计思想](#设计思想)
     - [根据以下几个标准来对各种拷贝方法进行分类](#根据以下几个标准来对各种拷贝方法进行分类)
     - [测试函数](#测试函数)
     - [拷贝方法](#拷贝方法)
         - [方法一：`Object(source)`](#方法一objectsource)
         - [方法二：`Object.assign(target, source)`](#方法二objectassigntarget-source)
         - [方法三：`JSON.parse( JSON.stringify( source ) )`](#方法三jsonparse-jsonstringify-source--)
-        - [方法四：自定义方法 `clone`](#方法四自定义方法-clone)
-            - [实现](#实现)
+        - [方法四：自定义方法 `deep_clone`](#方法四自定义方法-deep_clone)
+            - [原型](#原型)
+            - [算法流程](#算法流程)
+            - [边界条件](#边界条件)
+        - [循环引用的处理](#循环引用的处理)
+            - [继承原型的问题](#继承原型的问题)
+        - [实现](#实现)
+        - [方法五：兼容多种类型的自定义方法 `clone`](#方法五兼容多种类型的自定义方法-clone)
+            - [原型](#原型-1)
+            - [逻辑流程](#逻辑流程)
+            - [边界条件](#边界条件-1)
+            - [实现](#实现-1)
             - [`mixin` 中不拷贝的属性](#mixin-中不拷贝的属性)
+    - [循环引用的问题](#循环引用的问题)
     - [浏览器尚未实现的拷贝功能](#浏览器尚未实现的拷贝功能)
         - [`localStorage` 和 `sessionStorage` 对引用类型的拷贝](#localstorage-和-sessionstorage-对引用类型的拷贝)
     - [References](#references)
@@ -22,7 +34,13 @@
 
 
 ## TODO
-* ES6的新类型中只检测了是否可拷贝`Symbol`
+* ES6 的新类型中只检测了是否可拷贝`Symbol`
+
+
+## 设计思想
+1. 总感觉深拷贝是一个 “面试功能”，就是实现深拷贝需要考虑不少东西，但是实际工作中很少用到。
+2. 自动的分配内存复制一份数据，而不是很明确的去手动申请内存，总感觉是个坑。
+3. 而且一个担忧是，这为同一个数据创造了两个数据源。除非所有人都明确的知道有两个数据源，否则就可能产生两个数据源不统一。
 
 
 ## 根据以下几个标准来对各种拷贝方法进行分类
@@ -538,21 +556,156 @@
 `PlainObject` 浅拷贝 + `Array` 浅拷贝 + `Node` 浅拷贝 + 仅实例 + 仅可枚举
 
 ### 方法三：`JSON.parse( JSON.stringify( source ) )`
-`PlainObject` 深拷贝 + `Array` 深拷贝 + 仅实例 + 仅可枚举 + 不可拷贝类型：`Undefined/NaN/RegExp/Function/Date/Node/Symbol`
+1. `PlainObject` 深拷贝 + `Array` 深拷贝 + 仅实例 + 仅可枚举 + 不可拷贝类型：`Undefined/NaN/RegExp/Function/Date/Node/Symbol`
+2. 如果存在对象循环引用，则 `JSON.stringify` 会报错
+    ```js
+    let obj1 = {name: "obj1"};
+    let obj2 = {name: "obj2"};
 
-### 方法四：自定义方法 `clone`
-`PlainObject` 深拷贝 + `Array` 深拷贝 + `Node` 深拷贝 + 可拷贝原型属性 + 仅可枚举  
+    obj1.obj = obj2;
+    obj2.obj = obj1;
+
+
+
+    console.log(JSON.stringify(obj1));
+    // Uncaught TypeError: Converting circular structure to JSON
+    //     --> starting at object with constructor 'Object'
+    //     |     property 'obj' -> object with constructor 'Object'
+    //     --- property 'obj' closes the circle
+    ```
+
+### 方法四：自定义方法 `deep_clone`
+1. 支持深拷贝 plain object 和数组。
+
+#### 原型
+    ```js
+    function deep_clone(src) {
+        return dest;
+    }
+    ```
+
+#### 算法流程
+1. 如果 `src` 是基础类型，则返回 `src`。
+2. 如果 `src` 是数组，创建一个新数组 `dest`；如果 `src` 是 plain object，创建一个新对象 `dest`。
+3. 将 `dest` 的原型属性指向 `src` 的原型。
+4. 遍历 `src` 的可枚举实例属性：
+    * 如果该属性是 plain object 或数组，则递归调用 `deep_clone` 拷贝该属性，将返回的副本保存到 `dest` 中；
+    * 否则直接将该户型保存到 `dest` 中；
+
+#### 边界条件
+* 只支持拷贝 plain object 和数组。
+* 是否拷贝原型属性：不应该拷贝 `src` 的原型属性，而应该直接把 `dest` 的原型指向 `src` 的原型。
+* 是否拷贝不可枚举属性：不拷贝。
+
+### 循环引用的处理
+1. 考虑上面循环引用的例子。
+2. `obj1.obj` 需要正常的深拷贝，也就是深拷贝 `obj2`。
+3. 遍历到 `obj2.obj` 时，因为也是对象，所以按照上面的算法流程也要深拷贝，也就是深拷贝 `obj1`。
+4. 但实际上此时不应该再深拷贝了，否则就进入无意义的循环了。这里只能进行浅拷贝，也就是直接引用。
+5. 那么怎么判断需要浅拷贝的这种情况呢？打算深拷贝的这个对象，之前是否进行过深拷贝。
+6. 所以应该将每个曾经深拷贝的对象都记录下来，每次准备深拷贝一个对象时，都看看历史记录。
+
+#### 继承原型的问题
+1. 如果使用 `Object.setPrototypeOf` 来继承原型，那么不管 `src` 是数组还是平对象，都可以实现继承。
+2. 但直接修改原型会有明显的性能问题，参考 `Theories\Languages\JavaScript\V8\Basic\PptimizingPrototypes.md`。
+3. 所以这里只使用 `Object.create` 来直接创建继承 `src` 原型的 `dest`，而不是创建好了之后再修改原型。
+4. 因为没有类似的方法来创建数组，再加上其实数组很少有索引号以外的属性继承和修改，所以这里数组不进行继承。
+
+### 实现
+```js
+function get_type(obj) {
+    return Object.prototype.toString.call(obj).split(" ")[1].slice(0, -1);
+}
+
+function deep_clone(src, clonedList = []) {
+    let type = get_type(src);
+    if (  type !== "Array" && type !== "Object" ) {
+        return src;
+    }
+
+    // 将要进行深拷贝时，先检查历史记录
+    if ( clonedList.includes(src) ) {
+        // 如果曾经深拷贝过，则直接返回引用
+        return src;
+    }
+    else {
+        // 否则记录本次新的深拷贝
+        clonedList.push(src)
+    }
+
+    let dest;
+    if ( type === "Array" ) {
+        dest = [];
+    }
+    else {
+        dest = Object.create(Object.getPrototypeOf(src));
+    }
+
+    // Object.entries 方法遍历 可遍历 的 实例 属性
+    Object.entries(src).forEach((pair) => {
+        let t = get_type(pair[1]);
+        if ( t === "Array" || t === "Object" ) {
+            dest[pair[0]] = deep_clone(pair[1], clonedList);
+        }
+        else {
+            dest[pair[0]] = pair[1];
+        }
+    });
+
+    return dest;
+}
+
+
+let obj1 = {name: "obj1"};
+let obj2 = {name: "obj2"};
+
+obj1.obj = obj2;
+obj2.obj = obj1;
+
+let copy = deep_clone(obj1);
+
+console.log(obj1 === copy);                 // false
+console.log(obj1.obj === copy.obj);         // false
+console.log(obj1.obj.obj === copy.obj.obj); // true   // 直接引用
+```
+
+### 方法五：兼容多种类型的自定义方法 `clone`
+1. `PlainObject` 深拷贝 + `Array` 深拷贝 + `Node` 深拷贝 + 可拷贝原型属性 + 仅可枚举  
+2. 这个方法的问题是，它想要兼容多种类型，而 JS 中的非基础类型很多，每种的拷贝方法都不一样。所以要么实现一个庞大的、且要时常注意更新支持新类型的函数，要么就只能支持几种常见类型。
+3. 下面的实现中，除了 plain object 和数组外，只支持拷贝 `Node`、`Date` 和 `RegExp` 类型。
+
+#### 原型
+    ```js
+    funcion clone(src) {
+        return dest;
+    }
+    ```
+
+#### 逻辑流程
+1. 如果 `src` 是基础类型或者函数，则直接返回 `src`。
+2. 如果 `src` 是可以直接拷贝副本的类型，如 `Node` 类型、`Date` 等，则直接创建副本并返回。
+3. 如果 `src` 是数组，创建一个新数组 `dest`，递归的对 `src` 的每个数组项调用 `clone` 并保存到 `dest` 中；
+4. 如果 `src` 是 plain object，创建一个新对象 `dest`，递归的对 `src` 的每个属性调用 `clone` 并保存到 `dest` 中。
+
+#### 边界条件
+* 是否拷贝原型属性：不应该拷贝 `src` 的原型属性，而应该直接把 `dest` 的原型指向 `src` 的原型；
+* 是否拷贝不可枚举属性：不拷贝。
 
 #### 实现
-1. 在 [这篇文章](https://davidwalsh.name/javascript-clone) 的 `clone` 函数中加入了对 `Symbol` 的支持。
+1. 在 [这篇文章](https://davidwalsh.name/javascript-clone) 的 `clone` 函数中加入了对 `Symbol` 的支持，并做了一些其他修改。
 2. 主函数 `clone` 实现如下
     ```js
     function clone(src) {
-        
-        if (!src || typeof src != "object" || Object.prototype.toString.call(src) === "[object Function]") {
+        if (!src 
+            || typeof src != "object" 
+            || Object.prototype.toString.call(src) === "[object Function]"
+        ) {
             // 如果不是引用类型或者是函数，则直接返回本身
             return src;
         }
+
+        // 可以直接创建副本的三种引用类型
+        // 还有其他类型，使用时可以根据需求补齐
         if (src.nodeType && "cloneNode" in src) {
             // DOM Node
             return src.cloneNode(true); // deep clone
@@ -566,12 +719,11 @@
             return new RegExp(src);
         }
 
-        var dest;
+        let dest;
         if ( Array.isArray(src) ) {
-            // 如果是数组则创建一个新数组，把 src 的数组项逐一拷贝过来
-            // 为了深拷贝数组项，需要递归的使用 clone 调用
+            // 如果是数组则创建一个新数组，把 src 的数组项逐一深拷贝过来
             dest = [];
-            src.forEach(function(item) {
+            src.forEach((item) => {
                 dest.push(clone(item));
             });
         } 
@@ -585,7 +737,7 @@
         return mixin(dest, src, clone);
     }
     ```
-3. 因为数组可能不是基础类型，所以对于数组项的拷贝可以递归的使用 `clone` 函数。
+3. 因为数组项可能不是基础类型，所以对于数组项的拷贝可以递归的使用 `clone` 函数。
 4. 而为了深拷贝 Plain Object 的属性和数组的非索引属性的，单独实现一个 `mixin` 函数来完成。其实一般情况下，对于这样的属性也可以直接使用 `for...in` 来遍历并通过 `clone` 来拷贝，但还是有两类特殊情况需要处理：
     * `Symbol` 属性无法通过 `for...in` 遍历到
     * 因为这个拷贝方法会拷贝原型属性，所以要避免把 `Object.prototype` 上的属性拷贝为 `dest` 的实例属性。
@@ -594,7 +746,7 @@
     // 不能直接拷贝的属性使用 mixin
     // 包括 Symbol 属性、Plain Object 和 Array
     function mixin(dest, source, copyFunc) {
-        var name, s, empty = {};
+        let name, s, empty = {};
 
         // Symbol 属性只能通过以下方法枚举
         if ( Object.getOwnPropertySymbols ) {
@@ -627,6 +779,10 @@
     * D：`empty[name] !== s`：如果为 `true` 表明 `Object` 原型中有 `name` 属性，但值和 `source` 中 `name` 属性的值不同；如果为 `false` 则表明 `Object` 原型中有 `name` 属性且和 `source` 的 `name` 属性值相同。
 4. 当 A 为 `false` B 也为 `false` 时，说明 `dest` 中有同名同值的 `name` 属性。不用拷贝。
 5. 当 A 为 `false` B 为 `true` 且 `C` 和 `D` 都为 `false` 时，说明 `dest` 里面有和 `source` 同名但不同值的属性，但这个属性是 `Object` 原型属性且没有被 `source` 重写为不同的值（说明 `dest` 中重写了该属性）。
+
+
+## 循环引用的问题
+1. 因为深拷贝
 
 
 ## 浏览器尚未实现的拷贝功能

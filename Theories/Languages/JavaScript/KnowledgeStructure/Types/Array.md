@@ -383,7 +383,7 @@ console.log(a.concat([[4, 5]])); // [1, 2, 3, [4, 5]]
     console.log(arr3); // [0, 1, 2, [3, [4]], [5]]
     console.log(deep_flat({})); // TypeError
     ```
-
+6. TODO，栈实现 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat
 
 ### `slice()`
 1. returns a slice, or subarray, of the specified array.
