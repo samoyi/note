@@ -1,5 +1,21 @@
 # Optimizing prototypes
 
+
+<!-- TOC -->
+
+- [Optimizing prototypes](#optimizing-prototypes)
+    - [阅读基础](#阅读基础)
+    - [Optimization tiers and execution trade-offs](#optimization-tiers-and-execution-trade-offs)
+    - [Optimizing prototype property access](#optimizing-prototype-property-access)
+        - [Classes and prototype-based programming](#classes-and-prototype-based-programming)
+        - [基本属性查询](#基本属性查询)
+        - [优化属性查询](#优化属性查询)
+    - [Validity cells](#validity-cells)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
 ## 阅读基础
 * [Shapes and Inline Caches](./Shapes&InlineCaches.md)
 

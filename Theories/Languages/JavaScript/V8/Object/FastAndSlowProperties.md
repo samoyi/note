@@ -4,6 +4,7 @@
 <!-- TOC -->
 
 - [Fast And Slow Properties](#fast-and-slow-properties)
+    - [设计思想](#设计思想)
     - [常规属性 (properties) 和排序属性 (element)](#常规属性-properties-和排序属性-element)
         - [对象内属性 (in-object properties)](#对象内属性-in-object-properties)
     - [快属性和慢属性](#快属性和慢属性)
@@ -12,6 +13,9 @@
     - [References](#references)
 
 <!-- /TOC -->
+
+## 设计思想
+常规属性通过对象内属性的方法，加快了对它们的访问。但是保存对象内属性的内存很小，这就相当于高速缓存。
 
 
 ## 常规属性 (properties) 和排序属性 (element)
@@ -58,6 +62,7 @@
     <img src="./images/05.jpg" width="600" style="display: block; margin: 5px 0 10px;" />
 6. 通过上图我们可以发现，`bar` 对象包含了两个隐藏属性：`elements` 属性和 `properties` 属性，`elements` 属性指向了 elements 对象，在 elements 对象中，会按照顺序存放排序属性，`properties` 属性则指向了 properties 对象，在 properties 对象中，会按照创建时的顺序保存了常规属性。
 7. 分解成这两种线性数据结构之后，如果执行索引操作，那么 V8 会先从 elements 属性中按照顺序读取所有的元素，然后再在 properties 属性中读取所有的元素，这样就完成一次索引操作。
+8. TODO，排序属性并不是数组那样自然数的顺序，线性排列有什么意义？也不能根据索引直接找到数据；同样，排序属性线性排列有什么意义？
 
 ### 对象内属性 (in-object properties)
 1. 将不同的属性分别保存到 `elements` 属性和 `properties` 属性中简化了程序的复杂度，但是在查找元素时，却多了一步操作。比如执行 `bar.B` 这个语句来查找 `B` 的属性值， V8 会先查找出 `properties` 属性所指向的对象 properties，然后再在 properties 对象中查找 `B` 属性，这种方式在查找过程中增加了一步操作，因此会影响到元素的查找效率。
