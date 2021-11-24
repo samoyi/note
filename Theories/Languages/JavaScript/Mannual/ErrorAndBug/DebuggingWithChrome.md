@@ -133,6 +133,7 @@ bar();
 Did not find any use
 
 ### `console.table(data [, columns]);`
+Displays tabular data as a table.
 ```js
 {
     let obj = {

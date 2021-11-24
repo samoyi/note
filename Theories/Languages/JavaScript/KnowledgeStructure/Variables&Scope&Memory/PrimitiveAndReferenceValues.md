@@ -237,9 +237,45 @@
     // foo 的原型链里有 proto1 但没有 proto2，所以 Foo.prototype 不在 foo 的原型链里
     console.log(foo instanceof Foo); // false
     ```
-3. 所有引用类型的值都是 `Object` 的实例。因此在检测一个引用类型值和 `Object` 构造函数时，`instanceof` 操作符始终会返回 `true`。
-4. 当然，使用 `instanceof` 操作符检测基本类型的值，始终会返回 `false`，因为基本类型不是对象实例。
-5. 不懂。下面这种情况要怎么解释
+3. 可以自己实现一个 `instanceof`，来更明确的看到它的原理
+    1. 函数原型
+        ```js
+        function my_instanceof (instance, constructor) {
+            let bool;
+
+            return bool;
+        }
+        ```
+    2. 算法流程
+        1. 读取 `constructor` 的原型 `consProto`;
+        2. 通过循环遍历 `instance` 的原型链上的每个原型，直到原型不存在则返回 `false`，或者找到的原型就是 `consProto`。
+    3. 边界条件：
+        * 基础类型的最终原型也会是 `Object.prototype`，所以 `instance` 不能是基础类型；
+        * 如果 `instance` 是 `null`，虽然会通过使用 `typeof` 的基础类型筛选，但是 `Object.getPrototypeOf(null)` 时，ES5 会直接报错，ES6 会试图将基础类型的参数转换为对象，但是 `null` 无法转换为对象，所以还是会报错；
+        * 循环获取原型直到获取到 `undefined`；
+        * `constructor` 不是函数；
+    4. 实现
+        ```js
+        function my_instanceof (instance, constructor) {
+            if (typeof constructor !== "function") {
+                throw new TypeError(`The second parameter is not a function.`);
+            }
+
+            let consProto = constructor.prototype;
+            let insProto = Object.getPrototypeOf(instance);
+            while (insProto && insProto !== consProto) {
+                insProto = Object.getPrototypeOf(insProto);
+            }
+            if (insProto && insProto === consProto) {
+                return true;
+            }
+
+            return false;
+        }
+        ```
+4. 所有引用类型的值都是 `Object` 的实例。因此在检测一个引用类型值和 `Object` 构造函数时，`instanceof` 操作符始终会返回 `true`。
+5. 当然，使用 `instanceof` 操作符检测基本类型的值，始终会返回 `false`，因为基本类型不是对象实例。
+6. 不懂。下面这种情况要怎么解释
     ```js
     function Foo(){}
 
