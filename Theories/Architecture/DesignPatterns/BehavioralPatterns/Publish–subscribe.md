@@ -23,6 +23,7 @@
     - [参考一下 DOM 事件的机制](#参考一下-dom-事件的机制)
     - [给任意对象添加发布-订阅功能](#给任意对象添加发布-订阅功能)
     - [全局的发布-订阅对象](#全局的发布-订阅对象)
+    - [`once` 事件绑定](#once-事件绑定)
     - [模块间通信](#模块间通信)
         - [比较一下两者的调用栈](#比较一下两者的调用栈)
     - [离线事件](#离线事件)
@@ -384,6 +385,84 @@ Publisher.listen('event2', subscriber1.ev2_cb);
         // publisher2 发布了 event1 事件
         publisher2.publish();
     }, 2222)
+    ```
+
+
+##  `once` 事件绑定
+1. 例如 `EventAgency.once("ev", cb)`，当第一次 `ev` 事件触发并调用 `cb` 后，就自动删除 `ev` 事件回调列表里的 `cb` 函数，之后再触发 `ev` 事件，不会再调用 `cb` 函数。
+2. 要实现这个功能，就需要在 `cb` 被调用后，使用 `remove` 移除 `cb`。所以这个移除操作，其实也算是事件回调的一部分。
+3. 因此可以使用装饰器设计模式，包装一个新的回调 `wrappedCb`，这个回调会调用 `cb`，同时也会调用 `remove("ev", cb)`；`once` 方法内部实际的事件注册监听时使用 `wrappedCb` 而非 `cb` 作为回调，也就是 `on("ev", wrappedCb)`。
+4. 还有一个问题，就是 `once` 注册后，我们应该允许在事件触发前主动移除该事件的回调，也就是主动从 `ev` 的事件列表里移除 `wrappedCb`。
+5. 但显然用户只知道回调 `cb`，所以它调用 `remove` 时只能传 `cb` 而不能传 `wrappedCb`。因此，当用户调用 `remove("ev", cb)`，我们必须能根据 `cb` 找到 `wrappedCb`。
+6. 除了使用映射关系将两者联系起来以外，更简单的方法是，把 `cb` 设置为 `wrappedCb` 的属性，例如设为 `wrappedCb.realCb = cb`。这样，当执行 `remove("ev", cb)`，我们遍历 `ev` 的每个回调 $cb_i$，除了检查 $cb_i$ 是否等于 `cb`，还要检查 $cb_i.realCb$ 是否等于 `cb`。
+7. 注意是把 `cb` 设置为 `wrappedCb` 的属性，而不是 `cb.realCb = wrappedCb`。因为：
+    * 你不应该随意更改外部对象；
+    * `cb` 可能不止注册了一个事件的 `once` 监听。
+8. 还有最后一个问题，如果用户同时通过 `on` 和 `once` 注册了 `"ev"` 事件的回调 `cb`，那当用户调用 `remove("ev", cb)` 时，应该全部移除，也就是移除回调列表里的 `cb` 和 `wrappedCb`。因此 `remove` 操作就应该遍历 `"ev"` 事件完整的回调列表，而不是只匹配到一个就结束。
+9. 实现
+    ```js
+    const EventAgency = {
+        assertEvName (evName) {
+            if (typeof evName !== "string" || evName.length === 0) {
+                throw new TypeError("evName must be a non-emtpy string.");
+            }
+        },
+        assertCb (cb) {
+            if (cb && typeof cb !== "function") {
+                throw new TypeError("Optional cb must be a function.");
+            }
+        },
+
+        events: {},
+
+        on (evName, cb) {
+            this.assertEvName(evName);
+            this.assertCb(cb);
+            if ( !this.events[evName] ) {
+                this.events[evName] = [];
+            }
+            if ( this.events[evName].indexOf(cb) === -1 ) { // 不会重复添加
+                this.events[evName].push(cb);
+            }
+        },
+
+        emit (evName, ...data) {
+            this.assertEvName(evName);
+            if (this.events[evName]) {
+                this.events[evName].forEach((cb) => {
+                    cb(...data);
+                });
+            }
+        },
+
+        remove (evName, cb=undefined) {
+            this.assertEvName(evName);
+            this.assertCb(cb);
+            if (this.events[evName]) {
+                if (cb) {
+                    let cbList = this.events[evName];
+                    // 因为要删除，所以要反向遍历
+                    for (let i=cbList.length-1; i>=0; i--) {
+                        if ( cbList[i] === cb || cbList[i].realCb === cb ) {
+                            cbList.splice(i, 1);
+                        }
+                    }
+                }
+                else {
+                    this.events[evName] = []; // 不用删除事件。删除不仅没有必要，还影响性能。
+                }
+            }
+        },
+
+        once (evName, cb) {
+            let wrappedCb = (...data) => {
+                this.remove(evName, cb);
+                cb(...data);
+            }
+            wrappedCb.realCb = cb;
+            this.on(evName, wrappedCb);
+        },
+    };
     ```
 
 
