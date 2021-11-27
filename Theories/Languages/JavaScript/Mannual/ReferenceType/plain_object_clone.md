@@ -607,7 +607,7 @@
 
 #### 继承原型的问题
 1. 如果使用 `Object.setPrototypeOf` 来继承原型，那么不管 `src` 是数组还是平对象，都可以实现继承。
-2. 但直接修改原型会有明显的性能问题，参考 `Theories\Languages\JavaScript\V8\Basic\PptimizingPrototypes.md`。
+2. 但直接修改原型会有明显的性能问题，参考 `Theories\Languages\JavaScript\V8\Basic\OptimizingPrototypes.md`。
 3. 所以这里只使用 `Object.create` 来直接创建继承 `src` 原型的 `dest`，而不是创建好了之后再修改原型。
 4. 因为没有类似的方法来创建数组，再加上其实数组很少有索引号以外的属性继承和修改，所以这里数组不进行继承。
 
