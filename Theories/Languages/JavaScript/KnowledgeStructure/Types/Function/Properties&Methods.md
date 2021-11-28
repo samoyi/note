@@ -1,6 +1,23 @@
 # Properties and Methods
 
 
+<!-- TOC -->
+
+- [Properties and Methods](#properties-and-methods)
+    - [Properties](#properties)
+        - [`length`](#length)
+        - [`prototype`](#prototype)
+        - [`name`](#name)
+        - [使用函数自定义属性来替代全局变量](#使用函数自定义属性来替代全局变量)
+    - [Methods](#methods)
+        - [`call()` and `apply()`](#call-and-apply)
+            - [自己实现一下 `call` 和 `apply` 以加深理解](#自己实现一下-call-和-apply-以加深理解)
+        - [`bind()`](#bind)
+        - [toString()](#tostring)
+
+<!-- /TOC -->
+
+
 ## Properties
 ### `length`
 1. The value of the `length` property is an integer that indicates the typical
@@ -117,6 +134,45 @@ of arbitrary length. 不过在 ES6 中，可以直接用 rest 参数了
     let arr = [5, 42, 645, 1, 54, 1, 24, 2];
     Math.max.apply(Math, arr);
     Math.max(...arr)
+    ```
+
+#### 自己实现一下 `call` 和 `apply` 以加深理解
+1. 出于性能考虑，不应该把这个函数实现为 `Function.prototype` 的方法。所以实现为独立的函数。原型如下
+    ```js
+    function my_call (fn, ctx, ...args) {
+
+    }
+    ```
+2. 思路：
+    1. 把 `fn` 作为 `ctx` 的方法，进行方法调用；
+    2. 为了作为方法，就要为 `ctx` 增加一个属性，而且还要避免和现有属性重名，所以使用 `Symbol` 实现唯一的属性名；
+    3. 为了尽量减少这个临时添加的属性的存在感，使用 `Object.getOwnPropertyDescriptor` 来设置属性，让它是不可遍历的；
+    4. 而且最后调用完之后，还要从 `ctx` 上删除这个属性；
+3. 边界条件：
+    * 检查参数类型；
+    * `fn` 返回值；
+4. 实现
+    ```js
+    function my_call (fn, ctx, ...args) {
+        if (typeof fn !== "function") {
+            throw new TypeError("")
+        }
+        if (typeof ctx !== "object") {
+            throw new TypeError("")
+        }
+
+        let methodName = Symbol();
+        Object.defineProperty(ctx, methodName, {
+            value: fn,
+            configurable: true,
+        });
+
+        let result = ctx[methodName](...args);
+        
+        delete ctx[methodName];
+        
+        return result;
+    }
     ```
 
 ### `bind()`

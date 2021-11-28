@@ -35,6 +35,7 @@
     <img src="./images/22.svg" width="600" style="display: block; margin: 5px 0 10px;" />   
 11. 后续再运行这个指令时，IC 只需要对比 shape，如果它与以前相同，只需从记忆的偏移量处加载该属性值，而不需要再去访问 shape 具体的信息
     <img src="./images/36.png" width="600" style="display: block; margin: 5px 0 10px;" />   
+    还是需要对比一下 shape 的，只不过不需要再加载 shape 并从里面读取偏移量。
     
 
 ## 复杂讲解

@@ -123,7 +123,7 @@ C 中一个结构体的所有实例都是相同的 shape
 4. In the general case, that means we have to perform 1 check on the instance itself, plus 2 checks for each prototype up to the prototype which holds the property we’re looking for.
 5. `1+2N` checks (where `N` is the number of prototypes involved) may not sound too bad for this case, because the prototype chain is relatively shallow — but engines often have to deal with much longer prototype chains, like in the case of common DOM classes.
 6. For each object involved up until the prototype that carries the property, we need to do shape checks for absence. 
-7. It’d be nice if we could reduce the number of checks by folding the prototype check into the absence check. And that’s essentially what engines do with a simple trick: instead of storing the prototype link on the instance itself, engines store it on the `Shape`
+7. It’d be nice if we could reduce the number of checks by folding the prototype check into the absence check. And that’s essentially what engines do with a simple trick: **instead of storing the prototype link on the instance itself, engines store it on the `Shape`**
     <img src="./images/2018-08-21-Prototypes-17.svg" width="600" style="display: block; margin: 5px 0 10px;" />
 8. Each shape points to the prototype. This also means that every time the prototype of `foo` changes, the engine transitions to a new shape. 也就是说，现在实例对象本身不需要引用它的原型了，它的 shape 会自动引用最新的原型。也就是说，上面三步检查中的第二步实际上不需要了。
 9. With this approach, we can reduce the number of checks required from `1+2N` to `1+N` for faster property access on prototypes. But that’s still quite expensive, since it’s still linear in the length of the prototype chain. 
@@ -136,19 +136,23 @@ C 中一个结构体的所有实例都是相同的 shape
 2. To speed up subsequent loads from prototypes, V8 puts an Inline Cache in place, with four fields:
     <img src="./images/ic-validitycell.svg" width="600" style="display: block; margin: 5px 0 10px;" />
 3. When warming up the inline cache during the first run of this code, V8 remembers:
-    * the offset at which the property(`getX`) was found in the prototype.也就是 Inline Cache 最下面一行的 `Offset`;
+    * the offset at which the property(`getX`) was found in the prototype. 也就是 Inline Cache 最下面一行的 `Offset`;
     * the prototype on which the property was found (`Bar.prototype` in this example，Inline Cache 的第二行 `Prototype`)；
-    * the shape of the instance (the shape of `foo` in this case，Inline Cache 的第三行 `Shape`)；也就是说这个 Inline Cache 是和实例对应的，而不是和原型；
+    * the shape of the instance (the shape of `foo` in this case，Inline Cache 的第三行 `Shape`)；也就是说这个 Inline Cache 是和实例属性对应的，而不是和原型；
     * and also the link to the current ValidityCell of the immediate prototype that is linked to from the instance shape (which also happens to be `Bar.prototype` in this case，Inline Cache 的第一行 `ValidityCell`).
 4. The next time the Inline Cache is hit, the engine has to check the shape of the instance and the `ValidityCell`. If it’s still valid, the engine can reach out directly to the `Offset` on the `Prototype`, skipping the additional lookups.
-5. When the prototype is changed, a new shape is allocated and the previous `ValidityCell` is invalidated. So the Inline Cache misses the next time it’s executed, resulting in worse performance.
+5. 也就是说，当从一个实例查找某个原型属性后，实例本身会为该原型属性创建一个 inline cahce；不管这个原型属性是在实例的直接原型或者好几级之上的某个原型，下次再从这个实例访问这个原型属性时，只要 inline cache 中记录的 `ValidityCell` 的 `valid` 还是 `true` 的话，就可以从之前创建的 inline cache 中直接找到该原型属性在哪个原型的哪个位置。
+6. When the prototype is changed, a new shape is allocated and the previous `ValidityCell` is invalidated. So the Inline Cache misses the next time it’s executed, resulting in worse performance.
     <img src="./images/2018-08-21-Prototypes-20.svg" width="600" style="display: block; margin: 5px 0 10px;" />
-6. Although prototypes are just objects, they are treated specially by JavaScript engines to optimize the performance of method lookups on prototypes. Leave your prototypes alone! Or if you really need to touch prototypes, then do it before other code runs, so that you at least don’t invalidate all the optimizations in the engine while your code is running.
+    既然原型变了，那就保不准某个属性消失或改变了，所以整个缓存就不再是可信的了。当下次再访问这个原型属性的时候，就要重新建立 inline cache。
+7. 而且，修改一个原型，不仅会让直接与该原型相关的 inline cache 失效，该原型所在原型链下面的所有原型的 inline cache 都会失效。所以最坏的情况就是修改 `Object.prototype`。
+8. 不懂，为什么原型链中该原型之下原型的缓存也要失效？`getX` 是在 `Bar.prototype` 上的，修改了 `Object.prototype`，`getX` 不还是在 `Bar.prototype` 上吗？
+9. Although prototypes are just objects, they are treated specially by JavaScript engines to optimize the performance of method lookups on prototypes. Leave your prototypes alone! Or if you really need to touch prototypes, then do it before other code runs, so that you at least don’t invalidate all the optimizations in the engine while your code is running.
 
 
 ## 访问原型最佳实践
-* 其实可以修改实例的 shape
-
+* 不要修改原型，尤其是高层原型。这会导致 inline cache 失效。
+* 修改实例的 shape 看起来并不会导致用于访问原型属性的 inline cache 失效，但仍然会导致访问实例属性的 IC 失效。
 
 
 ## References
