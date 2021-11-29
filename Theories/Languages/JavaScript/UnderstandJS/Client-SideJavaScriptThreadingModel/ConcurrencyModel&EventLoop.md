@@ -97,7 +97,7 @@ programming environment) and accessed through the browser APIs.
 1. 在没有异步操作的情况下，JS 就会按照上面 `Stack` 说明中的方式，不断的线性执行，直到程序结束。
 2. 但如果程序中执行了一个异步操作，就会涉及到另外两个数据结构：**事件表**（Event Table） 和 **事件队列**（Event Queue）。
 3. 看起来事件队列 **消息队列**（Message Queue）的部分。另外，结合上面的图片，看起来也可以称为 Callback Queue。
-4. 并不是所有的异步操作都会被加入到消息队列中，详见下面的 【Macrotask 和 Microtask】
+4. 并不是所有的异步操作都会被加入到消息队列中，详见下面的 【Macrotask 和 Microtask】。
 
 ### 事件表
 1. 这个数据结构记录了事件及其对应的回调函数。
@@ -108,10 +108,13 @@ programming environment) and accessed through the browser APIs.
 1. 是队列结构的数据结构，事件队列保证了若干个事件回调按照顺序依次执行。
 2. 事件队列从事件表那里接收到回调函数，但还需要某种机制来把队列里面的回调函数推进调用栈。这种机制就是下面要说的 **事件循环**（Event loop）。
 
+
 ## 事件循环
 1. 事件循环是一个持续运行的进程，它不断的检查调用栈是否被清空。
 2. 一次检查周期被称为一次 **tick**，每次 tick 事件循环机制会检查调用栈是否被清空。
-3. 如果清空了，事件循环机制会看看事件队列里有没有待执行的回调，如果有的话，就把排在最前面的回调推进调用栈，如果没有就什么也不做。
+3. 如果清空了，事件循环机制会看看事件队列里有没有待执行的回调，如果有的话，就把排在最前面的回调推进调用栈，如果没有就什么也不做。感觉上异步回调是不应该在当前调用的非空的时候就放到最上面执行，但如果这样会怎样呢？
+4. 也就是说，JS 核心部分只是从一个 main 函数开始，执行若干个嵌套的函数。如果没有异步的事件，则最外层的 main 函数返回后 JS 也就结束工作了，因为调用栈已经清空，并且因为没有异步回调，所以会一直空着。
+5. 但如果在调用栈清空之前发起了异步操作，那么在异步执行完时，并且已经等待调用栈清空，异步回调就会被推入调用栈，现在调用栈就会继续启动执行函数。
 
 ### 一个事件循环流程
 ```js
@@ -119,7 +122,7 @@ function main(){
     console.log('A');
     setTimeout(
         function display(){ console.log('B'); }
-    ,0);
+    , 0);
 	console.log('C');
 }
 main();
@@ -127,8 +130,17 @@ main();
 <img src="./images/EventLoop.png" width="1200" style="display: block; margin: 5px 0 10px 0;" />
 可以看 [视频演示](https://www.youtube.com/watch?v=8aGhZQkoFbQ)
 
+1. 首先是 `main` 入栈并执行；
+2. 接着内部的 `console.log` 函数入栈并执行；
+3. `console.log` 返回后出栈，`setTimeout` 函数入栈并执行。`setTimeout` 是同步执行的没问题，只不过它的参数函数会异步执行；
+4. `setTimeout` 返回后出栈，另一个 `console.log` 函数入栈并执行；
+5. 这个 `console.log` 返回后出栈；`main` 也执行完毕，返回出栈；
+6. 调用栈清空了。
+7. 因为 `setTimeout` 设置的时间延迟很短，所以此时可能已经触发了这个 “到时” 的事件，而这个事件的回调函数就是 `setTimeout` 的第一个参数。既然事件已经触发，所以事件表就会找到这个回调，将它加入到事件队列。
+8. 在下一个 tick，事件循环机制检查调用栈发现已经清空了，然后又检查事件队列发现有排队的回调，就把最前面的回调加入到调用栈，调用栈因此开始继续执行。
+
 ### `main()` 以及 `setTimeout` 的回调总是最后执行
-1. 如下代码，`timeout` 是最后被打印出来的
+1. 如下代码，`"timeout"` 是最后被打印出来的
     ```js
     setTimeout(function(){
         console.log('timeout');
@@ -182,7 +194,7 @@ main();
     console.log('out');
     ```
 9. 当然，在事件循环本次 tick 的最后，这个全局执行环境也会被弹出调用栈，否则也不会进入下一个 tick 执行事件队列里后续的事件。
-10. 那也就是说说，事件循环的每次 tick，都会先入栈这个全局执行环境，最后也都会对它执行出栈。
+10. 那也就是说，事件循环的每次 tick，都会先入栈这个全局执行环境，最后也都会对它执行出栈。
 
 
 ## 宏任务和微任务
@@ -213,7 +225,7 @@ main();
 4. 有微任务队列时候，JS 的事件循环机制是：
     ```
     主程序 Macrotask —— 主程序的 Microtask —— 
-    Macrotask1 —— Macrotask 的 Microtask —— 
+    Macrotask1 —— Macrotask1 的 Microtask —— 
     Macrotask2 —— Macrotask2 的 Microtask ——
     ……
     ```  
@@ -286,18 +298,18 @@ main();
     function bar(){
         console.log('bar')
         Promise.resolve().then(
-            (str) =>console.log('micro-bar')
+            () =>console.log('micro-bar')
         ) 
-        setTimeout((str) =>console.log('macro-bar'), 0)
+        setTimeout(() =>console.log('macro-bar'), 0)
     }
 
 
     function foo() {
         console.log('foo')
         Promise.resolve().then(
-            (str) =>console.log('micro-foo')
+            () =>console.log('micro-foo')
         ) 
-        setTimeout((str) =>console.log('macro-foo'), 0)
+        setTimeout(() =>console.log('macro-foo'), 0)
         
         bar()
     }
@@ -307,10 +319,10 @@ main();
     console.log('global')
 
     Promise.resolve().then(
-        (str) =>console.log('micro-global')
+        () =>console.log('micro-global')
     ) 
 
-    setTimeout((str) =>console.log('macro-global'), 0)
+    setTimeout(() =>console.log('macro-global'), 0)
     ```
 5. 当 V8 执行这段代码时，会首先将全局执行上下文压入调用栈中，并在执行上下文中创建一个空的微任务队列。此时：
     * 调用栈中只有全局执行上下文；

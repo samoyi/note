@@ -24,6 +24,12 @@
     - [`Promise.race()`](#promiserace)
     - [`Promise.resolve` & `Promise.reject`](#promiseresolve--promisereject)
     - [其他一些自定义的有用的方法](#其他一些自定义的有用的方法)
+    - [自己实现加深理解](#自己实现加深理解)
+        - [基本的 promise](#基本的-promise)
+            - [接口](#接口)
+        - [逻辑](#逻辑)
+        - [边界条件](#边界条件)
+        - [实现 TODO](#实现-todo)
     - [References](#references)
 
 <!-- /TOC -->
@@ -299,6 +305,7 @@ setTimeout(()=>{
     })
     ```
 
+
 ## Nested promise
 1. 一个 promise 实例作为另一个 promise 的结果
 2. 不懂。嵌套实例的最终解析结果感觉比较混乱，没有总结出规律，先看下面各种情况的例子
@@ -430,37 +437,43 @@ p2 // 三秒钟之后 reject
 
 
 ## 捕获错误
-1. 不管是 `then` 方法的第二个参数还是 `catch` 方法，都不仅能捕获 `promise` 中 `reject` 记录的错误，还能捕获到 `resolve` 和 `reject` 调用之前发生的其他错误。
+1. 不管是 `then` 方法的第二个参数还是 `catch` 方法，都不仅能捕获 `promise` 中 `reject` 记录的错误，还能捕获到 `resolve` 和 `reject` 调用之前发生的其他错误
     ```js
     new Promise((resolve, reject)=>{
         throw new Error('test1');
     })
     .then(
         (res)=>{console.log(res)},
-        (err)=>{console.log(err.message)} // test1
+        (err)=>{console.log(err.message)} // test1 // 捕获到直接抛出的错误
     )
 
     new Promise((resolve, reject)=>{
         throw new Error('test2');
     })
     .catch(
-        (err)=>{console.log(err.message)} // test2
+        (err)=>{console.log(err.message)} // test2 // 捕获到直接抛出的错误
     )
 
     new Promise((resolve, reject)=>{
         throw new Error('test3');
-        resolve();
+        resolve("resolve test4");
+    })
+    .then((res) => {
+        console.log(res); // 不会调用，因为之前已经抛出了错误
     })
     .catch(
         (err)=>{console.log(err.message)} // test3
     )
 
     new Promise((resolve, reject)=>{
-        resolve();
+        resolve("resolve test4");
         throw new Error('test4');
     })
+    .then((res) => {
+        console.log(res); // resolve test4
+    })
     .catch(
-        (err)=>{console.log(err.message)} // 没有捕获
+        (err)=>{console.log(err.message)} // 不会调用，resolve 或 reject 之后的错误不会被抛出和捕获
     )
 
     new Promise((resolve, reject)=>{
@@ -470,8 +483,20 @@ p2 // 三秒钟之后 reject
     .catch(
         (err)=>{console.log(err)} // rejected
     )
+    .catch(
+        (err)=>{console.log(err)} // 不会调用，resolve 或 reject 之后的错误不会被抛出和捕获
+    )
     ```
-2. 但 `resolve` 和 `reject` 调用之后，并不是像 `return` 一样后面的代码就不执行。后面仍然会执行，只不过其中的错误既不会被捕获也不会被抛出。但是，仍然会中断执行。
+2. 另外注意一下输出顺序
+    ```
+    test1
+    test2
+    resolve test4
+    rejected
+    test3
+    ```
+    `"test3"` 是最后输出的，因为前四个都是最初的 `new Promise()` 返回的 promise 解析的结果，而 `"test3"` 是它前面那个 `then()` 返回的 promise 解析的结果，也就是说解析 `"test3"` 的微任务是排在前面几个微任务的后面。
+3. 但 `resolve` 和 `reject` 调用之后，并不是像 `return` 一样后面的代码就不执行。后面仍然会执行，只不过其中的错误既不会被捕获也不会被抛出。但是，仍然会中断执行。
     ```js
     new Promise((resolve, reject)=>{
         resolve(22); // 不管是 resolve
@@ -674,6 +699,71 @@ ReferenceError
         这里不会被调用
     });
     ```
+5. 自己实现
+    1. 接口
+        ```js
+        function my_promise_all (iterable) {
+            return new Promise();
+        }
+        ```
+    2. 逻辑
+        1. 设置一个结果数组 `results` 用来记录每个 promise 的结果值；
+        2. 创建一个新的 promise 实例用于返回；
+        3. 新的 promise 里，依次解析每个参数 promise：
+            * 如果解析成功，就把结果值加入到 `results`；同时还要检查是否解析完成了所有的参数 promise
+            * 如果解析失败，就直接 reject 这个新的 promise；
+        4. 需要注意的是，将每个参数 promise 的解析结果加入到 `results` 时不能使用 `push` 方法，这样会导致先解析的结果就会放在前面，而 `Promis.all` 的整体解析的结果数组的顺序应该是和参数 promise 顺序一一对应的；因此在加入 `results` 数组时，需要根据当前的序号插入到对应的位置；
+        5. 这也导致了，判断是否解析完全部的参数 promise 时不能使用 `result.length` 来比较，因为数组的 `length` 并不是它实际的数组项数，而是最大的序号加一；所以另外设置一个自增的 `count` 记录已经成功的 promise 的个数；
+    3. 边界条件：
+        * 参数不是可遍历对象，这时要报错；
+        * 可遍历对象中的某项不是 promise，直接把每一项使用 `Promis.resolve()` 转换；
+    4. 实现
+    ```js
+        function my_promise_all (iterable) {
+        if (typeof iterable[Symbol.iterator] !== "function") {
+            throw new TypeError("object is not iterable \
+                                (cannot read property Symbol(Symbol.iterator))");
+        }
+
+        let list = [...iterable];
+        let results = [];
+        let count = 0;
+
+        return new Promise((resolve, reject) => {
+            for (let i=0; i<list.length; i++) {
+                let p = Promise.resolve(list[i]);
+                p.then((res)=>{
+                    results[i] = res;
+                    if (++count === list.length) {
+                        resolve(results);
+                    }
+                })
+                .catch((err)=>{
+                    reject(err);
+                });
+            }
+        });
+    }
+
+
+    // 测试
+
+    let p1 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve(111);
+        }, 1000);
+    });
+    let p2 = new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+            resolve(222);
+        }, 3000);
+    });
+
+    my_promise_all([p1, p2, 333])
+    .then(res=>{
+        console.log(res); // 三秒钟之后输出 [111, 222, 333]
+    })
+    ```
 
 
 ## `Promise.race()`
@@ -741,6 +831,93 @@ new Promise((res, rej)=>{
     console.log('finally');
 })
 .done();
+```
+
+
+## 自己实现加深理解
+### 基本的 promise
+#### 接口
+    ```js
+    class My_Promise {
+        constructor (executor) {
+
+        }
+
+        resolve (msg) {
+
+        }
+
+        reject (err) {
+
+        }
+
+        then (onFulfilled, onRejected) {
+
+        }
+
+        catch (onRejected) {
+
+        }
+    }
+    ```
+
+### 逻辑
+1. 调用 `My_Promise` 创建实例时需要传入一个函数作为 `executor`，`executor` 会在 `constructor` 里立刻执行。
+2. `executor` 有两个参数，一个是作为 `resolve` 函数，一个是作为 `reject`。这两个函数调用时接收异步操作的成功或失败消息。
+3. 这两个函数的实际实现是实例方法 `resolve` 和 `reject`。这两个实例方法接收参数，改变 promise 的状态，然后通知实例。
+4. 实例接到成功或失败的通知，需要调用用户提供的函数通知用户。所以用户需要调用实例方法 `then` 和 `catch` 提供回调函数。
+5. 只有 promise 的状态是 pending 的时候才能 `resolve` 和 `reject`。
+6. `then` 和 `catch` 接收用户的回调并保存，然后在 `resolve` 和 `reject` 时调用相应的回调。
+7. `then` 和 `catch` 要返回新的 promise
+
+### 边界条件
+* 没有传 `executor`；`executor` 没有传函数类型的 `resolve` 和 `reject`；
+* 没有调用 `then` 和 `catch`；`then` 和 `catch` 没有传函数类型的参数；
+
+### 实现 TODO
+```js
+class My_Promise {
+    constructor (executor) {
+        this.status = "pending";
+        this.onFulfilled = null;
+        this.onRejected = null;
+        executor(this.resolve.bind(this), this.reject.bind(this));
+    }
+
+    resolve (fulfillmentValue) {
+        if (this.status !== "pending") {
+            return;
+        }
+        this.status = "fulfilled";
+        this.onFulfilled && this.onFulfilled(fulfillmentValue);
+    }
+
+    reject (err) {
+        if (this.status !== "pending") {
+            return;
+        }
+        this.status = "rejected";
+        this.onRejected && this.onRejected();
+    }
+
+    then (onFulfilled, onRejected) {
+        try {
+            this.onFulfilled = onFulfilled;
+            this.onRejected = onRejected;
+            if (this.status === "pending") {
+                return Promise.resolve(this.onFulfilled());
+            }
+        }
+        catch (err) {
+            return Promise.reject(err);
+        }
+    }
+
+    catch (onRejected) {
+        this.onRejected = onRejected;
+        return Promise.reject
+    }
+}
 ```
 
 
