@@ -30,6 +30,8 @@
         - [逻辑](#逻辑)
         - [边界条件](#边界条件)
         - [实现 TODO](#实现-todo)
+    - [其他](#其他)
+        - [并行数量限制的 promise](#并行数量限制的-promise)
     - [References](#references)
 
 <!-- /TOC -->
@@ -797,7 +799,29 @@ ReferenceError
     .catch(error => console.log(error));
     ```
     如果第一个异步操作 fetch 五秒之内没有反应，则第二个异步操作执行并作为总体的结果
+3. 自己实现
+    ```js
+    function my_promise_race (iterable) {
+        if (typeof iterable[Symbol.iterator] !== "function") {
+            throw new TypeError("object is not iterable \
+                                (cannot read property Symbol(Symbol.iterator))");
+        }
 
+        let list = [...iterable];
+
+        return new Promise((resolve, reject) => {
+            for (let i=0; i<list.length; i++) {
+                let p = Promise.resolve(list[i]);
+                p.then((res)=>{
+                    resolve(res);
+                })
+                .catch((err)=>{
+                    reject(err);
+                });
+            }
+        });
+    }
+    ```
 
 ## `Promise.resolve` & `Promise.reject`
 将一个非 promise 值转换为 promise 实例，并立即 resolve/reject
@@ -919,6 +943,177 @@ class My_Promise {
     }
 }
 ```
+
+
+## 其他
+### 并行数量限制的 promise
+1. 来自于一个题目
+    ```js
+    // JS 实现一个带并发限制的异步调度器 Scheduler，保证同时运行的任务最多有两个。
+    // 完善下面代码的Scheduler类，使以下程序能够正常输出：
+    class Scheduler {
+        add(promiseCreator) { }
+        // ...
+    }
+    
+    const timeout = time => {
+        return new Promise(resolve => {
+            setTimeout(resolve, time)
+        }
+    })
+    
+    const scheduler = new Scheduler()
+    
+    const addTask = (time,order) => {
+        scheduler.add(() => timeout(time).then(()=>console.log(order)))
+    }
+
+    addTask(1000, '1')
+    addTask(500, '2')
+    addTask(300, '3')
+    addTask(400, '4')
+
+    // output: 2 3 1 4
+
+
+    // 整个的完整执行流程：
+
+    // 起始1、2两个任务开始执行
+    // 500ms时，2任务执行完毕，输出2，任务3开始执行
+    // 800ms时，3任务执行完毕，输出3，任务4开始执行
+    // 1000ms时，1任务执行完毕，输出1，此时只剩下4任务在执行
+    // 1200ms时，4任务执行完毕，输出4
+    ```
+2. 先分析一下现有的代码，该整理的整理，该注释的注释
+    ```js
+    // 一个返回延时 promise 函数，time 到时后执行 promise 的 then 的回调
+    const timeout = time => {
+        return new Promise(resolve => {
+            setTimeout(resolve, time)
+        }
+    })
+
+    class Scheduler {
+        add(promiseCreator) { }
+        // ...
+    }
+    
+    const scheduler = new Scheduler()
+    
+    // 调用 add 方法往 scheduler 中添加一个任务
+    // 实际添加的是一个函数，该函数调用后返回延时 promise 并调用 then 方法
+    const addTask = (time,order) => {
+        scheduler.add(() => timeout(time).then(()=>console.log(order)))
+    }
+
+    addTask(1000, '1')
+    addTask(500, '2')
+    addTask(300, '3')
+    addTask(400, '4')
+    ```
+3. 根据要求的执行效果可以看出，任务函数添加后并不会立即调用返回 promise，而是要等待只有一个 pending 任务的时候，才会调用任务函数，开始 promise。而每个 pending 任务 resolve 后，都要调用下一个任务函数添加新的 promise。
+4. 所以每次新添加一个任务函数，都要判断当前正在 pending 的数量：
+    * 如果不到两个，就直接执行任务函数返回 promise，并且要在后面追加一个 then，用来调用下一个任务函数；
+    * 如果是两个，任务函数就要进入队列排队；
+5. 初步实现为
+    ```js
+    class Scheduler {
+        constructor () {
+            this.queue = [];
+            this.currNum = 0;
+            this.maxNum = 2;
+        }
+
+        add(promiseCreator) {
+            if (this.currNum < this.maxNum) {
+                let p = promiseCreator();
+                this.currNum++;
+                p.then(()=>{
+                    if (this.queue.length) {
+                        let nextP = this.queue.shift()();
+                        nextP.then(再从队列里读取一个任务执行)
+                        this.currNum--;
+                    }
+                });
+            }
+            else {
+                this.queue.push(promiseCreator);
+            }
+        }
+    }
+    ```
+6. 上面的 `再从队列里读取一个任务执行` 没法再写了，其实这部分就是要递归的传递函数
+    ```js
+    ()=>{
+        if (this.queue.length) {
+            let nextP = this.queue.shift()();
+            nextP.then(再从队列里读取一个任务执行)
+            this.currNum--;
+        }
+    }
+    ```
+7. 因此把这部分实现为独立的方法，递归调用
+    ```js
+    add(promiseCreator) {
+        if (this.currNum < this.maxNum) {
+            let p = promiseCreator();
+            this.currNum++;
+            p.then(this.runNext.bind(this));
+        }
+        else {
+            this.queue.push(promiseCreator);
+        }
+    }
+
+    runNext () {
+        if (this.queue.length) {
+            let nextP = this.queue.shift()();
+            nextP.then(this.runNext.bind(this))
+            this.currNum--;
+        }
+    }
+    ```
+    注意把对象方法作为参数传递时要绑定 `this`。
+8. 测试。加入了时间显示
+    ```js
+    const scheduler = new Scheduler()
+    
+    const addTask = (time, order) => {
+        scheduler.add(() => timeout(time).then(()=>console.log(order, Date.now()-baseTime)))
+    }
+
+    let baseTime = Date.now();
+    addTask(1000, '1')
+    addTask(500, '2')
+    addTask(300, '3')
+    addTask(400, '4')
+
+
+    // 2 517
+    // 3 827
+    // 1 1000
+    // 4 1236
+    ```
+9. 还要一个解法，实现上会简单一些，但是语义上有些复杂。就是每次新添加的任务都先加到队里，然后立刻尝试从队列里取任务运行。这样，如果当前运行的任务不到两个，则队列肯定是空的，因为新加完立刻就可以运行；如果当前运行的任务是两个或以上，则尝试从队列去任务会失败，那就正常排队
+    ```js
+    add (promiseCreator) {
+        this.queue.push(promiseCreator);
+        this.runNext();
+    }
+
+    runNext () {
+        if (this.queue.length && this.currNum < this.maxNum) {
+            this.currNum++;
+            let p = this.queue.shift()();
+            p.then(() => {
+                this.currNum--;
+                this.runNext()
+            });
+        }
+    }
+    ```
+
+
 
 
 ## References
