@@ -1,28 +1,64 @@
 # Array
 
 **收录原则：**  
-如果实现同一目的的两种方法，一种方法和另一种相比没有任何优点而只有缺点，则不收录。例如，
-使用`Set`数据结构可以很好地实现数组去重，替代了之前需要自己编写去重函数，则这里不收录自
-编写的去重函数。对自编写去重函数的研究会放在算法研究部分。
+如果实现同一目的的两种方法，一种方法和另一种相比没有任何优点而只有缺点，则不收录。例如，使用 `Set` 数据结构可以很好地实现数组去重，替代了之前需要自己编写去重函数，则这里不收录自编写的去重函数。对自编写去重函数的研究会放在算法研究部分。
+
+
+<!-- TOC -->
+
+- [Array](#array)
+    - [创建数组](#创建数组)
+        - [使用构造函数](#使用构造函数)
+        - [使用字面量](#使用字面量)
+        - [`Array.of()`](#arrayof)
+    - [查询数组](#查询数组)
+        - [查找数组项](#查找数组项)
+            - [`indexOf()` 和 `lastIndexOf()`](#indexof-和-lastindexof)
+            - [`find()` 和 `findIndex()`](#find-和-findindex)
+        - [`includes()` 方法判断数组中是否包含某项](#includes-方法判断数组中是否包含某项)
+    - [改变数组](#改变数组)
+        - [改变顺序](#改变顺序)
+            - [翻转顺序](#翻转顺序)
+            - [排序](#排序)
+            - [乱序](#乱序)
+        - [添加数组项](#添加数组项)
+        - [删除数组项](#删除数组项)
+        - [替换数组项](#替换数组项)
+        - [合并数组](#合并数组)
+        - [归并数组](#归并数组)
+    - [遍历数组](#遍历数组)
+    - [深复制数组](#深复制数组)
+    - [数组去重与搜重](#数组去重与搜重)
+        - [功能维度](#功能维度)
+        - [`Set` 不改变原数组](#set-不改变原数组)
+        - [ES5 返回新数组](#es5-返回新数组)
+        - [ES5 直接修改原数组](#es5-直接修改原数组)
+        - [找出重复项](#找出重复项)
+        - [找出所有重复的 index](#找出所有重复的-index)
+    - [空数组项和`undefined`项](#空数组项和undefined项)
+        - [空数组项和`undefined`项的区别](#空数组项和undefined项的区别)
+        - [各种数组方法对空数组项和 `undefined` 项的处理](#各种数组方法对空数组项和-undefined-项的处理)
+    - [其他](#其他)
+        - [数组方法是否改变原数组](#数组方法是否改变原数组)
+            - [会改变的](#会改变的)
+            - [不会改变的](#不会改变的)
+
+<!-- /TOC -->
 
 
 ##  创建数组
 ### 使用构造函数
-给构造函数传参数组长度时，只是给数组的`length`属性赋值了，而数组本身并没有这么多项，它
-还是一个空数组。  
-```js
-const assert = require('assert');
-const arr1 = new Array(1);
-const arr2 = [undefined];
-console.log(arr1[0] === arr2[0]); // true
-console.log(arr1); // [ <1 empty item> ]
-console.log(arr2); // [ undefined ]
-assert.deepEqual(arr1, arr2); // AssertionError
-```
-这里倒是可以更好的理解何为**真正的属性**何为**表达的属性**。如果一个数组有三项，则其真
-正有三个项，然后我们又定义一个抽象的概念`length`，在这里它像是一个变量，来表达数组有三
-个项这个事实，所以它显示`3`。事实没法改变，但数据可以造假。而一般意义上的属性，其实只是
-数据而已，就像这里的`length`，它可以被人造假强制修改。
+1. 给构造函数传参数组长度时，只是给数组的 `length` 属性赋值了，而数组本身并没有这么多项，它还是一个空数组  
+    ```js
+    const assert = require('assert');
+    const arr1 = new Array(1);
+    const arr2 = [undefined];
+    console.log(arr1[0] === arr2[0]); // true
+    console.log(arr1); // [ <1 empty item> ]
+    console.log(arr2); // [ undefined ]
+    assert.deepEqual(arr1, arr2); // AssertionError
+    ```
+2. 这里倒是可以更好的理解何为**真正的属性**何为**表达的属性**。如果一个数组有三项，则其真正有三个项，然后我们又定义一个抽象的概念`length`，在这里它像是一个变量，来表达数组有三个项这个事实，所以它显示`3`。事实没法改变，但数据可以造假。而一般意义上的属性，其实只是数据而已，就像这里的`length`，它可以被人造假强制修改。
 
 ### 使用字面量
 
@@ -31,7 +67,7 @@ assert.deepEqual(arr1, arr2); // AssertionError
 
 ## 查询数组
 ### 查找数组项
-#### `indexOf()`和`lastIndexOf()`
+#### `indexOf()` 和 `lastIndexOf()`
 相等性算法：Strict Equality Comparison
 ```js
 const arr = [-0, NaN, 0];
@@ -39,9 +75,9 @@ console.log(arr.indexOf(0)); // 0
 console.log(arr.indexOf(NaN)); // -1
 ```
 
-#### `find()`和`findIndex()`
+#### `find()` 和 `findIndex()`
 
-### `includes()`方法判断数组中是否包含某项
+### `includes()` 方法判断数组中是否包含某项
 相等性算法： sameValueZero algorithm
 ```js
 const arr = [-0, NaN];
@@ -53,10 +89,10 @@ console.log(arr.includes(NaN)); // true
 ## 改变数组
 ### 改变顺序
 #### 翻转顺序
-`reverse()`  改变原数组
+`reverse()` 改变原数组
 
 #### 排序
-* `sort()`     改变原数组
+* `sort()` 改变原数组
 
 #### 乱序
 参考 `Theories\Algorithm\Misc\Fisher-Yates shuffle.md`
@@ -132,8 +168,12 @@ Array.prototype.push.apply( arr0, arr1 ); // ES6之前
 
 
 ## 数组去重与搜重
-### `Set` 去重  不改变原数组
-`Set`中对相等性判断的算法为 Same-value-zero equality
+### 功能维度
+* 是否直接修改原数组：两种需求都是存在的；
+* 采用哪种同值算法：这里选择和 `Set` 去重一样的 Same-value-zero 算法；
+
+### `Set` 不改变原数组
+`Set` 中对相等性判断的算法为 Same-value-zero equality
 ```js
 const arr1 = [-0, NaN, NaN];
 const arr2 = [0, -0, NaN, NaN];
@@ -141,33 +181,105 @@ console.log(new Set(arr1)); // {0, NaN}
 console.log(new Set(arr2)); // {0, NaN}
 ```
 
-### ES5 去重
-```js
-function dedup(arr){
-    let bHasNaN = false;
-    arr.forEach((item, index)=>{
-        if (Number.isNaN(item)){
-            bHasNaN = bHasNaN ? arr.splice(index, 1) : !bHasNaN;
-            return;
+### ES5 返回新数组
+1. ES5 没有 Same-vaule-zero 实现，所以要单独判断 `NaN`。而且 ES5 的 `isNaN` 方法很混乱，所以自己实现一个方法
+    ```js
+    function is_NaN (value) {
+        if (typeof value !== "number") {
+            return false;
         }
-
-        let nFirstIndex = arr.indexOf(item);
-        let nLastIndex = arr.lastIndexOf(item);
-        if (nFirstIndex !== nLastIndex) {
-            do {
-                arr.splice(nLastIndex, 1);
-                nLastIndex = arr.lastIndexOf(item);
+        return value !== value;
+    }
+    ```
+2. 因为返回新数组，所以可以遍历原数组，把新数组里没有的元素加入原数组。
+3. 判断新数组里是否存在某个元素要用到 `indexOf`，而这个方法是 strict equality 同值算法。所以为了判断新数组里是否有 `NaN`，还需要一个标记变量 `hasNaN`
+    ```js
+    function foo (arr) {
+        let hasNaN = false; 
+        let newArr = [];
+        arr.forEach((item) => {
+            if ( is_NaN(item) ) {
+                if ( !hasNaN ) {
+                    newArr.push(item);
+                    hasNaN = true;
+                }
             }
-            while (nFirstIndex !== nLastIndex);
+            else if ( newArr.indexOf(item) === -1 ) {
+                newArr.push(item);
+            }
+        });
+        return newArr;
+    }
+
+    let arr = [1, 3, 2, 5, NaN, 4, NaN, 5, 3, 6, 3, 2];
+    console.log(foo(arr)); // [1, 3, 2, 5, NaN, 4, 6]
+    ```
+
+### ES5 直接修改原数组
+1. 因为要使用 `splice` 删除数组项，所以从后往前遍历数组，找到一个非 `NaN` 的项，如果之前还存在重复值的项，那就删除当前项。
+2. 对于值为非 `NaN` 的项，通过 `indexOf` 和 `lastIndexOf` 是否相等判断是否是重复项。
+3. 对于 `NaN`，无法使用 `indexOf` 和 `lastIndexOf`，所以仍然要通过一个变量记录它是否出现。之后再出现 `NaN` 时，删除出现的 `NaN`
+    ```js
+    function foo (arr) {
+        let hasNaN = false;
+        for (let i=arr.length; i>-1; i--) {
+            if ( is_NaN(arr[i]) ) {
+                if (hasNaN) {
+                    arr.splice(i, 1);
+                }
+                else {
+                    hasNaN = true;
+                }
+            }
+            else {
+                let firstIdx = arr.indexOf(arr[i]);
+                if (i !== firstIdx) {
+                    arr.splice(i, 1);
+                } 
+            }
         }
-    });
-    return arr;
-}
+    }
+    let arr = [1, 3, 2, 5, NaN, 4, NaN, 5, 3, 6, 3, 2];
+    foo(arr);
+    console.log(arr); // [1, 3, 2, 5, 4, NaN, 6]
+    ```
+4. 这个方法有一个小小不完善。就上面的例子来看，我们期望删除的结果是 `[1, 3, 2, 5, NaN, 4, 6]`，和实际的结果在顺序上略有差别。
+5. 这是因为对于非 `NaN` 的项是删除右边的若干个重复的保留最左的，而对于 `NaN` 则是保留最右的。
 
-let arr = [1, 3, 2, 5, NaN, 4, NaN, 5, 3, 6, 3, 2];
-console.log(dedup(arr)); // [1, 3, 2, 5, NaN, 4, 6]
-```
+1. 从前往后遍历数组，找到一个非 `NaN` 的项，如果之后还存在重复值的项，删除之后所有相同值的项。
+2. 对于值为非 `NaN` 的项，通过 `indexOf` 和 `lastIndexOf` 是否相等判断是否有重复项，并循环的调用 `lastIndexOf` 找到重复的项并删掉。
+3. 对于 `NaN`，无法使用 `indexOf` 和 `lastIndexOf` 查找重复项并删除，仍然要通过一个变量记录它是否出现。之后再出现 `NaN` 时，删除当前的 `NaN`。
+    ```js
+    function foo (arr) {
+        let hasNaN = false;
+        for (let i=0; i<arr.length; i++) {
+            if ( is_NaN(arr[i]) ) {
+                if (hasNaN) {
+                    arr.splice(i, 1);
+                }
+                else {
+                    hasNaN = true;
+                }
+            }
+            else {
+                let lastIdx = arr.lastIndexOf(arr[i]);
+                if (i !== lastIdx) {
+                    do {
+                        arr.splice(lastIdx, 1);
+                        lastIdx = arr.lastIndexOf(arr[i]);
+                    }
+                    while (i !== lastIdx);
+                } 
+            }
+        }
+    }
 
+    
+    let arr = [1, 3, 2, 5, NaN, 4, NaN, 5, 3, 6, 3, 2];
+    foo(arr);
+    console.log(arr); // [1, 3, 2, 5, NaN, 4, 6]
+    ```
+4. 非 `NaN` 的项不能像对待 `NaN`
 ### 找出重复项
 * 方法一：先把所有重复的项组成新数组，然后去重
     ```js

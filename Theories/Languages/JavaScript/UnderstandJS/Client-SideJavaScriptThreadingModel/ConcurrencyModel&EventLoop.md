@@ -29,6 +29,7 @@ JavaScript Runtime:
         - [能否在微任务中循环地触发新的微任务](#能否在微任务中循环地触发新的微任务)
         - [JS 中的宏任务和微任务](#js-中的宏任务和微任务)
         - [再看一个更复杂的例子](#再看一个更复杂的例子)
+    - [异常处理](#异常处理)
     - [Several runtimes communicating together](#several-runtimes-communicating-together)
     - [References](#references)
 
@@ -442,6 +443,70 @@ promise 5
 promise 6
 ```
 
+
+## 异常处理
+1. 参考[这个回答](https://stackoverflow.com/a/25172622)：A thrown exception may also exit one or more execution contexts.
+2. 也就是说，一个异常如果没有被最外层的函数执行环境捕获，就会异常退出该执行环境
+    ```js
+    function bar () {
+        try {
+            throw new Error("hehe");
+        }
+        catch (err) {
+            console.error("bar:", err.message);
+        }
+    }
+
+    function foo () {
+        try {
+            bar();
+        }
+        catch (err) {
+            console.error("foo:", err.message);
+        }
+    }
+
+    try {
+        foo()
+    }
+    catch(err) {
+        console.log("main:", err.message);
+    }
+    ```
+    如上面代码所示，在调用栈最上层的 `bar` 中抛出的异常，依次可以在 `bar`、`foo` 和全局执行环境中被捕获。如果在全局执行环境中没有捕获，就会导致全局执行环境退出，程序终止。
+3. 但是如果异常是发生在宏任务回调中的，当宏任务回调被退出调用栈的时候，调用栈是空的。所以此时宏任务回调的环境就是最外层环境。
+4. 在这里抛出的错误，如果没有被捕获，就会导致该环境执行终止
+    ```js
+    setTimeout(()=>{
+        console.log(1111); // 会打印
+        throw new Error();
+        console.log(2222); // 不会打印
+    }, 2222);
+    ```
+5. 但是，如果是之前的执行环境里的异常没有被捕获，导致执行环境终止，之后的宏任务回调因为是在独立的执行环境，则可以正常执行
+    ```js
+    setTimeout(()=>{
+        console.log(2222);
+    }, 2222);
+
+    throw new Error();
+    ```
+    main 函数的执行环境抛出了错误，导致退出执行环境。此时调用栈清空，但两秒后 `setTimeout` 的回调进来建立了新的执行环境，里面的代码可以正常执行。
+6. 甚至，更有趣的是，即使之前的 main 环境里进行了事件绑定，之后 main 环境异常退出，但因为事件回调是浏览器负责的，所以还可以正常的响应事件
+    ```js
+    window.addEventListener("click", ()=>{
+        console.log("click");
+    })
+    throw new Error();
+    ```
+7. 另外，这也是为什么 `setInterval` 回调里如果抛出异常，循环还可以继续进行的原理。因为每次执行的回调都是一个宏任务，都是独立的执行环境，尽管每次都会异常退出，但负责循环的并不是在当前执行环境，所以循环依旧
+    ```js
+    setInterval(()=>{
+        throw new Error();
+        console.log(666); // 虽然每次执行回调都会导致异常退出执行环境而不能打印 `666`
+    }, 1111);
+    ```
+    
 
 ## Several runtimes communicating together
 1. A web worker or a cross-origin iframe has its own stack, heap, and message queue.
