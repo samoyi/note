@@ -245,41 +245,46 @@ console.log(new Set(arr2)); // {0, NaN}
     ```
 4. 这个方法有一个小小不完善。就上面的例子来看，我们期望删除的结果是 `[1, 3, 2, 5, NaN, 4, 6]`，和实际的结果在顺序上略有差别。
 5. 这是因为对于非 `NaN` 的项是删除右边的若干个重复的保留最左的，而对于 `NaN` 则是保留最右的。
-
-1. 从前往后遍历数组，找到一个非 `NaN` 的项，如果之后还存在重复值的项，删除之后所有相同值的项。
-2. 对于值为非 `NaN` 的项，通过 `indexOf` 和 `lastIndexOf` 是否相等判断是否有重复项，并循环的调用 `lastIndexOf` 找到重复的项并删掉。
-3. 对于 `NaN`，无法使用 `indexOf` 和 `lastIndexOf` 查找重复项并删除，仍然要通过一个变量记录它是否出现。之后再出现 `NaN` 时，删除当前的 `NaN`。
+6. 从后往前遍历，就不能通过 `splice` 删除，否则就会影响接下来的遍历。不过，从后往前遍历是因为删除当前项会影响后面遍历的项，但是在这里，删除同值项并不需要删除当前项，而可以通过删除之后的同值项。而这正是我们需要的。
+7. 从前往后遍历数组，找到一个非 `NaN` 的项，如果之后还存在重复值的项，删除之后所有相同值的项。
+8. 但是此时对于 `NaN`，却只能删除当前 `NaN` 项，因为无法使用 `lastIndexOf` 查找之后的重复。而通过`splice` 删除当前重复的 `NaN` 之后，下一项就无法被遍历到了。
+9. 所以，在删除了重复的 `NaN` 之后，还要让索引再减一才行
     ```js
-    function foo (arr) {
+    function foo(arr){
         let hasNaN = false;
+
         for (let i=0; i<arr.length; i++) {
-            if ( is_NaN(arr[i]) ) {
+            let item = arr[i];
+            if ( is_NaN(item) ) {
                 if (hasNaN) {
                     arr.splice(i, 1);
+                    i--;
                 }
                 else {
                     hasNaN = true;
                 }
             }
             else {
-                let lastIdx = arr.lastIndexOf(arr[i]);
+                let lastIdx = arr.lastIndexOf(item);
                 if (i !== lastIdx) {
                     do {
                         arr.splice(lastIdx, 1);
-                        lastIdx = arr.lastIndexOf(arr[i]);
+                        lastIdx = arr.lastIndexOf(item);
                     }
                     while (i !== lastIdx);
-                } 
+                }
             }
         }
+
+        return arr;
     }
 
-    
-    let arr = [1, 3, 2, 5, NaN, 4, NaN, 5, 3, 6, 3, 2];
+
+    let arr = [1, 3, 2, 5, NaN, 4, NaN, 15, 15, 3, 6, 3, 2];
     foo(arr);
-    console.log(arr); // [1, 3, 2, 5, NaN, 4, 6]
+    console.log(arr); // [1, 3, 2, 5, NaN, 4, 15, 6]
     ```
-4. 非 `NaN` 的项不能像对待 `NaN`
+    
 ### 找出重复项
 * 方法一：先把所有重复的项组成新数组，然后去重
     ```js
@@ -338,8 +343,7 @@ console.log('1' in arr2); // true
 ```
 
 ### 各种数组方法对空数组项和 `undefined` 项的处理
-* `forEach()`、 `filter()`、 `every()` 和 `some()` 都会跳过空数组项；`map()` 会跳过
-空数组项，但会保留这个值
+* `forEach()`、 `filter()`、 `every()` 和 `some()` 都会跳过空数组项；`map()` 会跳过空数组项，但会保留这个值
     ```js
     let arr = [ "a", , "c"],
         num = 0,

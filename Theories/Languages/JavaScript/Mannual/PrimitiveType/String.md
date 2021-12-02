@@ -1,5 +1,28 @@
 # String
 
+
+<!-- TOC -->
+
+- [String](#string)
+    - [查询字符串](#查询字符串)
+        - [正确识别字符串长度](#正确识别字符串长度)
+        - [查找某个位置的字符](#查找某个位置的字符)
+        - [Verify a string as palindrome](#verify-a-string-as-palindrome)
+    - [改变字符串](#改变字符串)
+        - [拼接字符串](#拼接字符串)
+        - [反转字符串](#反转字符串)
+        - [字符串去重](#字符串去重)
+    - [比较字符串](#比较字符串)
+        - [比较版本号](#比较版本号)
+        - [问题描述](#问题描述)
+        - [算法思路](#算法思路)
+        - [边界](#边界)
+        - [实现](#实现)
+    - [其他](#其他)
+
+<!-- /TOC -->
+
+
 ## 查询字符串
 ### 正确识别字符串长度
 1. 因为 JavaScript 的字符串规则是 UCS-2，所以16位以上的 Unicode 字符，识别为2个字符。
@@ -17,25 +40,6 @@ function length(str){
 2. 这两个方法共同的问题就是，不能正确处理多字节字符。如果为了万无一失，就不能用这两个方
 法，而应该把字符串转换为数组。
 
-### 查找子字符串的位置
-#### `indexOf()`和`lastIndexOf()`
-不支持正则表达式
-
-#### `match()`
-支持正则表达式
-
-#### `search()`
-只支持正则表达式或者可以转换成正则表达式的参数
-
-### 获得子字符串
-* `slice()`
-* `substring()`
-* `substr()`
-
-### 是否（在头或尾）包含某子字符串
-* `includes()`
-* `startsWidth()`和`endsWidth()`
-
 ### Verify a string as palindrome
 ```js
 function isPalindrome(str){
@@ -52,10 +56,6 @@ function isPalindrome(str){
 instead of the concat() method. According to this performance test,
 the assignment operators are several times faster.
 
-### 增长字符串
-* `repaet()`
-* `padStart()`和`padEnd()`
-
 ### 反转字符串
 ```js
 function strReverse(str){
@@ -71,12 +71,111 @@ function strUnique(str){
 ```
 
 
-## 其他
-### 支持正则表达式的方法
-* `search()`
-* `replace()`
-* `match()`
-* `split()`
+## 比较字符串
+### 比较版本号
+### 问题描述
+https://leetcode-cn.com/problems/compare-version-numbers/
 
-### 对原字符串的改变
-都不改变原字符串？
+### 算法思路
+1. 根据点号 `.` split 版本号到数组，同时删除每个数组项的前导 0；
+2. 依次对比对应的数组项：
+    * 如果两个数组项都存在，则比较大小：一样大就比较两个数组的下一项，否则返回结果；
+    * 如果一个存在另一个不存在：
+        * 判断存在的当前项以及之后的所有项是否有大于 0 的，有的话则该版本号更大
+        * 否则两者相等。
+    * 如果比较完了还没结果（这可以说是 “两个数组项都不存在”，但不会遍历到这种情况），则相等
+
+### 边界
+参数是否是字符串且包含数字和点号
+
+### 实现
+1. 初步实现
+    ```js
+    function AssertValidVerStr (str) {
+        if ( typeof str !== "string" || /[^\d\.]/.test(str) ) {
+            throw new TypeError();
+        }
+    }
+
+
+    function foo (v1, v2) {
+        AssertValidVerStr(v1);                                                                 
+        AssertValidVerStr(v2);
+
+        let segs1 = v1.split(".").map((item) => {
+            return Number.parseInt(item);
+        });                                                                 
+        let segs2 = v2.split(".").map((item) => {
+            return Number.parseInt(item);
+        });
+        
+        let maxLen = Math.max(segs1.length, segs2.length);
+        for (let i=0; i<maxLen; i++) {
+            if ( segs1[i] !== undefined && segs2[i] !== undefined ) {
+                if ( segs1[i] > segs2[i] ) {
+                    return 1;
+                }
+                else if ( segs1[i] < segs2[i] ) {
+                    return -1;
+                }
+            }
+            else if (segs1[i] !== undefined) {
+                let j = i;
+                do {
+                    if (segs1[j] > 0) {
+                        return 1;
+                    }
+                    j++;
+                }
+                while (j < segs1.length);
+                return 0;
+            }
+            else if (segs2[i] !== undefined) {
+                let j = i;
+                do {
+                    if (segs2[j] > 0) {
+                        return -1;
+                    }
+                    j++;
+                }
+                while (j < segs2.length)
+                return 0;
+            }
+        }
+        return 0;
+    }
+    ```
+2. 归并排序中也遇到了一个数组提前比较完的情况，当时如果给两个数组都加上一个最大值，那么就不用判断是否其中一个已经排完了。这里也可以通过类似的思想，来避免掉最外层的两个 `else...if` 分支。
+3. 在这里，当一个版本号的字段比较完之后，另一个版本号中剩余的部分要和零比较。那么如果让短的那个数组补上几个 0，让两个数组长度一样就可以。
+4. 或者还有一个办法，就是让每次比较的默认值都是 0，如果一个数组的当前项有值，那就覆盖掉默认的 0，否则的话就用默认的 0 去和另一个更长的数组比较
+    ```js
+    function foo (v1, v2) {
+        AssertValidVerStr(v1);                                                                 
+        AssertValidVerStr(v2);
+
+        let segs1 = v1.split(".").map((item) => {
+            return Number.parseInt(item);
+        });                                                                 
+        let segs2 = v2.split(".").map((item) => {
+            return Number.parseInt(item);
+        });
+        
+        let maxLen = Math.max(segs1.length, segs2.length);
+        for (let i=0; i<maxLen; i++) {
+            let x = i < segs1.length ? segs1[i] : 0;
+            let y = i < segs2.length ? segs2[i] : 0;
+            if ( x > y ) {
+                return 1;
+            }
+            else if ( x < y ) {
+                return -1;
+            }
+        }
+        return 0;
+    }
+    ```
+
+
+
+## 其他
+
