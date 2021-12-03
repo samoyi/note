@@ -52,6 +52,7 @@
     - [Reduction Methods](#reduction-methods)
         - [`callback`](#callback)
         - [`initialValue`](#initialvalue)
+        - [自己实现加深理解](#自己实现加深理解)
     - [Array-Like](#array-like)
 
 <!-- /TOC -->
@@ -566,6 +567,59 @@ console.log(result2); // 16
 
 console.log(arr); // [1, 2, 3]
 ```
+
+### 自己实现加深理解
+1. 原型
+    ```js
+    function my_reduce (arr, reducer, initVal) {
+
+    }
+    ```
+2. 逻辑
+    1. 声明一个保存累加值的变量 `accu`，如果提供了 `initVal`，`accu` 初始化为 `initVal`，否则初始化为 `arr[0]`;
+    2. 如果提供了 `initVal`，从 `arr[0]` 开始已遍历 `arr`，否则从 `arr[1]` 开始遍历；
+        1. 每次遍历都调用 `reducer`，并传参：
+            * 第一个参数：`accu`；
+            * 第二个参数：当前数组项；
+            * 第三个参数：当前数组项的数组 index； 
+            * 第四个参数：`arr`。
+        2. `reducer` 的返回值赋值给 `accu`。
+    3. 遍历结束后返回 `accu`。
+
+3. 边界
+    * 参数类型
+    * 数组长度小于 2：
+        * 空数组但是有 `initVal`，算法可以正常运行并返回 `initVal`；
+        * 单项数组没有 `initVal`，也可以正常运行并返回该数组项。
+        * 空数组且没有 `initVal`，如果继续运行会返回没有初始值 `accu`，所以不运行直接报错。
+4. 实现
+    ```js
+    function my_reduce (arr, reducer, initVal) {
+        // assertArgumentsType();
+        
+        if (arr.length === 0 && initVal === undefined) {
+            throw new TypeError();
+        }
+
+        let accu;
+        let startIdx;
+
+        if (initVal) {
+            accu = initVal;
+            startIdx = 0;
+        }
+        else {
+            accu = arr[0];
+            startIdx = 1;
+        }
+
+        for (let i=startIdx; i<arr.length; i++) {
+            accu = reducer(accu, arr[i], i, arr);
+        }
+
+        return accu;
+    }
+    ```
 
 
 ## Array-Like

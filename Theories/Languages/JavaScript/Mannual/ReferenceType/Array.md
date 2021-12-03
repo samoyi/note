@@ -26,6 +26,7 @@
         - [替换数组项](#替换数组项)
         - [合并数组](#合并数组)
         - [归并数组](#归并数组)
+        - [数组 pad 方法](#数组-pad-方法)
     - [遍历数组](#遍历数组)
     - [深复制数组](#深复制数组)
     - [数组去重与搜重](#数组去重与搜重)
@@ -149,6 +150,39 @@ Array.prototype.push.apply( arr0, arr1 ); // ES6之前
 ### 归并数组
 * `reduce()`和`reduceRight()`   不改变原数组
 * 遍历数组手动归并
+
+### 数组 pad 方法
+1. 类似于字符串的原生 pad 方法，第三个参数从字符串变成了数组
+    ```js
+    function arr_padStart (arr, targetLength, padArr) {
+        if (targetLength <= arr.length) {
+            return arr.slice();
+        }
+        
+        let n = Math.ceil( (targetLength) / padArr.length );
+        let repeated = [];
+        for (let i=0; i<n; i++) {
+            repeated.push(...padArr);
+        }
+        repeated.length = targetLength - arr.length;
+
+        return repeated.concat(arr);
+    }
+    function arr_padEnd (arr, targetLength, padArr) {
+        if (targetLength <= arr.length) {
+            return arr.slice();
+        }
+
+        let n = Math.ceil( (targetLength) / padArr.length );
+        let repeated = [];
+        for (let i=0; i<n; i++) {
+            repeated.push(...padArr);
+        }
+        repeated.length = targetLength - arr.length;
+        return arr.concat(repeated);
+    }
+    ```
+2. 先用 `padArr` 重复若干次创建一个长度大于等于 `targetLength` 的数组，然后再通过 `length` 属性把这个数组缩短到合适的长度，再拼接上原数组 `arr`。
 
 
 ## 遍历数组
