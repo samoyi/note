@@ -43,6 +43,15 @@
         - [数组方法是否改变原数组](#数组方法是否改变原数组)
             - [会改变的](#会改变的)
             - [不会改变的](#不会改变的)
+    - [列表和树结构的转换](#列表和树结构的转换)
+        - [列表转树](#列表转树)
+            - [分析](#分析)
+            - [逻辑](#逻辑)
+            - [边界条件](#边界条件)
+            - [实现](#实现)
+        - [树转列表](#树转列表)
+            - [递归实现](#递归实现)
+            - [遍历实现](#遍历实现)
 
 <!-- /TOC -->
 
@@ -533,3 +542,131 @@ console.log('1' in arr2); // true
 * `slice()`
 * `reduce()`和`reduceRight()`
 * spread operator 添加数组项
+
+
+## 列表和树结构的转换
+1. 对于逻辑上的树结构，可以表示成列表的形式。例如
+    ```js
+    {
+        id: 1,
+        name: "obj1",
+        children: [
+            {
+                id: 2,
+                name: "obj2",
+                children: [],
+            },
+            {
+                id: 3,
+                name: "obj3",
+                children: [
+                    {
+                        id: 4,
+                        name: "obj4",
+                        children: [],
+                    },
+                ],
+            },
+        ],
+    }
+    ```
+    可以表示为
+    ```js
+    [
+        {id: 1, name: "obj1", pid: 0},
+        {id: 2, name: "obj2", pid: 1},
+        {id: 3, name: "obj3", pid: 1},
+        {id: 4, name: "obj4", pid: 3},
+    ]
+    ```
+2. 对于其中一种表示，提供相应的方法转换成另一种形式。
+
+### 列表转树
+#### 分析
+1. 当遍历某一个列表项时，需要创建该项对应的对象 `obj`，然后把该对象插入到它父级的 `children` 里。
+3. 一个问题是可能此时 `obj` 的父级对象有可能还没有创建。对于这种情况，我们此时已经知道了父级的 `id`，那么可以先创建一个父级 `parent`，然后把 `obj` 加入到 `parent` 的 `children` 里。
+3. 但此时 `parent` 是无处安放的，因为我们不知道它的父级，所以需要将它存储起来。之后遍历到 `parent` 对应的列表项时，还要完善它的属性。
+4. 当然如果 `obj` 是根对象，也就是 `obj.id` 为 1，那么它就没有父级。
+5. 另外 `obj` 本身也要存储起来，这样它的子对象也才能找到它。
+
+#### 逻辑
+1. 创建一个哈希结构 `objMap` 用来存储对象。
+2. 遍历列表：
+    * 如果当前列表项 `id` 没有创建过对象：
+        1. 以该 `id` 为 `key` 创建对象，属性包括 `id`、`name`、`pid` 和 `children`；
+        2. 根据 `pid` 从 `objMap` 中寻找父对象 `objMap[pid]`：
+            * 如果找到，把当前项加入到父对象的 `children` 里面；
+            * 如果没找到，创建父对象，把当前节点加入到父对象的 `children` 里面；父对象此时 `name` 和 `pid` 属性为空;
+    * 如果当前列表项 `id` 已经创建过对象，那证明是它的子对象创建的，只需要补上该对象的 `pid` 和 `name` 属性；
+3. 返回 `objMap[1]`
+
+#### 边界条件
+根对象的 `pid` 为 0，没有父对象
+
+#### 实现
+```js
+function list2tree (list) {
+    let objMap = {};
+    list.forEach((item) => {
+        let {id, name, pid} = item;
+        if (objMap[id]) {
+            objMap[id].name = name;
+            objMap[id].pid = pid;
+        }
+        else {
+            objMap[id] = {
+                id,
+                name,
+                pid,
+                children: [],
+            };
+            if (pid !== 0) {
+                if (objMap[pid]) {
+                    objMap[pid].children.push(objMap[id]);
+                }
+                else {
+                    objMap[pid] = {
+                        id: pid,
+                        name: null,
+                        pid: null,
+                        children: [objMap[id]],
+                    };
+                }
+            }
+        }
+    });
+    return objMap[1];
+}
+```
+
+### 树转列表
+#### 递归实现
+1. 函数接受一个对象，将它加入结果列表；
+2. 然后遍历这个对象的子对象，递归的调用
+    ```js
+    function tree2list (tree, list=[]) {
+        let {id, name, pid} = tree;
+        list.push({id, name, pid});
+        tree.children.forEach((item) => {
+            tree2list(item, list);
+        });
+        return list;
+    }
+    ```
+
+#### 遍历实现
+1. 定义一个对象队列，只要里面还有对象，就取出一个对象加入结果列表；
+2. 然后把取出的对象的所有子对象再加入对象队列；
+3. 初始时把参数的对象加入队列，然后开始循环
+    ```js
+    function tree2list (tree, list=[]) {
+        let objQueue = [tree];
+        while (objQueue.length) {
+            let child = objQueue.shift();
+            let {id, name, pid} = child;
+            list.push({id, name, pid});
+            objQueue.push(...child.children);
+        }
+        return list;
+    }
+    ```
