@@ -1,31 +1,84 @@
 # async-await
 
+
+<!-- TOC -->
+
+- [async-await](#async-await)
+    - [Basic](#basic)
+    - [异步逻辑](#异步逻辑)
+        - [`return` 设置的返回值](#return-设置的返回值)
+        - [Promise 对象的状态变化](#promise-对象的状态变化)
+    - [错误处理](#错误处理)
+    - [执行顺序](#执行顺序)
+    - [Misc](#misc)
+        - [并行`await`](#并行await)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
 ## Basic
 1. The `async` keyword before a function has two effects:
     * Makes it always return a promise.
     * Allows to use `await` in it.
 
-### `await`
-1. 当`async`函数中出现一个`await`，表明它后面将会是一个异步操作。
-2. 正常情况下，`await`命令后面是一个 Promise 对象。如果不是，会被转成一个立即 resolve
-的 Promise 对象。
-3. 函数内部遇到`await`时，不会继续执行，而是等待异步返回结果。
-4. 当然程序不会就停在这里，因为这是`async`函数，所以在等待异步返回结果的同时，函数外部
-的代码会进行异步的并行执行。
-```js
-async function foo(){
-    console.log(1)
-    console.log(await 3);
-    console.log(4)
-}
-foo();
-console.log(2);
-for(let i=0; i<999999999; i++){}
-```
-先依次输入`1`、`2`，等待循环结束后，再依次输出`3`、`4`
+
+## 异步逻辑
+1. 当 `async` 函数中出现一个 `await`，表明它后面将会是一个异步操作。
+2. 正常情况下，`await` 命令后面是一个 promise 实例。如果不是，会被转成一个立即 resolve 的 promise 实例。
+3. 函数内部遇到 `await` 时，不会继续执行，而是等待异步返回结果。也就是等待后面 promise 出结果。
+4. 也就是说，此时引擎创建了一个 promise 微任务。
+5. 那么此时引擎本身的同步线程还会继续进行。此时，从代码上看还是还没有执行完，但实际上函数已经返回，因此会接着执行函数调用后面的代码。
+    ```js
+    async function foo () {
+        console.log(1);
+        let result = await bar();
+        console.log(result);
+        console.log(2);
+        return "done";
+    }
+
+    function bar () {
+        let p = new Promise((resolve) => {
+            console.log(3)
+            resolve(4);   
+            console.log(5)
+        });
+        console.log(6);
+        return p;
+    }
+
+    console.log(7);
+    foo().then((res) => {console.log(res)});
+    console.log(8);
+
+    // 输出顺序为：7 1 3 5 6 8 4 2 done
+    ```
+6. 执行顺序是：
+    1. 打印 7；
+    2. 调用 `foo`，打印 1；
+    3. 调用 `bar`，调用 `new Promise` 并传参 executor 函数；
+    4. 执行 executor，打印 3；
+    5. 调用 `resolve`，创建一个微任务1，微任务1 到时候解析为 4；
+    6. 打印 5，executor 返回，创建好 promise1 实例 `p`；
+    7. 打印 6，`bar` 返回；
+    8. `foo` 函数实际返回，返回了另一个 promise2 实例，promise2 实例创建一个微任务2，之后会解析为 `"done"`；
+    9. 调用 `then`，传递接收该 promise2 解析结果函数 onFulfilled；
+    10. 打印 8；
+    11. 调用栈准备清空，执行两个微任务；
+    12. 首先执行微任务1，解析为 4；`result` 获得值 4，打印 4；
+    13. 打印 2；
+    14. 执行 `return "done"`，也就是微任务2 解析为 `"done"`，onFulfilled 得到结果打印 `"done"`。
+7. JS 主线程是同步执行的，先调用 `foo`，然后打印 1，然后 `await` 之后的表达式发起一个异步请求，然后
 
 
-### 返回值
+promise 本身并不是异步操作，只是可以发起一个异步操作
+promise 发起了异步操作，异步操作返回后调用 resove，但此时调用栈不是已经清空了吗，还是说没清空一直等着异步结果？
+
+
+返回给 await 的 promise 创建时如果本身就调用了 then，那就相当于 await 是 then 的 then
+### `return` 设置的返回值
+相当于 `resolve`
 `async`函数本身返回一个 promise 对象，而其中`return`设定的返回值是`onFulfilled`的参数
 ```js
 async function foo(){

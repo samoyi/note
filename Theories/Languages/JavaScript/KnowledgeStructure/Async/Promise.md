@@ -8,8 +8,13 @@
         - [给你一个承诺（promise）：](#给你一个承诺promise)
         - [基本用法](#基本用法)
     - [对结果不可变的承诺](#对结果不可变的承诺)
+    - [Promise 对象](#promise-对象)
+    - [`Promise.prototype.then()`](#promiseprototypethen)
+        - [回调调用机制](#回调调用机制)
+        - [返回值](#返回值)
+        - [详细的返回值规则](#详细的返回值规则)
     - [基本实例方法](#基本实例方法)
-        - [`Promise.prototype.then()`](#promiseprototypethen)
+        - [`Promise.prototype.then()`](#promiseprototypethen-1)
             - [链式调用](#链式调用)
         - [`Promise.prototype.catch()`](#promiseprototypecatch)
         - [`Promise.prototype.finally()`](#promiseprototypefinally)
@@ -20,6 +25,7 @@
         - [如果被嵌套实例提前 reject 了](#如果被嵌套实例提前-reject-了)
     - [捕获错误](#捕获错误)
     - [Promise 的执行顺序](#promise-的执行顺序)
+        - [结合 async-await 函数的例子分析](#结合-async-await-函数的例子分析)
     - [`Promise.all(iterable)`](#promisealliterable)
     - [`Promise.race()`](#promiserace)
     - [`Promise.resolve` & `Promise.reject`](#promiseresolve--promisereject)
@@ -115,6 +121,127 @@ setTimeout(()=>{
     })
     ```
 2. 因为 Promise 的状态一旦改变，就永久保持该状态，不会再变了。因此除了之后不能再调用 `resolve` 和 `reject`，因为抛出错误也是相当于 `reject`，所以错误也不会被抛出到外部。
+
+
+## Promise 对象
+1. Promise 对象代表着一个异步操作，从中可以读取到它的可能是正在进行，可能是成功了，也可能是失败了；如果成功或失败了，可以得到成功的返回值和失败的原因。
+2. 与普通异步操作需要再发起时就传递回调不同，使用 promise 可以在之后的任何时候调用它的实例方法获得回调的状态和结果
+    ```js
+    let p = new Promise((resolve, reject) => {
+        // 异步操作一秒钟之后完成
+        setTimeout(() => {
+            resolve("success");
+        }, 1000);
+    });
+
+    // 异步操作发起之后再添加回调
+    // 因为是异步操作刚发起就添加的，所以一秒钟后一步操作完成后这里就能得到结果
+    p.then((res) => {
+        console.log(res);
+    });
+
+    // 异步操作发起两秒后再添加回调
+    // 此时异步操作已经完成了，所以刚添加完就能得到结果
+    setTimeout(() => {
+        p.then((res) => {
+            console.log(res);
+        })
+    }, 2000);
+    ```
+3. 你在异步操作结束前就添加回调，可以在刚结束时就及时得到结果；而之后再添加的话，异步操作已经完成了，所以添加完就能得到结果。（不过并不是添加完立刻得到，因为 promise 的回调要作为微任务执行）
+
+
+## `Promise.prototype.then()`
+### 回调调用机制
+1. 这个方法是用来个 promise 所代表的的异步操作添加回调的。
+2. 使用这个方法添加的成功回调和失败会在 promise 的异步操作得到成功或失败结果时被调用，但并不是严格的立刻调用
+    ```js
+    let p = new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve("success");
+            console.log(1);
+        }, 1000);
+    });
+
+    p.then((res) => {
+        console.log(res);
+    });
+    ```
+    调用 `resolve` 使异步操作完成后，并不会立刻打印 `"success"`，还是要先打印 `1`。显然回调的优先级不可能强到插入到两行同步执行的代码之间。
+3. 严格地说，异步操作完成后，并不是调用回调，而是把回调加入到微任务队列里。
+
+### 返回值
+1. `then` 方法是用来给异步操作传递回调的，那为什么需要返回值呢？
+2. 假设我们有一个链式的异步操作：
+    1. 第一个异步操作结束后调用回调，在回调里调用第二个异步操作；
+    2. 第二个异步操作结束后调用回调，在回调里调用第三个异步操作；
+    3. 第三个异步操作结束后调用回调，链式异步操作结束。
+3. 如果 `then` 没有返回值，使用 promise 需要如下实现
+    ```js
+    new Promise((resolve) => {
+        setTimeout(() => {
+            resolve("step 1");
+        }, 1000);
+    })
+    .then((res) => {
+        console.log(res);
+        new Promise((resolve) => {
+            setTimeout(() => {
+                resolve("step 2");
+            }, 1000);
+        })
+        .then((res) => {
+            console.log(res);
+            new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve("step 3");
+                }, 1000);
+            })
+            .then((res) => {
+                console.log(res);
+            });
+        });
+    });
+    ```
+4. 可以看到这是逐层嵌套的结构，也就是所谓的回调地狱。我们必须在上一个异步操作回调函数的内部发起下一次异步操作并添加回调，所以就会形成嵌套。
+5. 而 `then` 实际可以通过返回值，让我们虽然在上一个异步操作回调函数的内部发起下一次异步操作，但是这一次的回调添加可以放到外部，从而就跳出了上一个回调函数。
+6. 如果我们在 `then` 的回调里新发起的 promise 异步后，返回该 promise 实例，则 `then` 方法也会返回和这个实例状态相同的 promise。虽然不是同一个，但是可以当做同一个使用。
+7. 这样，我们就可以在和上一个 `then` 平级的环境里添加链式异步操作后续 promise 的回调
+    ```js
+    new Promise((resolve) => {
+        setTimeout(() => {
+            resolve("step 1");
+        }, 1000);
+    })
+    .then((res) => {
+        console.log(res);
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve("step 2");
+            }, 1000);
+        });
+    })
+    .then((res) => {
+        console.log(res);
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve("step 3");
+            }, 1000);
+        });
+    })
+    .then((res) => {
+        console.log(res);
+    });
+    ```
+
+### 详细的返回值规则
+1. 实际上，即使没有在 `then` 的回调里明确的返回 promise 对象，`then` 也会返回一个 promise 对象。
+2. 如果回调返回一个 promise 实例，则 `then` 也会返回一个状态相同的 promise 实例；
+3. 如果回调返回的不是 promise，则 `then` 也会返回一个 resolved 的 promise 实例，resolved 的值就是回调的返回值；
+4. 如果回调抛出错误，则 `then` 也会返回一个 rejected 的 promise 实例，rejected 的错误就是抛出的错误。
+5. 详细的规则可以看 [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/then#return_value)。
+
+
 
 
 ## 基本实例方法
@@ -586,6 +713,27 @@ p2 // 三秒钟之后 reject
 
 
 ## Promise 的执行顺序
+1. `executor` 里的操作会立刻执行，这没问题，因为要发起异步操作；但是即使是 resove 或者 reject 之后的操作，也会同步（非异步）的执行
+    ```js
+    let p = new Promise ((resolve, reject) => {
+        console.log("1");
+        resolve("true");
+        // reject("false");
+        console.log("2");
+    });
+
+    p.then((res) => {
+        console.log(res);
+    }, (err) => {
+        console.warn(err);
+    });
+
+    console.log(3);
+
+    // resolve 时输出书序为： 1 2 3 true
+    // reject  时输出书序为： 1 2 3 false
+    ```
+
 ```js
 let p = new Promise((res, rej)=>{
     console.log(1);
@@ -617,6 +765,60 @@ error
 ReferenceError
 ```
 
+### 结合 async-await 函数的例子分析
+1. 程序如下
+    ```js
+    setTimeout(function () {
+        console.log("1");
+    }, 0);
+
+    async function async1() {
+        console.log("2");
+        const data = await async2();
+        console.log("3");
+        return data;
+    }
+
+    async function async2() {
+        return new Promise((resolve) => {
+            console.log("4");
+            resolve("async2的结果");
+        }).then((data) => {
+            console.log("5");
+            return data;
+        });
+    }
+
+    async1()
+    .then((data) => {
+    console.log("6");
+    console.log(data);
+    });
+
+    new Promise(function (resolve) {
+        console.log("7");
+        //   resolve()
+    }).then(function () {
+        console.log("8");
+    });
+    ```
+2. 其实只要知道 promise 和 async-await 异步逻辑，一步一步线性的推导就行了，毕竟 JS 主线程就是线性的。
+3. 调用栈推入全局执行环境；
+    1. 调用 `setTimeout`，创建 【宏任务1】，该宏任务之后会打印 1；
+    2. `setTimeout` 返回；
+    3. 调用 `async1`：
+        1. 【打印2】；
+        2. 调用 `async2`：
+            1. 调用 Promise 构造函数并传入参数函数；
+            2. 参数函数执行，【打印4】，`resolve` 建立【微任务1】，该微任务会解析为 `"async2的结果"`;
+            3. Promise 构造函数返回 promise 实例，该实例紧接着调用 `then` 方法，传递【微任务1的回调】；
+            4. `then` 方法也创建了一个 promise 实例，建立【微任务2】
+        3. `async2` 返回 `then` 返回的 promise 实例给 `await`，`await` 之后的代码也相当于 【微任务2的回调】
+    4. `async1` 返回 promise 实例，该实例创建【微任务3】，之后会解析为 `data` 的值；
+    5. 该实例调用 `then` 方法并接受函数作为 【微任务3的回调】
+    6. 全局环境创建 promise，调用参数函数，【打印7】；但是 没有 `resolve`，不会创建微任务；之后虽然通过 `then` 传递了回调但不会执行；
+4. 全局执行环境准备清空，开始调用微任务：
+    1. 微任务1 解析为 `"async2的结果"`，它的回调 【打印5】并返回 `"async2的结果"`，
 
 ## `Promise.all(iterable)`
 1. `Promise.all` 方法用于将多个 Promise 实例，包装成一个新的 Promise 实例。
