@@ -13,6 +13,7 @@
         - [回调调用机制](#回调调用机制)
         - [返回值](#返回值)
         - [详细的返回值规则](#详细的返回值规则)
+            - [改变时间](#改变时间)
     - [基本实例方法](#基本实例方法)
         - [`Promise.prototype.then()`](#promiseprototypethen-1)
             - [链式调用](#链式调用)
@@ -235,12 +236,98 @@ setTimeout(()=>{
     ```
 
 ### 详细的返回值规则
-1. 实际上，即使没有在 `then` 的回调里明确的返回 promise 对象，`then` 也会返回一个 promise 对象。
-2. 如果回调返回一个 promise 实例，则 `then` 也会返回一个状态相同的 promise 实例；
-3. 如果回调返回的不是 promise，则 `then` 也会返回一个 resolved 的 promise 实例，resolved 的值就是回调的返回值；
-4. 如果回调抛出错误，则 `then` 也会返回一个 rejected 的 promise 实例，rejected 的错误就是抛出的错误。
-5. 详细的规则可以看 [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/then#return_value)。
+1. 实际上，即使没有在 `then` 的回调里明确的返回 promise 对象，`then` 也会返回一个 promise 对象。但是，这个 promise 的状态取决于 `then` 的返回值。
+2. 因为 `then` 的调用是在同步的主线程，而它的回调是作为微任务之后异步调用。所以 `then` 刚返回的 promise 对象的状态是 pendding。
+3. 之后等它的回调执行时，根据回调的返回值，`then` 返回的 promise 的状态会发生相应的变化。
+4. 如果之后回调返回一个 promise 实例，则 `then` 也会返回一个状态相同的 promise 实例
+    ```js
+    let p0 = Promise.resolve(22)
+    .then((res) => {
+        console.log(res);
+        return new Promise( (resolve, reject) => {
+            
+        });
+    });
+    console.log("Sync:", p0);
+    setTimeout(() => {
+        console.log("Macro:", p0);
+    });
+    // 依次输出：
+    // Sync: Promise {<pending>}
+    // 22
+    // Macro: Promise {<pending>}
+    ```
+    ```js
+    let p1 = Promise.resolve(22)
+    .then((res) => {
+        console.log(res);
+        return new Promise( (resolve, reject) => {
+            resolve(33);
+        });
+    });
+    console.log("Sync:", p1);
+    setTimeout(() => {
+        console.log("Macro:", p1);
+    });
+    // 依次输出：
+    // Sync: Promise {<pending>}
+    // 22
+    // Macro: Promise {<fulfilled>: 33}
+    ```
+    ```js
+    let p2 = Promise.resolve(22)
+    .then((res) => {
+        console.log(res);
+        return new Promise( (resolve, reject) => {
+            reject(33);
+        });
+    });
+    console.log("Sync:", p2);
+    setTimeout(() => {
+        console.log("Macro:", p2);
+    });
+    // 依次输出：
+    // Sync: Promise {<pending>}
+    // 22
+    // Uncaught (in promise) 33 // 在当前事件循环中没有被捕捉到
+    // Macro: Promise {<rejected>: 33}
+    ```
+5. 如果之后回调返回的不是 promise，则 `then` 也会返回一个 resolved 的 promise 实例，resolved 的值就是回调的返回值；
+    ```js
+    let p = Promise.resolve(22)
+    .then((res) => {
+        console.log(res);
+        return 33;
+    });
+    console.log("Sync:", p);
+    setTimeout(() => {
+        console.log("Macro:", p);
+    });
+    // 依次输出：
+    // Sync: Promise {<pending>}
+    // 22
+    // Macro: Promise {<fulfilled>: 33}
+    ```
+6. 如果回调抛出错误，则 `then` 也会返回一个 rejected 的 promise 实例，rejected 的错误就是抛出的错误
+    ```js
+    let p = Promise.resolve(22)
+    .then((res) => {
+        console.log(res);
+        throw new Error(33);
+    });
+    console.log("Sync:", p);
+    setTimeout(() => {
+        p.catch((err) => {
+            console.error("Macro:", err);
+        })
+    });
+    // 依次输出：
+    // Sync: Promise {<pending>}
+    // 22
+    // Macro: Error: 33
+    ```
 
+#### 改变时间
 
 
 
