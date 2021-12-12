@@ -18,7 +18,10 @@
             - [如果 `then` 的回调明确返回了 promise 实例](#如果-then-的回调明确返回了-promise-实例)
             - [如果 `then` 的回调返回了其他值](#如果-then-的回调返回了其他值)
             - [链式调用](#链式调用)
-        - [`Promise.prototype.catch()`](#promiseprototypecatch)
+    - [`Promise.prototype.catch()`](#promiseprototypecatch)
+        - [Error propagation](#error-propagation)
+    - [Promise rejection events](#promise-rejection-events)
+        - [示例](#示例)
         - [`Promise.prototype.finally()`](#promiseprototypefinally)
     - [Nested promise](#nested-promise)
         - [如果嵌套实例提前 resolve 了](#如果嵌套实例提前-resolve-了)
@@ -248,6 +251,23 @@ setTimeout(()=>{
     .then((res) => {
         console.log(res);
     });
+    ```
+8. 返回值的规则也适用于 `then` 的第二个函数参数
+    ```js
+    new Promise((resolve, reject) => {
+        reject("fail");
+    })
+    .then((res) => {
+        console.log(res);
+        return 22;
+        }, (err) => {
+            console.error(err); // fail
+            return 33;
+        }
+    )
+    .then((res) => {
+        console.log(res); // 33
+    })
     ```
 
 ### 详细的返回值规则
@@ -489,9 +509,50 @@ setTimeout(()=>{
         console.log(res); // 再两秒钟后加入微任务队列，输出 33
     });
     ```
+4. 另一个链式调用的执行顺序分析
+    ```js
+    Promise.resolve('foo')
+    .then(function(string) {
+        return new Promise(function(resolve, reject) {
+            setTimeout(function() {
+                string += 'bar';
+                resolve(string);
+            }, 1000);
+        });
+    })
+    .then(function(string) {
+        setTimeout(function() {
+            string += 'baz';
+            console.log(string);
+        }, 1000)
+        return string;
+    })
+    .then(function(string) {
+        console.log("Last Then:  oops... didn't bother to instantiate and return " +
+                    "a promise in the prior then so the sequence may be a bit " +
+                    "surprising");
+        console.log(string);
+    });
+
+    // 打印顺序为
+    // 大约一秒钟后打印那一长串，以及 foobar
+    // 再大约一秒钟后打印 foobarbaz
+    ```
+    1. 第一个 promise 直接出结果 `"foo"`
+    2. 第一个 `then` 添加的第一个 promise 的回调直接加入微任务
+    3. 第二个 `then` 添加第一个 `then` 返回的 promis 的回调
+    4. 第三个 `then` 添加第二个 `then` 返回的 promis 的回调
+    5. 调用栈准备清空，执行目前唯一的微任务
+    6. 微任务中创建 promise，executor 中创建第一个 `setTimeout` 宏任务
+    7. 大约一秒钟之后该宏任务执行，`string` 变成 `"foobar"`，然后 `resolve("foobar")` 给第二个 `then` 添加的回调
+    8. 第二个 `then` 添加的回调因此被加入微任务队列，接收 `"foobar"`，这是目前唯一的微任务
+    9. 该微任务执行，创建一个 `setTimeout` 宏任务，并返回 `"foobar"` 给第三个 `then` 添加的回调
+    10. 第三个 `then` 添加的回调因此被加入微任务，接收 `"foobar"`，这是目前唯一的微任务
+    11. 该微任务执行，【打印】那一长串，紧接着【打印】 `"foobar"`
+    12. 一秒钟后执行目前唯一的宏任务，`string` 变成 `"foobarbaz"`，然后【打印】
 
 
-### `Promise.prototype.catch()`
+## `Promise.prototype.catch()`
 1. 异步操作中调用了 `reject` 函数，或者在调用 `resolve` 或 `reject` 函数之前有错误抛出，`Promise` 实例的状态都会变为 rejected，导致 `catch` 的回调被触发。
     ```js
     let p = new Promise((res, rej)=>{
@@ -502,6 +563,145 @@ setTimeout(()=>{
         console.log(err.message); // "Error!"
     })
     ```
+2. It's possible to chain after a failure, i.e. a `catch`, which is useful to accomplish new actions even after an action failed in the chain
+    ```js
+    new Promise((resolve, reject) => {
+        console.log('Initial');
+
+        resolve();
+    })
+    .then(() => {
+        throw new Error('Something failed');
+
+        console.log('Do this');
+    })
+    .catch(() => {
+        console.error('Do that');
+    })
+    .then(() => {
+        console.log('Do this, no matter what happened before');
+    });
+    // Initial
+    // Do that
+    // Do this, no matter what happened before
+    ```
+3. 和捕获异常的时机一样，只要在当前事件循环退出前捕获 rejection 就不会抛出错误
+    ```js
+    let p = Promise.reject("oops");
+
+    let n = 2; // 随意的其他代码
+
+    Promise.resolve().then(() => {
+        // 在微任务里捕获
+        p.catch((err) => {
+            console.warn(err);
+        });
+    });
+    ```
+
+### Error propagation
+1. If there's an exception, the browser will look down the chain for `.catch()` handlers or `onRejected`
+    ```js
+    doSomething()
+    .then(result => doSomethingElse(result))
+    .then(newResult => doThirdThing(newResult))
+    .then(finalResult => console.log(`Got the final result: ${finalResult}`))
+    .catch(failureCallback);
+    ```
+2.  This is very much modeled after how synchronous code works:
+    ```js
+    try {
+        const result = syncDoSomething();
+        const newResult = syncDoSomethingElse(result);
+        const finalResult = syncDoThirdThing(newResult);
+        console.log(`Got the final result: ${finalResult}`);
+    } catch(error) {
+        failureCallback(error);
+    }
+    ```
+3. This symmetry with asynchronous code culminates in the `async`/`await` syntactic sugar in ECMAScript 2017:
+    ```js
+    async function foo() {
+        try {
+            const result = await doSomething();
+            const newResult = await doSomethingElse(result);
+            const finalResult = await doThirdThing(newResult);
+            console.log(`Got the final result: ${finalResult}`);
+        } catch(error) {
+            failureCallback(error);
+        }
+    }
+    ```
+
+
+## Promise rejection events
+1. The `PromiseRejectionEvent` interface represents events which are sent to the global script context when JavaScript Promises are rejected. These events are particularly useful for telemetry and debugging purposes.
+2. Whenever a promise is rejected, one of two events is sent to the global scope:
+    * `rejectionhandled`: Fired when a promise is rejected, and after the rejection is handled by the promise's rejection handling code. 这个事件并不是看上去的那样，并不是一个 `reject` 的 promise 添加了捕获错误函数就会触发这个事件。根据 [这个回答](https://stackoverflow.com/a/57261820) 提到了规范中关于这个方法的内容，在规范里看到了 “queue a global task”，看起来是要在下一个宏任务处理了这个 rejection 后才会触发这个事件。也就是说，本轮事件循环没有捕获，但是之后的某个事件循环捕获了，那捕获的那个事件循环里才会触发这个事件。
+    * `unhandledrejection`: Sent when a promise is rejected but there is no rejection handler available.
+3. In both cases, the event has as members a `promise` property indicating the promise that was rejected, and a `reason` property that provides the reason given for the promise to be rejected.
+4. These make it possible to offer fallback error handling for promises, as well as to help debug issues with your promise management. 
+5. These handlers are global per context, so all errors will go to the same event handlers, regardless of source.
+6. One case of special usefulness: when writing code for Node.js, it's common that modules you include in your project may have unhandled rejected promises, logged to the console by the Node.js runtime. You can capture them for analysis and handling by your code—or just to avoid having them cluttering up your output—by adding a handler for the Node.js unhandledRejection event. 
+
+### 示例
+1. 正常处理的 rejection 不会触发这两个事件
+    ```js
+    window.addEventListener("rejectionhandled", (ev) => {
+        console.log("rejectionhandled ev.promise:", ev.promise);
+        console.log("rejectionhandled ev.reason:", ev.reason);
+    });
+    window.addEventListener("unhandledrejection", (ev) => {
+        console.log("unhandledrejection ev.promise:", ev.promise);
+        console.log("unhandledrejection ev.reason:", ev.reason);
+    });
+
+    let p = Promise.reject("oops");
+    p.catch((err) => {});
+    ```
+2. 完全不处理的 rejection 会触发 `unhandledrejection`
+    ```js
+    window.addEventListener("rejectionhandled", (ev) => {
+        console.log("rejectionhandled ev.promise:", ev.promise);
+        console.log("rejectionhandled ev.reason:", ev.reason);
+    });
+    window.addEventListener("unhandledrejection", (ev) => {
+        console.log("unhandledrejection ev.promise:", ev.promise);
+        console.log("unhandledrejection ev.reason:", ev.reason);
+    });
+
+    let p = Promise.reject("oops");
+    // unhandledrejection ev.promise: Promise {<rejected>: 'oops'}
+    // unhandledrejection ev.reason: oops
+    // Uncaught (in promise) oops
+    ```
+3. 本轮事件循环没有捕获的 rejection 正常触发 `unhandledrejection`，之后某个事件循环又处理了这个 rejection，则在处理的那个事件循环里触发 `rejectionhandled`
+    ```js
+    window.addEventListener("rejectionhandled", (ev) => {
+        console.log("rejectionhandled ev.promise:", ev.promise);
+        console.log("rejectionhandled ev.reason:", ev.reason);
+    });
+    window.addEventListener("unhandledrejection", (ev) => {
+        console.log("unhandledrejection ev.promise:", ev.promise);
+        console.log("unhandledrejection ev.reason:", ev.reason);
+    });
+
+    let p = Promise.reject("oops");
+
+    setTimeout(() => {
+        setTimeout(() => {
+            p.catch((err) => {console.log("handle rejection: " + err)});
+        });
+    });
+
+
+    // unhandledrejection ev.promise: Promise {<rejected>: 'oops'}
+    // unhandledrejection ev.reason: oops
+    // handle rejection: oops
+    // rejectionhandled ev.promise: Promise {<rejected>: 'oops'}
+    // rejectionhandled ev.reason: oops
+    ```
+
 
 ### `Promise.prototype.finally()`
 1. `finally` 方法用于指定不管 Promise 对象最后状态如何，都会执行的操作。该方法是 ES2018 引入标准的。
