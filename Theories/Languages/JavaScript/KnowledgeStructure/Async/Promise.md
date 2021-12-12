@@ -9,13 +9,14 @@
         - [基本用法](#基本用法)
     - [对结果不可变的承诺](#对结果不可变的承诺)
     - [Promise 对象](#promise-对象)
+        - [构造函数直接返回的 promise 状态会同步改变](#构造函数直接返回的-promise-状态会同步改变)
     - [`Promise.prototype.then()`](#promiseprototypethen)
         - [回调调用机制](#回调调用机制)
         - [返回值](#返回值)
         - [详细的返回值规则](#详细的返回值规则)
-            - [改变时间](#改变时间)
-    - [基本实例方法](#基本实例方法)
-        - [`Promise.prototype.then()`](#promiseprototypethen-1)
+        - [返回的 promise 的状态改变时间](#返回的-promise-的状态改变时间)
+            - [如果 `then` 的回调明确返回了 promise 实例](#如果-then-的回调明确返回了-promise-实例)
+            - [如果 `then` 的回调返回了其他值](#如果-then-的回调返回了其他值)
             - [链式调用](#链式调用)
         - [`Promise.prototype.catch()`](#promiseprototypecatch)
         - [`Promise.prototype.finally()`](#promiseprototypefinally)
@@ -151,6 +152,20 @@ setTimeout(()=>{
     ```
 3. 你在异步操作结束前就添加回调，可以在刚结束时就及时得到结果；而之后再添加的话，异步操作已经完成了，所以添加完就能得到结果。（不过并不是添加完立刻得到，因为 promise 的回调要作为微任务执行）
 
+### 构造函数直接返回的 promise 状态会同步改变
+1. 下面的例子中，在调用 `resolve` 后，实例立刻变成了
+    ```js
+    let fn;
+    let p = new Promise((resolve) => {
+        fn = resolve;
+    });
+
+    console.log(p); // Promise {<pending>}
+    fn();
+    console.log(p); // Promise {<fulfilled>: undefined}
+    ```
+2. 这里强调了是 “构造函数直接返回的 promise”，在下面 `then` 方法返回的 promise 的情况下会有所不同。
+
 
 ## `Promise.prototype.then()`
 ### 回调调用机制
@@ -239,7 +254,7 @@ setTimeout(()=>{
 1. 实际上，即使没有在 `then` 的回调里明确的返回 promise 对象，`then` 也会返回一个 promise 对象。但是，这个 promise 的状态取决于 `then` 的返回值。
 2. 因为 `then` 的调用是在同步的主线程，而它的回调是作为微任务之后异步调用。所以 `then` 刚返回的 promise 对象的状态是 pendding。
 3. 之后等它的回调执行时，根据回调的返回值，`then` 返回的 promise 的状态会发生相应的变化。
-4. 如果之后回调返回一个 promise 实例，则 `then` 也会返回一个状态相同的 promise 实例
+4. 如果之后回调返回一个 promise 实例，则 `then` 也会返回一个状态相同的 promise 实例。注意只是状态相同，但并不是同一个
     ```js
     let p0 = Promise.resolve(22)
     .then((res) => {
@@ -327,69 +342,81 @@ setTimeout(()=>{
     // Macro: Error: 33
     ```
 
-#### 改变时间
+### 返回的 promise 的状态改变时间
+上面说到构造函数直接返回的 promise 状态会同步改变，但这里的情况不同，而且还很奇怪且不统一。
 
-
-
-## 基本实例方法
-### `Promise.prototype.then()`
-#### 链式调用
-1. `then` 方法返回的是一个新的 `Promise` 实例（不是原来那个 `Promise` 实例）。
-2. 返回的逻辑是；如果 `then` 方法的回调内部抛出了错误，则 `then` 方法返回的是 `Promise.reject(该错误实例)`；否则，返回的是 `Promise.resolve(回调返回值)`
+#### 如果 `then` 的回调明确返回了 promise 实例
+1. 如下例子
     ```js
-    let p0 = new Promise((resolve, reject)=>{
-        resolve('resolved');
+    let p = Promise.resolve(22);
+    let p1 = p.then((res) => {
+        // 这个函数是第一个微任务
+        console.log(res);
+        return new Promise( (resolve, reject) => {
+            resolve();
+            console.log("Inner:", p1);
+            Promise.resolve().then(() => {
+                // 这个函数是 resolve 调用后才建立的微任务
+                console.log("Micro next:", p1);
+            });
+        });
+    });
+    console.log("Sync:", p1);
+
+    Promise.resolve().then(() => {
+        // 这个函数是第二个微任务
+        console.log("Micro:", p1);
     });
 
-    let p1 = p0.then(
-        res=>{
-            return 22;
-        },
-    );
-    // 回调返回 22，所以 p1 是 Promise.resolve(22)
-    p1.then(res=>{
-        console.log(res); // 22
-    })
-
-    let p2 = p1.then(res=>{
-        return new Error('error1');
+    setTimeout(() => {
+        console.log("Macro:", p1);
     });
-    // 回调返回错误实例 Error('error1') ，所以 p2 是 Promise.resolve(Error('error1'))
-    // 注意，p2 仍是被 resolve 了。因为这是返回错误，而不是抛出错误。
-    p2.then(res=>{
-        console.log(res.message); // "error1"
-    })
 
-    let p3 = p2.then(res=>{
-        throw new Error('error2');
-    });
-    // 回调抛出了错误，所以 p3 是 Promise.reject(Error('error2'))
-    p3.catch(err=>{
-        console.log(err.message); // "error2"
-    })
+    // 依次输出：
+    // Sync: Promise {<pending>}
+    // 22
+    // Inner: Promise {<pending>}
+    // Micro: Promise {<pending>}
+    // Micro next: Promise {<pending>}
+    // Macro: Promise {<fulfilled>: undefined}
     ```
-3. 因此可以采用链式写法，即 `then` 方法后面再调用另一个 `then` 方法。同时，因为 `catch` 方法是 `then(null, rejection)` 方法的别名，所以后面依然可以继续链
+2. 执行完 `setTimeout` 后，已经有了两个微任务等待执行。然后在第一个微任务在调用 `resolve` 的时候，开始改变 `then` 返回的 promise 的状态。
+3. 但是从上面的执行结果可以看出来，状态改变不是同步执行的，否则在 `resolve` 之后的紧接着的 `"inner"` 处就可以看到改变的结果，而且在第二个微任务处也可以看到改变的结果。
+4. 而且甚至，也不是按照预期的微任务顺序执行的。因为在状态改变后才建立的微任务里面，依然无法看到 `p1` 状态改变。
+5. 这就很奇怪。因为如果状态的实际改变是通过建立微任务，那调用 `resolve` 会建立一个微任务，这个微任务会在 `"Micro next"` 所在的微任务之前。但 `"Micro next"` 所在的微任务依然杜晓马状态改变。但是如果状态改变是通过宏任务，那么这个宏任务就会排在 `setTimeout` 的回调宏任务之后。但显然在 `setTimeout` 的回调里就已经杜晓马状态变化。不懂
+
+#### 如果 `then` 的回调返回了其他值
+1. 如下例子
     ```js
-    new Promise((resolve, reject)=>{
-        resolve('resolved');
-    })
-    .then(res=>{
-            console.log(res); // "resolved"
-            return 22;
-    })
-    .then(res=>{
-        console.log(res); // 22
-        throw new Error('error!')
-    })
-    .catch(err=>{
-        console.log(err.message); // "error!"
+    let p = Promise.resolve(22);
+    let p1 = p.then((res) => {
+        // 这个函数是第一个微任务
+        console.log(res);
         return 33;
-    })
-    .then(res=>{
-        console.log(res); // 33
     });
+    console.log("Sync:", p1);
+
+    Promise.resolve().then(() => {
+        // 这个函数是第二个微任务
+        console.log("Micro:", p1);
+    });
+
+    setTimeout(() => {
+        console.log("Macro:", p1);
+    });
+
+    // 依次输出：
+    // Sync: Promise {<pending>}
+    // 22
+    // Micro: Promise {<fulfilled>: 33}
+    // Macro: Promise {<fulfilled>: 33}
     ```
-4. 上面例子中返回的 `Promise` 实例因为都是可以立即 resolve 或 reject 的，所以不能明显的感受到异步的感觉。把它们分开写并插入一些同步代码，就可以看出来异步
+2. 这里就和通过构造函数返回的 promise 实例改变状态的时间一样了，是同步改变，因为在第一个微任务里返回了数值后，第二个微任务就看到改变了。
+3. 抛出错误的情况也是一样。
+
+#### 链式调用
+1. 因为 `then` 方法返回的是和回调里返回的 promise 状态相同的 promise 实例，而回调是处理之前一个 promise 的，所以就可以通过链式调用 `then` 方法来处理链式的异步操作。
+2. 同时，因为 `catch` 方法是 `then(null, rejection)` 方法的别名，所以后面依然可以继续链
     ```js
     let p0 = new Promise((resolve, reject)=>{
         resolve('resolved');
@@ -414,8 +441,19 @@ setTimeout(()=>{
         console.log(res); // 33
     });
     console.log('4');
+
+    // 依次输出
+    // 0 
+    // 1 
+    // 2 
+    // 3 
+    // 4 
+    // resolved 
+    // 22 
+    // error! 
+    // 33
     ```
-5. 不过更实际的使用情况是，在回调里返回就是一个异步操作
+3. 不过更实际的使用情况是，在回调里返回就是一个异步操作
     ```js
     function resolved(ms, res){
         return new Promise((resolve, reject)=>{
@@ -436,21 +474,22 @@ setTimeout(()=>{
         resolve('resolved');
     })
     .then(res=>{
-        console.log(res); // 立刻输出 "resolved"
+        console.log(res); // 1. 直接加入微任务队列，很快输出 "resolved"
         return resolved(2000, 22);
     })
     .then(res=>{
-        console.log(res); // 两秒钟后输出 22
+        console.log(res); // 2. 两秒钟加入微任务队列，输出 22
         return rejected(2000, new Error('error!'));
     })
     .catch(err=>{
-        console.log(err.message); // 再两秒钟后输出 "error!"
+        console.log(err.message); // 3. 再两秒钟后加入微任务队列，输出 "error!"
         return resolved(2000, 33);
     })
     .then(res=>{
-        console.log(res); // 再两秒钟后输出 33
+        console.log(res); // 再两秒钟后加入微任务队列，输出 33
     });
     ```
+
 
 ### `Promise.prototype.catch()`
 1. 异步操作中调用了 `reject` 函数，或者在调用 `resolve` 或 `reject` 函数之前有错误抛出，`Promise` 实例的状态都会变为 rejected，导致 `catch` 的回调被触发。
