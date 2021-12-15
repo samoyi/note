@@ -22,7 +22,7 @@
         - [Error propagation](#error-propagation)
     - [Promise rejection events](#promise-rejection-events)
         - [示例](#示例)
-        - [`Promise.prototype.finally()`](#promiseprototypefinally)
+    - [`Promise.prototype.finally()`](#promiseprototypefinally)
     - [Nested promise](#nested-promise)
         - [如果嵌套实例提前 resolve 了](#如果嵌套实例提前-resolve-了)
         - [如果嵌套实例提前 reject 了](#如果嵌套实例提前-reject-了)
@@ -703,7 +703,7 @@ setTimeout(()=>{
     ```
 
 
-### `Promise.prototype.finally()`
+## `Promise.prototype.finally()`
 1. `finally` 方法用于指定不管 Promise 对象最后状态如何，都会执行的操作。该方法是 ES2018 引入标准的。
 2. 只要想想，其实 `then` 方法只要提供了两个回调参数，也可以实现这个功能。但与 `then` 方法的实现由两点不同：
     * `finally` 方法的回调函数不接受任何参数，这意味着没有办法知道，前面的 Promise 状态到底是 fulfilled 还是 rejected。这表明，`finally` 方法里面的操作，应该是与状态无关的，不依赖于 Promise 的执行结果。异步不管成功或失败之后的收尾工作。
