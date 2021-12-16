@@ -33,12 +33,29 @@
 直接看《编码》“逻辑与开关” 章节。
 
 
+## 继电器（relay）和晶体管（transistor）
+1. 直接看 [Crash Course Computer Science 第二集](https://www.bilibili.com/video/BV1EW411u7th?p=2)。
+2. 继电器使用电磁铁的通电与否控制电路的机械开关，进而控制电路的连通和断开；晶体管使用对半导体的通电与否控制半导体是否导电，进而控制电路的连通和断开。
+3. 由于使用机械结构的机械运动来实现开关，因此继电器无法高速切换状态，也就是无法进行高速运算。而且频繁运动的机械结构也更容易损坏。
+4. 但无论如何，两者的原理都是一样的：通过外部电源控制继电器或晶体管中电路的连通和断开。
+
+
 ## 布尔电路
-直接看《编码》“逻辑与开关” 章节。
+1. 直接看《编码》“逻辑与开关” 章节。
 
 
 ## 逻辑门
-直接看《编码》“门” 章节。
+1. 直接看 [Crash Course Computer Science 第三集](https://www.bilibili.com/video/BV1EW411u7th?p=3) 和《编码》“门” 章节。
+2. 使用串联电路可以实现与门。两个晶体管都通电，整个电路才会通电
+    <img src="./images/02.png" width="400" style="display: block; margin: 5px 0 10px;" />
+3. 使用并联电路可以实现或门。只要有一个晶体管通电，整个电路就会通电
+    <img src="./images/03.png" width="400" style="display: block; margin: 5px 0 10px;" />
+4. 按照下面 的示意修改晶体管可以实现非门。当有电流接入时，半导体通电，电流流向接地，因此输出端没有电流；没有电流结束时，半导体绝缘，电流可以流向输出端
+    <img src="./images/01.png" width="400" style="display: block; margin: 5px 0 10px;" />
+5. 将两个反向器串联可以实现或非门。
+6. 将两个反向器并联可以实现与非门。
+7. 异或门的实现稍微复杂一点
+    <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px;" />
 
 
 
