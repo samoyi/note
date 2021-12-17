@@ -33,7 +33,12 @@
         - [结合 async-await 函数的例子分析](#结合-async-await-函数的例子分析)
     - [`Promise.all(iterable)`](#promisealliterable)
     - [`Promise.race()`](#promiserace)
-    - [`Promise.resolve` & `Promise.reject`](#promiseresolve--promisereject)
+    - [`Promise.resolve()` & `Promise.reject()`](#promiseresolve--promisereject)
+        - [`Promise.resolve()` 返回类型](#promiseresolve-返回类型)
+            - [如果参数是 promise 实例](#如果参数是-promise-实例)
+            - [如果参数是一个 thenable 对象](#如果参数是一个-thenable-对象)
+            - [其他参数](#其他参数)
+        - [`Promise.reject()` 返回类型](#promisereject-返回类型)
     - [其他一些自定义的有用的方法](#其他一些自定义的有用的方法)
     - [自己实现加深理解](#自己实现加深理解)
         - [基本的 promise](#基本的-promise)
@@ -1351,12 +1356,107 @@ ReferenceError
     }
     ```
 
-## `Promise.resolve` & `Promise.reject`
-将一个非 promise 值转换为 promise 实例，并立即 resolve/reject
+## `Promise.resolve()` & `Promise.reject()`
+1. 将参数的值转换为 promise 实例并返回。
+2. 这两个方法主要是用来将非 promise 的值转换为 promise，当然如果参数传 promise 实例也可以。
+
+### `Promise.resolve()` 返回类型
+#### 如果参数是 promise 实例
+直接返回该实例本身。也就是说并不会对 pending 甚至 rejected 的实例进行 resolve
 ```js
-console.log(Promise.resolve(111)); // Promise {<resolved>: 111}
-console.log(Promise.reject(111)); // Promise {<rejected>: 111}
+    let p0 = new Promise(() => {});
+    console.log(Promise.resolve(p0)); // Promise {<pending>}
+    console.log(p0 === Promise.resolve(p0)); // true
+        
+    let p1 = new Promise((resolve) => {resolve(22)});
+    console.log(Promise.resolve(p1)); // Promise {<fulfilled>: 22}
+    console.log(p1 === Promise.resolve(p1)); // true
+
+    let p2 = new Promise((resolve, reject) => {reject(33)});
+    console.log(Promise.resolve(p2)); // Promise {<rejected>: 33}
+    console.log(p2 === Promise.resolve(p2)); // true
+    p2.catch((err) => {
+        console.log(err); // 33
+    });
 ```
+
+#### 如果参数是一个 thenable 对象
+1. 其实也就是该对象有 `then` 方法。那么会按照下面逻辑执行：
+    1. 创建一个 promise 实例；
+    2. 把 thenable 对象的 `then` 方法作为该 promise 实例的 executor 加入到微任务队列；
+    3. 返回该 promise 实例。
+2. 示例
+    ```js
+    let p1;
+
+    let thenable = {
+        then (resolve, reject) {
+            resolve(42);
+            console.log("resolved:", p1);
+        }
+    };
+
+    p1 = Promise.resolve(thenable);
+
+    console.log("sync:", p1);
+
+    // 按顺序输出
+    // sync: Promise {<pending>}
+    // resolved: Promise {<fulfilled>: 42}
+    ```
+    返回的 `p1` 开始时是 pending 的状态，执行了 `then` 方法的微任务后，就变成了 resolved。
+
+#### 其他参数
+创建一个 promise 实例，并 resolve 为参数的值，然后返回该实例
+```js
+console.log(Promise.resolve(22)); // Promise {<fulfilled>: 22}
+```
+
+### `Promise.reject()` 返回类型
+1. 不像 `Promise.resolve()` 那么复杂，不管参数是什么，`Promise.reject()` 就是直接返回一个 rejected 的 promise 实例，reject 时的错误原因就是那个参数。
+2. 如果参数是引用类型，那错误原因就是那个引用类型本身；如果参数是基础类型，那错误原因就是同样的值
+    ```js
+    let p0 = new Promise(() => {});
+    let p0_rej = Promise.reject(p0);
+    console.log(p0_rej); // Promise {<rejected>: Promise}
+    p0_rej.catch((err) => {
+        console.log(err); // Promise {<pending>}
+        console.log(err === p0);
+    });
+        
+    let p1 = new Promise((resolve) => {resolve(22)});
+    let p1_rej = Promise.reject(p1); 
+    console.log(p1_rej); // Promise {<rejected>: Promise}
+    p1_rej.catch((err) => {
+        console.log(err); // Promise {<fulfilled>: 22}
+        console.log(err === p1);
+    });
+
+    let p2 = new Promise((resolve, reject) => {reject(33)});
+    let p2_rej = Promise.reject(p2);
+    console.log(p2_rej); // Promise {<rejected>: Promise}
+    console.log(p2 === p2_rej); // false
+    p2.catch((err) => {
+        console.log(err); // 33
+    });
+    p2_rej.catch((err) => {
+        console.log(err); // Promise {<rejected>: 33}
+        console.log(err === p2);
+    });
+
+
+    let obj = {name: "33"};
+    let p3_rej = Promise.reject(obj);
+    p3_rej.catch((err) => {
+        console.log(err); // {name: '33'}
+        console.log(err === obj); // true
+    });
+
+    let p4_rej = Promise.reject(22);
+    p4_rej.catch((err) => {
+        console.log(err); // 22
+    });
+    ```
 
 
 ## 其他一些自定义的有用的方法
