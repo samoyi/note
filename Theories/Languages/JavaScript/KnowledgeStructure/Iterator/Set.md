@@ -189,7 +189,7 @@ console.log(difference);  // Set(1) {1}
 WeakSet 的成员只能是引用类型，而不能是其他类型的值。因为基础类型的值并不存在弱引用。
 
 ### 5.2 Properties and Methods
-和 `Set` 中的相比，实例方法只有 `add`、`delete` 和 `has`，没有 `size` 属性
+和 `Set` 中的相比，实例方法只有 `add`、`delete` 和 `has`，没有 `size` 属性。不懂为什么有 `has`，垃圾回收执行后 `has` 的结果不就有可能不对了吗？
 
 
 ## Reference

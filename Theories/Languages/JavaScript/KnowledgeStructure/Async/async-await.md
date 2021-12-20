@@ -161,6 +161,60 @@
     9. 微任务全部执行完；
     10. 任务队列里第一个宏任务执行，push 6；
     11. 任务队列里第二个宏任务执行，打印 `[1, 2, 3, 4, 5, 6]`
+4. 例4
+    ```js
+    setTimeout(function () {
+        console.log("1");
+    }, 0);
+
+    async function async1() {
+        console.log("2");
+        const data = await async2();
+        console.log("3");
+        return data;
+    }
+
+    async function async2() {
+        return new Promise((resolve) => {
+            console.log("4");
+            resolve("async2的结果");
+        }).then((data) => {
+            console.log("5");
+            return data;
+        });
+    }
+
+    async1().then((data) => {
+        console.log("6");
+        console.log(data);
+    });
+
+    new Promise(function (resolve) {
+        console.log("7");
+    //   resolve()
+    }).then(function () {
+        console.log("8");
+    });
+    ```
+    1. `setTimeout` 将 `console.log("1")` 加入宏任务队列；
+    2. 执行 `async1`：
+        1. 打印 2：
+        2. 执行 `async2`：
+            1. 调用构造函数创建 promise1，打印 `4`，resolve 该 promise1 为 `"async2的结果"`；
+            2. 通过 `then` 方法给该 promise1 添加回调，该回调立刻加入微任务队列，之后执行时 `data` 会接收 `"async2的结果"`；
+        3. `async2` 返回 `then` 返回的 promise2，等 `then` 回调返回后，promise2 解析为 `"async2的结果"`
+        4. `await` 之后的代码作为 promise2 的回调，promise2 解析后，`data` 接收 `"async2的结果"`;
+    3. `async1` 返回一个 promise3，proise3 通过 `then` 方法添加回调；
+    4. 调用构造函数新创建 promise4，打印 `7`；添加了一个不会被调用的回调；
+    5. 同步任务执行完成，开始执行微任务；当前只有一个微任务；
+    6. 打印 `5`；
+    7. `data` 接收 `"async2的结果"` 并返回作为 `async2` 返回的 promise2 的值；
+    8. `await` 之后的代码加入微任务，作为当前唯一的微任务，立刻执行；
+    9. 打印 `3`；
+    10. `async1` 返回的 promise3 解析为 `"async2的结果"`，回调加入微任务，同样立刻执行；
+    11. 打印 `6`，打印 `"async2的结果"`；
+    12. 执行下一个宏任务，打印 `1`；
+    13. 完整的打印顺序为：2 4 7 5 3 6 "async2的结果" 1
 
 
 ## 返回值

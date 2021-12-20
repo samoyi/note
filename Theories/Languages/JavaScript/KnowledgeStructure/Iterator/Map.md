@@ -4,6 +4,7 @@
 <!-- TOC -->
 
 - [Map](#map)
+    - [设计思想](#设计思想)
     - [1. 构造](#1-构造)
     - [2. 实例属性](#2-实例属性)
         - [`size`](#size)
@@ -36,6 +37,10 @@
 
 <!-- /TOC -->
 
+
+## 设计思想
+Map 解决了之前只能用 Object 凑合实现映射的问题，而 WeakMap 和 WeakSet 解决了之前一直存在的只有强引用的问题。
+ 
 
 ## 1. 构造
 1. 语法
@@ -310,7 +315,8 @@ console.log(new Map(JSON.parse('[[true,7],[{"foo":3},["abc"]]]')));
     let obj = {foo: 1};
 
     wm.set(key, obj);
-    obj = null;
+    // {foo: 1} 被两个指针引用：一个是 obj，一个是 vm 里的 key 
+    obj = null; // obj 不再引用 {foo: 1}
     wm.get(key)
     // Object {foo: 1}
     ```
