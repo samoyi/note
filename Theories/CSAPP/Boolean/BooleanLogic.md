@@ -50,14 +50,21 @@
     <img src="./images/02.png" width="400" style="display: block; margin: 5px 0 10px;" />
 3. 使用并联电路可以实现或门。只要有一个晶体管通电，整个电路就会通电
     <img src="./images/03.png" width="400" style="display: block; margin: 5px 0 10px;" />
-4. 按照下面 的示意修改晶体管可以实现非门。当有电流接入时，半导体通电，电流流向接地，因此输出端没有电流；没有电流结束时，半导体绝缘，电流可以流向输出端
+4. 按照下面的示意修改晶体管可以实现非门。当有电流接入时，半导体通电，电流流向接地，因此输出端没有电流；没有电流结束时，半导体绝缘，电流可以流向输出端
     <img src="./images/01.png" width="400" style="display: block; margin: 5px 0 10px;" />
-5. 将两个反向器串联可以实现或非门。
-6. 将两个反向器并联可以实现与非门。
+5. 将两个非门并联可以实现 **或非门**（NOR gate）。或非门和或门的输出结果相反，实现如下
+    <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 5px;" />
+    只要有一个非门输入为 1，半导体都会通电，C 的输入电流就会流向接地，X 的输出就没有电流；
+6. 将两个非门串联可以实现 **与非门**(NAND gate)。与非门和与门的输出结果相反，实现如下
+    <img src="./images/06.png" width="600" style="display: block; margin: 5px 0 5px;" />
+    只有两个非门输入都为以 1 时，两个非门都会通电，导致输入电流流向接地；
 7. 异或门的实现稍微复杂一点
     <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px;" />
 
 
 
 ## References
+* [Crash Course Computer Science](https://www.bilibili.com/video/BV1EW411u7th)
 * [《编码》](https://book.douban.com/subject/20260928/)
+* [NOR Gate: What is it?](https://www.electrical4u.com/nor-gate/)
+* [transistor-NAND-Gate](https://www.101computing.net/from-transistors-to-micro-processors/transistor-nand-gate/)
