@@ -31,3 +31,7 @@
 2. 接收两个 8 位的输入数，还需要一个 4 位的操作码来表明要对两个输入进行怎样的操作；
 3. 输出结果是一个 8 位数，以及若干个标志位；
 4. 标志位表明计算结果的若干状态，例如结果是否溢出、是否为 0、是否为负等。高级的 ALU 会有更多的标志位。
+
+
+## References
+* [Crash Course Computer Science](https://www.bilibili.com/video/BV1EW411u7th)
