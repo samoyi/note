@@ -11,6 +11,13 @@
     - [Processes Communicating](#processes-communicating)
         - [进程与网络之间的接口](#进程与网络之间的接口)
         - [进程寻址（Addressing Processes）](#进程寻址addressing-processes)
+    - [互联网提供的传输层服务](#互联网提供的传输层服务)
+        - [TCP 服务](#tcp-服务)
+            - [面向连接服务](#面向连接服务)
+            - [可靠数据传输服务](#可靠数据传输服务)
+            - [拥塞控制](#拥塞控制)
+        - [UDP 服务](#udp-服务)
+        - [TCP 安全性](#tcp-安全性)
     - [References](#references)
 
 <!-- /TOC -->
@@ -57,6 +64,46 @@ by users, with most of the peers residing in homes, universities, and offices.
 ### 进程寻址（Addressing Processes）
 1. 为了把一个主机中某个进程的包发送到另一个主机的某个进程，发送端进程即需要知道目的端主机的地址，也需要知道是该主机的哪个进程（严格来说，是哪个 socket）。
 2. 主机地址是通过 IP 地址来表示，而 **端口号**（port number）是用来标识某个主机上的某个进程的 socket 的。也就是说发送端需要知道目的地的 IP 和端口号。
+
+
+## 互联网提供的传输层服务
+1. The Internet (and, more generally, TCP/IP networks) makes two transport protocols available to
+applications, UDP and TCP. 
+2. When you (as an application developer) create a new network application for the Internet, one of the first decisions you have to make is whether to use UDP or TCP. 
+3. Each of these protocols offers a different set of services to the invoking applications.
+
+### TCP 服务
+1. The TCP service model includes a connection-oriented service and a reliable data transfer service.
+2. When an application invokes TCP as its transport protocol, the application receives both of these
+services from TCP.
+
+#### 面向连接服务
+1. 在应用层报文开始流动之前，TCP 会让客户端和服务端交换传输层控制信息。这一过程被称为 **握手**（handshaking），它提醒客户端和服务器，让它们为即将到来的大量包做好准备。
+2. 握手之后，一个 TCP 连接就在两个进程的 socket 之间建立好了。这是一个全双工连接，两个进程可以同时通过这个连接给对方发送报文。
+3. 当应用程序发送报文结束后，还需要在销毁这个连接。
+
+#### 可靠数据传输服务
+1. 通信进程可以依靠 TCP 进行没有错误和顺序正常的数据发送。
+2. 当一端的应用程序把字节流传递给 socket 之后，它可以信赖 TCP 把同样的字节流传送给接收端的 socket。
+
+#### 拥塞控制
+1. TCP 也有拥塞控制机制，但是这一机制并不会直接为通信进程带来好处，而是为互联网本身带来好处。
+2. 当发送端和接收端之间的网络发生拥塞时，这个机制会限制发送进程。
+
+### UDP 服务
+1. UDP 是一种仅提供必要服务的情良好传输层协议。
+2. UDP 是无连接的，因此在进程通信之前不会有握手。
+3. UDP 提供不可靠的数据传输服务，不能保证报文一定会送到，也不能保证送到的顺序正确。
+4. UDP 也没有拥塞控制机制，所以发送端的 UDP 可以以任意速率想网络层注入数据。（当然）
+
+### TCP 安全性
+1. TCP 和 UDP 都没有提供加密，报文在发送进程和接收进程之间明文传输，因此在中间的若干链路中就可能被嗅探和看到。
+2. 为了更安全的传输，开发出了 TCP 的加强安全功能，就是 **安全套接字层**（Secure Sockets Layer, SSL）。
+3. 使用 SSL 加强的 TCP 不仅可以实现和基础的 TCP 一样的功能，在此基础上还提供了关键的进程到进程的安全服务。包括加密、数据完整性（data integrity）和端点认证（end-point authentication）。
+4. SSL 并不是传输层协议，它只是 TCP 的一个加强功能，并且是是现在应用层里的。
+5. 应用程序想使用 SSL 服务时，要在客户端和服务器都添加 SSL 代码。SSL 有它自己的 socket API，和基础的 TCP socket API 类似。
+6. 应用程序使用 SSL 时，发送进程把明文数据传递给 SSL socket，SSL 对数据进行加密，然后把密文发送给 TCP socket；
+7. 加密数据经过网络传输到达接收方的 TCP socket 后，TCP socket 把密文传递给接收端的 SSL，SSL 对其进行解密，然后 SSL 的 socket 把明文传递给接收方进程。
 
 
 ## References
