@@ -4,11 +4,11 @@
 <!-- TOC -->
 
 - [The Parts of a Message](#the-parts-of-a-message)
-    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
-    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
+    - [设计思想](#设计思想)
+    - [抽象本质](#抽象本质)
     - [Summary](#summary)
     - [Message Syntax](#message-syntax)
-        - [格式](#%E6%A0%BC%E5%BC%8F)
+        - [格式](#格式)
         - [Quick description of the various parts](#quick-description-of-the-various-parts)
             - [method](#method)
             - [request-URL](#request-url)
@@ -49,17 +49,15 @@
 
 ## Message Syntax
 ### 格式
-1. All HTTP messages fall into two types: request messages and response messages.
-2. Request messages request an action from a web server. Response messages carry results of a request back to a client. 
-3. Both request and response messages have the same basic message structure. Figure below shows request and response messages to get a GIF image
+1. Both request and response messages have the same basic message structure. Figure below shows request and response messages to get a GIF image
     <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-4. Here’s the format for a request message:
+2. Here’s the format for a request message:
     ```
     <method> <request-URL> <version>
     <headers>
     <entity-body>
     ```
-5. Here’s the format for a response message (note that the syntax differs only in the start line):
+3. Here’s the format for a response message (note that the syntax differs only in the start line):
     ```
     <version> <status> <reason-phrase>
     <headers>

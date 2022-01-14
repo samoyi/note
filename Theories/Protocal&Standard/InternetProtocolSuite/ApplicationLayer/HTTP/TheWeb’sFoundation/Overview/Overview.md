@@ -1,35 +1,24 @@
 # Overview
 
-The world’s web browsers, servers, and related web applications all talk to each other through HTTP, the Hypertext Transfer Protocol. HTTP is the common language of the modern global Internet.
-
 
 <!-- TOC -->
 
 - [Overview](#overview)
-    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
-    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
-    - [HTTP: The Internet’s Multimedia Courier](#http-the-internets-multimedia-courier)
-    - [Web Clients and Servers](#web-clients-and-servers)
+    - [设计思想](#设计思想)
+    - [抽象本质](#抽象本质)
     - [Resources](#resources)
-        - [资源的概念](#%E8%B5%84%E6%BA%90%E7%9A%84%E6%A6%82%E5%BF%B5)
         - [Media Types](#media-types)
         - [URIs](#uris)
             - [URLs](#urls)
             - [URNs](#urns)
-    - [Transactions（事务）](#transactions%E4%BA%8B%E5%8A%A1)
-        - [Messages（报文）](#messages%E6%8A%A5%E6%96%87)
+    - [Transactions（事务）](#transactions事务)
+        - [Messages（报文）](#messages报文)
         - [Methods](#methods)
         - [Status Codes](#status-codes)
-        - [Web Pages Can Consist of Multiple Objects](#web-pages-can-consist-of-multiple-objects)
-    - [Messages（报文）](#messages%E6%8A%A5%E6%96%87)
-        - [报文结构](#%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84)
+    - [Messages（报文）](#messages报文-1)
+        - [报文结构](#报文结构)
         - [Simple Message Example](#simple-message-example)
     - [Connections](#connections)
-        - [TCP/IP](#tcpip)
-        - [Connections, IP Addresses, and Port Numbers](#connections-ip-addresses-and-port-numbers)
-        - [A Real Example Using Telnet](#a-real-example-using-telnet)
-            - [关于 Telnet](#%E5%85%B3%E4%BA%8E-telnet)
-            - [An HTTP transaction using telnet](#an-http-transaction-using-telnet)
     - [Architectural Components of the Web](#architectural-components-of-the-web)
         - [Proxies](#proxies)
         - [Caches](#caches)
@@ -47,61 +36,22 @@ The world’s web browsers, servers, and related web applications all talk to ea
 ## 抽象本质
 
 
-
-## HTTP: The Internet’s Multimedia Courier
-1. Billions of JPEG images, HTML pages, text files, MPEG movies, WAV audio files, Java applets, and more cruise through the Internet each and every day. 
-2. HTTP moves the bulk of this information quickly, conveniently, and reliably from web servers all around the world to web browsers on people’s desktops.
-3. Because HTTP uses reliable data-transmission protocols, it guarantees that your data will not be damaged or scrambled in transit, even when it comes from the other side of the globe. 
-4. This is good for you as a user, because you can access information without worrying about its integrity. Reliable transmission is also good for you as an Internet application developer, because you don’t have to worry about HTTP communications being destroyed, duplicated, or distorted in transit. You can focus on programming the distinguishing details of your application, without worrying about the flaws and foibles of the Internet.
-
-
-## Web Clients and Servers
-1. Web content lives on web servers. Web servers speak the HTTP protocol, so they are often called HTTP servers. 
-2. These HTTP servers store the Internet’s data and provide the data when it is requested by HTTP clients. 
-3. The clients send HTTP requests to servers, and servers return the requested data in HTTP responses. 
-4. Together, HTTP clients and HTTP servers make up the basic components of the World Wide Web.
-5. You probably use HTTP clients every day. The most common client is a web browser. 
-6. Web browsers request HTTP objects from servers and display the objects on your screen.
-7. When you browse to a page, such as “http://www.oreilly.com/index.html”, your browser sends an HTTP request to the server www.oreilly.com. 
-8. The server tries to find the desired object (in this case, “/index.html”) and, if successful, sends the object to the client in an HTTP response, along with the type of the object, the length of the object, and other information.
-
-
 ## Resources
-### 资源的概念
-1. Web servers host web resources. A web resource is the source of web content. 
-2. The simplest kind of web resource is a static file on the web server’s filesystem. These files can contain anything: they might be text files, HTML files, Microsoft Word files, Adobe Acrobat files, JPEG image files, AVI movie files, or any other format you can think of.
-3. However, resources don’t have to be static files. Resources can also be software programs that generate content on demand. 
-4. These dynamic content resources can generate content based on your identity, on what information you’ve requested, or on the time of day. They can show you a live image from a camera, or let you trade stocks, search real estate databases, or buy gifts from online stores.
-    <img src="./images/01.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-5. In summary, a resource is any kind of content source. A file containing your company’s sales forecast spreadsheet is a resource. A web gateway to scan your local public library’s shelves is a resource. An Internet search engine is a resource.
-
 ### Media Types
-1. Because the Internet hosts many thousands of different data types, HTTP carefully tags each object being transported through the Web with a data format label called a MIME type. 
-2. MIME (Multipurpose Internet Mail Extensions) was originally designed to solve problems encountered in moving messages between different electronic mail systems. 
-3. MIME worked so well for email that HTTP adopted it to describe and label its own multimedia content.
-4. Web servers attach a MIME type to all HTTP object data. When a web browser gets an object back from a server, it looks at the associated MIME type to see if it knows how to handle the object. 
-5. Most browsers can handle hundreds of popular object types: displaying image files, parsing and formatting HTML files,
-playing audio files through the computer’s speakers, or launching external plug-in software to handle special formats.
-6. A MIME type is a textual label, represented as a primary object type and a specific subtype, separated by a slash. For example:
+1. Web servers attach a MIME type to all HTTP object data. When a web browser gets an object back from a server, it looks at the associated MIME type to see if it knows how to handle the object. 
+2. A MIME type is a textual label, represented as a primary object type and a specific subtype, separated by a slash. For example:
     * An HTML-formatted text document would be labeled with type `text/html`.
     * A plain ASCII text document would be labeled with type `text/plain`.
     * A JPEG version of an image would be `image/jpeg`.
     * A GIF-format image would be `image/gif`.
     * An Apple QuickTime movie would be `video/quicktime`.
     * A Microsoft PowerPoint presentation would be `application/vnd.ms-powerpoint`.
-7. There are hundreds of popular MIME types, and many more experimental or limited-use types.
 
 ### URIs
 1. Each web server resource has a name, so clients can point out what resources they are interested in. 
 2. The server resource name is called a **uniform resource identifier**, or URI. 
 3. URIs are like the postal addresses of the Internet, uniquely identifying and locating information resources around the world.
-4. Here’s a URI for an image resource on Joe’s Hardware store’s web server:
-    ```
-    http://www.joes-hardware.com/specials/saw-blade.gif
-    ```
-5. Figure below shows how the URI specifies the HTTP protocol to access the saw-blade GIF resource on Joe’s store’s server. Given the URI, HTTP can retrieve the object.
-    <img src="./images/02.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-6. URIs come in two flavors, called URLs and URNs. Let’s take a peek at each of these types of resource identifiers now.
+4. URIs come in two flavors, called URLs and URNs.
 
 #### URLs
 1. The **uniform resource locator** (URL) is the most common form of resource identifier.
@@ -126,9 +76,8 @@ playing audio files through the computer’s speakers, or launching external plu
 
 ## Transactions（事务）
 ### Messages（报文）
-1. Let’s look in more detail how clients use HTTP to transact with web servers and their resources. 
-2. An HTTP transaction consists of a request command (sent from client to server), and a response result (sent from the server back to the client). 
-3. This communication happens with formatted blocks of data called **HTTP messages**, as illustrated below
+1. An HTTP transaction consists of a request command (sent from client to server), and a response result (sent from the server back to the client). 
+2. This communication happens with formatted blocks of data called **HTTP messages**, as illustrated below
     <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 ### Methods
@@ -147,21 +96,14 @@ playing audio files through the computer’s speakers, or launching external plu
     200 All’s cool, dude
     ```
 
-### Web Pages Can Consist of Multiple Objects
-1. An application often issues multiple HTTP transactions to accomplish a task. 
-2. For example, a web browser issues a cascade of HTTP transactions to fetch and display a graphics-rich web page. The browser performs one transaction to fetch the HTML “skeleton” that describes the page layout, then issues additional HTTP transactions for each embedded image, graphics pane, Java applet, etc. These embedded resources might even reside on different servers.
-    <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-3. Thus, a “web page” often is a collection of resources, not a single resource.
-
 
 ## Messages（报文）
 ### 报文结构
-1. Now let’s take a quick look at the structure of HTTP request and response messages.
-2. HTTP messages are simple, line-oriented sequences of characters. Because they are plain text, not binary, they are easy for humans to read and write.
-3. HTTP messages sent from web clients to web servers are called **request messages**. Messages from servers to clients are called **response messages**. There are no other kinds of HTTP messages. 
-4. The formats of HTTP request and response messages are very similar
+1. HTTP messages are simple, line-oriented sequences of characters. Because they are plain text, not binary, they are easy for humans to read and write.
+2. HTTP messages sent from web clients to web servers are called **request messages**. Messages from servers to clients are called **response messages**. There are no other kinds of HTTP messages. 
+3. The formats of HTTP request and response messages are very similar
     <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-5. HTTP messages consist of three parts:
+4. HTTP messages consist of three parts:
     * **Start line**: The first line of the message is the start line, indicating what to do for a request or what happened for a response.
     * **Header fields**: Zero or more header fields follow the start line. Each header field consists of a name and a value, separated by a colon (`:`) for easy parsing. The headers end with a blank line. Adding a header field is as easy as adding another line.
     * **Body**: After the blank line is an optional message body containing any kind of data. Request bodies carry data to the web server; response bodies carry data back to the client. Unlike the start lines and headers, which are textual and structured, the body can contain arbitrary binary data (e.g., images, videos, audio tracks, software applications). Of course, the body can also contain text.
@@ -175,20 +117,6 @@ because no request data is needed to GET a simple document from a server.
 
 
 ## Connections
-Now that we’ve sketched what HTTP’s messages look like, let’s talk for a moment about how messages move from place to place, across Transmission Control Protocol(TCP) connections.
-
-### TCP/IP
-1. HTTP is an application layer protocol. HTTP doesn’t worry about the nitty-gritty details of network communication; instead, it leaves the details of networking to TCP/IP, the popular reliable Internet transport protocol.
-2. TCP provides:
-    * Error-free data transportation
-    * In-order delivery (data will always arrive in the order in which it was sent)
-    * Unsegmented data stream (can dribble out data in any size at any time)
-3. The Internet itself is based on TCP/IP, a popular layered set of packet-switched network protocols spoken by computers and network devices around the world. 
-4. TCP/IP hides the peculiarities and foibles of individual networks and hardware, letting computers and networks of any type talk together reliably.
-5. Once a TCP connection is established, messages exchanged between the client and server computers will never be lost, damaged, or received out of order.
-6. In networking terms, the HTTP protocol is layered over TCP. HTTP uses TCP to transport its message data. Likewise, TCP is layered over IP.
-
-### Connections, IP Addresses, and Port Numbers
 1. Before an HTTP client can send a message to a server, it needs to establish a TCP/IP connection between the client and server using Internet protocol (IP) addresses and port numbers.
 2. Setting up a TCP connection is sort of like calling someone at a corporate office. First, you dial the company’s phone number. This gets you to the right organization. Then, you dial the specific extension of the person you’re trying to reach.
 3. In TCP, you need the IP address of the server computer and the TCP port number associated with the specific software program running on the server.
@@ -211,67 +139,14 @@ Now that we’ve sketched what HTTP’s messages look like, let’s talk for a m
     6. (f) The server sends an HTTP response back to the browser.
     7. (g) The connection is closed, and the browser displays the document
 
-### A Real Example Using Telnet
-#### 关于 Telnet
-1. Because HTTP uses TCP/IP, and is text-based, as opposed to using some obscure binary format, it is simple to talk directly to a web server.
-2. The Telnet utility connects your keyboard to a destination TCP port and connects the TCP port output back to your display screen. 
-3. Telnet is commonly used for remote terminal sessions, but it can generally connect to any TCP server, including
-HTTP servers.
-4. You can use the Telnet utility to talk directly to web servers. Telnet lets you open a TCP connection to a port on a machine and type characters directly into the port.
-5. The web server treats you as a web client, and any data sent back on the TCP connection is displayed onscreen.
-
-#### An HTTP transaction using telnet
-1. Let’s use Telnet to interact with a real web server. We will use Telnet to fetch the document pointed to by the URL `http://www.joes-hardware.com:80/tools.html`.
-2. Let’s review what should happen:
-    1. First, we need to look up the IP address of `www.joes-hardware.com` and open a TCP connection to port 80 on that machine. Telnet does this legwork for us.
-    2. Once the TCP connection is open, we need to type in the HTTP request.
-    3. When the request is complete (indicated by a blank line), the server should send back the content in an HTTP response and close the connection.
-3. Our example HTTP request for `http://www.joes-hardware.com:80/tools.html` is shown below. What we typed is shown in boldface，不过这种情况下不知道怎么加粗，就还是用 markdown 的 `**` 语法括起来了
-    ```
-    **% telnet www.joes-hardware.com 80**
-    Trying 161.58.228.45...
-    Connected to joes-hardware.com.
-    Escape character is '^]'.
-    **GET /tools.html HTTP/1.1**
-    **Host: www.joes-hardware.com**
-
-    HTTP/1.1 200 OK
-    Date: Sun, 01 Oct 2000 23:25:17 GMT
-    Server: Apache/1.3.11 BSafe-SSL/1.38 (Unix) FrontPage/4.0.4.3
-    Last-Modified: Tue, 04 Jul 2000 09:46:21 GMT
-    ETag: "373979-193-3961b26d"
-    Accept-Ranges: bytes
-    Content-Length: 403
-    Connection: close
-    Content-Type: text/html
-
-    <HTML>
-    <HEAD><TITLE>Joe's Tools</TITLE></HEAD>
-    <BODY>
-    <H1>Tools Page</H1>
-    <H2>Hammers</H2>
-    <P>Joe's Hardware Online has the largest selection of hammers on the earth.</P>
-    <H2><A NAME=drills></A>Drills</H2>
-    <P>Joe's Hardware has a complete line of cordless and corded drills, as well as the latest
-    in plutonium-powered atomic drills, for those big around the house jobs.</P> ...
-    </BODY>
-    </HTML>
-    Connection closed by foreign host.
-    ```
-4. Telnet looks up the hostname and opens a connection to the `www.joes-hardware.com` web server, which is listening on port 80. The three lines after the command are output from Telnet, telling us it has established a connection.
-5. We then type in our basic request command, `GET /tools.html HTTP/1.1`, and send a Host header providing the original hostname, followed by a blank line, asking the server to GET us the resource `/tools.html` from the server `www.joes-hardware.com`. After that, the server responds with a response line, several response headers, a blank
-line, and finally the body of the HTML document.
-6. Beware that Telnet mimics HTTP clients well but doesn’t work well as a server. And automated Telnet scripting is no fun at all. For a more flexible tool, you might want to check out nc (netcat). The nc tool lets you easily manipulate and script UDP- and TCP-based traffic, including HTTP. 
-
 
 ## Architectural Components of the Web
-1. In this overview chapter, we’ve focused on how two web applications (web browsers and web servers) send messages back and forth to implement basic transactions.
-2. There are many other web applications that you interact with on the Internet. In this section, we’ll outline several other important applications, including:
-    * Proxies：HTTP intermediaries that sit between clients and servers
-    * Caches: HTTP storehouses that keep copies of popular web pages close to clients
-    * Gateways: Special web servers that connect to other applications
-    * Tunnels: Special proxies that blindly forward HTTP communications
-    * Agents: Semi-intelligent web clients that make automated HTTP requests
+Besides web browsers and web servers, there are many other web applications that you interact with on the Internet. In this section, we’ll outline several other important applications, including:
+* Proxies：HTTP intermediaries that sit between clients and servers
+* Caches: HTTP storehouses that keep copies of popular web pages close to clients
+* Gateways: Special web servers that connect to other applications
+* Tunnels: Special proxies that blindly forward HTTP communications
+* Agents: Semi-intelligent web clients that make automated HTTP requests
 
 ### Proxies
 1. Let’s start by looking at HTTP proxy servers, important building blocks for web security, application integration, and performance optimization.

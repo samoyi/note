@@ -1,15 +1,12 @@
 # URL Syntax
 
-1. URLs provide a means of locating any resource on the Internet, but these resources can be accessed by different schemes (e.g., HTTP, FTP, SMTP), and URL syntax varies from scheme to scheme.
-2. Does this mean that each different URL scheme has a radically different syntax? In practice, no. Most URLs adhere to a general URL syntax, and there is significant overlap in the style and syntax between different URL schemes.
-
 
 <!-- TOC -->
 
 - [URL Syntax](#url-syntax)
-    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
-    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
-    - [URL 结构](#url-%E7%BB%93%E6%9E%84)
+    - [设计思想](#设计思想)
+    - [抽象本质](#抽象本质)
+    - [URL 结构](#url-结构)
     - [Schemes: What Protocol to Use](#schemes-what-protocol-to-use)
     - [Hosts and Ports](#hosts-and-ports)
     - [Usernames and Passwords](#usernames-and-passwords)
@@ -18,7 +15,7 @@
     - [Query Strings](#query-strings)
     - [Fragments](#fragments)
     - [Host, Domain, Origin and Site](#host-domain-origin-and-site)
-        - [public suffix 和 registrable domain](#public-suffix-%E5%92%8C-registrable-domain)
+        - [public suffix 和 registrable domain](#public-suffix-和-registrable-domain)
         - [Origin](#origin)
         - [Site](#site)
     - [References](#references)

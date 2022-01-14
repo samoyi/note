@@ -24,7 +24,7 @@
 1. HTTP messages are the blocks of data sent between HTTP applications. 
 2. These blocks of data begin with some text meta-information describing the message contents and meaning, followed by optional data. 
 3. These messages flow between clients, servers, and proxies. 
-4. The terms “inbound,” “outbound,” “upstream,” and “downstream” describe message direction.
+4. The terms “inbound”, “outbound”, “upstream” and “downstream” describe message direction.
 
 
 ## Messages Commute Inbound to the Origin Server
@@ -34,8 +34,8 @@
 
 
 ## Messages Flow Downstream
-1. HTTP messages flow like rivers. All messages flow `downstream`, regardless of whether they are request messages or response messages. 
-2. The sender of any message is `upstream` of the receiver. In Figure below, proxy 1 is upstream of proxy 3 for
+1. HTTP messages flow like rivers. All messages flow *downstream*, regardless of whether they are request messages or response messages. 
+2. The sender of any message is *upstream* of the receiver. In Figure below, proxy 1 is upstream of proxy 3 for
 the request but downstream of proxy 3 for the response.
     <img src="./images/02.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
