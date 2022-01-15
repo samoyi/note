@@ -21,23 +21,21 @@ The server has encountered a situation it doesn't know how to handle.
 
 
 ## `501 Not Implemented`
-1. Indicates that the server does not support the functionality required to fulfill the request.  
-2. This is the appropriate response when the server does not recognize the request method and is not capable of supporting it for any resource.
-3. If the server does recognize the method, but intentionally does not support it, the appropriate response is `405 Method Not Allowed`.
+1. 客户端发起的请求超出服务器的能力范围。比如不能识别或者没有能力支持请求的方法。
+2. 如果有能力支持请求的方法但认为该请求不应该使用该方法，那就应该返回状态 `405 Method Not Allowed`。
 
 
 ## `502 Bad Gateway`
-Indicates that the server, while acting as a gateway or proxy, received an invalid response from an inbound server it accessed while attempting to fulfill the request.
+通信链路上的网关或代理服务器从上游服务器收到了一个不可用的响应，会返回这个状态。
 
 
 ## `503 Service Unavailable`
-1. Used to indicate that the server currently cannot service the request but will be able to in the future. 
-2. If the server knows when the resource will become available, it can include a `Retry-After` header in the response.
-3. The webmaster must also take care about the caching-related headers that are sent along with this response, as these temporary condition responses should usually not be cached.
+1. 服务器暂时不能满足请求。
+2. 如果服务器知道之后什么时候可以恢复，应该在响应里包括响应首部 `Retry-After` 告知客户端之后重试。
 
 
 ## `504 Gateway Timeout`
-This error response is given when the server is acting as a gateway and cannot get a response in time.
+网关或代理服务器一直没有从上游等到响应，会返回这个状态。
 
 
 ## `505 HTTP Version Not Supported`

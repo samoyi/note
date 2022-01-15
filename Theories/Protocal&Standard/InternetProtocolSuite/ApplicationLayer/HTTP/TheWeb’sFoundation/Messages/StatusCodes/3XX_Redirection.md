@@ -3,19 +3,19 @@
 
 <!-- TOC -->
 
-- [XX Redirection](#xx-redirection)
-    - [300 Multiple Choices](#300-multiple-choices)
-    - [301 Moved Permanently](#301-moved-permanently)
-    - [302 Found](#302-found)
-    - [303 See Other](#303-see-other)
-    - [304 Not Modified](#304-not-modified)
-    - [305 Use Proxy](#305-use-proxy)
-    - [307 Temporary Redirect](#307-temporary-redirect)
-    - [308 Permanent Redirect](#308-permanent-redirect)
-    - [区别](#%E5%8C%BA%E5%88%AB)
-        - [重定向是否永久生效](#%E9%87%8D%E5%AE%9A%E5%90%91%E6%98%AF%E5%90%A6%E6%B0%B8%E4%B9%85%E7%94%9F%E6%95%88)
-        - [重请求重定向后的 URI 能否改变请求方法](#%E9%87%8D%E8%AF%B7%E6%B1%82%E9%87%8D%E5%AE%9A%E5%90%91%E5%90%8E%E7%9A%84-uri-%E8%83%BD%E5%90%A6%E6%94%B9%E5%8F%98%E8%AF%B7%E6%B1%82%E6%96%B9%E6%B3%95)
-        - [重定向的请求是否可缓存](#%E9%87%8D%E5%AE%9A%E5%90%91%E7%9A%84%E8%AF%B7%E6%B1%82%E6%98%AF%E5%90%A6%E5%8F%AF%E7%BC%93%E5%AD%98)
+- [3XX Redirection](#3xx-redirection)
+    - [`300 Multiple Choices`](#300-multiple-choices)
+    - [`301 Moved Permanently`](#301-moved-permanently)
+    - [`302 Found`](#302-found)
+    - [`303 See Other`](#303-see-other)
+    - [`304 Not Modified`](#304-not-modified)
+    - [`305 Use Proxy`](#305-use-proxy)
+    - [`307 Temporary Redirect`](#307-temporary-redirect)
+    - [`308 Permanent Redirect`](#308-permanent-redirect)
+    - [区别维度](#区别维度)
+        - [重定向是否永久生效](#重定向是否永久生效)
+        - [重请求重定向后的 URI 能否改变请求方法](#重请求重定向后的-uri-能否改变请求方法)
+        - [重定向的请求是否可缓存](#重定向的请求是否可缓存)
     - [References](#references)
 
 <!-- /TOC -->
@@ -48,7 +48,7 @@
 ## `303 See Other`
 1. 该状态码表示由于请求对应的资源存在着另一个 URI，应使用 `GET` 或 `HEAD` 方法定向获取请求的资源。
 2. `303` 状态码和 `302` 状态码有着相同的功能，但 `303` 状态码明确表示客户端应当采用 `GET` 或 `HEAD` 方法获取资源。
-3. 因为按照规范，`301` 和 `302` 在重定向时都是不应该更改请求方法的。所以假如用户在未登录时想 `POST`、`PUT` 或 `DELETE` 一个东西，按照逻辑应该从定向到登陆界面。而请求登陆界面显然应该使用 `GET` 方法，所以按照规范，是不应该返回 `302` 的。（虽然实际情况下，浏览器看到 `302` 仍然会改为 `GET` 重定向，从而可以正确的请求登陆页面。但这是不规范的。）
+3. 因为按照规范，`301` 和 `302` 在重定向时都是不应该更改请求方法的。所以假如用户在未登录时想 `POST`、`PUT` 或 `DELETE` 一个东西，按照逻辑应该重定向到登录界面。而请求登录界面显然应该使用 `GET` 方法，所以按照规范，是不应该返回 `302` 的。（虽然实际情况下，浏览器看到 `302` 仍然会改为 `GET` 重定向，从而可以正确的请求登录页面。但这是不规范的。）
 4. 所以规范提出来 `303` 用于这类场景，会明确要求改用 `GET` 或 `HEAD` 方法请求 `Location` 中的 URI。
 5. 看起来从 301 到 303 已经可以处理重定向了，但因为实际中约定俗成的会不遵守不准更改方法的规范，所以又出现了 308 和 307。
 
@@ -74,7 +74,7 @@
 和 `301` 唯一的区别是它禁止用户代理在访问重定向 URI 时改变请求方法
 
 
-## 区别
+## 区别维度
 ### 重定向是否永久生效
 `301` 和 `308` 指示永久重定向，用户代理应该做出相应的更新，完全弃用旧的 URI。其他的重定向则表示临时的，客户代理下次请求时还应该使用重定向之前的 URI。
 

@@ -3,43 +3,48 @@
 
 <!-- TOC -->
 
-- [XX Client Error](#xx-client-error)
-    - [400 Bad Request](#400-bad-request)
-    - [401 Unauthorized](#401-unauthorized)
-        - [402 Payment Required](#402-payment-required)
-    - [403 Forbidden](#403-forbidden)
-    - [404 Not Found](#404-not-found)
-    - [405 Method Not Allowed](#405-method-not-allowed)
-    - [406 Not Acceptable](#406-not-acceptable)
-    - [407 Proxy Authentication Required](#407-proxy-authentication-required)
-    - [408 Request Timeout](#408-request-timeout)
-    - [409 Conflict](#409-conflict)
-    - [410 Gone](#410-gone)
-    - [411 Length Required](#411-length-required)
-    - [412 Precondition Failed](#412-precondition-failed)
-    - [413 Payload Too Large](#413-payload-too-large)
-    - [414 URI Too Long](#414-uri-too-long)
-    - [415 Unsupported Media Type](#415-unsupported-media-type)
-    - [416 Requested Range Not Satisfiable](#416-requested-range-not-satisfiable)
-    - [417 Expectation Failed](#417-expectation-failed)
-    - [418 I'm a teapot](#418-im-a-teapot)
-    - [426 Upgrade Required](#426-upgrade-required)
-    - [428 Precondition Required](#428-precondition-required)
-    - [429 Too Many Requests](#429-too-many-requests)
-    - [431 Request Header Fields Too Large](#431-request-header-fields-too-large)
-    - [451 Unavailable For Legal Reasons](#451-unavailable-for-legal-reasons)
+- [4XX Client Error](#4xx-client-error)
+    - [`400 Bad Request`](#400-bad-request)
+    - [`401 Unauthorized`](#401-unauthorized)
+        - [`402 Payment Required`](#402-payment-required)
+    - [`403 Forbidden`](#403-forbidden)
+    - [`404 Not Found`](#404-not-found)
+    - [`405 Method Not Allowed`](#405-method-not-allowed)
+    - [`406 Not Acceptable`](#406-not-acceptable)
+    - [`407 Proxy Authentication Required`](#407-proxy-authentication-required)
+    - [`408 Request Timeout`](#408-request-timeout)
+    - [`409 Conflict`](#409-conflict)
+    - [`410 Gone`](#410-gone)
+    - [`411 Length Required`](#411-length-required)
+    - [`412 Precondition Failed`](#412-precondition-failed)
+    - [`413 Payload Too Large`](#413-payload-too-large)
+    - [`414 URI Too Long`](#414-uri-too-long)
+    - [`415 Unsupported Media Type`](#415-unsupported-media-type)
+    - [`416 Requested Range Not Satisfiable`](#416-requested-range-not-satisfiable)
+    - [`417 Expectation Failed`](#417-expectation-failed)
+    - [`418 I'm a teapot`](#418-im-a-teapot)
+    - [`426 Upgrade Required`](#426-upgrade-required)
+    - [`428 Precondition Required`](#428-precondition-required)
+    - [`429 Too Many Requests`](#429-too-many-requests)
+    - [`431 Request Header Fields Too Large`](#431-request-header-fields-too-large)
+    - [`451 Unavailable For Legal Reasons`](#451-unavailable-for-legal-reasons)
     - [References](#references)
 
 <!-- /TOC -->
 
 
 ## `400 Bad Request`
-Indicates that the server cannot or will not process the request due to something that is perceived to be a client error.
+服务器认为由于客户端的某些错误而不能或者不愿处理请求。
 
 
 ## `401 Unauthorized`
-1. Indicates that the request has not been applied because it lacks valid authentication credentials for the target resource.
-2. This status is sent with a `WWW-Authenticate` header that contains information on how to authorize correctly.
+1. 请求该资源需要身份认证，但是客户端的请求没有提供该认证。
+2. 响应中还会包含一个 `WWW-Authenticate`，用来告诉客户端需要什么身份认证。例如
+    ```
+    HTTP/1.1 401 Unauthorized
+    Date: Wed, 21 Oct 2015 07:28:00 GMT
+    WWW-Authenticate: Basic realm="Access to staging site"
+    ```
 
 
 ### `402 Payment Required`
@@ -47,7 +52,7 @@ Currently this status code is not used, but it has been set aside for future use
 
 
 ## `403 Forbidden`
-1. 服务器已经理解请求，但是拒绝执行它。
+1. 服务器已经理解请求，但是拒绝响应它。
 2. 与 `401` 响应不同的是，身份验证并不能提供任何帮助，而且这个请求也不应该被重复提交。
 3. 如果这不是一个 `HEAD` 请求，而且服务器希望能够讲清楚为何请求不能被执行，那么就应该在实体内描述拒绝的原因。
 4. 当然服务器也可以返回一个 `404` 响应，假如它不希望让客户端获得任何信息。
@@ -62,16 +67,21 @@ Currently this status code is not used, but it has been set aside for future use
 
 
 ## `405 Method Not Allowed`
-1. Used when a request is made with a method that is not supported for the requested URL. For example, an API may forbid `DELETE`-ing a resource.
-2. 该响应必须返回一个 `Allow` 头信息用以表示出当前资源能够接受的请求方法的列表。
+1. 服务器认为请求该资源不应该使用当前请求方法。比如服务器禁止用户通过 `DELETE` 方法删除某资源，就可以返回 405。
+2. 该响应必须返回一个 `Allow` 首部用以表示出当前资源能够接受的请求方法的列表。例如
+    ```
+    Allow: GET, POST, HEAD
+    ```
 3. 鉴于 `PUT`、`DELETE` 方法会对服务器上的资源进行写操作，因而绝大部分的网页服务器都不支持或者在默认配置下不允许上述请求方法，对于此类请求均会返回 `405` 错误。
-4. The two mandatory methods, `GET` and `HEAD`, must never be disabled and should not return this error code.
+4. 服务器不能对 `GET` 和 `HEAD` 方法的请求返回 405。
 
 
 ## `406 Not Acceptable`
-1. Clients can specify parameters about what types of entities they are willing to accept. 
-2. This code is used when the server has no resource matching the URL that is acceptable for the client. 
-3. Often, servers include headers that allow the client to figure out why the request could not be satisfied. 
+1. 客户端的请求使用内容协商首部制定了期望的响应实体类型，但是如果服务器服务满足要求的类型，就可以返回 406。
+2. 客户端的内容协商首部包括以下三个：
+    * Accept：期望的实体 MIME 类型；
+    * Accept-Encoding：期望的实体编码方式，通常是压缩算法方式；
+    * Accept-Language：期望的实体语言，例如期望法语文档和汉语文档。
 
 
 ## `407 Proxy Authentication Required`
@@ -80,10 +90,12 @@ Currently this status code is not used, but it has been set aside for future use
 
 
 ## `408 Request Timeout`
-1. If a client takes too long to complete its request, a server can send back this status code and close down the connection. 
-2. The length of this timeout varies from server to server but generally is long enough to accommodate any legitimate request.
-3. A server should send the "close" `Connection` header field in the response, since `408` implies that the server has decided to close the connection rather than continue waiting.
-4. Also note that some servers merely shut down the connection without sending this message.
+1. 客户端发起的一个请求连接如果一直没有完成，服务器就会断开这个连接。
+2. 具体的超时时间因服务器而已，但都会足够完成正常的请求。
+3. 服务器应该设置响应首部 `Connection: close`。
+4. 这类响应出现的比较频繁，源于一些浏览器——例如  Chrome, Firefox 27+, 或者 IE9 等——使用 HTTP 协议中的预连接机制来加速上网体验。
+5. 同时应该注意到，某些服务器会直接关闭连接，而不发送此类消息。
+
 
 ## `409 Conflict`
 1. Used to indicate some conflict that the request may be causing on a resource.

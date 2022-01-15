@@ -3,13 +3,13 @@
 
 <!-- TOC -->
 
-- [XX Informational](#xx-informational)
-    - [100 Continue](#100-continue)
-    - [101 Switching Protocol](#101-switching-protocol)
-    - [100 Continue 深入讨论](#100-continue-%E6%B7%B1%E5%85%A5%E8%AE%A8%E8%AE%BA)
-        - [Clients and 100 Continue](#clients-and-100-continue)
-        - [Servers and 100 Continue](#servers-and-100-continue)
-        - [Proxies and 100 Continue](#proxies-and-100-continue)
+- [1XX Informational](#1xx-informational)
+    - [`100 Continue`](#100-continue)
+    - [`101 Switching Protocol`](#101-switching-protocol)
+    - [`100 Continue` 深入讨论](#100-continue-深入讨论)
+        - [Clients and `100 Continue`](#clients-and-100-continue)
+        - [Servers and `100 Continue`](#servers-and-100-continue)
+        - [Proxies and `100 Continue`](#proxies-and-100-continue)
     - [References](#references)
 
 <!-- /TOC -->
@@ -22,9 +22,9 @@
 
 
 ## `101 Switching Protocol`
-1. Indicates that the server is changing protocols, as specified by the client, to one listed in the `Upgrade` header.
-2. 当客户端请求切换协议为 `websocket` 时，客户端发送的请求会带上 `Upgrade` 头。
-3. 服务器在收到该请求时，如果同意切换协议，则会回复 `101` 状态码。同时也会带上一个 `Upgrade` 头，指明将要切换的协议。
+1. 说明服务器正在根据客户端的需求切换协议。客户端之前的请求会通过请求首部 `Upgrade` 告知服务器需要切换的协议。
+2. 例如当客户端请求切换协议为 `websocket` 时，客户端发送的请求会带上 `Upgrade` 首部。
+3. 服务器在收到该请求时，如果同意切换协议，则会回复 `101` 状态码。同时也会带上一个 `Upgrade` 首部，指明将要切换的协议。
 4. 可以看一下这个在线的 [websocket例子](https://websocket.org/echo.html)。可以看到，在点击 connect 按钮时，浏览器发送了一个请求，`Upgrade` 头为 `websocket`；响应中的状态状态码为 `101 Web Socket Protocol Handshake`，`Upgrade` 响应头的值也 `websocket`。
 
 

@@ -3,36 +3,35 @@
 
 <!-- TOC -->
 
-- [XX Successful](#xx-successful)
-    - [200 OK](#200-ok)
-    - [201 Created](#201-created)
-    - [202 Accepted](#202-accepted)
-    - [203 Non-Authoritative Information](#203-non-authoritative-information)
-    - [204 No Content](#204-no-content)
-    - [205 Reset Content](#205-reset-content)
-    - [206 Partial Content](#206-partial-content)
+- [2XX Successful](#2xx-successful)
+    - [`200 OK`](#200-ok)
+    - [`201 Created`](#201-created)
+    - [`202 Accepted`](#202-accepted)
+    - [`203 Non-Authoritative Information`](#203-non-authoritative-information)
+    - [`204 No Content`](#204-no-content)
+    - [`205 Reset Content`](#205-reset-content)
+    - [`206 Partial Content`](#206-partial-content)
     - [References](#references)
 
 <!-- /TOC -->
 
 
 ## `200 OK`
-The request has succeeded.
 
 
 ## `201 Created`
-1. For requests that create server objects (e.g., `PUT`). 相对于 `200` 是一个单纯的成功来说，`201` 有更明确的成功意义，即成功处理了请求，并为此创建了新的资源。
-2. The entity body of the response should contain the various URLs for referencing the created resource, with the `Location` header containing the most specific reference. 
-3. The server must have created the object prior to sending this status code.
-4. 例如你发送了一个发布新博文的请求，那么服务器如果成功的创建了一篇博文数据，就可以返回 `201`，并带上该篇博文的 URL。
+1. 对于在服务器上创建对象的请求，例如使用 `PUT` 创建一个对象，如果创建成功则返回该状态码。
+2. 相对于 `200` 是一个单纯的成功来说，`201` 有更明确的成功意义，即成功处理了请求，并为此创建了新的资源。
+3. The entity body of the response should contain the various URLs for referencing the created resource, with the `Location` header containing the most specific reference. 
+4. 服务器必须在该响应之前就创建好对象。
 
 
 ## `202 Accepted`
-1. The request was accepted, but the server has not yet performed any action with it.
-2. There are no guarantees that the server will complete the request; this just means that the request looked valid when accepted.
-3. The server should include an entity body with a description indicating the status of the request and possibly an estimate for when it will be completed (or a pointer to where this information can be obtained).
-4. It is intended for cases where another process or server handles the request, or for batch processing.
-5. 至于其他进程或者其他服务器之后会怎么处理，这个响应并不会包含任何相关信息。之后这个请求被处理之后，服务器也不会再发送一个回调响应来通知客户端。
+1. 请求已经被接受，但服务器还没有进行处理。并不能保证之后会处理。
+2. The server should include an entity body with a description indicating the status of the request and possibly an estimate for when it will be completed (or a pointer to where this information can be obtained).
+3. 这个状态码的意图是，如果接收到的请求要交给其他进程或服务器处理时，或者是该请求要等待批处理时，告知服务器。
+4. 至于其他进程或者其他服务器之后会怎么处理，这个响应并不会包含任何相关信息。之后这个请求被处理之后，服务器也不会再发送一个回调响应来通知客户端。
+
 
 ## `203 Non-Authoritative Information`
 1. The information contained in the entity headers came not from the origin server but from a copy of the resource. 
