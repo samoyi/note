@@ -4,22 +4,31 @@
 <!-- TOC -->
 
 - [Same-origin policy](#same-origin-policy)
-    - [Same-origin policy 限制范围](#same-origin-policy-%E9%99%90%E5%88%B6%E8%8C%83%E5%9B%B4)
-        - [AJAX 同源限制是为了防止 CSRF](#ajax-%E5%90%8C%E6%BA%90%E9%99%90%E5%88%B6%E6%98%AF%E4%B8%BA%E4%BA%86%E9%98%B2%E6%AD%A2-csrf)
-    - [相关定义](#%E7%9B%B8%E5%85%B3%E5%AE%9A%E4%B9%89)
-        - [同源（same origin）的定义](#%E5%90%8C%E6%BA%90same-origin%E7%9A%84%E5%AE%9A%E4%B9%89)
-        - [源（origin）的定义](#%E6%BA%90origin%E7%9A%84%E5%AE%9A%E4%B9%89)
-    - [继承源](#%E7%BB%A7%E6%89%BF%E6%BA%90)
-    - [绕过同源策略](#%E7%BB%95%E8%BF%87%E5%90%8C%E6%BA%90%E7%AD%96%E7%95%A5)
-        - [使用 document.domain](#%E4%BD%BF%E7%94%A8-documentdomain)
-            - [危害](#%E5%8D%B1%E5%AE%B3)
-        - [使用 CORS、WebSocket 或 JSONP](#%E4%BD%BF%E7%94%A8-corswebsocket-%E6%88%96-jsonp)
-            - [HTML 中第三方资源的跨域使用](#html-%E4%B8%AD%E7%AC%AC%E4%B8%89%E6%96%B9%E8%B5%84%E6%BA%90%E7%9A%84%E8%B7%A8%E5%9F%9F%E4%BD%BF%E7%94%A8)
-        - [使用代理服务器](#%E4%BD%BF%E7%94%A8%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8)
-        - [window.postMessage](#windowpostmessage)
+    - [同源（same origin）的定义](#同源same-origin的定义)
+    - [Same-origin policy 限制范围](#same-origin-policy-限制范围)
+        - [AJAX 同源限制是为了防止 CSRF](#ajax-同源限制是为了防止-csrf)
+    - [继承源](#继承源)
+    - [绕过同源策略](#绕过同源策略)
+        - [使用 `document.domain`](#使用-documentdomain)
+            - [危害](#危害)
+        - [使用 CORS、WebSocket 或 JSONP](#使用-corswebsocket-或-jsonp)
+            - [HTML 中第三方资源的跨域使用](#html-中第三方资源的跨域使用)
+        - [使用代理服务器](#使用代理服务器)
+        - [`window.postMessage()`](#windowpostmessage)
     - [References](#references)
 
 <!-- /TOC -->
+
+
+## 同源（same origin）的定义
+1. 一个的 URL 中的 scheme（HTTP、HTTPS 之类）、host（包括域名和 IP） 和 port 三者组合到一起定义了这个 URL 的源。
+2. 如果两个 URL 的这三部分都相同，这两个 URL 才是同源的。
+3. 默认情况下，一个源的文档是不能访问另一个源的文档的。例如 `http://example.com/doc.html` 无法成功访问到 `https://example.com/target.html` 的文档内容。因为两者的 scheme 和 port 都不一样：前者是 http 和 80，后者是 https 和 443。
+4. 同源政策并不是限制发起请求，而是限制服务端对请求的响应。因此服务端可以修改某些配置来允许一定情况下对跨源请求进行响应。
+5. 注意，文档中 JS 脚本的来源和同源策略并不相关，相关的是脚本所嵌入的文档的来源。
+6. 例如，假设一个来自主机 A 的脚本被包含到主机 B 的一个 web 页面中。那么这个脚本的源是主机 B，因此可以完整地访问包含它的文档的内容。否则如果引用一个远程 jQuery 脚本就无法操作当前页面的 DOM 了。
+7. 如果脚本打开一个新窗口并载入来自主机 B 的另一个文档，脚本对这个文档的内容也具有完全的访问权限。
+8. 但是，如果脚本打开第三个窗口并载入一个来自主机 C 的文档（或者是来自主机 A），同源策略就会发挥作用，阻止脚本访问这个文档。
 
 
 ## Same-origin policy 限制范围
@@ -37,18 +46,6 @@
 4. 诱导张三进入我的网页，由于没有同源限制，该 AJAX 请求可以发送成功。
 5. 因为请求会自动发送请求域所（即 `www.bank.com`）设置的 cookie，所以张三浏览器里保存的银行的身份信息也同时发送。
 6. 银行核对了身份信息，并不能区分这是张三在银行网站的转账请求还是在其他域的跨域请求，所以会执行转账。
-
-
-## 相关定义
-### 同源（same origin）的定义
-相同的协议（protocol）、相同的端口（port）和相同的主机（host，包括域名和 IP）
-
-### 源（origin）的定义
-1. 脚本本身的来源和同源策略并不相关，相关的是脚本所嵌入的文档的来源。
-2. 例如，假设一个来自主机 A 的脚本被包含到（使用 `<script>` 标记的 `src` 属性）宿主 B 的一个 Web 页面中。这个脚本的源是主机 B，因此可以完整地访问包含它的文档的内容。
-3. 如果脚本打开一个新窗口并载入来自主机 B 的另一个文档，脚本对这个文档的内容也具有完全的访问权限。
-4. 但是，如果脚本打开第三个窗口并载入一个来自主机 C 的文档（或者是来自主机 A），同源策略就会发挥作用，阻止脚本访问这个文档。
-5. 假如脚本的源是脚本本身来源的话，那比如你引用了 `https://unpkg.com/axios/dist/axios.min.js`，那你就只能对 `https://unpkg.com` 发请求了。
 
 
 ## 继承源
@@ -198,3 +195,4 @@
 * [Javascript - The Definitive Guide 6th](http://shop.oreilly.com/product/9780596805531.do)
 * [Bypass Same Origin Policy](http://qnimate.com/same-origin-policy-in-nutshell/)
 * [Origin 的标准文档](https://html.spec.whatwg.org/multipage/origin.html)
+* [W3C 文档](https://www.w3.org/Security/wiki/Same_Origin_Policy)
