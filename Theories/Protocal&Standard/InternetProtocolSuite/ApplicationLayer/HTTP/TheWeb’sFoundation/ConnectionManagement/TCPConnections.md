@@ -4,15 +4,15 @@
 <!-- TOC -->
 
 - [The Flow of Messages](#the-flow-of-messages)
-    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
-    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
+    - [设计思想](#设计思想)
+    - [抽象本质](#抽象本质)
     - [Summary](#summary)
-    - [TCP Reliable Data Pipes](#tcp-reliable-data-pipes)
-    - [TCP Streams Are Segmented and Shipped by IP Packets](#tcp-streams-are-segmented-and-shipped-by-ip-packets)
-    - [Keeping TCP Connections Straight](#keeping-tcp-connections-straight)
+    - [TCP 的可靠数据管道](#tcp-的可靠数据管道)
+    - [TCP 流分段的，通过 IP packets 传输](#tcp-流分段的通过-ip-packets-传输)
+    - [保证 TCP 正确连接](#保证-tcp-正确连接)
     - [Programming with TCP Sockets](#programming-with-tcp-sockets)
         - [API](#api)
-        - [一次使用流程举例](#%E4%B8%80%E6%AC%A1%E4%BD%BF%E7%94%A8%E6%B5%81%E7%A8%8B%E4%B8%BE%E4%BE%8B)
+        - [一次使用流程举例](#一次使用流程举例)
     - [References](#references)
 
 <!-- /TOC -->
@@ -25,51 +25,51 @@
 
 
 ## Summary
-1. Just about all of the world’s HTTP communication is carried over TCP/IP, a popular layered set of packet-switched network protocols spoken by computers and network devices around the globe. 
-2. A client application can open a TCP/IP connection to a server application, running just about anywhere in the world. 
-3. Once the connection is established, messages exchanged between the client’s and server’s computers will never be lost, damaged, or received out of order. 
-4. Say you want the latest power tools price list from Joe’s Hardware store: 
+1. 假设通过浏览器请求下面的 URL
     ```
     http://www.joes-hardware.com:80/power-tools.html
     ```
-5. When given this URL, your browser performs the steps shown below
+2. 浏览器会按照下图的步骤执行
     <img src="./images/01.png" width="800" style="display: block; margin: 5px 0 10px 0;" />
-6. In Steps 1–3, the IP address and port number of the server are pulled from the URL. 
-7. A TCP connection is made to the web server in Step 4, and a request message is sent across the connection in Step 5. 
-8. The response is read in Step 6, and the connection is closed in Step 7.
+    1. 提取域名；
+    2. 把域名解析为 IP 地址；
+    3. 提取端口号；
+    4. 与目标主机的指定端口建立 TCP 连接；
+    5. 通过这个连接发送一个 GET 请求；
+    6. 服务器返回请求给客户端；
+    7. 客户端关闭连接。
 
 
-## TCP Reliable Data Pipes
-1. HTTP connections really are nothing more than TCP connections, plus a few rules about how to use them. 
-2. TCP connections are the reliable connections of the Internet. To send data accurately and quickly, you need to know the basics of TCP.
-3. TCP gives HTTP a reliable bit pipe. Bytes stuffed in one side of a TCP connection come out the other side correctly, and in the right order
+## TCP 的可靠数据管道
+1. HTTP 连接时 TCP 连接再加上一些连接使用规则。TCP 连接时互联网的可靠连接。
+2. TCP 为 HTTP 提供了可靠的比特管道，字节从管道的一段被装入，从另一端取出，并且能保证数据正确和顺序正确
     <img src="./images/02.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 
-## TCP Streams Are Segmented and Shipped by IP Packets
-1. TCP sends its data in little chunks called **IP packets** (or **IP datagrams**). 
-2. In this way, HTTP is the top layer in a “protocol stack” of “HTTP over TCP over IP”.
-3. A secure variant, HTTPS, inserts a cryptographic encryption layer (called TLS or SSL) between HTTP and TCP
+## TCP 流分段的，通过 IP packets 传输
+1. TCP 的数据通过称为 **IP packets** （或者叫做 **IP datagrams**，IP 数据报）的小数据块来发送的。
     <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-4. When HTTP wants to transmit a message, it streams the contents of the message data, in order, through an open TCP connection. 
-5. TCP takes the stream of data, chops up the data stream into chunks called segments, and transports the segments across the Internet inside envelopes called IP packets
+2. HTTP 想要发送报文时，会按顺序把报文流传入之前建立的 TCP 连接。
+3. TCP 收到报文流之后会把它分成小的报文段（segment）；
+4. 报文段会被被封装进 IP 数据报通过互联网传输。
     <img src="./images/04.png" width="800" style="display: block; margin: 5px 0 10px 0;" />
-6. This is all handled by the TCP/IP software; the HTTP programmer sees none of it. 
-7. Each TCP segment is carried by an IP packet from one IP address to another IP address. Each of these IP packets contains: 
-    * An IP packet header (usually 20 bytes) 
+5. 所有这些都是 TCP/IP 软件处理的，HTTP 程序员什么也看不到。
+6. 每一个 TCP 报文段都通过 IP 数据报从一个 IP 地址发送到另一个 IP 地址。每一个 IP 数据报包括：
+    * 一个 IP 数据报首部（通常为 20 字节）
+    * 一个 TCP 报文段首部（通常为 20 字节）
+    * 一个 TCP 数据块（0 个或多个字节）
     * A TCP segment header (usually 20 bytes) 
     * A chunk of TCP data (0 or more bytes) 
-8. The IP header contains the source and destination IP addresses, the size, and other flags. The TCP segment header contains TCP port numbers, TCP control flags, and numeric values used for data ordering and integrity checking.
+7. IP 首部包含了源和目的 IP 地址、长度和其他标志。TCP 首部包括了 TCP 端口号、TCP 控制标志，以及用于数据顺序和完整性检查的数字值。
 
 
-## Keeping TCP Connections Straight
-1. A computer might have several TCP connections open at any one time. TCP keeps all these connections straight through port numbers.
-2. Port numbers are like employees’ phone extensions. Just as a company’s main phone number gets you to the front desk and the extension gets you to the right employee, the IP address gets you to the right computer and the port number gets you to the right application. 
-3. A TCP connection is distinguished by four values:
+## 保证 TCP 正确连接
+1. 任何时刻计算机上都有若干个打开的 TCP 连接，TCP 通过端口号保证这些连接正确。
+2. IP 地址让你连接到正确的计算机，端口号让你连接到该计算机中正确的程序。
+3. 下面是个值定义了一个唯一的 TCP 连接
     ```
     <source-IP-address, source-port, destination-IP-address, destination-port>
     ```
-4. Together, these four values uniquely define a connection. Two different TCP connections are not allowed to have the same values for all four address components (but different connections can have the same values for some of the components).
 
 
 ## Programming with TCP Sockets

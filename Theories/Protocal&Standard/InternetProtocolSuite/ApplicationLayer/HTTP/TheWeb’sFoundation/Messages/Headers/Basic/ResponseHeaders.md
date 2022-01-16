@@ -7,24 +7,24 @@
 <!-- TOC -->
 
 - [Response headers](#response-headers)
-    - [Negotiation headers](#negotiation-headers)
-        - [Accept-Ranges](#accept-ranges)
-        - [Vary](#vary)
+    - [协商（negotiation）首部](#协商negotiation首部)
+        - [`Accept-Ranges`](#accept-ranges)
+        - [`Vary`](#vary)
     - [Response security headers](#response-security-headers)
-        - [Proxy-Authenticate](#proxy-authenticate)
-        - [Set-Cookie](#set-cookie)
-        - [WWW-Authenticate](#www-authenticate)
-    - [Age](#age)
-    - [Location](#location)
-    - [Retry-After](#retry-after)
-    - [Server](#server)
+        - [`Proxy-Authenticate`](#proxy-authenticate)
+        - [`Set-Cookie`](#set-cookie)
+        - [`WWW-Authenticate`](#www-authenticate)
+    - [`Age`](#age)
+    - [`Location`](#location)
+    - [`Retry-After`](#retry-after)
+    - [`Server`](#server)
     - [References](#references)
 
 <!-- /TOC -->
 
 
-## Negotiation headers
-HTTP/1.1 provides servers and clients with the ability to negotiate for a resource if multiple representations are available—for instance, when there are both French and German translations of an HTML document on a server. 
+## 协商（negotiation）首部
+如果一个资源有多种形式，比如说一个文档有不同中语言的版本，那么客户端可以通过协商首部向服务器请求自己想要的形式。
 
 ### `Accept-Ranges`
 1. 首部字段 `Accept-Ranges` 是用来告知客户端服务器是否能处理范围请求，以指定获取服务器端某个部分的资源。

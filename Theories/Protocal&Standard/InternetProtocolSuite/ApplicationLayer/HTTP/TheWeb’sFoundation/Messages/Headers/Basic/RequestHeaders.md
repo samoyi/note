@@ -1,43 +1,37 @@
 # Request headers
 
-1. As the name implies, request headers are specific to request messages. They provide extra information to servers, such as what type of data the client is willing to receive. 
-2. For example, the following `Accept` header tells the server that the client will accept any media type that matches its request:
-    ```
-    Accept: */*
-    ```
 
 <!-- TOC -->
 
 - [Request headers](#request-headers)
     - [Accept headers](#accept-headers)
-        - [Accept](#accept)
-        - [Accept-Charset](#accept-charset)
-        - [Accept-Encoding](#accept-encoding)
-        - [Accept-Language](#accept-language)
-    - [Conditional request headers](#conditional-request-headers)
-        - [Expect](#expect)
-        - [Range](#range)
-            - [Examples](#examples)
-        - [If-Range](#if-range)
-        - [If-Match](#if-match)
-            - [语法](#%E8%AF%AD%E6%B3%95)
-        - [If-None-Match](#if-none-match)
-        - [If-Modified-Since](#if-modified-since)
-        - [If-Unmodified-Since](#if-unmodified-since)
-    - [Request security headers](#request-security-headers)
-        - [Authorization](#authorization)
-        - [Cookie](#cookie)
+        - [`Accept`](#accept)
+        - [`Accept-Charset`](#accept-charset)
+        - [`Accept-Encoding`](#accept-encoding)
+        - [`Accept-Language`](#accept-language)
+    - [条件请求首部](#条件请求首部)
+        - [`Expect`](#expect)
+        - [`Range`](#range)
+        - [`If-Range`](#if-range)
+        - [`If-Match`](#if-match)
+            - [语法](#语法)
+        - [`If-None-Match`](#if-none-match)
+        - [`If-Modified-Since`](#if-modified-since)
+        - [`If-Unmodified-Since`](#if-unmodified-since)
+    - [安全请求首部](#安全请求首部)
+        - [`Authorization`](#authorization)
+        - [`Cookie `](#cookie-)
     - [Proxy request headers](#proxy-request-headers)
-        - [Max-Forwards](#max-forwards)
-        - [Proxy-Authorization](#proxy-authorization)
-        - [Proxy-Connection](#proxy-connection)
-    - [其他请求首部](#%E5%85%B6%E4%BB%96%E8%AF%B7%E6%B1%82%E9%A6%96%E9%83%A8)
-        - [From](#from)
-        - [Host](#host)
-        - [Origin](#origin)
-        - [Range](#range)
-        - [Referer](#referer)
-        - [User-Agent](#user-agent)
+        - [`Max-Forwards`](#max-forwards)
+        - [`Proxy-Authorization`](#proxy-authorization)
+        - [`Proxy-Connection`](#proxy-connection)
+    - [其他请求首部](#其他请求首部)
+        - [`From`](#from)
+        - [`Host`](#host)
+        - [`Origin`](#origin)
+        - [`Range`](#range-1)
+        - [`Referer`](#referer)
+        - [`User-Agent`](#user-agent)
     - [References](#references)
 
 <!-- /TOC -->
@@ -83,9 +77,13 @@ Accept-Language: zh-cn,zh;q=0.7,en-us,en;q=0.3
 3. 和 `Accept` 首部字段一样，按权重值 `q` 来表示相对优先级。
 
 
-## Conditional request headers
-1. Sometimes, clients want to put some restrictions on a request. For instance, if the client already has a copy of a document, it might want to ask a server to send the document only if it is different from the copy the client already has. 
-2. Using conditional request headers, clients can put such restrictions on requests, requiring the server to make sure that the conditions are true before satisfying the request.
+## 条件请求首部
+1. 有时客户端需要给请求加上一些前提条件。例如客户端有了一个文件的缓存，用户需要这个文件时，客户端要先询问服务器这个文件的缓存是否有效，有效的话就不用重复请求该文件了。
+2. 使用条件请求首部，客户端会让服务器先检查前提条件，条件成立时才正常的响应请求。
+3. 其中有两对和缓存相关的条件首部：
+    * 一对是带 `Match` 的，会比较本地资源缓存副本的 ETag 和服务器资源的 ETag 是否相同；
+    * 另一对是带 `Since` 的，会询问服务器本地资源缓存副本对应的服务器端资源在某个时间之后是否有过修改。
+4. 还有 `Range` 和 `If-Range` 是对资源的范围请求以及带前提条件的范围请求。
 
 ### `Expect`
 1. Allows a client to list server behaviors that it requires for a request.
@@ -96,30 +94,29 @@ Accept-Language: zh-cn,zh;q=0.7,en-us,en;q=0.3
 4. No common browsers send the `Expect` header, but some other clients such as cURL do so by default.
 
 ### `Range`
-1. The `Range` HTTP request header indicates the part of a document that the server should return. 
-2. Several parts can be requested with one `Range` header at once, and the server may send back these ranges in a multipart document. 
-3. If the server sends back ranges, it uses the `206 Partial Content` for the response. 
-4. If the ranges are invalid, the server returns the `416 Range Not Satisfiable` error. 
-5. The server can also ignore the `Range` header and return the whole document with a `200` status code.
-
-#### Examples
-1. Requesting three ranges from the file.
+1. 这个首部指定服务器返回所请求资源的某些部分而非整个资源。
+2. 例如下面的设置请求服务器返回资源的三部分，第三部分是从 19000 到结尾。范围的单位是字节
     ```
     Range: bytes=200-1000, 2000-6576, 19000- 
     ```
-2. Requesting the first 500 and last 500 bytes of the file. The request may be rejected by the server if the ranges overlap.
+3. 以及下面这个是请求开头的 500 字节和最后的 500 字节
     ```
     Range: bytes=0-499, -500 
     ```
+4. 如果指定的范围有问题，比如说不存在或者多个范围有重叠，服务器可以会拒绝，可以响应状态 `416 Range Not Satisfiable`。
     
 ### `If-Range`
 1. `If-Range` HTTP 请求头字段用来使得 `Range` 头字段在一定条件下起作用。
 2. 当字段值中的条件得到满足时，`Range` 头字段才会起作用，同时服务器回复 `206` 部分内容状态码，以及 `Range` 头字段请求的相应部分；如果字段值中的条件没有得到满足，服务器将会返回 `200 OK` 状态码，并返回完整的请求资源。
-3. 字段值中既可以用 `Last-Modified` 时间值用作验证，也可以用 `ETag` 标记作为验证，但不能将两者同时使用。
-4. `If-Range` 头字段通常用于断点续传的下载过程中，用来自从上次中断后，确保下载的资源没有发生改变。
+3. 字段值中既可以用 `If-Unmodified-Since` 时间值用作验证，也可以用 `If-Match` 的 ETag 值作为验证，但不能将两者同时使用。
+4. 下面的设置要求服务器如果请求的资源在这个时间之后没有修改过，则可以使用返回 `Range` 指定的部分资源
+    ```js
+    If-Range: Wed, 21 Oct 2015 07:28:00 GMT
+    ```
+5. `If-Range` 头字段通常用于断点续传的下载过程中，用来自从上次中断后，确保下载的资源没有发生改变。
 
 ### `If-Match`
-1. 请求首部 `If-Match` 的使用表示这是一个条件请求。在请求方法为 `GET` 和 `HEAD` 的情况下，服务器仅在请求的资源满足此首部列出的 `ETag` 值时才会返回资源。而对于 `PUT` 或其他非安全方法来说，只有在满足条件的情况下才可以将资源上传。
+1. 在请求方法为 `GET` 和 `HEAD` 的情况下，服务器仅在请求资源 的 `ETag` 和此首部列出的 `ETag` 值匹配时才会返回资源。而对于 `PUT` 或其他非安全方法来说，只有在满足条件的情况下才可以将资源上传。
 2. `ETag` 之间的比较使用的是强比较算法，即只有在每一个字节都相同的情况下，才可以认为两个文件是相同的。在 `ETag` 前面添加 `W/` 前缀表示可以采用相对宽松的算法。
 3. 以下是两个常见的应用场景：
     * 对于 `GET`  和 `HEAD` 方法，搭配 `Range` 首部使用，可以用来保证新请求的范围与之前请求的范围是对同一份资源的请求。如果  `ETag` 无法匹配，那么需要返回 `416` (Range Not Satisfiable，范围请求无法满足) 响应。
@@ -145,7 +142,7 @@ If-Match: *
 ### `If-None-Match`
 1. 对于 `GET` 和 `HEAD` 请求方法来说，当且仅当服务器上没有任何资源的 `ETag` 属性值与这个首部中列出的相匹配的时候，服务器端会才返回所请求的资源，响应码为 `200`。
 2. 对于其他方法来说，当且仅当最终确认没有已存在的资源的 `ETag` 属性值与这个首部中所列出的相匹配的时候，才会对请求进行相应的处理。
-3. 对于 `GET` 和 `HEAD` 方法来说，当验证失败的时候，服务器端必须返回响应码 `304` （Not Modified，未改变）。
+3. 对于 `GET` 和 `HEAD` 方法来说，当验证失败的时候，也就是请求的资源没有发生变化，即 `ETag` 没有改时的，服务器端必须返回响应 `304 Not Modified`，告知用户可以继续使用缓存的资源副本。
 4. 对于能够引发服务器状态改变的方法，则返回 `412` （Precondition Failed，前置条件失败）。
 5. 需要注意的是，服务器端在生成状态码为 `304` 的响应的时候，必须同时生成以下会存在于对应的 `200` 响应中的首部：`Cache-Control`、`Content-Location`、`Date`、`ETag`、`Expires` 和 `Vary`。
 6. `ETag` 属性之间的比较采用的是弱比较算法，即两个文件除了每个比特都相同外，内容一致也可以认为是相同的。例如，如果两个页面仅仅在页脚的生成时间有所不同，就可以认为二者是相同的。
@@ -155,21 +152,20 @@ If-Match: *
     * 采用其他方法，尤其是 `PUT`，将 `If-None-Match` 的值设置为 `*`，用来生成事先并不知道是否存在的文件，可以确保先前并没有进行过类似的上传操作，防止之前操作数据的丢失。这个问题属于更新丢失问题的一种。
 
 ### `If-Modified-Since`
-1. The `If-Modified-Since` request HTTP header makes the request conditional: the server will send back the requested resource, with a `200` status, only if it has been last modified after the given date. 
-2. If the request has not been modified since, the response will be a `304` without any body; the `Last-Modified` response header of a previous request will contain the date of last modification. 
-3. Unlike `If-Unmodified-Since`, `If-Modified-Since` can only be used with a `GET` or `HEAD`.
-4. When used in combination with `If-None-Match`, it is ignored, unless the server doesn't support `If-None-Match`.
-5. The most common use case is to update a cached entity that has no associated `ETag`.
+1. `If-Modified-Since` 指定一个时间，只有请求的资源在这个时间之后修改过，服务器才会返回该资源，状态码为 200。
+2. 如果在指定的时间后否则的话会返回状态 304，并且没有响应实体。同时会有 `Last-Modified` 首部指出上次修改的时间。
+3. 与 `If-Unmodified-Since` 不同，`If-Modified-Since` 只能用来响应 `GET` 或 `HEAD` 方法。
+4. 优先级没有 `If-None-Match` 高，同时使用时以后者为准。
 
 ### `If-Unmodified-Since`
-1. The server will send back the requested resource, or accept it in the case of a `POST` or another non-safe method, only if it has not been last modified after the given date. 
-2. If the resource has been modified after the given date, the response will be a `412` (Precondition Failed) error.
-3. There are two common use cases:
-    * In conjunction with non-safe methods, like `POST`, it can be used to implement an optimistic concurrency control, like done by some wikis: editions are rejected if the stored document has been modified since the original has been retrieved.
-    * In conjunction with a range request with a `If-Range` header, it can be used to ensure that the new fragment requested comes from an unmodified document. 
-    
+1. 只有在指定的时间之后没修改过才会响应请求。
+2. 如果请求的资源在指定时间之后被修改了，则会返回 `412 Precondition Failed`。
+3. 有两种典型使用场景：
+    * 在使用比如 `POST` 这样的非安全方法是，可以实现并行控制。例如共同编辑一个在线文档时，在提交修改时需要保证从之前读取该文档以来文档没有被其他人修改过。
+    * 在类似断点续传的场景中，继续获取文档的一部分时间，结合 `If-Range` 来确定文档没有发生过变化。
 
-## Request security headers
+
+## 安全请求首部
 1. HTTP natively supports a simple challenge/response authentication scheme for requests. 
 2. It attempts to make transactions slightly more secure by requiring clients to authenticate themselves before getting access to certain resources. 
 
