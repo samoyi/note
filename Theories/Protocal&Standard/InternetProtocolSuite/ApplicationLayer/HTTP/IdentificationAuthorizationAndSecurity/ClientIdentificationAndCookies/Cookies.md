@@ -4,36 +4,35 @@
 <!-- TOC -->
 
 - [Cookies](#cookies)
-    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
-    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
+    - [设计思想](#设计思想)
+    - [抽象本质](#抽象本质)
     - [Summary](#summary)
-    - [Cookie 主要用于以下三个方面：](#cookie-%E4%B8%BB%E8%A6%81%E7%94%A8%E4%BA%8E%E4%BB%A5%E4%B8%8B%E4%B8%89%E4%B8%AA%E6%96%B9%E9%9D%A2)
-    - [Lifetime of a cookie](#lifetime-of-a-cookie)
-        - [Session cookies](#session-cookies)
-        - [Permanent cookies](#permanent-cookies)
-    - [Restrict access to cookies](#restrict-access-to-cookies)
-        - [Secure cookies](#secure-cookies)
-        - [HttpOnly cookies](#httponly-cookies)
-        - [SameSite experimental by 2018.6](#samesite-experimental-by-20186)
-    - [Scope of cookies](#scope-of-cookies)
-        - [Domain](#domain)
-        - [Path](#path)
+    - [Cookie 主要用于以下三个方面：](#cookie-主要用于以下三个方面)
+    - [cookie 的生命周期](#cookie-的生命周期)
+        - [会话 cookie（Session cookies）](#会话-cookiesession-cookies)
+        - [持久 cookie（Permanent cookies）](#持久-cookiepermanent-cookies)
+    - [对 cookie 的访问限制](#对-cookie-的访问限制)
+        - [`Secure` cookies](#secure-cookies)
+        - [`HttpOnly` cookies](#httponly-cookies)
+        - [SameSite (experimental)](#samesite-experimental)
+    - [cookie 的作用域](#cookie-的作用域)
+        - [`Domain`](#domain)
+        - [`Path`](#path)
     - [Security](#security)
         - [Session hijacking and XSS](#session-hijacking-and-xss)
-        - [Cross-site request forgery CSRF](#cross-site-request-forgery-csrf)
+        - [Cross-site request forgery (CSRF)](#cross-site-request-forgery-csrf)
     - [Tracking and privacy](#tracking-and-privacy)
         - [Third-party cookies](#third-party-cookies)
         - [Do-Not-Track](#do-not-track)
         - [EU cookie directive](#eu-cookie-directive)
         - [Zombie cookies and Evercookies](#zombie-cookies-and-evercookies)
     - [How Cookies Work](#how-cookies-work)
-    - [Cookies and Session Tracking](#cookies-and-session-tracking)
     - [Cookies and Caching](#cookies-and-caching)
         - [Mark documents uncacheable if they are](#mark-documents-uncacheable-if-they-are)
-        - [Be cautious about caching Set-Cookie headers](#be-cautious-about-caching-set-cookie-headers)
-        - [Be cautious about requests with Cookie headers](#be-cautious-about-requests-with-cookie-headers)
+        - [Be cautious about caching `Set-Cookie` headers](#be-cautious-about-caching-set-cookie-headers)
+        - [Be cautious about requests with `Cookie` headers](#be-cautious-about-requests-with-cookie-headers)
     - [Creating cookies](#creating-cookies)
-        - [document.cookie](#documentcookie)
+        - [`document.cookie`](#documentcookie)
     - [Misc](#misc)
     - [References](#references)
 
@@ -57,16 +56,15 @@
 * **Tracking**: Recording and analyzing user behavior.
 
 
-## Lifetime of a cookie
-### Session cookies
-1. A cookie without `Expires` or `Max-Age` directive is a session cookie: it is deleted when the client shuts down.
-2. Note that this is a subtly different lifetime than `sessionStorage`: cookies are not scoped to a single window, and their default lifetime is the same as the entire browser process, not the lifetime of any one window.
-3. However, web browsers may use **session restoring**, which makes most session cookies permanent, as if the browser was never closed.
+## cookie 的生命周期
+### 会话 cookie（Session cookies）
+1. 没有设置 `Expires` 或 `Max-Age` 的 cookie 是一个会话 cookie，当客户端关闭时就会被删除。
+2. 注意和 `sessionStorage` 的不同。会话 cookie 的范围是整个浏览器进程，而 `sessionStorage` 是具体的一个窗口。
+3. 但浏览器可能也会使用 **session restoring**，从而在浏览器关闭后仍然保存会话 cookie。
 
-### Permanent cookies
-1. Persistent cookies can live longer; they are stored on disk and survive browser exits and computer restarts.
-2. Instead of expiring when the client closes, permanent cookies expire at a specific date (`Expires`) or after a specific length of time (`Max-Age`).
-3. If a response includes both an `Expires` header and a `max-age` directive, the `max-age` directive overrides the `Expires` header, even if the `Expires` header is more restrictive
+### 持久 cookie（Permanent cookies）
+1. 持久 cookie 会保存在硬盘中，在浏览器关闭后仍然存在。
+2. 持久缓存的删除时间是根据设置 cookie 时指定的 `Expires` 或 `Max-Age` 字段来决定的。
     ```js
     // Node
     res.setHeader('Set-Cookie', 'CookieName=CookieValue;Max-Age=3600');
@@ -74,22 +72,23 @@
     // Browser
     document.cookie = 'CookieName=CookieValue;max-age=3600';
     ```
-4. When an expiry date is set, the time and date set is relative to the client the cookie is being set on, not the server. 出于这个原因也不应该使用 `Expires`。
+3. `Expires` 设置的时间是客户端的时间而非服务器时间。
+4. `Max-Age` 的优先级高于 `Expires`。
 5. 如果设置为小数，则向下取整。
 
 
-## Restrict access to cookies
+## 对 cookie 的访问限制
 ### `Secure` cookies
-1. A secure cookie is only sent to the server with a encrypted request over the HTTPS protocol, never with unsecured HTTP (except on localhost), and therefore can't easily be accessed by a man-in-the-middle attacker
+1. 设置 cookie 时如果设置了 `Secure` 字段，则该 cookie 只会在使用 HTTPS 协议时向服务器发送，这样可以有效避免中间人攻击
     ```js
     res.setHeader('Set-Cookie', 'SecureCookieName=SecureCookieValue;Secure');
     ```
-2. Starting with Chrome 52 and Firefox 52, insecure sites (`http:`) can't set cookies with the `Secure` directive. 
-3. Even with `Secure`, sensitive information should **never** be stored in cookies, as they are inherently insecure and this flag can't offer real protection.
+2. 即使是 `Secure` cookie，也不应该用来保存敏感信息，因为 cookie 本身就是不安全的。
+3. Starting with Chrome 52 and Firefox 52, insecure sites (`http:`) can't set cookies with the `Secure` directive. 
 
 ### `HttpOnly` cookies
-1. To prevent cross-site scripting (XSS) attacks, `HttpOnly` cookies are inaccessible to JavaScript's `document.cookie` API; they are only sent to the server. 
-2. For example, cookies that persist server-side sessions don't need to be available to JavaScript, and the `HttpOnly` flag should be set.
+1. 为了防止跨站脚本攻击（例如注入恶意脚本读取用户的 cookie），设置 cookie 时可以使用 `HttpOnly` 字段使得该 cookie 只能浏览器的请求发送给服务器，而不能被脚本读取，比如不能通过 JavaScript 的 `document.cookie` 读取。
+2. 比如对于维持会话的 cookie 就没必要让 JavaScript 读取，因此应该这样设置
     ```js
     document.cookie = 'NormalCookieName1=NormalCookieValue1';
     document.cookie = 'HttpOnlyCookieName=HttpOnlyCookieValue;HttpOnly';
@@ -98,47 +97,37 @@
     // NormalCookieName1=NormalCookieValue1; NormalCookieName2=NormalCookieValue2
     ```
 
-### SameSite (experimental by 2018.6)
-1. `SameSite` cookies let servers require that a cookie shouldn't be sent with cross-site requests, which somewhat protects against cross-site request forgery attacks (CSRF)
+### SameSite (experimental)
+1. 设置 cookie 使用这个字段可以让该 cookie 不能从跨站请求发送。
+2. CSRF 攻击就是通过伪造的第三方网站发起请求并提交 cookie，因此可以使用这个字段进行防止
     ```js
     Set-Cookie: mykey=myvalue; SameSite=Strict
     ```
-2. `SameSite` cookies are still experimental and not yet supported by all browsers.
+3. `SameSite` cookies are still experimental and not yet supported by all browsers.
 
 
-## Scope of cookies
-The `Domain` and `Path` directives define the scope of the cookie: what URLs the cookies should be sent to.
+## cookie 的作用域
+`Domain` 和 `Path` 这两个字段指定了 cookie 的发送范围。
 
 ### `Domain`
-1. A server generating a cookie can control which sites get to see that cookie by adding a `Domain` attribute to the `Set-Cookie` response header. 
-2. If unspecified, it defaults to the host of the current document location, **excluding subdomains**.
-3. For example, the following HTTP response header tells the browser to send the cookie `user=“mary17”` to any site in the domain `.airtravelbargains.com`:
+1. 设置 cookie 时，这个字段可以指定哪些主机（域）可以接收该 cookie。
+2. 默认情况下，只有当前域会接收到 cookie，而且不包含子域。
+3. 但是如果指定了某个域，则它的子域也可以接收该 cookie
     ```
     Set-cookie: user="mary17"; domain="airtravelbargains.com"
     ```
-4. If the user visits `www.airtravelbargains.com`, `specials.airtravelbargains.com`, or any site ending in `.airtravelbargains.com`, the following `Cookie` header will be issued:
-    ```
-    Cookie: user="mary17"
-    ```
+4. 如果客户端访问 `www.airtravelbargains.com`、`specials.airtravelbargains.com` 或者任何以 `.airtravelbargains.com` 结尾的域，上面设置的 cookie 都会随着请求发送。
 
 ### `Path`
-1. The cookie specification even lets you associate cookies with portions of web sites. This is done using the `Path` attribute, which indicates the URL path prefix where each cookie is valid, and subdirectories will match as well.
-2. For example, one web server might be shared between two organizations, each having separate cookies. The site `www.airtravelbargains.com` might devote part of its web site to auto rentals—say, `http://www.airtravelbargains.com/autos/`—using a separate cookie to keep track of a user’s preferred car size. 
-3. A special auto-rental cookie might be generated like this:
+1. 使用这个字段可以指定主机中哪些路径可以接收 cookie。
+2. 如果设置了该字段，则设置的路径的子路径也可以接收该 cookie。
+3. 比如一个主机可能别两个用户共享，它们分别使用不同的路径。那么通过这个字段就可以让它们使用各自的 cookie。
+4. 例如主机 `www.airtravelbargains.com` 把它的 `/autos/` 目录分享给其他用户，那么下面设置的 cookie 就只用在请求 `/autos/` 下的资源是才会被发送
     ```
     Set-cookie: pref=compact; domain="airtravelbargains.com"; path=/autos/
     ```
-4. If the user goes to `http://www.airtravelbargains.com/specials.html`, she will get only this cookie:
-    ```
-    Cookie: user="mary17"
-    ```
-5. But if she goes to `http://www.airtravelbargains.com/autos/cheapo/index.html`, she will get both of these cookies:
-    ```
-    Cookie: user="mary17"
-    Cookie: pref=compact
-    ```
-6. 在请求的路径不符合 `Path` 的设定时，仍然可以正常的保存响应的 cookie。之后请求路径修改为符合的情况时，可以正常发送之前收到的 cookie。
-7. 另外，在网页不符合 `Path` 指定的路径时，前端使用 `document.cookie` 也无法读取使用该 `Path` 指定的 cookie。也就是说，不管是浏览器自动发送，还是前端主动获取，只要路径不对，虽然仍会保存，但都没有权限使用该 cookie。
+5. 在请求的路径不符合 `Path` 的设定时，仍然可以正常的保存响应的 cookie。之后请求路径修改为符合的情况时，可以正常发送之前收到的 cookie。
+6. 另外，在网页不符合 `Path` 指定的路径时，前端使用 `document.cookie` 也无法读取使用该 `Path` 指定的 cookie。也就是说，不管是浏览器自动发送，还是前端主动获取，只要路径不对，虽然仍会保存，但都没有权限使用该 cookie。
 
 
 ## Security
@@ -187,32 +176,10 @@ techniques to recreate themselves whenever the cookie's absence is detected.
 
 
 ## How Cookies Work
-1. Cookies are like “Hello, My Name Is” stickers stuck onto users by servers. When a user visits a web site, the web site can read all the stickers attached to the user by that server.
-2. The first time the user visits a web site, the web server doesn’t know anything about the user. The web server expects that this same user will return again, so it wants to “slap” a unique cookie onto the user so it can identify this user in the future. 
-    <img src="./images/02.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-3. The cookie contains an arbitrary list of `name=value` information, and it is attached to the user using the `Set-Cookie` HTTP response (extension) headers.
-4. Cookies can contain any information, but they often contain just a unique identification number, generated by the server for tracking purposes. 
-5. For example, in figure above (b), the server slaps onto the user a cookie that says `id="34294"`. The server can use this number to look up database information that the server accumulates for its visitors (purchase history, address information, etc.).
-6. However, cookies are not restricted to just ID numbers. Many web servers choose to keep information directly in the cookies. For example: `Cookie: name="Brian Totty"; phone="555-1212"`. The browser remembers the cookie contents sent back from the server in `Set-Cookie` headers, storing the set of cookies in a browser cookie database. 
-7. When the user returns to the same site in the future (igure above (c)), the browser will select those cookies
+1. The cookie contains an arbitrary list of `name=value` information, and it is attached to the user using the `Set-Cookie` HTTP response headers.
+2. Cookies can contain any information, but they often contain just a unique identification number, generated by the server for tracking purposes. 
+3. When the user returns to the same site in the future, the browser will select those cookies
 slapped onto the user by that server and pass them back in a `Cookie` request header.
-
-
-## Cookies and Session Tracking
-1. Cookies can be used to track users as they make multiple transactions to a web site. 
-2. E-commerce web sites use session cookies to keep track of users’ shopping carts as they browse. Let’s take the example of the popular shopping site `Amazon.com`.
-3. When you type `http://www.amazon.com` into your browser, you start a chain of transactions where the web server attaches identification information through a series of redirects, URL rewrites, and cookie setting.
-4. Figure below shows a transaction sequence captured from an `Amazon.com` visit:
-    <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-    
-    1. (a)—Browser requests `Amazon.com` root page for the first time.
-    2. (b)—Server redirects the client to a URL for the e-commerce software.
-    3. (c)—Client makes a request to the redirected URL.
-    4. (d)—Server slaps two session cookies on the response and redirects the user to another URL, so the client will request again with these cookies attached. This new URL is a fat URL, meaning that some state is embedded into the URL. If the client has cookies disabled, some basic identification can still be done as long as the user follows the `Amazon.com`-generated fat URL links and doesn’t leave the site.
-    5. (e)—Client requests the new URL, but now passes the two attached cookies.
-    6. (f)—Server redirects to the `home.html` page and attaches two more cookies.
-    7. (g)—Client fetches the `home.html` page and passes all four cookies.
-    8. (h)—Server serves back the content.
 
 
 ## Cookies and Caching

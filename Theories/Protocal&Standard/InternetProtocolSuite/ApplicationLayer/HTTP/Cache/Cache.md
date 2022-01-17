@@ -4,30 +4,30 @@
 <!-- TOC -->
 
 - [Cache](#cache)
-    - [强缓存和协商缓存](#%E5%BC%BA%E7%BC%93%E5%AD%98%E5%92%8C%E5%8D%8F%E5%95%86%E7%BC%93%E5%AD%98)
-    - [强缓存首部](#%E5%BC%BA%E7%BC%93%E5%AD%98%E9%A6%96%E9%83%A8)
-        - [Cache-Control 首部（响应中的）](#cache-control-%E9%A6%96%E9%83%A8%E5%93%8D%E5%BA%94%E4%B8%AD%E7%9A%84)
-            - [优先级](#%E4%BC%98%E5%85%88%E7%BA%A7)
-            - [Cache-Control: no-store](#cache-control-no-store)
-            - [Cache-Control: no-cache](#cache-control-no-cache)
-            - [Cache-Control: must-revalidate](#cache-control-must-revalidate)
-            - [Cache-Control: max-age 和 Cache-Control: s-maxage](#cache-control-max-age-%E5%92%8C-cache-control-s-maxage)
-            - [Cache-Control: no-transform](#cache-control-no-transform)
-            - [Cache-Control: public](#cache-control-public)
-            - [Cache-Control: private](#cache-control-private)
-            - [Cache-Control: proxy-revalidate](#cache-control-proxy-revalidate)
-        - [Expires](#expires)
-    - [协商缓存首部](#%E5%8D%8F%E5%95%86%E7%BC%93%E5%AD%98%E9%A6%96%E9%83%A8)
-        - [Etag](#etag)
-        - [Last-modified](#last-modified)
-        - [Last-modified 和 Etag 的区别（优先使用 Etag 的原因）](#last-modified-%E5%92%8C-etag-%E7%9A%84%E5%8C%BA%E5%88%AB%E4%BC%98%E5%85%88%E4%BD%BF%E7%94%A8-etag-%E7%9A%84%E5%8E%9F%E5%9B%A0)
-    - [请求中的 Cache-Control 首部](#%E8%AF%B7%E6%B1%82%E4%B8%AD%E7%9A%84-cache-control-%E9%A6%96%E9%83%A8)
-    - [Defining optimal Cache-Control policy](#defining-optimal-cache-control-policy)
+    - [强缓存和协商缓存](#强缓存和协商缓存)
+    - [强缓存首部](#强缓存首部)
+        - [`Cache-Control` 首部（响应中的）](#cache-control-首部响应中的)
+            - [优先级](#优先级)
+            - [`Cache-Control: no-store`](#cache-control-no-store)
+            - [`Cache-Control: no-cache`](#cache-control-no-cache)
+            - [`Cache-Control: must-revalidate`](#cache-control-must-revalidate)
+            - [`Cache-Control: max-age` 和 `Cache-Control: s-maxage`](#cache-control-max-age-和-cache-control-s-maxage)
+            - [`Cache-Control: no-transform`](#cache-control-no-transform)
+            - [`Cache-Control: public`](#cache-control-public)
+            - [`Cache-Control: private`](#cache-control-private)
+            - [`Cache-Control: proxy-revalidate`](#cache-control-proxy-revalidate)
+        - [`Expires`](#expires)
+    - [协商缓存首部](#协商缓存首部)
+        - [`Etag`](#etag)
+        - [`Last-modified`](#last-modified)
+        - [`Last-modified` 和 `Etag` 的区别（优先使用 `Etag` 的原因）](#last-modified-和-etag-的区别优先使用-etag-的原因)
+    - [合理的设置方案](#合理的设置方案)
+    - [请求中的 `Cache-Control` 首部](#请求中的-cache-control-首部)
     - [Invalidating and updating cached responses](#invalidating-and-updating-cached-responses)
     - [Caching checklist](#caching-checklist)
-    - [Chrome 相关](#chrome-%E7%9B%B8%E5%85%B3)
-        - [Chrome 的 memory cache 和 disk cache](#chrome-%E7%9A%84-memory-cache-%E5%92%8C-disk-cache)
-        - [Chrome 在不同场景下的 cache 使用](#chrome-%E5%9C%A8%E4%B8%8D%E5%90%8C%E5%9C%BA%E6%99%AF%E4%B8%8B%E7%9A%84-cache-%E4%BD%BF%E7%94%A8)
+    - [Chrome 相关](#chrome-相关)
+        - [Chrome 的 memory cache 和 disk cache](#chrome-的-memory-cache-和-disk-cache)
+        - [Chrome 在不同场景下的 cache 使用](#chrome-在不同场景下的-cache-使用)
     - [References](#references)
 
 <!-- /TOC -->
@@ -43,11 +43,12 @@
 7. 完整的缓存使用流程
     <img src="./images/HTTP-Cache.jpg" width="400" style="display: block; margin: 5px 0 10px 0;" />
 8. 一个具体的例子
-    <img src="./images/http_staleness.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+    <img src="./images/http_staleness.png" width="600" style="display: block; margin: 5px 0 10px 0; background: white" />
 
 
 ## 强缓存首部
 ### `Cache-Control` 首部（响应中的）
+
 #### 优先级
 1. Attach a `Cache-Control: no-store` header to the response.
 2. Attach a `Cache-Control: no-cache` header to the response.
@@ -108,13 +109,13 @@ The `proxy-revalidate` response directive has the same meaning as the `must-reva
 * 服务器会优先验证 ETag。
 
 
+## 合理的设置方案
+<img src="./images/http-cache-decision-tree.png" width="600" style="display: block; margin: 5px 0 10px 0; background: white" />
+
+
 ## 请求中的 `Cache-Control` 首部
 1. 除了服务器设置的缓存规则外，客户端也可以通过 `Cache-Control` 首部对资源的缓存规则进行改变，例如浏览器的强制刷新以确保使用了最新的资源，或者要求可以使用过期资源以节省流量。
 2. 详见 `../HTTPArchitecture/Caching/ControllingCachability.md`。
-
-
-## Defining optimal Cache-Control policy
-![http-cache-decision-tree](./images/http-cache-decision-tree.png)
 
 
 ## Invalidating and updating cached responses

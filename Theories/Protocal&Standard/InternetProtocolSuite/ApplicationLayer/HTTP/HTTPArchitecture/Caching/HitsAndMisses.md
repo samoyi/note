@@ -3,12 +3,12 @@
 <!-- TOC -->
 
 - [Hits and Misses](#hits-and-misses)
-    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
-    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
+    - [设计思想](#设计思想)
+    - [抽象本质](#抽象本质)
     - [Summary](#summary)
-    - [Revalidations](#revalidations)
-        - [Revalidate hit](#revalidate-hit)
-        - [If-Modified-Since](#if-modified-since)
+    - [再验证](#再验证)
+        - [再验证命中](#再验证命中)
+        - [`If-Modified-Since`](#if-modified-since)
             - [Revalidate hit](#revalidate-hit)
             - [Revalidate miss](#revalidate-miss)
             - [Object deleted](#object-deleted)
@@ -27,20 +27,18 @@
 
 
 ## Summary
-1. So caches can help. But a cache doesn’t store a copy of every document in the world. Few folks can afford to buy a cache big enough to hold all the Web’s documents. And even if you could afford gigantic “whole-Web caches”, some documents change so frequently that they won’t be fresh in many caches.
-2. Some requests that arrive at a cache can be served from an available copy. This is called a **cache hit**. Other requests arrive at a cache only to be forwarded to the origin server, because no copy is available. This is called a **cache miss**
-    <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+如果请求到达缓存时发现有可用副本，这被称为 **缓存命中**（cache hit）；如果没有的话，缓存就会把请求转发到原始服务器，这被称为 **缓存为命中**（cache miss）；如果缓存不确定副本是否还能用，则需要向原始服务器确认，这被称为 **再验证**（revalidation）
+<img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 
-## Revalidations
-1. Because the origin server content can change, caches have to check every now and then that their copies are still up-to-date with the server. These “freshness checks” are called HTTP revalidations (上图 c). 
+## 再验证
+1. 因为服务器的内容可能会发生改变，所以缓存需要时不时的检查自己的副本是否是最新的。
+2. 为了能高效的验证，HTTP 定义了一些特殊的请求，不用从服务器获取完整的对象就能进行验证。
 
-### Revalidate hit
-1. To make revalidations efficient, HTTP defines special requests that can quickly check if content is still fresh, without fetching the entire object from the server.
-2. A cache can revalidate a copy any time it wants, and as often as it wants. But because caches often contain millions of documents, and because network bandwidth is scarce, most caches revalidate a copy only when it is requested by a client and when the copy is old enough to warrant a check.
-3. When a cache needs to revalidate a cached copy, it sends a small revalidation request to the origin server. If the content hasn’t changed, the server responds with a tiny `304 Not Modified` response. 
-4. As soon as the cache learns the copy is still valid, it marks the copy temporarily fresh again and serves the copy to the client. 
-5. This is called a *revalidate hit* or a *slow hit*. It’s slower than a pure cache hit, because it does need to check with the origin server, but it’s faster than a cache miss, because no object data is retrieved from the server
+### 再验证命中
+1. 缓存需要验证某个副本时，会向原始服务器发送一个小的再验证请求。如果服务器端的资源没有变化，则会返回一个小的响应，状态为 `304 Not Modified`。
+2. 缓存因此会将自己的副本标记为暂时新鲜的，然后把副本返回给客户端。
+3. 这被称为再验证命中或慢命中。下图 a
     <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 
 ### `If-Modified-Since`
