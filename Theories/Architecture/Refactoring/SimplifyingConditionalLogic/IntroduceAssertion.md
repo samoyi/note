@@ -39,6 +39,7 @@
 
 
 ## Mechanics
+断言使用的详细说明 `/Theories/Architecture/DefensiveProgramming/Assertions.md`
 
 
 ## References
