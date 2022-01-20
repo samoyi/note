@@ -22,5 +22,50 @@
     * 总之就是所有程序代码本身以外的东西。
 
 
+## 确定在产品代码中保留多少防御式代码
+产品阶段需要移除大部分防御式代码，以保证程序的高效和健壮。当仍然需要权衡利弊，保留一些必要的防御式代码。
+
+### 保留检查重要错误的代码
+用来检测明显影响使用的错误的代码应该保留，其他的可以移除。
+
+### 不要让程序崩溃，尤其是影响数据的崩溃
+
+### 确认错误消息是友好的
+开发阶段的错误消息是面向开发者的，而产品阶段的错误消息则是直接面向用户的。
+
+
+## 不要过度防御
+根据实际情况，考虑每防御的成本和收益。
+
+
+## CHECKLIST
+### General
+* Does the routine protect itself from bad input data?
+* Have you used assertions to document assumptions, including preconditions and postconditions?
+* Have assertions been used only to document conditions that should never occur?
+* Does the architecture or high-level design specify a specific set of errorhandling techniques?
+* Does the architecture or high-level design specify whether error handling should favor robustness or correctness?
+* Have barricades been created to contain the damaging effect of errors and reduce the amount of code that has to be concerned about error processing?
+* Have debugging aids been used in the code?
+* Have debugging aids been installed in such a way that they can be activated or deactivated without a great deal of fuss?
+* Is the amount of defensive programming code appropriate—neither too much nor too little?
+* Have you used offensive-programming techniques to make errors difficult to overlook during development?
+
+### Exceptions
+* Has your project defined a standardized approach to exception handling?
+* Have you considered alternatives to using an exception?
+* Is the error handled locally rather than throwing a nonlocal exception, if possible?
+* Does the code avoid throwing exceptions in constructors and destructors?
+* Are all exceptions at the appropriate levels of abstraction for the routines that throw them?
+* Does each exception include all relevant exception background information?
+* Is the code free of empty catch blocks? (Or if an empty catch block truly is appropriate, is it documented?)
+
+### Security Issues
+* Does the code that checks for bad input data check for attempted buffer overflows, SQL injection, HTML injection, integer overflows, and other malicious inputs?
+* Are all error-return codes checked?
+* Are all exceptions caught?
+* Do error messages avoid providing information that would help an attacker break into the system?
+
+
 ## References
 * [《代码大全（第2版）》](https://book.douban.com/subject/1477390/)
