@@ -1273,7 +1273,7 @@
     i = s + 2;
     printf("%d\n", i); // 3
     ```
-7. 编译器会把 `s` 作为整型变量来处理，而 `CLUBS`、`DIAMONDS`、`HEARTS` 和 `SPADES` 只是数 0、1、2 和 3 的名字而已。
+7. 编译器会把 `s` 作为整型变量来处理，而 `CLUBS`、`DIAMONDS`、`HEARTS` 和 `SPADES` 只是数 0、1、2 和 3 的名字而已
     ```cpp
     enum {CLUBS, DIAMONDS, HEARTS, SPADES} s;
 
