@@ -9,7 +9,6 @@
     - [涉及的 bad codes](#涉及的-bad-codes)
     - [Motivation](#motivation)
     - [实现方法](#实现方法)
-        - [使用 setter 返回副本的方法](#使用-setter-返回副本的方法)
     - [Mechanics](#mechanics)
     - [References](#references)
 
@@ -32,23 +31,17 @@
 
 
 ## 实现方法
-1. 一种不太好的方法是完全不返回集合，而是针对集合的所有元素都提供访问方法。但是这样对于封装方和适用方都不方便。
+1. 一种不太好的方法是完全不返回集合，而是针对集合的所有元素都提供访问方法。但是这样对于封装方和使用方都不方便。
 2. 另一种方法是返回只读的集合，对返回的集合修改会提示错误。例如使用 JavaScript 的 `Object.freeze()`。
-3. 不过最常用的方法还是返回集合的一个副本。
-
-
-### 使用 setter 返回副本的方法
-1. Probably the most common approach is to provide a getting method for the collection, but make it return a copy of the underlying collection. 
-2. That way, any modifications to the copy don’t affect the encapsulated collection. 
-3. This might cause some confusion if programmers expect the returned collection to modify the source field — but in many code bases, programmers are used to collection getters providing copies. 
-4. If the collection is huge, this may be a performance issue — but most lists aren’t all that big.
-5. 如果原始数据结构的属性也是引用类型，则需要进行深拷贝才能真正保护原始数据。下面这样的浅拷贝并不行
+3. 不过最常用的方法还是返回集合的一个副本。也就是为集合提供一个取值函数（显式的函数或者是隐式的 getter），返回集合的副本，这样其他人的修改就不会影响原始的集合。
+4. 如果原始数据结构的属性也是引用类型，则需要进行深拷贝才能真正保护原始数据。下面这样的浅拷贝并不行
     ```js
     let arr = [1, [2]];
     let newArr = arr.slice();
     newArr[1][0] = 3;
     console.log(arr[1]); // [3]
     ```
+5. 如果集合很大的话，生成副本可能会有一些性能开销。
 
 
 ## Mechanics

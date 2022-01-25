@@ -1,8 +1,8 @@
-# Large Class Large Record
+# Large Class and Large Record
 
 <!-- TOC -->
 
-- [Large Class Large Record](#large-class-large-record)
+- [Large Class and Large Record](#large-class-and-large-record)
     - [现象](#现象)
         - [扁平的记录](#扁平的记录)
     - [重构方法参考](#重构方法参考)

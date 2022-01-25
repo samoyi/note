@@ -1,8 +1,8 @@
-# 消除非必要的可变性
+# SRP
 
 <!-- TOC -->
 
-- [消除非必要的可变性](#消除非必要的可变性)
+- [SRP](#srp)
     - [思想](#思想)
     - [涉及的 bad codes](#涉及的-bad-codes)
     - [涉及的重构](#涉及的重构)
@@ -14,10 +14,11 @@
 
 
 ## 思想
+1. 顶层设计原则：ETU 和 $ETC_h$。
 
 
 ## 涉及的 bad codes
-* Large Class Large Record
+* Large Class and Large Record
 * Long Function and Long Module
 
 

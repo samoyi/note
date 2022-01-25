@@ -19,12 +19,9 @@
 
 
 ## 涉及的 bad code
-* Duplicated Code
 
 
 ## 涉及的重构方法
-* Extract Function
-* Split Phase
 
 
 ## References
