@@ -6,8 +6,6 @@
     - [思想](#思想)
     - [涉及的 bad codes](#涉及的-bad-codes)
     - [涉及的重构](#涉及的重构)
-        - [Moving Features](#moving-features)
-        - [Dealing with Inheritance](#dealing-with-inheritance)
     - [References](#references)
 
 <!-- /TOC -->
@@ -23,18 +21,13 @@
 
 
 ## 涉及的重构
-* Replace Derived Variable with Query
-* Extract Function
-* Split Phase
 * Extract Class
-* Remove Flag Argument
-* Separate Query from Modifier
-
-### Moving Features
-* Split Loop
-
-### Dealing with Inheritance
-* Replace Type Code with Subclasses
+* Extract Function
+* Remove Flag Argument：flag 的每种状态应该提取为独立函数。
+* Replace Type Code with Subclasses：和 Remove Flag Argument 同理。
+* Separate Query from Modifier：不要用同一个接口同时用来查询和修改。
+* Split Loop：一个循环里不要同时做多个事情。
+* Split Phase：如果一个函数里是做一件事的好几个步骤，可以考虑把每个提取为独立的函数。
 
 
 ## References

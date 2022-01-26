@@ -1,10 +1,10 @@
-# Separate Query from Modifier
+# Separate Query from Modifier（查询和修改分离）
 
 <!-- TOC -->
 
-- [Separate Query from Modifier](#separate-query-from-modifier)
+- [Separate Query from Modifier（查询和修改分离）](#separate-query-from-modifier查询和修改分离)
     - [思想](#思想)
-        - [Command-Query Separation，也算是 SRP 的一种](#command-query-separation也算是-srp-的一种)
+        - [Command-Query Separation（CQS）](#command-query-separationcqs)
     - [Motivation —— Command-Query Separation](#motivation--command-query-separation)
         - [“纯函数” 的好处](#纯函数-的好处)
     - [Mechanics](#mechanics)
@@ -14,10 +14,13 @@
 
 
 ## 思想
-### Command-Query Separation，也算是 SRP 的一种
-1. 纯函数很好，尽量使用纯函数。
-2. 如果一个函数不是纯函数，那就不要让它看起来像纯函数。
-3. 能纯化的部分就单独提取出来作为纯函数，不要把它混在不纯的操作里面。
+中层设计规则：SRP
+
+### Command-Query Separation（CQS）
+1. Every method should either be a command that performs an action, or a query that returns data to the caller, but not both. 
+2. 纯函数很好，尽量使用纯函数。
+3. 如果一个函数不是纯函数，那就不要让它看起来像纯函数。
+4. 能纯化的部分就单独提取出来作为纯函数，不要把它混在不纯的操作里面。
 
 
 ## Motivation —— Command-Query Separation

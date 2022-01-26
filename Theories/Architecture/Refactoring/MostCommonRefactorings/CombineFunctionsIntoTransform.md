@@ -1,5 +1,7 @@
 # Combine Functions into Transform
 
+相关重构方法：Replace Derived Variable with Query
+
 
 <!-- TOC -->
 
