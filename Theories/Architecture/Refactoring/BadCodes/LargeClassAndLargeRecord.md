@@ -3,12 +3,17 @@
 <!-- TOC -->
 
 - [Large Class and Large Record](#large-class-and-large-record)
+    - [思想](#思想)
     - [现象](#现象)
         - [扁平的记录](#扁平的记录)
     - [重构方法参考](#重构方法参考)
     - [References](#references)
 
 <!-- /TOC -->
+
+
+## 思想
+SRP
 
 
 ## 现象
@@ -58,7 +63,6 @@
     
 
 ## 重构方法参考
-* Replace Loop with Pipeline
 
 
 ## References

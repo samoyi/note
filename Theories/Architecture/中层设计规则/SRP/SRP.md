@@ -16,8 +16,10 @@
 
 
 ## 涉及的 bad codes
+* Divergent Change
 * Large Class and Large Record
 * Long Function and Long Module
+* Speculative Generality
 
 
 ## 涉及的重构

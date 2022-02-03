@@ -12,8 +12,9 @@
 
 
 ## 思想
-1. Duplication means that every time you read these copies, you need to read them carefully to see if there’s any difference. If you need to change the duplicated code, you have to find and catch each duplication.
-2. 重复不仅仅意味着重复的工作量，更危险的是，不统一所带来的混乱。
+1. 中层设计规则：DRY
+2. Duplication means that every time you read these copies, you need to read them carefully to see if there’s any difference. If you need to change the duplicated code, you have to find and catch each duplication.
+3. 重复不仅仅意味着重复的工作量，更危险的是，不统一所带来的混乱。
 
 
 ## 重构方法参考

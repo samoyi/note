@@ -5,7 +5,6 @@
 
 - [Data Clumps](#data-clumps)
     - [思想](#思想)
-        - [语义化](#语义化)
     - [重构方法参考](#重构方法参考)
     - [References](#references)
 
@@ -13,14 +12,14 @@
 
 
 ## 思想
-### 语义化
-1. 看起来这里说的意思是，如果几个数据同时出现在好几个地方，那么就说明这几个数据是有内在联系的，它们在逻辑上可以成为一个整体。因此就应该把它们组合成整体。
+1. 中层设计规则：高内聚、语义化
+2. 如果几个数据总是同时出现，那很有可能它们子语义上是一个整体，那就应该让它们组成一个整体。
 
 
 ## 重构方法参考
-* Introduce Parameter Object：好几个相关的参数组合为一个对象
-* Extract Class
-* Preserve Whole Object
+* Introduce Parameter Object：如果这几个数据是参数，那可以组成参数对象
+* Preserve Whole Object：原理同上
+* Extract Class：实现为整体的对象
 * Combine Variables Into Record
 
 

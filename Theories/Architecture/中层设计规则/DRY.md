@@ -36,6 +36,8 @@
 
 
 ## 涉及的 bad code
+* Change Value to ReferenceChange Value to Reference
+* Duplicated Code
 
 
 ## 涉及的重构方法

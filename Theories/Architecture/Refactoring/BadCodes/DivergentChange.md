@@ -5,7 +5,6 @@
 
 - [Divergent Change](#divergent-change)
     - [思想](#思想)
-        - [SRP](#srp)
     - [表现](#表现)
     - [重构方法参考](#重构方法参考)
     - [References](#references)
@@ -14,7 +13,7 @@
 
 
 ## 思想
-### SRP
+中层设计规则：SRP
 
 
 ## 表现
@@ -25,7 +24,7 @@
 
 ## 重构方法参考
 * Extract Class：分成若干个 SRP 的类
-* Split Phase：划分为若干个 SRP 的处理实体
+* Split Phase：如果该实体负责了两个及以上的阶段的功能，那就把每个阶段都提取位单独的 SRP 的实体
 
 
 ## References

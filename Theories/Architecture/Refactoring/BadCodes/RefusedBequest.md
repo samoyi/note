@@ -42,8 +42,6 @@
 
 
 ## 重构方法参考
-* Push Down Method
-* Push Down Field
 * Replace Superclass with Delegate
 * Replace Subclass with Delegate
 
