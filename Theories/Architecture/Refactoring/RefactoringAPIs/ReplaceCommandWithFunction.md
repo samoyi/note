@@ -18,7 +18,7 @@ inverse of: *Replace Function with Command*
 
 
 ## Motivation
-如果不需要附加功能了，那就把对象退回为单独的函数。
+如果不需要附加功能了，那就把退回为类单独的函数。
 
 
 ## Mechanics

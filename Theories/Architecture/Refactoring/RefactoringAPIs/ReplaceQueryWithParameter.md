@@ -15,7 +15,7 @@ inverse of: *Replace Parameter with Query*
 
 
 ## 思想
-低耦合纯函数
+低耦合
 
 
 ## Motivation

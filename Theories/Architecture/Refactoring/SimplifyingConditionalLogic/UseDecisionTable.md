@@ -13,6 +13,8 @@
 
 
 ## 思想
+中层设计规则：OCP
+
 ### 表驱动方法（table-driven methods）
  
 

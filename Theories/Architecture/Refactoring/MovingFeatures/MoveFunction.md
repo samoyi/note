@@ -16,7 +16,7 @@ inverse of: Extract Class
 
 
 ## 思想
-* 最少知识原则（LKP）
+* 语义化
 * 高内聚低耦合
 
 
