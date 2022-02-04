@@ -1,4 +1,4 @@
-# Inline Class 
+# Inline Class
 
 inverse of: Extract Class
 
@@ -15,7 +15,8 @@ inverse of: Extract Class
 
 
 ## 思想
-TODO  “先融合，再拆分” 能抽象出什么思想？
+1. 中层设计规则：高内聚。
+2. TODO  “先融合，再拆分” 能抽象出什么思想？
 
 
 ## Motivation

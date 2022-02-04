@@ -1,32 +1,18 @@
 # Encapsulate Record
 
-formerly: Replace Record with Data Class
-
 
 <!-- TOC -->
 
 - [Encapsulate Record](#encapsulate-record)
     - [思想](#思想)
-    - [涉及的 bad code](#涉及的-bad-code)
     - [Motivation](#motivation)
-        - [提供明确的 API，降低使用成本](#提供明确的-api降低使用成本)
-        - [提供数据读取逻辑](#提供数据读取逻辑)
-        - [方便修改](#方便修改)
-    - [Mechanics](#mechanics)
     - [References](#references)
 
 <!-- /TOC -->
 
 
 ## 思想
-* **意图与实现分离**：提供明确的 API 供使用者方便的使用，但不需要他们知道功能的实现。
-* **黑箱封装**：禁止使用者随意修改内部数据，并且黑箱内部可以对公开的功能做一些黑箱操作。
-* **访问监听**：通过读写方法可以监听和控制用户的访问。
-* **对使用者透明**：可以在对外的表现不变化的前提下，在里面根据需求修改逻辑，使用者都是无感的。
-
-
-## 涉及的 bad code
-* Message Chains
+中层设计规则：意图与实现分离
 
 
 ## Motivation
@@ -59,27 +45,6 @@ class Organization {
     }
 }
 ```
-
-### 提供明确的 API，降低使用成本
-1. 上面只是一个很简单的记录，所以看起来比较容易。
-2. 但如果记录变得复杂，里面会有各种处理逻辑，甚至有一些在某些情况下不希望暴露出来的数据。这时，记录就比较复杂了。
-3. 记录的使用者需要仔细看里面的代码，他会看到自己不需要知道逻辑和数据。
-4. 显然这样的情况，对于使用者是很不方便的。
-5. 封装为对象后，内部的逻辑和私有内容完全隐藏了，只暴露出明确的 API，使用成本就会降低。
-
-### 提供数据读取逻辑
-1. 使用记录的情况下，数据是完全暴露，使用者可以随意的读取和修改。
-2. 但有时你希望对读取和修改加上一些控制，这时就需要把数据封装为对象，就可以做很多事情。参考了这个 [提问](https://stackoverflow.com/questions/1568091/why-use-getters-and-setters-accessors) 及 [翻译](https://www.zhihu.com/question/21401198/answer/18113707)
-    * 变量的内部逻辑和外部表现可以不一样，你可能是想隐藏内部实现，也可能是希望在内部实现改变时对使用者透明
-    * 实现对读写的 debug
-    * Getters and setters can allow different access levels - for example the get may be public, but the set could be protected.
-
-### 方便修改
-1. 假设你的数据逻辑发生了变化，你使用对象的话，那 API 完全可以不变化，只在方法内部进行逻辑修改，对用户来说这样的变化就是无感的。
-2. 或者你要对某个属性重命名，你完全可以提供新旧两个命名方法的，让这两个命名在重构阶段可以共存，逐步替换。
-
-
-## Mechanics
 
 
 ## References

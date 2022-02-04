@@ -42,6 +42,10 @@
 
 ## 涉及的重构方法
 * Change Value to Reference：如果一个数据结构能被好几个共享且能被修改，那就不应该给好几个地方各自分发副本，而是分发引用。
+* Extract Superclass
+* Pull Up Constructor Body
+* Pull Up Field
+* Pull Up Method
 
 
 ## 涉及的设计模式

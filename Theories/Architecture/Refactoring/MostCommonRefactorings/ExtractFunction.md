@@ -1,10 +1,12 @@
 # Extract Function
+
 inverse of: Inline Function
 
 
 <!-- TOC -->
 
 - [Extract Function](#extract-function)
+    - [思想](#思想)
     - [Bad codes](#bad-codes)
     - [Motivations](#motivations)
         - [单纯的长度缩减](#单纯的长度缩减)
@@ -22,8 +24,11 @@ inverse of: Inline Function
 <!-- /TOC -->
 
 
+## 思想
+中层设计规则：意图和实现分离、SRP
+
+
 ## Bad codes
-* Comments
 * Duplicated Code
 * Long Function and Long Module
 * Message Chains
