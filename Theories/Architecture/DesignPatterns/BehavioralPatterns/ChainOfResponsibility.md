@@ -1,6 +1,6 @@
 # Chain of Responsibility
 
-Chain of Responsibility is a behavioral design pattern that lets you pass requests along a chain of handlers. Upon receiving a request, each handler decides either to process the request or to pass it to the next handler in the chain.
+责任链模式是一种行为设计模式， 允许你将请求沿着处理者链进行发送。 收到请求后， 每个处理者均可对请求进行处理， 或将其传递给链上的下个处理者。
 
 
 <!-- TOC -->
@@ -36,11 +36,11 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
 ## 0. 设计思想
 ### 0.1 OCP
 1. 职责链核心的思想不是链，因为即使是疯狂的 `if...else` 也是链式结构。
-2. 核心思想仍然是解耦，是对链的解耦。疯狂的 `if...else` 只写死的职责链，而这里的职责链则是解耦的链，或者说是可以任意拆开、组合、删减和修改节点的链。
-3. 链式处理的结构不需要因为上述修改而修改。
+2. 核心思想仍然是解耦，是对链式结构和业务逻辑的解耦。疯狂的 `if...else` 只写死的职责链，而这里的职责链则是解耦的链，或者说是可以任意拆开、组合、删减和修改节点的链。
+3. 我们需要链式模式，但链式模式不能耦合于具体的业务。职责链可以提供一种不受业务影响的链式功能。
 
 ### 0.2 SRP
-1. 每个节点都独立且完整的负责自己的工作。
+1. 每个节点都独立且完整的负责自己的工作，节点不需要知道自己处在链式结构的什么位置。
 2. 提高可维护性：每个节点可以单独维护，不涉及整个链式结构。
 3. 提高复用性：每个节点处理逻辑也可以复用到职责链以外的其他地方。
 
@@ -76,11 +76,10 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
 
 ## 3. 适用场景
 ### 在处理请求前不确定由哪个对象来处理
-1. 请求在处理前不能知道到底由哪个对象来处理，而是必须要让各个对象依次尝试，不行再转交给其他对象。
-2. 前者是哈希表的结构，后者是链表的结构。
+请求在处理前不能知道到底由哪个对象来处理，而是必须要让各个对象依次尝试，不行再转交给其他对象。
 
 ### 链式处理
-1. 请求需要在若干个节点间传递，然后选择一个可以处理请求的节点。
+1. 请求需要在若干个节点间传递，每个节点负责处理一部分请求。
 2. 如果这些节点的顺序还可能发生变化，或者增加删除节点，或者修改某些节点的逻辑，就更适合职责链。
 
 
@@ -142,7 +141,7 @@ Chain of Responsibility is a behavioral design pattern that lets you pass reques
     console.log( orderResult( 1 , true, 500) ); // 500元定金预购, 得到100优惠券
     ```
 5. 这无疑也是广义上的职责链，需求在 `if-else` 链上传递，直到被应该处理它的一个节点捕获，并进行处理。
-6. 但缺点也是很明显的，但里面的三种处理逻辑没有进行意图和实现的分离，导致函数过大难以理解，而且严重违反了 OCP：
+6. 但缺点也是很明显的，里面的三种处理逻辑没有进行意图和实现的分离，导致函数过大难以理解，而且严重违反了 OCP：
     * 增加减少节点需要修改整个链的函数
     * 修改某个节点也需要修改整个链的函数
     * 调整节点的链接顺序仍然需要修改整个链的函数
