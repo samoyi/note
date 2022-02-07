@@ -20,7 +20,7 @@
 
 
 ## 如何追踪变化
-1. 当你把一个普通的 JavaScript 对象传入 Vue 实例作为 `data` 选项，Vue 将遍历此对象所有的 property，并使用 `Object.defineProperty` 把这些 property 全部转为 getter/setter。 Vue 实例将代理对这些属性的访问和设置。
+1. 当你把一个普通的 JavaScript 对象传入 Vue 实例作为 `data` 选项，Vue 将遍历此对象所有的 property，并使用 `Object.defineProperty` 把这些 property 全部通过 getter/setter 的方式转换为访问器属性。Vue 实例将代理对这些属性的访问和设置。
 2. 这些 getter/setter 对用户来说是不可见的，但是在内部它们让 Vue 能够追踪依赖，在 property 被访问和修改时通知变更。
 3. 每个组件实例都对应一个 watcher 实例，它会在组件渲染的过程中把 “接触” 过的数据 property 记录为依赖。之后当依赖项的 setter 触发时，会通知 watcher，从而使它关联的组件重新渲染。
     <img src="../../../images/ReactivitySystem.png" width="600" style="display: block; margin: 5px 0 10px;" />
@@ -86,7 +86,9 @@
     ```
 4. 有时你可能需要为已有对象赋值多个新 property，比如使用 `Object.assign()` 或 `_.extend()`。但是，这样添加到对象上的新 property 不会触发更新。在这种情况下，你应该用原对象与要混合进去的对象的 property 一起创建一个新的对象。
     ```js
-    // Object.assign(this.parent.child, { age: 22, sex: 'female' }); // 不行
+    // 下面的不行，因为这是个 child 添加属性
+    // Object.assign(this.parent.child, { age: 22, sex: 'female' }); 
+
     // 下面的可以，因为直接修改了 child 而不是添加属性
     this.parent.child = Object.assign({}, this.parent.child, { age: 22, sex: 'female' }); 
     ```
@@ -95,7 +97,7 @@
 1. Vue 不能检测以下数组的变动：
     * 当你利用索引直接设置一个数组项时，例如：`vm.items[indexOfItem] = newValue`
     * 当你修改数组的长度时，例如：`vm.items.length = newLength`
-2. 因为这两个都是在修改 `vm.items` 的子属性，而不是修改 `vm.items` 本身。
+2. 因为这两个都是在修改 `vm.items` 的属性，而不是修改 `vm.items` 本身。
 3. 为了解决第一个问题，有两个方法：
     * 可以把子属性 `indexOfItem` 也设置为响应式的
         ```js
@@ -116,7 +118,7 @@
 
 ## 声明响应式 property
 1. 由于 Vue 不允许动态添加根级响应式 property，所以你必须在初始化实例前声明所有根级响应式 property，哪怕只是一个空值。
-2. 如果你未在 `data` 选项中声明 `message`，Vue 将警告你渲染函数正在试图访问不存在的 property。
+2. 如果你未在 `data` 选项中声明一个值却在模板中使用，Vue 将警告你渲染函数正在试图访问不存在的 property。
 3. 这样的限制在背后是有其技术原因的，它消除了在依赖项跟踪系统中的一类边界情况，也使 Vue 实例能更好地配合类型检查系统工作。
 4. 但与此同时在代码可维护性方面也有一点重要的考虑：`data` 对象就像组件状态的结构 (schema)。提前声明所有的响应式 property，可以让组件代码在未来修改或给其他开发人员阅读时更易于理解。
 

@@ -45,14 +45,16 @@ Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过 `Obje
 
 ## 1. 实现功能
 以下三个功能，就是一个基础但完整的双向绑定的内容：
-* 初始编译模板
+* 初始编译模板，获得用户标记的绑定关系
 * 从 view 到 model 的绑定
 * 从 model 到 view 的绑定
+
+<img src="../../../images/ReactivitySystem.png" width="600" style="display: block; margin: 5px 0 10px;" />
 
 ### 初始编译模板
 1. 从 model 到 view 的初始化赋值。  
 2. 保证网页打开后，在不交互的情况下，页面正常显示。包括但不限于：
-    * HTML 中的文本变量已经替换为具体的数据
+    * HTML 中的文本变量已经替换为具体的数据文本
     * `v-model` 的表单使用了 model 中的值
     * `v-for` 的节点循环渲染
     * `v-if="false"` 的节点不渲染
@@ -62,7 +64,7 @@ Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过 `Obje
 改变 view 中 `input` 的值时，model 的 data 发生更新。
 
 ### 从 model 到 view 的绑定
-1. 改变 model 的某个数据时，更新 view 依赖该数据的节点。包括但不限于：
+1. 改变 model 的某个数据时，更新 view 中依赖该数据的节点。包括但不限于：
     * `input` 的 `value`
     * 节点的 `textContent`
     * 节点的 `class`
@@ -71,8 +73,8 @@ Vue.js 采用数据劫持结合发布者-订阅者模式的方式，通过 `Obje
 
 
 ## 2. 功能模块
-* Compiler
-* Publisher：对应 Vue 中的 Dep 类
+* Compiler：编译模板；
+* Publisher：对应 Vue 中的 Dep 类，也就是依赖，view 节点依赖的数据；
 * Observer
 * Subscriber：对应 Vue 中的 Watcher 类
 
