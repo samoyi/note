@@ -30,7 +30,7 @@ export function toggleObserving(value: boolean) {
     shouldObserve = value;
 }
 
-// 观察（Observe）一个 vue 实例，将它的 data 对象里面的属性转换为访问器属性。
+// Observe 一个 vue 实例，将它的 data 对象里面的属性转换为访问器属性。
 // 将每一个属性设置为 publisher，从而实现在其值更新的时候通知依赖，也就是实现响应式
 /**
  * Observer class that is attached to each observed
@@ -212,6 +212,9 @@ export function defineReactive(
                 //         Dep.target.addDep(this);
                 //     }
                 // }
+                // 一个数据和它的 dep 实例建立关系的方法并不是把数据传入 `Dep` 构造函数中，
+                // 而是通过闭包在数据的 getter 和 setter 里引用 dep 实例。
+                // 这样，在编译模板时读取该数据以及之后该数据更新时，就可以找到数据对应的 dep 实例。
                 dep.depend();
 
                 // 如果该对象的子属性对象也被 observe 了，那么子属性对象也会作为其父对象 watcher 的依赖

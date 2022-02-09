@@ -16,9 +16,9 @@
         - [发布者](#发布者)
     - [整体流程](#整体流程)
     - [主要模块](#主要模块)
-        - [`Observer`](#observer)
-        - [`Dep`](#dep)
-        - [`Watcher`](#watcher)
+        - [`Observer` 类](#observer-类)
+        - [`Dep` 类](#dep-类)
+        - [`Watcher` 类](#watcher-类)
         - [从单词语义上看 `Watcher` 和 `Observer` 的命名](#从单词语义上看-watcher-和-observer-的命名)
     - [`Dep.target` 的作用](#deptarget-的作用)
     - [实现](#实现)
@@ -66,7 +66,7 @@
 ## 整体流程
 <img src="../../images/ReactivitySystem.png" width="600" style="display: block; background-color: #fff; margin: 5px 0 10px 0;" />
 
-1. **实现发布者**：为每个依赖的数据构造一个发布者，依赖的数据发生变化后通知订阅者。发布者由 `Dep` 类实现。
+1. **实现发布者**：为每个被依赖的数据构造一个发布者，依赖的数据发生变化后通知订阅者。发布者由 `Dep` 类实现。
 2. **实现数据响应式**：要获得依赖数据的变化事件，如果让发布者轮询显然不合适，所以需要让数据变动时主动通知发布者。数据响应由 `Observer` 类实现。
 3. **实现订阅者**：每一个依赖该数据的对象，要先把自己变成一个订阅者实例。订阅者由 `Watcher` 类实现。
 4. **订阅依赖**：订阅者向发布者订阅数据变动。订阅时需要调用发布者的订阅函数并传递订阅者，但这个调用是由 `Observer` 发起的。下述原因。
@@ -74,20 +74,19 @@
 
 
 ## 主要模块
-### `Observer`
-1. 位于 `/src/core/observer/index.js` 中的 `Observer` 类。
+### `Observer` 类
+1. 位于 `/src/core/observer/index.js`。
 2. Observe 一个 vue 实例，也就是将它的 data 对象里面的属性转换为访问器属性（递归的）。
-3. 通过使用 Dep 模块，将每一个属性设置为 publisher，从而实现在其值更新的时候通知依赖，也就是实现响应式。
+3. 通过使用 `Dep` 类，将每一个属性设置为发布者，从而实现在其值更新的时候通知依赖，也就是实现响应式。
 
-### `Dep`
-1. 位于 `/src/core/observer/dep.js`
-2. 相当于 Publisher & Subscriber 模式的 Publisher。
-3. 每一个被依赖的属性都有一个对应的 `Dep` 实例，管理着订阅者们（`Watcher`）对该属性的订阅操作和属性值更新后通知订阅者。
+### `Dep` 类
+1. 位于 `/src/core/observer/dep.js`，相当于发布者。
+2. 每一个被依赖的属性创建一个对应的 `Dep` 实例，管理着订阅者们（`Watcher`）对该属性的订阅操作和属性值更新后通知订阅者。
 
-### `Watcher`
-1. 位于 `/src/core/observer/watcher.js`
-2. 相当于 Publisher & Subscriber 模式的 Subscriber。
-3. 管理一个表达式，确定它依赖哪些 `Dep` 并结合相应的 `Dep` 进行订阅。
+### `Watcher` 类
+1. 位于 `/src/core/observer/watcher.js`，相当于订阅。
+2. 管理一个表达式，确定它依赖哪些 `Dep` 实例并订阅该实例对应的数据的变动。
+3. 这个表达式代表着依赖某数据的节点、计算属性或者 `watch` 属性。
 
 ### 从单词语义上看 `Watcher` 和 `Observer` 的命名
 1. 来自这个 [视频](https://www.youtube.com/watch?v=X864N8H9OCg) 的解释：
@@ -103,7 +102,7 @@
 
 ## 实现
 1. 我们举例假设有一个计算属性内部依赖了两个 data 属性，来看看这个依赖关系是怎么绑定的。
-2. 计算属性是 subscriber，对应 `Watcher`；data 属性是 publisher，对应 `Dep`。
+2. 计算属性是订阅者，对应 `Watcher`；data 属性是发布者，对应 `Dep`。
 
 ### 第一步：实现数据响应式
 #### 初始化
@@ -195,7 +194,8 @@
 2. 现在，访问 `vm[key]` 的时候，实际返回的是 `vm[_data][key]`，设置 `vm[key]` 的时候，实际设置的是 `vm[_data][key]`。
 
 #### 为实例 data 对象创建 `Observer` 实例
-1. `observe` 自己并不会处理 data 对象，而是通过创建 `Observer` 实例来实现
+1. 上面 `initData` 函数的最后一步调用了 `observe` 方法，并传递了 `data` 对象。从这里开始，就要对 `data` 中的数据进行响应化处理。
+2. 但是 `observe` 并不会亲自处理 `data` 对象，而是通过创建 `Observer` 实例来实现
     ```js
     // /src/core/observer/index.js
 
@@ -234,7 +234,7 @@
         return ob;
     }
     ```
-2. `Observer` 实例化时会为 data 对象的每个属性通过 `defineReactive` 函数创建发布者实例（`Dep` 实例）并实现对象的响应式
+3. `Observer` 实例化时会为 data 对象的每个属性通过 `defineReactive` 函数创建发布者实例（`Dep` 实例）并实现对象的响应式
     ```js
     // /src/core/observer/index.js
 
@@ -305,8 +305,10 @@
 
 ##### 被 observe 的属性是数组的情况
 1. 对数组属性设置的响应式之后，只有直接改变数组才能触发 setter，而数组的 `pop`、`push` 等方法都是无法触发的。那么我们如何监听数组的这些变化呢？ 
-2. Vue.js 提供的方法是重写 `push`、`pop`、`shift`、`unshift`、`splice`、`sort`、`reverse` 这七个数组方法
+2. Vue.js 提供的方法是重写 `push`、`pop`、`shift`、`unshift`、`splice`、`sort`、`reverse` 这七个数组方法，并组成一个对象作为原型
     ```js
+    // /src/core/observer/array.js
+
     /*
     * not type checking this file because flow doesn't play well with
     * dynamically accessing methods on Array prototype
@@ -360,7 +362,7 @@
         });
     });
     ```
-3. 并通过 `protoAugment` 和 `copyAugment` 两个方法调用来作用在被 observe 的数组上
+3. 并通过 `protoAugment` 和 `copyAugment` 两个方法调用把上面的原型应用在被 observe 的数组上
     ```js
     // /src/core/observer/index.js
     
