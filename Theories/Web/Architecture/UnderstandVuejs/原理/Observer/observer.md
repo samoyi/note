@@ -16,7 +16,7 @@
         - [发布者](#发布者)
     - [整体流程](#整体流程)
     - [主要模块](#主要模块)
-        - [`Observer` 类](#observer-类)
+        - [`Observer` 模块](#observer-模块)
         - [`Dep` 类](#dep-类)
         - [`Watcher` 类](#watcher-类)
         - [从单词语义上看 `Watcher` 和 `Observer` 的命名](#从单词语义上看-watcher-和-observer-的命名)
@@ -28,6 +28,7 @@
             - [为实例 data 对象创建 `Observer` 实例](#为实例-data-对象创建-observer-实例)
                 - [被 observe 的属性是数组的情况](#被-observe-的属性是数组的情况)
             - [`defineReactive` 函数实际实现订阅者和响应式](#definereactive-函数实际实现订阅者和响应式)
+            - [`Observer` 模块几个主要子模块的分工](#observer-模块几个主要子模块的分工)
         - [第二步：实际的依赖收集](#第二步实际的依赖收集)
         - [第三步：通知更新](#第三步通知更新)
     - [Watcher 的实现](#watcher-的实现)
@@ -74,7 +75,7 @@
 
 
 ## 主要模块
-### `Observer` 类
+### `Observer` 模块
 1. 位于 `/src/core/observer/index.js`。
 2. Observe 一个 vue 实例，也就是将它的 data 对象里面的属性转换为访问器属性（递归的）。
 3. 通过使用 `Dep` 类，将每一个属性设置为发布者，从而实现在其值更新的时候通知依赖，也就是实现响应式。
@@ -475,13 +476,22 @@
 3. 而依赖的属性变化后，会触发 `set` 函数，函数内部会根据之前收集的依赖 watcher 列表，使用新的值来通知他们。
 4. 这样收集依赖的方式保证了只有真正被依赖的数据才会被响应式化，那些没人依赖的数据就不会被 observe。
 
+#### `Observer` 模块几个主要子模块的分工
+* `observe` 函数：为一个值（记为 `value`）创建一个 `Observer` 实例，并返回该实例。
+* `Observer` 类：为 `value` 创建一个 `Dep` 实例；使用 `value.__ob__` 上面创建的 `Observer` 实例；对 `value` 的每个属性调用 `defineReactive`。
+* `defineReactive` 函数：为 `value` 的属性创建一个 `Dep` 实例，并把该属性变为响应式的；并对该属性调用 `observe`。
+
+1. 可以看到，`observe` 把不会为 `value` 本身转变为响应式的，只会把 `value` 的属性转变为响应式的。
+2. 因此，对 `data` 对象调用 `observe` 时，`data` 本身并不会成为响应式的，而事实上也没有这个必要；但 `data` 还有 `Dep` 实例的；当然也有 `Observer` 实例，可以通过 `data.__ob__` 访问。
+3. 而 `data` 的每个属性才实现了响应式。
+
 ### 第二步：实际的依赖收集   
-1. 整体思路为：watcher 求值，触发依赖属性的 getter 函数，在函数内进行依赖收集。
+1. 整体思路为：watcher 对表达式求值，触发依赖属性的 getter 函数，在函数内进行依赖收集。
 2. 初次对模板中的变量或计算属性之类进行求值，就会访问到里面依赖的属性，进而触发该属性的 getter，也就是上面 `defineReactive` 中的 `get` 函数。
 3. 譬如说现在的 data 中有 `a`、`b`、`c` 三个数据，一个计算属性的值要被渲染，该计算属性依赖 `a` 和 `c`。
-4. 那么在对计算属性求值的时候，会读取里面的 `a` 和 `c` 两个属性，进而触发 `a` 和 `c` 的 getter 函数。
-5. 同时，在对计算属性求值的时候，全局的 `Dep.target` 会被设置为该计算属性的 watcher 对象。
-6. 因此，在触发 `a` 和 `c` 的 getter 函数的时候，就可以通过 `Dep.target` 得知是哪个 watcher 谁在依赖自己，然后把这个 watcher 添加到自己的依赖列表 `subs` 中。
+4. 那么在对计算属性求值之前，会读取里面的 `a` 和 `c` 两个属性，进而触发 `a` 和 `c` 的 getter 函数。
+5. 同时，在对计算属性求值的时候，全局的 `Dep.target` 会被设置为该计算属性的 `watcher` 实例。
+6. 因此，在触发 `a` 和 `c` 的 getter 函数的时候，就可以通过 `Dep.target` 得知是哪个 `watcher` 在依赖自己，然后把这个 `watcher` 添加到自己的依赖列表 `subs` 中。
 7. 看一下 `Watcher` 的求值函数
     ```js
     // /src/core/observer/watcher.js
@@ -534,6 +544,7 @@
         }
         // #7981: for accessor properties without setter
         if (getter && !setter) return;
+        // 如果属性自己定义了 setter 就调用自己的
         if (setter) {
             setter.call(obj, newVal);
         } else {

@@ -144,8 +144,8 @@ export function observe(value: any, asRootData: ?boolean): Observer | void {
         !isServerRendering() &&
         ( Array.isArray(value) || isPlainObject(value) ) &&
         Object.isExtensible(value) &&
-        !value._isVue ) 
-    {
+        !value._isVue 
+    ) {
         ob = new Observer(value); // 为该 data 对象创建 Observer 实例
     }
 
@@ -245,6 +245,7 @@ export function defineReactive(
             }
             // #7981: for accessor properties without setter
             if (getter && !setter) return;
+            // 如果属性自己定义了 setter 就调用自己的
             if (setter) {
                 setter.call(obj, newVal);
             } else {

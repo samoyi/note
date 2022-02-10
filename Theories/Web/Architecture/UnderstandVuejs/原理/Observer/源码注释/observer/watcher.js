@@ -71,7 +71,6 @@ export default class Watcher {
     ) {
         // vm 实例和 watcher 实例互相关联
         this.vm = vm;
-
         // 所有的 watcher 实例都会被加入到 vm 实例的 _watchers
         // 但渲染 watcher 还会被单独保存在实例的 _watcher 属性上
         if (isRenderWatcher) {
@@ -252,7 +251,7 @@ export default class Watcher {
      * Will be called by the scheduler.
      */
     run() {
-        if (this.active) {
+        if (this.active) { // 暂时测试都是 true，TODO
             const value = this.get();
             if (
                 value !== this.value ||
@@ -279,6 +278,7 @@ export default class Watcher {
                     }
                 } 
                 else {
+                    // TODO
                     this.cb.call(this.vm, value, oldValue);
                 }
             }
