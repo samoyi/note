@@ -196,7 +196,7 @@ export function defineReactive(
         enumerable: true,
         configurable: true,
         
-        // 在编译阶段，会对模板、计算属性之类的求值，求值的过程就会对其依赖属性求值，进而触发这里的 get 函数，完成依赖订阅。
+        // 在调用编译模板生成的渲染函数时，会调用每个节点的渲染表达式，进而对节点依赖的数据求值，求值的过程就会对其依赖属性求值，进而触发这里的 get 函数，完成依赖订阅。
         // 这样也保证了，只有真正被依赖的数据才会被响应式化，那些没人依赖的数据就不会被 observe。
         get: function reactiveGetter() {
             // 如果属性已经有 getter，则使用本身 getter 返回值
@@ -214,7 +214,7 @@ export function defineReactive(
                 // }
                 // 一个数据和它的 dep 实例建立关系的方法并不是把数据传入 `Dep` 构造函数中，
                 // 而是通过闭包在数据的 getter 和 setter 里引用 dep 实例。
-                // 这样，在编译模板时读取该数据以及之后该数据更新时，就可以找到数据对应的 dep 实例。
+                // 这样，在依赖订阅时读取该数据以及之后该数据更新时，就可以找到数据对应的 dep 实例。
                 dep.depend();
 
                 // 如果该对象的子属性对象也被 observe 了，那么子属性对象也会作为其父对象 watcher 的依赖

@@ -1,11 +1,11 @@
-# Compiler
+# Optimize
 
 * 源码版本：2.5.21
 
 
 <!-- TOC -->
 
-- [Compiler](#compiler)
+- [Optimize](#optimize)
     - [优化目的](#优化目的)
         - [关键细节](#关键细节)
     - [实现原理](#实现原理)
@@ -31,10 +31,9 @@
 
 
 ## 实现原理
-1. 优化器会遍历模板生成的 AST，查找其中的静态子树。一旦找到一个静态子树，就可以：
-    * 将它提升为常量，这样在每次重渲染时就不需要为它们创建节点。
-    * patch 的过程中直接跳过它。
-2. 详细的注释在源码文件中：`src/compiler/optimizer.js`
+优化器会遍历模板生成的 AST，查找其中的静态子树。一旦找到一个静态子树，就可以：
+* 将它提升为常量，这样在每次重渲染时就不需要为它们创建节点。
+* patch 的过程中直接跳过它。
 
 
 ## 抽象本质
@@ -218,10 +217,7 @@
     ```
 
 
-
-
-
-
 ## References
 * [聊聊Vue的template编译.MarkDown](https://github.com/answershuto/learnVue/blob/master/docs/%E8%81%8A%E8%81%8AVue%E7%9A%84template%E7%BC%96%E8%AF%91.MarkDown)
 * [【Vue原理】Compile - 源码版 之 optimize 标记静态节点](https://segmentfault.com/a/1190000020028904)
+* [Vue编译之 optimize和 code generate源码解析](https://juejin.cn/post/7016597507664773151)
