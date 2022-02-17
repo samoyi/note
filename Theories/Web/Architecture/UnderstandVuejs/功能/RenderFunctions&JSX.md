@@ -5,7 +5,7 @@
 
 - [Render Functions & JSX](#render-functions--jsx)
     - [0. Basic](#0-basic)
-    - [1. `createElement` Arguments](#1-createelement-arguments)
+    - [1. `createElement` 的参数](#1-createelement-的参数)
         - [1.1 第一个参数](#11-第一个参数)
             - [1.1.1 String: 一个 HTML 标签字符串](#111-string-一个-html-标签字符串)
             - [1.1.2 Object: 组件选项对象](#112-object-组件选项对象)
@@ -29,12 +29,60 @@
 
 
 ## 0. Basic
-1. `createElement` 返回的并不是一个实际的 DOM 元素。它更准确的名字也许应该是 `createNodeDescription`，因为它所包含的信息会告诉 Vue 页面上需要渲染什么样的节点，及其子节点。
-2. 我们把这样的节点描述为 “虚拟节点 (Virtual Node)”，也常简写它为“VNode”。“虚拟DOM” 是我们对由 Vue 组件树建立起来的整个 VNode 树的称呼。
+1. 使用模板时，Vue 会把带指令的 HTML 模板编译为最终的 HTML。例如
+    ```html
+    <body> 
+        <div id="app">
+            {{message}}
+        </div>
+    </body>
+    <script>
+    var app = new Vue({
+        el: '#app',
+
+        data: {
+            message: "hello"
+        },
+    })
+    </script>
+    ```
+    编译的结果是
+    ```html
+    <div id="app">
+        hello
+    </div>
+    ```
+2. 不过，因为 JavaScript 本身就可以创建节点，所以 Vue 也通过了渲染函数来用户自己创建依赖数据的节点。例如
+    ```html
+    <body> 
+        <div id="app"></div>
+    </body>
+    <script>
+    var app = new Vue({
+        el: '#app',
+
+        render(createElement) {
+            return createElement('div', {attrs: {id: "app"}}, this.message);
+        },
+        
+        data: {
+            message: "hello"
+        },
+    })
+    </script>
+    ```
+    编译的结果是
+    ```html
+    <div id="app">hello</div>
+    ```
+3. `createElement` 返回的并不是一个实际的 DOM 元素。它更准确的名字也许应该是 `createNodeDescription`，因为它所包含的信息会告诉 Vue 页面上需要渲染什么样的节点，及其子节点。
+4. 我们把这样的节点描述为 **虚拟节点**（Virtual Node），也常简写它为 “VNode”。“虚拟DOM” 是我们对由 Vue 组件树建立起来的整个 VNode 树的称呼。
+5. 上面的 `createElement` 返回的 VNode 如下
+    <img src="./images/01.png" width="800" style="display: block; margin: 5px 0 10px;" />
 
 
-## 1. `createElement` Arguments
-* 在只有两个参数的情况下， Vue 会识别第二个参数是形参2还是形参3
+## 1. `createElement` 的参数
+* 在只有两个参数的情况下， Vue 会识别第二个参数是形参2 还是形参3
 
 ### 1.1 第一个参数
 `{String | Object | Function}` Required
@@ -73,79 +121,78 @@ Vue.component('child-component', {
 ### 1.2 第二个参数
 * A data object corresponding to the attributes you would use in a template.
 * `{Object}` Optional
+    ```js
+    {
 
-```js
-{
+        // 设定节点的 class 特性，和`v-bind:class`一样的 API
+        // 接收一个字符串、对象或字符串和对象组成的数组
+        class: {
+            foo: true,
+            bar: false
+        },
 
-    // 设定节点的 class 特性，和`v-bind:class`一样的 API
-    // 接收一个字符串、对象或字符串和对象组成的数组
-    class: {
-        foo: true,
-        bar: false
-    },
+        // 设定节点的 style 特性，和`v-bind:style`一样的 API
+        // 接收一个字符串、对象或对象组成的数组
+        style: {
+            color: 'red',
+            fontSize: '14px'
+        },
 
-    // 设定节点的 style 特性，和`v-bind:style`一样的 API
-    // 接收一个字符串、对象或对象组成的数组
-    style: {
-        color: 'red',
-        fontSize: '14px'
-    },
+        // 设定普通的节点特性
+        attrs: {
+            id: 'foo'
+        },
 
-    // 设定普通的节点特性
-    attrs: {
-        id: 'foo'
-    },
+        // 设定组件 props
+        props: {
+            myProp: 'bar'
+        },
 
-    // 设定组件 props
-    props: {
-        myProp: 'bar'
-    },
+        // 设定节点 DOM 属性
+        domProps: {
+            innerHTML: 'baz'
+        },
 
-    // 设定节点 DOM 属性
-    domProps: {
-        innerHTML: 'baz'
-    },
+        // 设置事件监听
+        // 没有了修饰符功能，需要自己操作事件对象
+        on: {
+            click: this.clickHandler
+        },
 
-    // 设置事件监听
-    // 没有了修饰符功能，需要自己操作事件对象
-    on: {
-        click: this.clickHandler
-    },
+        // 监听原生事件，而非组件 emit 出来的自定义事件
+        nativeOn: {
+            click: this.nativeClickHandler
+        },
 
-    // 监听原生事件，而非组件 emit 出来的自定义事件
-    nativeOn: {
-        click: this.nativeClickHandler
-    },
-
-    // 设置自定义指令
-    directives: [
-        {
-            name: 'my-custom-directive',
-            value: '2',
-            expression: '1 + 1',
-            arg: 'foo',
-            modifiers: {
-                bar: true
+        // 设置自定义指令
+        directives: [
+            {
+                name: 'my-custom-directive',
+                value: '2',
+                expression: '1 + 1',
+                arg: 'foo',
+                modifiers: {
+                    bar: true
+                }
             }
-        }
-    ],
+        ],
 
-    // Scoped slots in the form of
-    // { name: props => VNode | Array<VNode> }
-    scopedSlots: {
-        default: props => createElement('span', props.text)
-    },
+        // Scoped slots in the form of
+        // { name: props => VNode | Array<VNode> }
+        scopedSlots: {
+            default: props => createElement('span', props.text)
+        },
 
-    // 不懂这个怎么用
-    // The name of the slot, if this component is the
-    // child of another component
-    slot: 'name-of-slot',
+        // 不懂这个怎么用
+        // The name of the slot, if this component is the
+        // child of another component
+        slot: 'name-of-slot',
 
-    // 其他特殊顶层属性
-    key: 'myKey',
-    ref: 'myRef'
-}
-```
+        // 其他特殊顶层属性
+        key: 'myKey',
+        ref: 'myRef'
+    }
+    ```
 
 ### 1.3  第三个参数
 * 定义子节点

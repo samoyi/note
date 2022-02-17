@@ -3,22 +3,20 @@
 <!-- TOC -->
 
 - [Diff Algorithm](#diff-algorithm)
-    - [设计思想](#设计思想)
-        - [性能权衡](#性能权衡)
-    - [原理](#原理)
-    - [本质](#本质)
-    - [环境](#环境)
-    - [准备知识](#准备知识)
     - [TODO](#todo)
+    - [设计目的](#设计目的)
+        - [关键细节](#关键细节)
+    - [实现原理](#实现原理)
+    - [抽象本质](#抽象本质)
+    - [设计思想](#设计思想)
     - [DOM 树变化差异比较](#dom-树变化差异比较)
     - [列表的情况](#列表的情况)
         - [Diff 算法并不知道用户操作](#diff-算法并不知道用户操作)
         - [使用 `key` 给节点一个身边标识](#使用-key-给节点一个身边标识)
-    - [渲染差异（patch）原理](#渲染差异patch原理)
-        - [patch](#patch)
-        - [sameVnode](#samevnode)
+    - [`sameVnode` 的逻辑](#samevnode-的逻辑)
+    - [`patch` 的逻辑](#patch-的逻辑)
         - [`patch` 函数源码](#patch-函数源码)
-    - [差异比较（patchVnode）](#差异比较patchvnode)
+    - [`patchVnode` 逻辑](#patchvnode-逻辑)
     - [`updateChildren`](#updatechildren)
         - [四个特殊的节点复用情况](#四个特殊的节点复用情况)
         - [其他情况](#其他情况)
@@ -27,29 +25,33 @@
 
 <!-- /TOC -->
 
-
-## 设计思想
-### 性能权衡
-
-
-## 原理
-
-
-## 本质
-
-
-## 环境
-key | value
---|--
-源码版本 | 2.5.21
-
-
-## 准备知识
-* `./VirtualDOM操作.md`
-
-
 ## TODO
 从 watcher 更新到触发 patch 的代码流程
+
+
+## 设计目的
+1. 更新一个节点是，如果不需要整体替换那就不要替换，只替换其中变更的部分就好。
+
+### 关键细节
+* 怎么判断需不需要整体替换；
+* 如果不需要整体替换，怎么计算要替换哪些部分；
+
+
+## 实现原理
+1. `patch` 函数判断新旧节点关系，以下四种关系中的一种：
+    * 没有旧节点，直接添加新节点；
+    * 没有新节点，说明要删除旧节点；
+    * 新旧节点都有：
+        * 需要用新节点整体替换旧节点；
+        * 不需要整体替换，只需要进行修补（patch）。
+2. 使用 `sameVnode` 函数判断是否需要整体替换。如果是新旧节点是 same，则不需要整体替换。但这里的 same 也不是完全一样，只是说功能上一样，可以修补而不需要替换。
+3. 如果要使用新节点对旧节点进行 patch，则调用 `patchVnode` 函数计算哪些部分需要替换；
+
+
+## 抽象本质
+
+
+## 设计思想
 
 
 ## DOM 树变化差异比较
@@ -124,26 +126,70 @@ key | value
 3. 因为 `key` 必须是唯一的表明节点身份的，所以不能用列表循环的索引作为 `key`。
 
 
-## 渲染差异（patch）原理
-### patch
-1. patch 的过程相当复杂，我们先用简单的代码来看一下
+## `sameVnode` 的逻辑
+1. 源码
+    ```js
+    // /src/core/vdom/patch.js
+
+    function sameVnode(a, b) {
+        return (
+            a.key === b.key // key 要么相同要么都没定义
+            &&
+            ( // 且满足以下两个条件之一
+                (
+                    a.tag === b.tag &&
+                    a.isComment === b.isComment &&
+                    isDef(a.data) === isDef(b.data) && // 同时定义或同时不定义
+                    sameInputType(a, b) // 下述
+                )
+                ||
+                (
+                    // TODO
+                    isTrue(a.isAsyncPlaceholder) &&
+                    a.asyncFactory === b.asyncFactory &&
+                    isUndef(b.asyncFactory.error)
+                )
+            )
+        );
+    }
+    ```
+2. 当标签类型同时为 `input` 的时候，类型也相同（某些浏览器不支持动态修改 `<input>` 类型，所以他们被视为不同类型）时，两个节点就被视为相同的节点
+    ```js
+    function sameInputType(a, b) {
+        if (a.tag !== 'input') return true;
+        let i;
+        const typeA = isDef((i = a.data)) && isDef((i = i.attrs)) && i.type;
+        const typeB = isDef((i = b.data)) && isDef((i = i.attrs)) && i.type;
+        // 要么是 type 一样，要么虽然不一样，但是都是文本输入的类型
+        return typeA === typeB || (isTextInputType(typeA) && isTextInputType(typeB));
+        // isTextInputType 实现如下
+        // const isTextInputType = makeMap('text,number,password,search,email,tel,url')
+    }
+    ```
+
+
+## `patch` 的逻辑
+1. patch 的过程相当复杂，我们先用简化的代码来看一下
     ```js
     function patch (oldVnode, vnode, parentElm) {
         if ( !oldVnode ) {
             addVnodes(parentElm, null, vnode, 0, vnode.length - 1);
-        } else if ( !vnode ) {
+        } 
+        else if ( !vnode ) {
             removeVnodes(parentElm, oldVnode, 0, oldVnode.length - 1);
-        } else {
+        } 
+        else {
             if ( sameVnode(oldVNode, vnode) ) {
                 patchVnode(oldVNode, vnode);
-            } else {
+            } 
+            else {
                 removeVnodes(parentElm, oldVnode, 0, oldVnode.length - 1);
                 addVnodes(parentElm, null, vnode, 0, vnode.length - 1);
             }
         }
     }
     ```
-2. 因为 `patch` 的主要功能是比对两个 VNode 节点，将「差异」更新到视图上，所以入参有新老两个 `VNode` 以及父节点的 `element` 。
+2. 因为 `patch` 的主要功能是比对两个 VNode 节点，将「差异」更新到视图上，所以入参有新老两个 `VNode` 以及父节点的 `parentElm` 。
 3. 首先在 `oldVnode`（老 VNode 节点）不存在的时候，相当于新的 VNode 替代原本没有的节点，所以直接用 `addVnodes` 将这些节点批量添加到 `parentElm` 上
     ```js
     if (!oldVnode) {
@@ -160,55 +206,12 @@ key | value
     ```js
     if (sameVnode(oldVNode, vnode)) {
         patchVnode(oldVNode, vnode);
-    } else {
+    } 
+    else {
         removeVnodes(parentElm, oldVnode, 0, oldVnode.length - 1);
         addVnodes(parentElm, null, vnode, 0, vnode.length - 1);
     }
     ```
-
-### sameVnode
-1. 看看什么情况下两个 VNode 会属于 sameVnode （相同的节点）。
-2. 源码
-    ```js
-    // /src/core/vdom/patch.js
-
-    function sameVnode (a, b) {
-        return (
-            a.key === b.key  // 首先 key 必须要相同
-            && 
-            ( // 且满足以下两个条件之一
-                (
-                    a.tag === b.tag &&
-                    a.isComment === b.isComment &&
-                    isDef(a.data) === isDef(b.data) &&
-                    sameInputType(a, b)
-                ) 
-                || 
-                (
-                isTrue(a.isAsyncPlaceholder) &&
-                a.asyncFactory === b.asyncFactory &&
-                isUndef(b.asyncFactory.error)
-                )
-            )
-        )
-    }
-
-    // 根据上面的 sameVnode 中的逻辑，调用这个函数的时候，说明两个节点的是相同类型的 tag 了
-    // 这时还要看看 tag 类型是不是 input：
-    //    * 如果是的话，它们的 type 也要相等才认为是相同的节点
-    //    * 如果不是的话那就没关系，它们就是相同的节点
-    function sameInputType (a, b) {
-        if (a.tag !== 'input') return true
-        let i
-        const typeA = isDef(i = a.data) && isDef(i = i.attrs) && i.type
-        const typeB = isDef(i = b.data) && isDef(i = i.attrs) && i.type
-        // 要么是 type 一样，要么虽然不一样，但是都是文本输入的类型
-        return typeA === typeB || isTextInputType(typeA) && isTextInputType(typeB)
-        // isTextInputType 在 /src/platforms/web/util/element.js。实现如下
-        // const isTextInputType = makeMap('text,number,password,search,email,tel,url')
-    }
-    ```
-3. 当 `key`、 `tag`、 `isComment`（是否为注释节点）、 `data` 同时定义（或不定义），同时满足当标签类型为 `input` 的时候 `type` 相同（某些浏览器不支持动态修改 `<input>` 类型，所以他们被视为不同类型）时，两个节点就被视为相同的节点。
 
 
 ### `patch` 函数源码
@@ -219,7 +222,9 @@ export function createPatchFunction (backend) {
     
     // ...
     
-    return function patch(oldVnode, vnode, hydrating, removeOnly) {
+    return function patch(oldVnode, vnode, hydrating, removeOnly, parentElm, refElm) {
+        // 如果没有新 VNode 只有旧 VNode，那就直接删除旧 VNode
+        // TODO，没找到删除元素的逻辑
         if (isUndef(vnode)) {
             if (isDef(oldVnode)) invokeDestroyHook(oldVnode);
             return;
@@ -228,33 +233,27 @@ export function createPatchFunction (backend) {
         let isInitialPatch = false;
         const insertedVnodeQueue = [];
 
-        if ( isUndef(oldVnode) ) { // 旧节点不存在直接创建新节点
+        // 有新 VNode 但没有旧 VNode，则创建一个新元素
+        if (isUndef(oldVnode)) { 
             // empty mount (likely as component), create new root element
             isInitialPatch = true;
-            createElm(vnode, insertedVnodeQueue);
-        } 
-        else {
-            const isRealElement = isDef( oldVnode.nodeType );
-            if ( !isRealElement && sameVnode(oldVnode, vnode) ) { // 旧节点是虚拟节点，且新旧虚拟节点是 sameVnode
+            createElm(vnode, insertedVnodeQueue, parentElm, refElm);
+        }
+        // 新旧 VNode 都有
+        else { 
+            const isRealElement = isDef(oldVnode.nodeType);
+            // 新旧 VNode 相同，则进行 patch
+            if (!isRealElement && sameVnode(oldVnode, vnode)) {
                 // patch existing root node
-                patchVnode(
-                    oldVnode,
-                    vnode,
-                    insertedVnodeQueue,
-                    null,
-                    null,
-                    removeOnly
-                );
-            } 
-            else { // 要么旧节点不是虚拟节点，要么新旧节点不是 sameVnode
-                if ( isRealElement ) { // 旧节点不是虚拟节点
+                patchVnode(oldVnode, vnode, insertedVnodeQueue, removeOnly);
+            }
+            // 新旧 VNode 不同，替换
+            else {
+                if (isRealElement) {
                     // mounting to a real element
                     // check if this is server-rendered content and if we can perform
                     // a successful hydration.
-                    if (
-                        oldVnode.nodeType === 1 &&
-                        oldVnode.hasAttribute(SSR_ATTR)
-                    ) {
+                    if (oldVnode.nodeType === 1 && oldVnode.hasAttribute(SSR_ATTR)) {
                         oldVnode.removeAttribute(SSR_ATTR);
                         hydrating = true;
                     }
@@ -262,25 +261,29 @@ export function createPatchFunction (backend) {
                         if (hydrate(oldVnode, vnode, insertedVnodeQueue)) {
                             invokeInsertHook(vnode, insertedVnodeQueue, true);
                             return oldVnode;
-                        } else if (process.env.NODE_ENV !== "production") {
+                        } 
+                        else if (process.env.NODE_ENV !== 'production') {
                             warn(
-                                "The client-side rendered virtual DOM tree is not matching " +
-                                    "server-rendered content. This is likely caused by incorrect " +
-                                    "HTML markup, for example nesting block-level elements inside " +
-                                    "<p>, or missing <tbody>. Bailing hydration and performing " +
-                                    "full client-side render."
+                              'The client-side rendered virtual DOM tree is not matching ' +
+                              'server-rendered content. This is likely caused by incorrect ' +
+                              'HTML markup, for example nesting block-level elements inside ' +
+                              '<p>, or missing <tbody>. Bailing hydration and performing ' +
+                              'full client-side render.'
                             );
                         }
                     }
+
                     // either not server-rendered, or hydration failed.
                     // create an empty node and replace it
                     oldVnode = emptyNodeAt(oldVnode);
                 }
 
+                // 获取旧节点的元素和父级，用来创建新元素
                 // replacing existing element
                 const oldElm = oldVnode.elm;
                 const parentElm = nodeOps.parentNode(oldElm);
 
+                // 创建新元素
                 // create new node
                 createElm(
                     vnode,
@@ -315,18 +318,20 @@ export function createPatchFunction (backend) {
                                     insert.fns[i]();
                                 }
                             }
-                        } else {
+                        } 
+                        else {
                             registerRef(ancestor);
                         }
                         ancestor = ancestor.parent;
                     }
                 }
 
+                // 删除旧的 VNode 和元素
                 // destroy old node
-                if ( isDef(parentElm) ) {
+                if (isDef(parentElm)) {
                     removeVnodes(parentElm, [oldVnode], 0, 0);
                 } 
-                else if ( isDef(oldVnode.tag) ) {
+                else if (isDef(oldVnode.tag)) {
                     invokeDestroyHook(oldVnode);
                 }
             }
@@ -339,7 +344,7 @@ export function createPatchFunction (backend) {
 ```
 
 
-## 差异比较（patchVnode）
+## `patchVnode` 逻辑
 1. patchVnode 是在符合 sameVnode 的条件下触发的，所以会进行「比对」。
 2. 示意代码
     ```js
