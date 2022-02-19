@@ -18,6 +18,7 @@
         - [四个特殊的节点复用情况](#四个特殊的节点复用情况)
         - [其他情况](#其他情况)
         - [`while` 循环结束以后](#while-循环结束以后)
+    - [测试](#测试)
     - [列表的情况](#列表的情况)
         - [Diff 算法并不知道用户操作](#diff-算法并不知道用户操作)
         - [使用 `key` 给节点一个身边标识](#使用-key-给节点一个身边标识)
@@ -706,6 +707,240 @@ function createKeyToOldIdx (children, beginIdx, endIdx) {
     }
     ```
 
+
+## 测试
+1. 子节点只包含文本，且文本就作为 `key`。代码如下
+    ```html
+    <div id="app">
+        <p v-for="key in arr":key="key">{{key}}</p>
+    </div>
+    ```
+    ```js
+    var app = new Vue({
+        el: '#app',
+        
+        data: {
+            arr: ["a", "b", "c", "d"]
+        },
+        
+        mounted () {
+            setTimeout(() => {
+                this.arr = ["b", "e", "d", "c"];
+            }, 1000)
+        }
+    })
+    ```
+2. 准备 patch 时，各部分状态如下
+    <table style="text-align:center">
+        <tr>
+            <th>DOM:</th>
+            <td>a</td>
+            <td>b</td>
+            <td>c</td>
+            <td>d</td>
+        </tr>
+        <tr>
+            <th><pre>oldCh:</pre></th>
+            <td>a</td>
+            <td>b</td>
+            <td>c</td>
+            <td>d</td>
+        </tr>
+        <tr>
+            <th><pre>newCh:</pre></th>
+            <td>b</td>
+            <td>e</td>
+            <td>d</td>
+            <td>c</td>
+        </tr>
+        <tr>
+            <th><pre>oldStartIdx <br /> oldEndIdx <br /> newStartIdx <br /> newEndIdx</pre></th>
+            <td>0</td>
+            <td>3</td>
+            <td>0</td>
+            <td>3</td>
+        </tr>
+    </table>
+3. 第一轮 `while` 开始:
+    1. 首尾结点没有相同的，进入 `else` 分支；
+    2. 通过新的 Vnode `b` 的 `key` 找到旧的 Vnode `b`；
+    3. 符合 sameVnode，进行 `patchVnode`；
+    4. 旧的 Vnode `b` 设置为 `undefined`；
+    5. 把旧的 Vnode `b` 对应的实际 DOM 元素 `b` 移动到 `oldCh[0]` 对应的 DOM 元素 `a` 之前。
+    6. `++newStartIdx`。
+4. 第一轮 `while` 结束，各部分状态如下
+    <table style="text-align:center">
+        <tr>
+            <th>DOM:</th>
+            <td>b</td>
+            <td>a</td>
+            <td>c</td>
+            <td>d</td>
+        </tr>
+        <tr>
+            <th><pre>oldCh:</pre></th>
+            <td>a</td>
+            <td><pre>undefined</pre></td>
+            <td>c</td>
+            <td>d</td>
+        </tr>
+        <tr>
+            <th><pre>newCh:</pre></th>
+            <td>b</td>
+            <td>e</td>
+            <td>d</td>
+            <td>c</td>
+        </tr>
+        <tr>
+            <th><pre>oldStartIdx <br /> oldEndIdx <br /> newStartIdx <br /> newEndIdx</pre></th>
+            <td>0</td>
+            <td>3</td>
+            <td>1</td>
+            <td>3</td>
+        </tr>
+    </table>
+5. 第二轮 `while` 开始:
+    1. 首尾结点没有相同的，进入 `else` 分支；
+    2. 在 `oldCh` 找不到新的 Vnode `e` 对应的 `key`； 
+    3. 通过 `createElm` 创建新的 DOM 元素：使用新的 Vnode `e` 创建，插入到 `oldCh[0]` 对应的 DOM 元素 `a` 之前；
+    4. `++newStartIdx`。
+6. 第二轮 `while` 结束，各部分状态如下
+    <table style="text-align:center">
+        <tr>
+            <th>DOM:</th>
+            <td>b</td>
+            <td>e</td>
+            <td>a</td>
+            <td>c</td>
+            <td>d</td>
+        </tr>
+        <tr>
+            <th><pre>oldCh:</pre></th>
+            <td>a</td>
+            <td><pre>undefined</pre></td>
+            <td>c</td>
+            <td>d</td>
+        </tr>
+        <tr>
+            <th><pre>newCh:</pre></th>
+            <td>b</td>
+            <td>e</td>
+            <td>d</td>
+            <td>c</td>
+        </tr>
+        <tr>
+            <th><pre>oldStartIdx <br /> oldEndIdx <br /> newStartIdx <br /> newEndIdx</pre></th>
+            <td>0</td>
+            <td>3</td>
+            <td>2</td>
+            <td>3</td>
+        </tr>
+    </table>
+7. 第三轮 `while` 开始:
+    1. 进入 `sameVnode(oldEndVnode, newStartVnode)` 分支；
+    2. `patchVnode`:
+    3. 把旧的 `oldCh[3]` 对应的实际 DOM 元素 `d` 移动到 `oldCh[0]` 对应的 DOM 元素 `a` 之前。
+    4. `--oldEndIdx`、`++newStartIdx`。
+8. 第三轮 `while` 结束，各部分状态如下
+    <table style="text-align:center">
+        <tr>
+            <th>DOM:</th>
+            <td>b</td>
+            <td>e</td>
+            <td>d</td>
+            <td>a</td>
+            <td>c</td>
+        </tr>
+        <tr>
+            <th><pre>oldCh:</pre></th>
+            <td>a</td>
+            <td><pre>undefined</pre></td>
+            <td>c</td>
+            <td>d</td>
+        </tr>
+        <tr>
+            <th><pre>newCh:</pre></th>
+            <td>b</td>
+            <td>e</td>
+            <td>d</td>
+            <td>c</td>
+        </tr>
+        <tr>
+            <th><pre>oldStartIdx <br /> oldEndIdx <br /> newStartIdx <br /> newEndIdx</pre></th>
+            <td>0</td>
+            <td>2</td>
+            <td>3</td>
+            <td>3</td>
+        </tr>
+    </table>
+9. 第四轮 `while` 开始:
+    1. 进入 `sameVnode(oldEndVnode, newEndVnode)` 分支；
+    2. `patchVnode`:
+    4. `--oldEndIdx`、`--newEndIdx`。
+10. 第四轮 `while` 结束，各部分状态如下
+    <table style="text-align:center">
+        <tr>
+            <th>DOM:</th>
+            <td>b</td>
+            <td>e</td>
+            <td>d</td>
+            <td>a</td>
+            <td>c</td>
+        </tr>
+        <tr>
+            <th><pre>oldCh:</pre></th>
+            <td>a</td>
+            <td><pre>undefined</pre></td>
+            <td>c</td>
+            <td>d</td>
+        </tr>
+        <tr>
+            <th><pre>newCh:</pre></th>
+            <td>b</td>
+            <td>e</td>
+            <td>d</td>
+            <td>c</td>
+        </tr>
+        <tr>
+            <th><pre>oldStartIdx <br /> oldEndIdx <br /> newStartIdx <br /> newEndIdx</pre></th>
+            <td>0</td>
+            <td>1</td>
+            <td>3</td>
+            <td>2</td>
+        </tr>
+    </table>
+11. 退出 `while`，进入 因为 `newStartIdx > newEndIdx`。移除 `oldCh` 中 [0, 1] 对应的的真实 DOM 节点，也就是删除的 DOM 元素 `a`。
+12. 退出 `updateChildren`，各部分状态如下
+    <table style="text-align:center">
+        <tr>
+            <th>DOM:</th>
+            <td>b</td>
+            <td>e</td>
+            <td>d</td>
+            <td>c</td>
+        </tr>
+        <tr>
+            <th><pre>oldCh:</pre></th>
+            <td>a</td>
+            <td><pre>undefined</pre></td>
+            <td>c</td>
+            <td>d</td>
+        </tr>
+        <tr>
+            <th><pre>newCh:</pre></th>
+            <td>b</td>
+            <td>e</td>
+            <td>d</td>
+            <td>c</td>
+        </tr>
+        <tr>
+            <th><pre>oldStartIdx <br /> oldEndIdx <br /> newStartIdx <br /> newEndIdx</pre></th>
+            <td>0</td>
+            <td>1</td>
+            <td>3</td>
+            <td>2</td>
+        </tr>
+    </table>
 
 
 ## 列表的情况

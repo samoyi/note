@@ -124,6 +124,7 @@ export function createPatchFunction(backend) {
 
     let creatingElmInVPre = 0;
 
+    // 里面会处理好几种情况，最常见的一种是：用 vnode 创建一个元素，插入到 refElm 前面
     function createElm(vnode, insertedVnodeQueue, parentElm, refElm, nested, ownerArray, index) {
         if (isDef(vnode.elm) && isDef(ownerArray)) {
             // This vnode was used in a previous render!
@@ -183,21 +184,25 @@ export function createPatchFunction(backend) {
                     }
                     insert(parentElm, vnode.elm, refElm);
                 }
-            } else {
+            } 
+            else {
                 createChildren(vnode, children, insertedVnodeQueue);
                 if (isDef(data)) {
                     invokeCreateHooks(vnode, insertedVnodeQueue);
                 }
+                // 把 vnode.elm 插入到 refElm 前面
                 insert(parentElm, vnode.elm, refElm);
             }
 
             if (process.env.NODE_ENV !== "production" && data && data.pre) {
                 creatingElmInVPre--;
             }
-        } else if (isTrue(vnode.isComment)) {
+        } 
+        else if (isTrue(vnode.isComment)) {
             vnode.elm = nodeOps.createComment(vnode.text);
             insert(parentElm, vnode.elm, refElm);
-        } else {
+        } 
+        else {
             vnode.elm = nodeOps.createTextNode(vnode.text);
             insert(parentElm, vnode.elm, refElm);
         }
@@ -264,13 +269,16 @@ export function createPatchFunction(backend) {
         insert(parentElm, vnode.elm, refElm);
     }
 
+    // 如果有 ref 元素，把 elm 插入到 ref 前面；
+    // 如果有 ref 元素，把 elm 作为 parent 最后一个子节点；
     function insert(parent, elm, ref) {
         if (isDef(parent)) {
             if (isDef(ref)) {
                 if (ref.parentNode === parent) {
                     nodeOps.insertBefore(parent, elm, ref);
                 }
-            } else {
+            } 
+            else {
                 nodeOps.appendChild(parent, elm);
             }
         }
@@ -362,6 +370,7 @@ export function createPatchFunction(backend) {
         }
     }
 
+    // 移除 vnodes 中 [startIdx, endIdx] 对应的的真实 DOM 节点
     function removeVnodes(parentElm, vnodes, startIdx, endIdx) {
         for (; startIdx <= endIdx; ++startIdx) {
             const ch = vnodes[startIdx];
@@ -369,7 +378,8 @@ export function createPatchFunction(backend) {
                 if (isDef(ch.tag)) {
                     removeAndInvokeRemoveHook(ch);
                     invokeDestroyHook(ch);
-                } else {
+                } 
+                else {
                     // Text node
                     removeNode(ch.elm);
                 }
@@ -377,6 +387,7 @@ export function createPatchFunction(backend) {
         }
     }
 
+    // TODO 第一个分支的细节
     function removeAndInvokeRemoveHook(vnode, rm) {
         if (isDef(rm) || isDef(vnode.data)) {
             let i;
@@ -401,7 +412,8 @@ export function createPatchFunction(backend) {
             } else {
                 rm();
             }
-        } else {
+        } 
+        else {
             removeNode(vnode.elm);
         }
     }
@@ -420,19 +432,22 @@ export function createPatchFunction(backend) {
         // removeOnly is a special flag used only by <transition-group>
         // to ensure removed elements stay in correct relative positions
         // during leaving transitions
-        const canMove = !removeOnly;
+        const canMove = !removeOnly; // 所以 canMove 一般都为 true
 
         if (process.env.NODE_ENV !== "production") {
             checkDuplicateKeys(newCh);
         }
 
         while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+            // isUndef 的情况是，下面有 oldCh[idxInOld] = undefined;
             if (isUndef(oldStartVnode)) {
                 oldStartVnode = oldCh[++oldStartIdx]; // Vnode has been moved left
             } 
             else if (isUndef(oldEndVnode)) {
                 oldEndVnode = oldCh[--oldEndIdx];
             } 
+            
+            // 首首 patch 或者 尾尾 patch，直接 patch 就行了
             else if (sameVnode(oldStartVnode, newStartVnode)) {
                 patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue);
                 oldStartVnode = oldCh[++oldStartIdx];
@@ -443,6 +458,10 @@ export function createPatchFunction(backend) {
                 oldEndVnode = oldCh[--oldEndIdx];
                 newEndVnode = newCh[--newEndIdx];
             } 
+
+            // 首尾 patch 会导致本来应该在后面的节点跑到前面，
+            // 尾首 patch 会导致本来应该在前面的节点跑到后面，
+            // 所以 patch 之后需要调整一下位置，也就是 canMova && 后面的操作。
             else if (sameVnode(oldStartVnode, newEndVnode)) {
                 // Vnode moved right
                 patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue);
@@ -458,12 +477,14 @@ export function createPatchFunction(backend) {
             else if (sameVnode(oldEndVnode, newStartVnode)) {
                 // Vnode moved left
                 patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue);
+                // 在 真实 DOM 层把 oldEndVnode.elm 移动到 oldStartVnode.elm 前面
                 canMove && nodeOps.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm);
                 oldEndVnode = oldCh[--oldEndIdx];
                 newStartVnode = newCh[++newStartIdx];
             } 
+            // 四个特殊的首尾子节点没有 sameVnode 的情况
             else {
-                // 四个特殊的首尾子节点没有 sameVnode 的情况，那就找找有没有和中间某个节点相同的情况。
+                // 那就找找有没有和中间某个节点相同的情况。
                 // 下面判断相同是通过两种方法之一：
                 //                           首选是通过比对有没有相同的 key，
                 //                           其次是通过 sameVnode 方法。
@@ -486,6 +507,7 @@ export function createPatchFunction(backend) {
 
                 if ( isUndef(idxInOld) ) { // 如果没有在 oldCh 里找到和 newStartVnode 相同的节点
                     // 那就证明 newStartVnode 是一个新增节点
+                    // 使用 newStartVnode 新增一个元素，插入到 oldStartVnode.elm 前面
                     // New element
                     createElm(
                         newStartVnode,
@@ -527,7 +549,9 @@ export function createPatchFunction(backend) {
         if (oldStartIdx > oldEndIdx) {
             refElm = isUndef(newCh[newEndIdx + 1]) ? null : newCh[newEndIdx + 1].elm;
             addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx, insertedVnodeQueue);
-        } else if (newStartIdx > newEndIdx) {
+        } 
+        else if (newStartIdx > newEndIdx) {
+            // 移除 oldCh 中 [oldStartIdx, oldEndIdx] 对应的的真实 DOM 节点
             removeVnodes(parentElm, oldCh, oldStartIdx, oldEndIdx);
         }
     }
