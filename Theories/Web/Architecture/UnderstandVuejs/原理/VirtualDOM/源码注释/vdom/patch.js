@@ -459,12 +459,15 @@ export function createPatchFunction(backend) {
                 newEndVnode = newCh[--newEndIdx];
             } 
 
-            // 首尾 patch 会导致本来应该在后面的节点跑到前面，
-            // 尾首 patch 会导致本来应该在前面的节点跑到后面，
+            // 首尾 patch 会导致本来应该在最右边的节点跑到了最左边，
+            // 尾首 patch 会导致本来应该在最左边的节点跑到最右边，
+            // （最左最右不是指在整体的子节点里最左最右，而是在首尾指针范围内）
             // 所以 patch 之后需要调整一下位置，也就是 canMova && 后面的操作。
             else if (sameVnode(oldStartVnode, newEndVnode)) {
                 // Vnode moved right
                 patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue);
+                // 既然新的 vnode 是在最右边，然后你用它修补旧的最左边的 vnode，
+                // 那也就是说修补后这个旧的最左边的 vnode 的元素应该移动到最右的位置。
                 canMove &&
                     nodeOps.insertBefore(
                         parentElm,
@@ -477,8 +480,14 @@ export function createPatchFunction(backend) {
             else if (sameVnode(oldEndVnode, newStartVnode)) {
                 // Vnode moved left
                 patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue);
-                // 在 真实 DOM 层把 oldEndVnode.elm 移动到 oldStartVnode.elm 前面
-                canMove && nodeOps.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm);
+                // 既然新的 vnode 是在最左边，然后你用它修补旧的最右边的 vnode，
+                // 那也就是说修补后这个旧的最右边的 vnode 的元素应该移动到最左的位置。
+                canMove && 
+                    nodeOps.insertBefore(
+                        parentElm, 
+                        oldEndVnode.elm, 
+                        oldStartVnode.elm
+                    );
                 oldEndVnode = oldCh[--oldEndIdx];
                 newStartVnode = newCh[++newStartIdx];
             } 
@@ -488,9 +497,9 @@ export function createPatchFunction(backend) {
                 // 下面判断相同是通过两种方法之一：
                 //                           首选是通过比对有没有相同的 key，
                 //                           其次是通过 sameVnode 方法。
-                // 根据 sameVnode 的逻辑，key 相同不是 sameVnode 必要条件，
-                // sameVnode 也不是 key 相同的充分条件。
-                // TODO，为什么上面四种情况没有先判断 key 是否相同？根据下面下面的逻辑，key 相同但不是
+                // 根据 sameVnode 的逻辑，key 相同不是 sameVnode 必要条件，sameVnode 也不是 key 相同的
+                // 充分条件。
+                // TODO，为什么上面四种情况没有先判断 key 是否相同？根据下面的逻辑，key 相同但不是
                 // sameVnode 会创建新节点，但上面四种情况为什么不这么处理？
 
                 // 获得旧子节点列表的节点 key 到其 index 的映射
@@ -546,11 +555,22 @@ export function createPatchFunction(backend) {
                 newStartVnode = newCh[++newStartIdx];
             }
         }
-        if (oldStartIdx > oldEndIdx) {
-            refElm = isUndef(newCh[newEndIdx + 1]) ? null : newCh[newEndIdx + 1].elm;
+        if (oldStartIdx > oldEndIdx) { // 新节点有剩余
+            // isUndef(newCh[newEndIdx + 1]) 为 true 则表示 newEndIdx 指的还是最右的一个 vnode，最右的
+            // vnode 还没有插入 DOM。
+            // 也就是说此时 newCh 剩余的是最后的一个或多个 vnode，那么这些节点对应的元素就应该 append 到
+            // 尾部而不是 insert 到谁之前。
+            // 所以把 refElm，addVnodes 内部就是 append 的逻辑。
+            // 如果 isUndef(newCh[newEndIdx + 1]) 为 false 则说明最右至少有一个 vnode 已经插入了 DOM。
+            // 那现在 newCh 剩余的部分就应该 insert 到右侧已经插入的若干个元素的最左一个，也就是 
+            // newEndIdx + 1 指向的那个。
+            refElm = isUndef(newCh[newEndIdx + 1]) 
+                        ? null 
+                        : newCh[newEndIdx + 1].elm;
             addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx, insertedVnodeQueue);
         } 
-        else if (newStartIdx > newEndIdx) {
+        else if (newStartIdx > newEndIdx) { // 旧节点有剩余
+            // 这里的逻辑比上面的简单，较少的 newCh 已经插入完，oldCh 两个指针中间还没比较过的就是没用的
             // 移除 oldCh 中 [oldStartIdx, oldEndIdx] 对应的的真实 DOM 节点
             removeVnodes(parentElm, oldCh, oldStartIdx, oldEndIdx);
         }

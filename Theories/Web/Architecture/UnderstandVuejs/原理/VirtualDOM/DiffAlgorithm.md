@@ -10,6 +10,12 @@
     - [抽象本质](#抽象本质)
     - [设计思想](#设计思想)
     - [DOM 树变化差异比较（diff 算法）](#dom-树变化差异比较diff-算法)
+    - [patch 的整体逻辑](#patch-的整体逻辑)
+        - [首先比较 oldVnode 和 vnode 自身](#首先比较-oldvnode-和-vnode-自身)
+        - [patchVnode](#patchvnode)
+        - [updateChildren](#updatechildren)
+            - [没有 key 的情况](#没有-key-的情况)
+            - [有 key 的情况](#有-key-的情况)
     - [`patch` 逻辑](#patch-逻辑)
         - [`sameVnode` 逻辑](#samevnode-逻辑)
         - [`patch` 函数源码](#patch-函数源码)
@@ -81,6 +87,48 @@
     ```
 4. 如果 diff 算法会进行深度比较的话，它就会直接把 `<span>diff</span>` 从第三层提出来放到 `<p>` 后面。这样移动起来很高效，但是比较起来却很低效。
 5. 实际上，因为它只能同层比较，所以它在比较第二层的时候会发现多了一个 `<span>diff</span>`，所以就新加一个；然后再比较第三层的时候发现 `<span>diff</span>` 没了，于是就删除该节点。
+
+
+## patch 的整体逻辑
+### 首先比较 oldVnode 和 vnode 自身
+* 如果 oldVnode 不存在，直接添加 vnode；
+* 如果 oldVnode 存在但 vnode 不存在，直接删除 oldVnode；
+* 如果 oldVnode 和 vnode 都存在，看看它俩是不是 sameVnode：
+    * 如果是，patchVnode：用 vnode 修补 oldVnode；
+    * 如果不是，直接用 vnode 替换 oldVnode。
+
+### patchVnode
+1. patchVnode 是比较 oldVnode 和 vnode 的子节点，看看有哪些复用的，所以要先比较子节点的情况。
+2. 这里只考虑子节点是元素节点的情况，实际上还要再考虑是文本节点的情况，不过逻辑也比较简单，可以直接看源码。
+3. oldVnode 和 vnode 的子节点情况分为以下几种：
+    * 如果 oldVnode 没有子节点，那就直接添加 vnode 的子节点；
+    * 如果 vnode 没有子节点，那就直接删除 oldVnode 的子节点；
+    * 两者都有子节点，需要通过 updateChildren 实现的 diff 算法判断哪些子节点可以复用。
+
+### updateChildren
+1. oldVnode 的子节点列表记为 oldCh，vnode 的子节点列表记为 newCh。
+2. diff 算法需要四个指针，分别指向这两个列表的首尾元素。记为 oldStartIdx、oldEndIdx、newStartIdx 和 newEndIdx。对应的四个节点记为 oldStartVnode、oldEndVnode、newStartVnode 和 newEndVnode。
+
+#### 没有 key 的情况
+1. 没有 key 时，新旧节点如果是 sameVnode 就 patch 复用，如果不是则新节点替换旧节点。
+2. sameVnode 的比较分为四种方式：
+    * oldStartIdx 和 newStartVnode 如果 sameVnode，patch 后两个指针分别向右移动一位；
+    * oldEndIdx 和 newEndIdx 如果 sameVnode，patch 后两个指针分别向左移动一位；
+    * oldStartIdx 和 newEndIdx 如果 sameVnode，patch 后本应该在右边的节点（newEndIdx 位置）跑到了左边（oldStartIdx 位置），所以要把 DOM 元素的位置移动到正确的位置，也就是把 oldStartIdx 对应的元素移到 oldEndIdx 对应得元素右边；
+    * oldEndVnode 和 newStartVnode 如果 sameVnode，和上一种情况同理但是正好相反，因此 patch 后要把 oldEndVnode 对应的元素移动到 oldStartIdx 对应元素的左边。
+3. 如果上面四种 sameVnode 都没有命中，那就必须为当前 newStartVnode 建立一个新元素。
+2. 随着比较和 patch，首尾指针逐渐靠拢，直到有一对指针先碰面并错过以为或者同时碰面并错过一位，比较结束。
+3. 如果此时 oldCh 还没碰面，说明 oldStartIdx 和 oldEndIdx 中间的子节点就是用不上得了，直接删掉。
+4. 如果此时 newCh 还没碰面，说明 newStartIdx 和 newEndIdx 中间的子节点还没有插入，用这些子节点创建元素插入 DOM。
+
+#### 有 key 的情况
+1. 因为有了 key，所以 sameVnode 还要加上 key 相同的条件。
+2. 此时上面的四种比较方式依然成立，但如果没有命中并不一定要创建新元素，还要和中间的节点比较有没有 key 相同的。
+3. 这里在 oldCh 中寻找和 newStartVnode 的拥有相同 key 的节点：
+    * 如果没找到的话就使用 newStartVnode 创建一个新元素，放到 oldStartVnode 左边。
+    * 如果找到了的话：
+        * 如果不是 sameVnode，比如虽然同 key 但是不同元素类型，那还是要创建新元素，放到 oldStartVnode 左边。
+        * 如果是 sameVnode，那就用 newStartVnode 去 patch 那个节点。然后把那个旧节点对应的 DOM 元素放到 oldStartVnode 对应元素的左边。
 
 
 ## `patch` 逻辑
