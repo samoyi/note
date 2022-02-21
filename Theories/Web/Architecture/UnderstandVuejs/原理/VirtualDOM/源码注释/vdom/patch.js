@@ -493,14 +493,13 @@ export function createPatchFunction(backend) {
             } 
             // 四个特殊的首尾子节点没有 sameVnode 的情况
             else {
-                // 那就找找有没有和中间某个节点相同的情况。
+                // 还要找找有没有和中间某个节点相同的情况。
+                // 没有 key 的情况下依然是通过 sameVnode 逻辑判断;
+                // 有 key 的情况下先用 key 比较,命中后还要再通过 sameVnode 比较.
                 // 下面判断相同是通过两种方法之一：
                 //                           首选是通过比对有没有相同的 key，
                 //                           其次是通过 sameVnode 方法。
-                // 根据 sameVnode 的逻辑，key 相同不是 sameVnode 必要条件，sameVnode 也不是 key 相同的
-                // 充分条件。
-                // TODO，为什么上面四种情况没有先判断 key 是否相同？根据下面的逻辑，key 相同但不是
-                // sameVnode 会创建新节点，但上面四种情况为什么不这么处理？
+                // TODO，有 key 时为什么不直接使用 sameVnode,此时的 sameVnode 也会先检测 key
 
                 // 获得旧子节点列表的节点 key 到其 index 的映射
                 // 如果没有 key 就返回空映射
@@ -508,7 +507,8 @@ export function createPatchFunction(backend) {
                     oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx);
                 }
                 // 如果子节点 newStartVnode 有 key，那么通过映射查找 oldCh 里有没有同 key 子节点；
-                // 如果找到就返回该旧子节点的 index；如果没找到，则通过 findIdxInOld 从 oldCh 查找有没
+                // 如果找到就返回该旧子节点的 index；
+                // 如果子节点 newStartVnode 没有 key，则通过 findIdxInOld 从 oldCh 查找有没
                 // 有和 newStartVnode 符合 sameVnode 的节点，找到的话返回 index
                 idxInOld = isDef(newStartVnode.key)
                     ? oldKeyToIdx[newStartVnode.key]
@@ -560,10 +560,10 @@ export function createPatchFunction(backend) {
             // vnode 还没有插入 DOM。
             // 也就是说此时 newCh 剩余的是最后的一个或多个 vnode，那么这些节点对应的元素就应该 append 到
             // 尾部而不是 insert 到谁之前。
-            // 所以把 refElm，addVnodes 内部就是 append 的逻辑。
+            // 所以把 refElm 设为 null，addVnodes 内部就是 append 的逻辑。
             // 如果 isUndef(newCh[newEndIdx + 1]) 为 false 则说明最右至少有一个 vnode 已经插入了 DOM。
-            // 那现在 newCh 剩余的部分就应该 insert 到右侧已经插入的若干个元素的最左一个，也就是 
-            // newEndIdx + 1 指向的那个。
+            // 那现在 newCh 剩余的部分就应该 insert 到右侧已经插入的若干个元素的最左一个的左边，也就是 
+            // newEndIdx + 1 指向的那个元素的左边。
             refElm = isUndef(newCh[newEndIdx + 1]) 
                         ? null 
                         : newCh[newEndIdx + 1].elm;
