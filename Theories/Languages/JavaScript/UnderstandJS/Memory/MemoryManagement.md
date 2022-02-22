@@ -4,11 +4,23 @@
 <!-- TOC -->
 
 - [Memory Management](#memory-management)
+    - [设计目的](#设计目的)
+        - [关键细节](#关键细节)
+    - [实现原理](#实现原理)
+    - [抽象本质](#抽象本质)
+    - [设计思想](#设计思想)
     - [JavaScript 内存使用概述](#javascript-内存使用概述)
         - [变量在内存中的存储位置](#变量在内存中的存储位置)
         - [Memory life cycle](#memory-life-cycle)
             - [In high-level languages](#in-high-level-languages)
         - [垃圾的产生](#垃圾的产生)
+    - [Garbage collection](#garbage-collection)
+        - [引用（References）的概念](#引用references的概念)
+        - [引用计数（reference-counting）算法](#引用计数reference-counting算法)
+            - [缺陷：循环引用](#缺陷循环引用)
+        - [标记-清除（Mark-and-sweep）算法](#标记-清除mark-and-sweep算法)
+            - [标记和清除](#标记和清除)
+            - [缺陷](#缺陷)
     - [V8 的垃圾回收算法](#v8-的垃圾回收算法)
         - [大致流程](#大致流程)
             - [第一步，通过 GC Root 标记空间中活动对象和非活动对象。](#第一步通过-gc-root-标记空间中活动对象和非活动对象)
@@ -28,6 +40,28 @@
 <!-- /TOC -->
 
 
+## 设计目的
+1. 堆内存的回收不是自动进行的，在 C 这样的低级语言中需要程序员手动进行。
+2. 但是这种手动回收很麻烦而且容易漏掉，所以像 JavaScript 这类高级语言实现了内存回收机制来帮助程序员回收堆内存。
+
+
+### 关键细节
+* 怎么识别一段内存已经不需要了？
+* 引用计数怎么计数？
+* 标记清除怎么标记？
+* 既然标记清除是清除不可访问的对象，那不可访问还怎么找到它并清除？
+* 内存回收后的收尾工作？
+
+
+## 实现原理
+
+
+## 抽象本质
+
+
+## 设计思想
+
+
 ## JavaScript 内存使用概述
 ### 变量在内存中的存储位置
 * 基本类型的值存储在栈内存中。
@@ -41,8 +75,7 @@ Regardless of the programming language, memory life cycle is pretty much always 
 
 #### In high-level languages
 1. The second part is explicit in all languages. The first and last parts are explicit in low-level languages, but are mostly implicit in high-level languages like JavaScript.
-2. This seemingly “automatical” nature of freeing up resources is a source of confusion and gives JavaScript (and other high-level-language) developers the false impression they can choose not to care about memory management. **This is
-a big mistake**.
+2. This seemingly “automatical” nature of freeing up resources is a source of confusion and gives JavaScript (and other high-level-language) developers the false impression they can choose not to care about memory management. **This is a big mistake**.
 
 ### 垃圾的产生
 1. 以下面的代码为例
@@ -60,6 +93,87 @@ a big mistake**.
     <img src="./images/02.jpg" width="600" style="display: block; margin: 5px 0 10px 0;" />
 4. `a` 属性之前是指向堆中数组对象的，现在已经指向了另外一个空对象，那么此时堆中的数组对象就成为了垃圾数据，因为我们无法从一个根对象遍历到这个数组对象。
 5. 不过，不用担心这个数组对象会一直占用内存空间，因为垃圾回收器会自动清理。
+
+
+## Garbage collection
+1. 主要工作是跟踪内存的分配和使用，以便当分配的内存不再使用时，自动释放它。
+2. 这只能是一个近似的过程，因为要知道是否仍然需要某块内存是无法判定的（无法通过某种算法解决）。
+3. 因此垃圾回收器只能实现一个有缺陷的解决方案。下面介绍两种常见的的垃圾回收算法以及它们的缺陷。
+
+### 引用（References）的概念
+1. 垃圾回收算法主要依赖于 “引用” 的概念。在内存管理的环境中，一个对象如果有访问另一个对象的权限（隐式或者显式），叫做一个对象引用另一个对象。例如，一个Javascript对象具有对它原型的引用（隐式引用）和对它属性的引用（显式引用）。
+2. 在这里，“对象” 的概念不仅特指 JavaScript 对象，还包括函数作用域（或者全局词法作用域）。
+
+### 引用计数（reference-counting）算法
+1. 这是最初级的垃圾收集算法。此算法把 “对象是否不再需要” 简化定义为 “对象有没有其他对象引用到它”。
+2. 每次新创建一个对象并在堆内存中为其分配内存时，会记录该段内存的引用数。之后增加或减少对其引用都会同步的变动记录引用数。
+3. 如果发现一段内存的引用数变为零，那就说明没有引用指向该段内存，它将被垃圾回收机制回收
+    ```js
+    var x = {
+        a: {
+            b: 2
+        }
+    };
+    // 现在两个对象，第一个对象被 x 引用，第二个对象被 x.a 引用。所以两个对象都不能被回收内存。
+    // 为了方便理解，引用关系记为 [ [x], [x.a] ]
+
+    var y = x; // [ [x, y], [x.a, y.a] ]
+    // y 也引用了第一个对象，所以 y.a 也会引用第二个对象。
+    
+    x = 1; // [ [y], [y.a] ]  
+    // x 不再引用第一个对象，只剩下 y 独自引用。
+    
+    var z = y.a; // [ [y], [y.a, z] ]    
+    // z 也引用第二个对象。
+    
+    y = 'mozilla'; // [ [], [z] ] 
+    // y 不再引用第一个对象，第一个对象失去所有引用，可以被回收内存。但第二个对象还被 z 引用。
+    
+    z = null; // [ [], [] ]
+    // z 也不再引用第二个对象，第二个对象失去所有引用，可以被回收内存。
+    ```
+
+#### 缺陷：循环引用
+即使两个对象都没用了，但如果它俩互相引用对方，那就永远不会被回收
+```js
+function f() {
+  var x = {};
+  var y = {};
+  x.a = y;        // x references y
+  y.a = x;        // y references x
+
+  return 'azerty';
+}
+
+f(); // 调用结束后 x 和 y 引用的对象其实都没用了
+```
+
+### 标记-清除（Mark-and-sweep）算法
+1. 该算法将内存视为一个有向 **可达图**（reachability graph），形式如下图所示
+    <img src="./images/17.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
+2. 该图的节点被分为一组根节点和一组堆节点，每个堆界定对应于堆中的一个已分配块。有向边 $p->q$ 意味着块 $p$ 中的某个位置指向块 $q$ 中的某个位置。
+3. 根节点不在堆中的位置，它们包含指向堆中的指针。根节点可以是寄存器、栈里的变量，或者是虚拟内存中读写数据区域内的全局变量。例如 JavaScript 的 `window` 对象就是这样的一个根节点，通过它可以找到在堆中分配的对象。
+4. 当存在一条从任意根节点出发并达到 $p$ 的有向路径时，我们说 $p$ 是 **可达的**（reachable）。在任何时刻，不可达节点对应于垃圾，不能被应用再次使用。
+5. 每一个堆节点都有一个标记位，标记它是否可达。
+6. 垃圾收集器的角色是维护可达图的某种表示，并通过释放不可达节点且将它们返回给空闲链表，来定期的回收它们。
+
+#### 标记和清除
+1. 初始状态下，刚分配的堆节点标记位上没有标记。
+2. 标记阶段会从所有的根节点开始遍历堆节点，遍历到的每个堆节点后都会在它的标记位上做标记，表示可达。
+3. 那些不可达的堆节点则仍然是未标记状态，之后会被回收。
+4. 然后进入清除阶段，清除阶段不是从根节点遍历，因为遍历不到。它是遍历整个堆内存，然后查看已分配的内存块：
+    * 如果该内存块已被标记，就证明还有用。当然之后可能会没用，所以这里要清除标记，以便下一次再标记。
+    * 如果该内存块没有被标记，那就可以对该段内存进行回收。
+5. 可以看到，这种垃圾回收算法可以解决引用计数算法遇到的循环引用问题，上图有三个堆节点在循环引用，但它们都是无法到达的。
+6. 从 2012 年起，所有现代浏览器都使用了标记-清除垃圾回收算法。
+7. 
+
+#### 缺陷
+1. 上述算法逻辑是最基本的标记-清除算法，有如下主要缺陷：
+    * 算法运行时会暂停正常程序运行；
+    * 需要扫描整个堆内存区域；
+    * 经过多次回收后，堆内存会变得破碎不连续。
+2. 在基础算法之上，有不同的优化改进，下面 V8 的实现就是标记-清除算法的改进。
 
 
 ## V8 的垃圾回收算法
@@ -81,7 +195,7 @@ a big mistake**.
 3. 但这步其实是可选的，因为有的垃圾回收器不会产生内存碎片，比如接下来我们要介绍的副垃圾回收器。
 
 ### 两个垃圾回收器
-1. 目前 V8 采用了两个垃圾回收器，**主垃圾回收器（Major GC）和 **副垃圾回收器**（Minor GC (Scavenger)）。
+1. 目前 V8 采用了两个垃圾回收器，**主垃圾回收器**（Major GC）和 **副垃圾回收器**（Minor GC (Scavenger)）。
 2. V8 之所以使用了两个垃圾回收器，主要是受到了 **代际假设**（The Generational Hypothesis）的影响。代际假设是垃圾回收领域中一个重要的概念，它有以下两个假设：
     * **大部分对象都是 “朝生夕死” 的**。也就是说大部分对象在内存中存活的时间很短，比如函数内部声明的变量，或者块级作用域中的变量，当函数或者代码块执行结束时，作用域中定义的变量就会被销毁。因此这一类对象一经分配内存，很快就变得不可访问。
     * **不死的对象，会活得更久**。比如全局的 window、DOM、Web API 等对象。
@@ -202,3 +316,4 @@ a big mistake**.
 * [How JavaScript works: memory management + how to handle 4 common memory leaks](https://blog.sessionstack.com/how-javascript-works-memory-management-how-to-handle-4-common-memory-leaks-3f28b94cfbec)
 * [上面引用的翻译](https://juejin.im/post/5a2559ae6fb9a044fe4634ba)
 * [并发与并行的区别是什么？](https://www.zhihu.com/question/33515481)
+* [《深入理解计算机系统》](https://book.douban.com/subject/26912767/)
