@@ -1,25 +1,32 @@
-# Cross-Site_Request_Forgery 跨站点请求伪造
+# Cross-Site Request Forgery 跨站点请求伪造
 
 
 <!-- TOC -->
 
-- [Cross-Site_Request_Forgery 跨站点请求伪造](#cross-site_request_forgery-跨站点请求伪造)
+- [Cross-Site Request Forgery 跨站点请求伪造](#cross-site-request-forgery-跨站点请求伪造)
+    - [防御思路](#防御思路)
     - [原理](#原理)
     - [示例](#示例)
         - [伪造转账请求](#伪造转账请求)
         - [Gmail 的 CSRF 漏洞](#gmail-的-csrf-漏洞)
     - [同域或跨域](#同域或跨域)
     - [防御攻击的手段](#防御攻击的手段)
-        - [验证码](#验证码)
-        - [验证来源](#验证来源)
-        - [Anti CSRF Token](#anti-csrf-token)
-            - [设置两个 token 的方法](#设置两个-token-的方法)
-            - [设置一个 token 的方法](#设置一个-token-的方法)
-        - [`SameSite` cookies](#samesite-cookies)
+        - [检查来源首部——验证来源](#检查来源首部验证来源)
+        - [Anti CSRF Token——验证来源](#anti-csrf-token验证来源)
+        - [`SameSite` cookies——禁止或限制第三方请求携带身份信息](#samesite-cookies禁止或限制第三方请求携带身份信息)
+        - [验证码——发送请求前让用户知道](#验证码发送请求前让用户知道)
     - [预防攻击的发生](#预防攻击的发生)
     - [References](#references)
 
 <!-- /TOC -->
+
+
+## 防御思路
+1. 先观察问题：跨站请求伪造。分析其中的特征：跨站和伪造。
+2. 根据问题特征，可以从跨站和伪造两方面入手来防御。分为一下几个思路：
+    * 验证来源：验证是否请求发起自第三方。
+    * 禁止或限制第三方请求携带身份信息：第三方请求不能发送 cookie，或者只有指定域才能发送。
+    * 发送请求前让用户知道：而不是不明不白就发了请求
 
 
 ## 原理
@@ -52,31 +59,25 @@
 
 
 ## 防御攻击的手段
-### 验证码
-保证只有用户明确交互才会发送请求
-
-### 验证来源
+### 检查来源首部——验证来源
 1. 请求可能会带上 `Origin` 和 `Referer` 的 header，这两个 header 都含有请求发起的域。
 2. 但是这两个 header 都有可能不被发送，甚至被伪造。
 
-### Anti CSRF Token
-#### 设置两个 token 的方法
-1. 大意就是设置 cookie 时生成一个随机 token，同时保存在用户表单隐藏域和 cookie 里。
-2. 生成 token 的信息里可以加上时间戳，后续服务器可以验证是否过期。
-3. 用户提交表单时，服务器会检查这两个 token 是否一致。
-4. 如果有人 CSRF，除非他看到了用户的前端代码，否则不会知道这个 token，因而即使发送了请求，服务器也可以发现请求中没有 token 或者和 cookie 中的 token 不同。
-5. 当然也不一定要放到表单里自动提交，也可以随便放到 cookie 以外的其他地方。在发送请求时，JS 取到这个 token 然后同时发送。
-6. 服务端除了需要对比两个 token 相同以外，还需要验证这个 token 是否正确。
+### Anti CSRF Token——验证来源
+1. 在生成提交页面时，服务器生成一个 token 并保留，然后复制一份到前端页面，一般是放在表单隐藏域里。
+2. 用户提交表单时，会一并提交这个 token，服务器验证该 token 是否一致。
+3. 如果有人 CSRF，除非他看到了用户的前端代码，否则不会知道这个 token。
+4. 如果直接把表单内嵌过来到第三方页面呢？内嵌过来因为是跨域，所以也读取不到表单数据。
+5. 生成 token 的信息里可以加上时间戳，后续服务器可以验证是否过期。
 
-#### 设置一个 token 的方法
-1. 还看到有只设置一个的方法，不往 cookie 里面设置了。
-2. 这时跨域请求就不会发送 token 了，只会在设置 token 的页面请求时发送 token。
-3. 不过服务器仍然需要验证。
+### `SameSite` cookies——禁止或限制第三方请求携带身份信息
+1. 为 `Set-Cookie` 响应头新增 `Samesite` 属性，可以用它来禁止从第三方页面发起请求时提交该 cookie。
+2. 必须要是 HTTPS 请求。
+3. [参考](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#SameSite_cookies)
 
-
-### `SameSite` cookies
-1. 为 `Set-Cookie` 响应头新增 `Samesite` 属性，它用来标明不允许跨站请求提交该 cookie。
-2. 截止 2018.6 仍是实验性质。[参考](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#SameSite_cookies)
+### 验证码——发送请求前让用户知道
+1. 图片验证码保证只有用户明确交互才会发送请求。
+2. 短信验证码会在短信中说明用户正在进行的操作。
 
 
 ## 预防攻击的发生
