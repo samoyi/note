@@ -1,83 +1,121 @@
 # Just-In-Time (JIT) compilation
 
 
-## Interpreter and Compiler
+<!-- TOC -->
+
+- [Just-In-Time (JIT) compilation](#just-in-time-jit-compilation)
+    - [设计目的](#设计目的)
+        - [关键细节](#关键细节)
+    - [实现原理](#实现原理)
+    - [抽象本质](#抽象本质)
+    - [设计思想](#设计思想)
+    - [解释器和编译器](#解释器和编译器)
+        - [解释器](#解释器)
+        - [编译器](#编译器)
+    - [Just-in-time 编译器：两者的权衡](#just-in-time-编译器两者的权衡)
+        - [基线编译器（Baseline compiler）](#基线编译器baseline-compiler)
+        - [优化编译器（Optimizing compiler）](#优化编译器optimizing-compiler)
+    - [An example optimization: Type specialization](#an-example-optimization-type-specialization)
+        - [基线编译器编译为机器码](#基线编译器编译为机器码)
+        - [优化编译器通过假设进一步优化](#优化编译器通过假设进一步优化)
+    - [References](#references)
+
+<!-- /TOC -->
+
+## 设计目的
+1. JavaScript 要求程序能快速的开始执行，所以无法进行完整的编译，只能快速编译为字节码进行解释执行。
+2. 随着程序复杂度增大，解释执行效率越来越低。但又不能改为先完整编译为机器码后执行。
+3. 为了平衡两者，所以需要在解释执行的同时进行一些编译为机器码的工作。
+4. 但显然不能给所有的代码都编译为机器码，因此只能选择一些频繁执行的代码编译为机器码。
+5. 但是因为 JavaScript 是动态类型弱类型语言，而机器码必须是明确的类型，这个要怎么处理？
+
+### 关键细节
+
+
+## 实现原理
+1. 基线编译器是对要执行多次的代码编译为机器码来高效执行。这是第一层的优化。
+2. 但是因为 JavaScript 是动态类型弱类型语言，但编译为机器码最终必须要确定的类型。
+3. 所以基线编译器会对一段代码编译出多个机器码版本，分别针对其中不同变量类型的情况。在下次执行时，想要判断当前的若干个变量是什么类型，然后再选择合适的机器码版本。
+4. 对于频繁执行的代码，每次都要做对多个变量做类型判断也会降低效率。优化编译器会解决这个问题。
+5. 当一段代码频繁执行时，它会被发送给优化编译器。优化编译器给予一些假设，也就是这段代码之前的若干次执行都是一致的变量类型，那就假设以后也会是这样的变量类型。
+6. 基于这样的假设，优化编译器只需要根据固定的类型来编译出一个更高效的机器码版本。
+7. 当然假设也不仅是变量类型，还包括对象形状要固定、数组长度要固定这样的情况。
+8. 总之即使，基于这样的假设，让动态的 JavaScript 变得静态，这样才能高效的时候机器码。
+
+
+## 抽象本质
+
+
+## 设计思想
+灵活与高效的权衡。
+
+
+## 解释器和编译器
 In programming, there are generally two ways of translating to machine language. You can use an interpreter or a compiler.
 
-### Interpreter
-1. With an interpreter, this translation happens pretty much line-by-line, on the fly.  
+### 解释器
+1. 解释器基本上实时、逐行进行翻译的。
+2. 所以解释器可以让程序快速的开始运行，翻译一行就执行一行，不需要等到整个程序编译结束后才开始运行。
+3. 所以解释器更适合 JavaScript 这样的语言，因为需要让网页的程序快速启动运行。
+4. 虽然浏览器最初使用解释器执行 JavaScript，但是随着程序越来越复杂，重复执行的的代码越来越多，解释器的问题就出现了。例如一个循环中的代码要反复执行，解释器就会反复的重复翻译这些代码。
 
-    <img src="./images/interpreter.png" />
-2. Interpreters are quick to get up and running. You don’t have to go through that whole compilation step before you can start running your code. You just start translating that first line and running it.
-3. Because of this, an interpreter seems like a natural fit for something like JavaScript. It’s important for a web developer to be able to get going and run their code quickly.
-4. And that’s why browsers used JavaScript interpreters in the beginning.
-5. But the con of using an interpreter comes when you’re running the same code more than once. For example, if you’re in a loop. Then you have to do the same translation over and over and over again.
-
-### Compiler
-1. A compiler on the other hand doesn’t translate on the fly. It works ahead of time to create that translation and write it down.  
-
-  <img src="./images/compiler.png" />
-2. It takes a little bit more time to start up because it has to go through that compilation step at the beginning. But then code in loops runs faster, because it doesn’t need to repeat the translation for each pass through that loop.
-3. Another difference is that the compiler has more time to look at the code and make edits to it so that it will run faster. These edits are called optimizations.
-4. The interpreter is doing its work during runtime, so it can’t take much time during the translation phase to figure out these optimizations.
+### 编译器
+1. 编译器并不是实时翻译，而是预先编译好整个程序然后再执行
+2. 但编译好之后执行起来就快得多了，因为对于上面循环的情况，它不需要每次都重复翻译 JavaScript 代码。
+3. 另一个好处是，因为有充足的编译时间，所以编译器可以充分的分析代码，并对其进行优化。
+4. 而解释器因为要在运行时进行翻译，所以没有多少时间进行优化。
 
 
-## Just-in-time compilers: the best of both worlds
-1. As a way of getting rid of the interpreter’s inefficiency—where the interpreter has to keep retranslating the code every time they go through the loop—browsers started mixing compilers in.
-2. Different browsers do this in slightly different ways, but the basic idea is the same. They added a new part to the JavaScript engine, called a monitor (aka a profiler). That monitor watches the code as it runs, and makes a note of how many times it is run and what types are used.
-3. At first, the monitor just runs everything through the interpreter.
-4. If the same lines of code are run a few times, that segment of code is called warm. If it’s run a lot, then it’s called hot.
+## Just-in-time 编译器：两者的权衡
+1. 为了摆脱解释器重复翻译的低效性，浏览器引入了混合编译器。
+2. 基本的想法就是在 JavaScript 引擎中加入一个新的部分，被称为 **监视器**（monitor） 或 **分析器**（profiler）。 
+3. 监视器在监视代码的运行，并记录代码运行了多少次，使用了什么类型。
+4. 最开始，监视器只是通过解释器运行所有代码。如果某些行的代码运行了好几次，这一段代码就被视为 warm 状态；如果一段代码运行了很多次，就被视为 hot 状态。
 
-### Baseline compiler
-1. When a function starts getting warm, the JIT will send it off to be compiled. Then it will store that compilation.
-2. Each line of the function is compiled to a “stub”. The stubs are indexed by line number and variable type. If the monitor sees that execution is hitting the same code again with the same variable types, it will just pull out its compiled version.
-3. That helps speed things up. But like I said, there’s more a compiler can do. It can take some time to figure out the most efficient way to do things… to make optimizations.
-4. The baseline compiler will make some of these optimizations. It doesn’t want to take too much time, though, because it doesn’t want to hold up execution too long.
-5. However, if the code is really hot—if it’s being run a whole bunch of times—then it’s worth taking the extra time to make more optimizations.
+### 基线编译器（Baseline compiler）
+1. 当一个函数变得 warm，JIT 就把它送去编译，然后保存下编译结果。
+2. 函数中的每一行被编译为一个 “stub”。这些 stub 按照行号和变量类型进行索引。
+3. 如果监视器看到相同的代码以相同的变量类型重复执行，那就会使用之前编译好的版本。
+4. 除了编译 warm 代码，编译器还会对代码进行优化，找到最高效的执行方式。
+5. 基线编译器虽然会进行一些优化，但不会用太多时间去做，因为这样会导致程序执行被阻塞太久。
+6. 但如果一段代码很 hot，那么多花点时间为它优化就是值得的。
 
-### Optimizing compiler
-1. When a part of the code is very hot, the monitor will send it off to the optimizing compiler. This will create another, even faster, version of the function that will also be stored.
-2. In order to make a faster version of the code, the optimizing compiler has to **make some assumptions**.
-3. For example, if it can assume that all objects created by a particular constructor have the same shape—that is, that they always have the same property names, and that those properties were added in the same order— then it can cut some corners based on that.
-4. The optimizing compiler uses the information the monitor has gathered by watching code execution to make these judgments. If something has been true for all previous passes through a loop, it assumes it will continue to be true.
-5. But of course with JavaScript, there are never any guarantees. You could have 99 objects that all have the same shape, but then the 100th might be missing a property.
-6. So the compiled code needs to check before it runs to see whether the assumptions are valid. If they are, then the compiled code runs. But if not, the JIT assumes that it made the wrong assumptions and trashes the optimized code.
-7. Then execution goes back to the interpreter or baseline compiled version. This process is called deoptimization (or bailing out).
-8. Usually optimizing compilers make code faster, but sometimes they can cause unexpected performance problems. If you have code that keeps getting optimized and then deoptimized, it ends up being slower than just executing the baseline compiled version.
-9. Most browsers have added limits to break out of these optimization/deoptimization cycles when they happen. If the JIT has made more than, say, 10 attempts at optimizing and keeps having to throw it out, it will just stop trying.
+### 优化编译器（Optimizing compiler）
+1. 当一段代码很 hot 时，就会被监视器送到优化编译器。优化编译器会为这段代码创建一个更快的版本并保存下来。
+2. 为了创建更快的版本，优化编译器必须做出一些假设。例如，要假设有同一个构造函数创建出的对象具有相同的形状，也就是用于相同的属性名，属性具有相同的顺序。基于这样的假设，编译器对代码进行优化。 
+3. 在静态类型语言中并不需要这样的假设，因为对象的形状不能改变。但弱类型语言只能假设，并且期望程序员之后不会打破假设，这样才能继续使用基于假设最初的优化。
+4. 之后需要再次执行被优化的版本时，要先检查一下假设是否仍然成立。如果成立就可以使用优化后的版本。
+5. 但是如果用户违反了假设，比如说修改了对象的形状，那优化的版本就无法使用，只能被丢弃。程序只好回到最初的解释执行或者使用基线优化器编译的版本。这个过程叫做去优化（deoptimization）。
+6. 通常优化编译器可以让代码更快执行，但如果你反复的打破它的假设，不断的优化和去优化，那最终执行速度会比基线编译器的版本更慢。
+7. 因此大多数浏览器限制了打断优化的次数，当达到这个限制后，就会放弃再尝试优化了。
+8. 当然，优化编译器除了作出假设而创建更快版本以外，还会进行很多其他的优化。
 
 
 ## An example optimization: Type specialization
-1. There are a lot of different kinds of optimizations, but I want to take a look at one type so you can get a feel for how optimization happens. One of the biggest wins in optimizing compilers comes from something called type specialization.
-2. The dynamic type system that JavaScript uses requires a little bit of extra work at runtime. For example, consider this code:
-  ```js
-  function arraySum(arr) {
-    var sum = 0;
-    for (var i = 0; i < arr.length; i++) {
-      sum += arr[i];
+1. 优化有很多种类型，这个例子是其中很重要的一种优化，被称为 type specialization。
+2. 因为 JavaScript 是弱类型动态类型语言，所以一段代码可能使用不同类型的数据运行。但是如果要编译为机器代码，就必须要有明确的类型。
+3. 以下面代码为例
+    ```js
+    function arraySum(arr) {
+        var sum = 0;
+        for (var i = 0; i < arr.length; i++) {
+            sum += arr[i];
+        }
     }
-  }
-  ```
-3. The `+=` step in the loop may seem simple. It may seem like you can compute this in one step, but because of dynamic typing, it takes more steps than you would expect.
-4. Let’s assume that `arr` is an array of 100 integers. Once the code warms up, the baseline compiler will create a stub for each operation in the function. So there will be a stub for `sum += arr[i]`, which will handle the `+=` operation as integer addition.
-5. However, `sum` and `arr[i]` aren’t guaranteed to be integers. Because types are dynamic in JavaScript, there’s a chance that in a later iteration of the loop, `arr[i]` will be a string. Integer addition and string concatenation are two very different operations, so they would compile to very different machine code.
-6. The way the JIT handles this is by compiling multiple baseline stubs. If a piece of code is monomorphic (that is, always called with the same types) it will get one stub. If it is polymorphic (called with different types from one pass through the code to another), then it will get a stub for each combination of types that has come through that operation.
-7. This means that the JIT has to ask a lot of questions before it chooses a stub:  
-
-  <img src="./images/choose-a-stub.png" />
-8. Because each line of code has its own set of stubs in the baseline compiler, the JIT needs to keep checking the types each time the line of code is executed. So for each iteration through the loop, it will have to ask the same questions.
-9. The code would execute a lot faster if the JIT didn’t need to repeat those checks. And that’s one of the things the optimizing compiler does.
-10. In the optimizing compiler, the whole function is compiled together. The type checks are moved so that they happen before the loop.
-11. Some JITs optimize this even further. For example, in Firefox there’s a special classification for arrays that only contain integers. If `arr` is one of these arrays, then the JIT doesn’t need to check if `arr[i]` is an integer. This means that the JIT can do all of the type checks before it enters the loop.
-
-
-## Conclusion
-1. That is the JIT in a nutshell. It makes JavaScript run faster by monitoring the code as it’s running it and sending hot code paths to be optimized. This has resulted in many-fold performance improvements for most JavaScript applications.
-2. Even with these improvements, though, the performance of JavaScript can be unpredictable. And to make things faster, the JIT has added some overhead during runtime, including:
-  * optimization and deoptimization
-  * memory used for the monitor’s bookkeeping and recovery information for when bailouts happen
-  * memory used to store baseline and optimized versions of a function
-3. There’s room for improvement here: that overhead could be removed, making performance more predictable. And that’s one of the things that WebAssembly does.
+    ```
+  
+### 基线编译器编译为机器码
+1. 假设 `arr` 是 100 项的数组，执行后代码会变得 warm，因此基线编译器会开始工作，会为函数里的每一行代码创建一个 stub。
+2. 对于 `sum += arr[i]` 的 stub，将它编译为机器码时，会怎么编译 `+=`？它的操作数可能是整数，可能是字符串，可能是 `整数 += 字符串`，还可能是 `字符串 += 整数`，这四种情况会编译为不同的机器码。
+3. JIT 处理这种问题的方法是为每种情况都编译一个基线 stub，比如这里针对这一行一共会编译四个基线 stub。
+4. 然后，100 次循环每次执行到这一行时，都要判断两个操作数是什么类型，依次来决定选择哪一个 stub。
+5. 实际上可能性要比四个更多。如下图所示，实际上要考虑四个类型，每个两个情况的话，最终就会生成的 16 个 stub。每次执行时要判断 4 次才能选中响应的 stub
+    <img src="./images/choose-a-stub.png" width="600" style="display: block; margin: 5px 0 10px;" />
+  
+### 优化编译器通过假设进一步优化
+1. 如果我们可以做出一些假设，不用考虑四个类型的情况，就可以减少 stub 的数量，从而减少每次执行时判断的情况。
+2. 例如在前面的若干次调用时，监视器发现 `sum` 和 `i` 一直都是整数，而且 `arr` 一直都是整数数组。那优化编译器就假设之后它们的类型也是不变的。
+3. 所以优化编译器就可以把整个函数一起编译，而不用在每一行都分别考虑不同情况。这种情况下，这个函数就会想静态语言里一样高效。
 
 
 ## References
