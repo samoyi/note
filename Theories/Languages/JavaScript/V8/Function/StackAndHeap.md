@@ -1,13 +1,13 @@
-# Stack And Heap
+# Stack and Heap
 
 
 <!-- TOC -->
 
-- [Stack And Heap](#stack-and-heap)
-    - [一例](#%E4%B8%80%E4%BE%8B)
-    - [栈如何管理函数调用](#%E6%A0%88%E5%A6%82%E4%BD%95%E7%AE%A1%E7%90%86%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8)
-    - [分析最开始的例子](#%E5%88%86%E6%9E%90%E6%9C%80%E5%BC%80%E5%A7%8B%E7%9A%84%E4%BE%8B%E5%AD%90)
-    - [堆的作用](#%E5%A0%86%E7%9A%84%E4%BD%9C%E7%94%A8)
+- [Stack and Heap](#stack-and-heap)
+    - [一例](#一例)
+    - [栈如何管理函数调用](#栈如何管理函数调用)
+    - [分析最开始的例子](#分析最开始的例子)
+    - [堆的作用](#堆的作用)
     - [References](#references)
 
 <!-- /TOC -->
