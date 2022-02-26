@@ -1,11 +1,13 @@
 # Template Method
 
-Template Method is a behavioral design pattern that defines the skeleton of an algorithm in the superclass but lets subclasses override specific steps of the algorithm without changing its structure.
+模板方法模式是一种行为设计模式，它在超类中定义了一个算法的框架，允许子类在不修改结构的情况下重写算法的特定步骤。
 
 
 <!-- TOC -->
 
 - [Template Method](#template-method)
+    - [设计目的](#设计目的)
+        - [关键细节](#关键细节)
     - [设计思想](#设计思想)
         - [便利与自由，安全与自由](#便利与自由安全与自由)
         - [SRP](#srp)
@@ -43,6 +45,16 @@ Template Method is a behavioral design pattern that defines the skeleton of an a
     - [References](#references)
 
 <!-- /TOC -->
+
+
+
+## 设计目的
+1. 做一件事情要分为好几个部分或者好几个步骤，这几部分或几个步骤在目的上是一致的，执行的顺序也是固定的，但是在不同的场景下，每个部分或每个步骤具体怎么做是不一定的。
+2. 也就是说，执行的流程是固定的，但具体每一步怎么做是可变的。这就是明显的 OCP 了。
+3. 因此应该把可变的执行方法分离出不可变的执行环境。
+4. 执行环境负责控制执行流程，但每一步要做什么的执行方法作为参数传入。
+    
+### 关键细节
 
 
 ## 设计思想
@@ -105,6 +117,7 @@ Template Method is a behavioral design pattern that defines the skeleton of an a
 
 ## 缺点
 * 就像上面提到的，具体的某些实现可能会失去自由度。
+* 尤其不要违反语义化，也就是说其实语言上不属于这个框架，仅仅是其中的步骤符合就使用。
 * You might violate the Liskov Substitution Principle by suppressing a default step implementation via a subclass. TODO 这里违反里氏替换原则有什么危害？
 
 
