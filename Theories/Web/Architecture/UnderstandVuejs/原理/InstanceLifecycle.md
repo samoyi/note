@@ -5,15 +5,24 @@
 
 - [Instance Lifecycle](#instance-lifecycle)
     - [Misc](#misc)
+    - [整体流程](#整体流程)
+        - [`beforeCreate` 之前](#beforecreate-之前)
+        - [`created` 之前](#created-之前)
+        - [`beforeMount` 之前](#beforemount-之前)
+        - [`mount` 之前](#mount-之前)
+        - [从数据更新到 `beforeUpdate` 之前](#从数据更新到-beforeupdate-之前)
+        - [`updated` 之前](#updated-之前)
+        - [`beforeDestroy` 之前](#beforedestroy-之前)
+        - [`destroyed` 之前](#destroyed-之前)
     - [实例生命周期](#实例生命周期)
         - [第一步 实例初始化](#第一步-实例初始化)
-            - [`beforeCreate`](#beforecreate)
+            - [该阶段结束后的钩子函数——`beforeCreate`](#该阶段结束后的钩子函数beforecreate)
         - [第二步 创建实例](#第二步-创建实例)
-            - [`created`](#created)
+            - [该阶段结束后的钩子函数——`created`](#该阶段结束后的钩子函数created)
         - [第三阶段 将模板编译为渲染函数](#第三阶段-将模板编译为渲染函数)
-            - [`beforeMount`](#beforemount)
+            - [该阶段结束后的钩子函数——`beforeMount`](#该阶段结束后的钩子函数beforemount)
         - [第四阶段 挂载](#第四阶段-挂载)
-            - [`mounted`](#mounted)
+            - [该阶段结束后的钩子函数——`mounted`](#该阶段结束后的钩子函数mounted)
         - [第五阶段 数据更新](#第五阶段-数据更新)
         - [第六阶段 虚拟 DOM 更新和重渲染](#第六阶段-虚拟-dom-更新和重渲染)
         - [第七阶段 准备销毁实例](#第七阶段-准备销毁实例)
@@ -31,7 +40,6 @@
 `Theories\Web\Architecture\UnderstandVuejs\原理\Two-wayBinding.md`  
 本篇中提到的以下四个模块都出自这篇笔记：`Compiler`、`Publisher`、`Observer`和`Subscriber`
 
-<!-- ![lifecycle](../images/lifecycle.png) -->
 <img src="../images/lifecycle.png" width="600" style="display: block; margin: 5px 0 10px;" />
 
 
@@ -52,6 +60,47 @@
         }
     });
     ```
+
+## 整体流程
+### `beforeCreate` 之前
+创建实例之间的一些初始化工作
+
+### `created` 之前
+1. 处理实例的各个属性，创建实例。
+2. Observe 实例 `data` 属性，对其中的数据进行响应化。
+
+### `beforeMount` 之前
+将模板编译为渲染函数，分为以下三大步骤：
+1. 将模板编译为 AST；
+2. AST 进行静态子树优化；
+3. 用优化后的 AST 生成渲染函数。
+
+### `mount` 之前
+1. 渲染函数被调用，主要完成两件事：
+    * 调用过程会 touch 到模板依赖的数据，实现依赖订阅；
+    * 调用结束后生成虚拟 DOM。
+2. 根据虚拟 DOM 进行挂载，也就是生成真实 DOM。
+
+### 从数据更新到 `beforeUpdate` 之前
+1. 数据更新触发 setter，Dep 通知到 watcher。
+2. 一般是异步更新，watcher 加入到更新队列，在 nextTick 时 flush 掉更新队列。
+3. flush 的时候，看起来一个 vm 实例只会有一个总的 watcher，而不是几个订阅者就有几个 watcher。
+4. 在队列中该实例的 watcher 调用更新方法前，会调用该实例的 `beforeUpdate` 函数。
+
+### `updated` 之前
+1. 每个实例的 watcher 调用完 `beforeUpdate` 后就进行实际的更新 patch。
+2. 异步队列中所有实例的 watcher 都 patch 完后，再一次调用每个实例的 `updated` 函数。
+
+### `beforeDestroy` 之前
+1. 实例的 `$destroy()` 被调用后进入销毁阶段。
+2. `beforeDestroy` 钩子被调用前就只做了一件事，通过 `vm._isBeingDestroyed` 判断该是是否正在被销毁，是的话直接返回。
+
+### `destroyed` 之前
+1. 删除和修改与该实例相关的东西，比如
+    * 从父实例中移除当前实例，同时销毁子实例
+    * 解除和所有订阅者的关系
+    * 更新 DOM，取消事件绑定
+2. 之后调用 `destroyed` 钩子。
 
 
 ## 实例生命周期
@@ -150,8 +199,8 @@
     ```
 3. 可以看到里面有一组初始化的操作，然后其间调用了 `beforeCreate` 和 `created` 两个钩子函数。也就是说 `initMixin` 中包含了实例初始化和实例创建的内容。
 
-#### `beforeCreate`
-1. Called synchronously immediately after the instance has been initialized, before data observation and event/watcher setup. 也就是说还没有开始处理实例的选项。
+#### 该阶段结束后的钩子函数——`beforeCreate`
+1. 实例初始化之后同步的调用该钩子函数，调用之后才会初始化实例的选项
     ```js
     const vm = new Vue({
         el: '#components-demo',
@@ -186,12 +235,12 @@
     }
     ```  
 2. 这一阶段将处理创建实例时的配置，进而完成创建实例。包括：
-    * 实现 data observation。也就是 Observer 模块使用 setter、getter 劫持了实例数据。
+    * 处理实例 data 属性的时候实现 data observation。也就是 Observer 模块使用 setter、getter 劫持了实例数据。
     * 处理了 computed properties, methods, watch/event callbacks。
-3. 这一阶段还不涉及模板，只是纯 JS 的部分。所以实例的 `$el` 也还不可用。
-4. 创建实例结束后触发钩子函数 `created`
+3. 这一阶段还不涉及模板编译，只是纯 JS 的部分。所以实例的 `$el` 也还不可用。
+4. 创建实例结束后触发钩子函数 `created`。
 
-#### `created`
+#### 该阶段结束后的钩子函数——`created`
 1. 既然已经创建完成，所以实例上的各种属性都可访问
     ```js
     new Vue({
@@ -416,7 +465,7 @@
 5. `beforeMount` 钩子在服务器端渲染期间不被调用。因为涉及挂载的两个钩子函数在服务端渲染期间不会被调用，所以他们不能用于获取数据这样的操作。这样的操作应该在 `created()` 中进行。
 4. 模板编译完成后触发 `beforeMount`，渲染函数准备首次调用来进行渲染。
 
-#### `beforeMount`
+#### 该阶段结束后的钩子函数——`beforeMount`
 ```html
 <div id="components-demo">
     {{ num1 }}
@@ -496,7 +545,7 @@ new Vue({
     看起来的意思就是在本次执行周期内，它的所有子组件也都会完成 mounting
 5. `mounted` 钩子在服务器端渲染期间不被调用。
 
-#### `mounted`
+#### 该阶段结束后的钩子函数——`mounted`
 ```html
 <div id="components-demo">
     {{ num1 }}
@@ -683,6 +732,7 @@ new Vue({
 5. 避免在这个钩子函数中操作数据，可能陷入死循环。`watcher.run()` 下面就是检查死循环的逻辑。
 6. 同样在服务端渲染中不会被触发。
 
+
 ### 第七阶段 准备销毁实例
 1. 当调用 `vm.$destroy()`，开始进入这一阶段
     ```js
@@ -721,7 +771,7 @@ new Vue({
         vm._isDestroyed = true
 
         // invoke destroy hooks on current rendered tree
-        // 销毁后更新 DOM，删除对应的节点
+        // 销毁后更新 DOM
         vm.__patch__(vm._vnode, null)
 
         // fire destroyed hook

@@ -70,6 +70,11 @@ function flushSchedulerQueue() {
         //       }
         //     }
         //   }, true /* isRenderWatcher */)
+        // TODO 这里看起来似乎如果一个数据又好几个 watcher 的话，那就会调用好几个词 beforeUpdate。
+        // 但实际上从没出现这样的情况。
+        // 我测试在衣蛾实例的模板里两个地方依赖一个数据，另一个地方依赖另一个数据，同时更新这两个数据，
+        // 我因为会有三个 watcher，但实际上只有一个 watcher。
+        // 所以一个实例最终会合并为一个 watcher？
         if (watcher.before) {
             watcher.before();
         }
