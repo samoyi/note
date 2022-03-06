@@ -60,7 +60,127 @@
 5. 这个过程保证了最终序列都是按照从小到大的顺序。
 6. 但要注意比较的边界。这样的比较，肯定是有一个临时序列首先变为空的，而此时另一个序列还会剩下一个或多个。
 7. 这种情况下，只需要把剩下的依次放回到原序列就可以了。
-8. 也就是说，在比较的过程中需要知道什么时候其中一个序列已经为空了
+8. 按照上面的逻辑可以如下实现
+    ```cpp
+    void merge (int* arr, int low, int mid, int high) {
+        int lSize = mid-low+1;
+        int rSize = high-mid;
+        // 分配临时的两个数组，并把原数组一分为二拷贝进来
+        int* left = calloc(lSize, sizeof(int));
+        int* right = calloc(rSize, sizeof(int));
+        if (left == NULL || right == NULL) {
+            printf("calloc failed.\n");
+            exit(EXIT_FAILURE);
+        }
+        for (int i=low; i<=mid; i++) {
+            // 这里的 i 不是从 0 开始，但是子数组的索引需要丛 0 开始
+            left[i-low] = arr[i];
+        }
+        for (int i=mid+1; i<=high; i++) {
+            // 这里的 i 不是从 0 开始，但是子数组的索引需要丛 0 开始
+            right[i-mid-1] = arr[i];
+        }
+
+        // 把两个临时数组归并进原数组
+        int lIdx = 0;
+        int rIdx = 0;
+        int currIdx = low; // 原数组的索引要从 low 开始
+        // 检查是否归并完所有元素
+        while (currIdx <= high) {
+            // 如果两个子数组都有剩余则比较
+            if (lIdx < lSize && rIdx < rSize) {
+                // lIdx 和 rIdx 不是同时自增
+                if (left[lIdx] < right[rIdx]) {
+                    arr[currIdx] = left[lIdx];
+                    lIdx++;
+                }
+                else {
+                    arr[currIdx] = right[rIdx];
+                    rIdx++;
+                }
+                currIdx++;
+            }
+            // 如果左边没剩余了则把右边的依次加入
+            else if (lIdx == lSize) {
+                for (; rIdx < rSize; rIdx++) {
+                    arr[currIdx] = right[rIdx];
+                    currIdx++;
+                }
+            }
+            // 如果右边没剩余了则把左边的依次加入
+            else {
+                for (; lIdx < lSize; lIdx++) {
+                    arr[currIdx] = left[lIdx];
+                    currIdx++;
+                }
+            } 
+            // currIdx++ 不能统一放在这里
+        }
+
+        // 释放临时数组内存
+        free(left);
+        free(right);
+    }
+    ```
+9. `while` 循环中还嵌套了 `for` 循环，可以通过优化只使用一层循环。内层和外层循环都是每次对应一次插入，所以内层就不用自己建立循环了，直接使用外层的
+    ```cpp
+    void merge (int* arr, int low, int mid, int high) {
+        int lSize = mid-low+1;
+        int rSize = high-mid;
+        
+        // 分配临时的两个数组，并把原数组一分为二拷贝进来
+        int* left = calloc(lSize, sizeof(int));
+        int* right = calloc(rSize, sizeof(int));
+        if (left == NULL || right == NULL) {
+            printf("calloc failed.\n");
+            exit(EXIT_FAILURE);
+        }
+        for (int i=low; i<=mid; i++) {
+            // 这里的 i 不是从 0 开始，但是子数组的索引需要丛 0 开始
+            left[i-low] = arr[i];
+        }
+        for (int i=mid+1; i<=high; i++) {
+            // 这里的 i 不是从 0 开始，但是子数组的索引需要丛 0 开始
+            right[i-mid-1] = arr[i];
+        }
+
+        // 把两个临时数组归并进原数组
+        int lIdx = 0;
+        int rIdx = 0;
+        int currIdx = low; // 原数组的索引要从 low 开始
+        // 检查是否归并完所有元素
+        while (currIdx <= high) {
+            // 如果两个子数组都有剩余则比较
+            if (lIdx < lSize && rIdx < rSize) {
+                // lIdx 和 rIdx 不是同时自增
+                if (left[lIdx] < right[rIdx]) {
+                    arr[currIdx] = left[lIdx];
+                    lIdx++;
+                }
+                else {
+                    arr[currIdx] = right[rIdx];
+                    rIdx++;
+                }
+            }
+            // 如果左边没剩余了则把右边的依次加入
+            else if (lIdx == lSize) {
+                arr[currIdx] = right[rIdx];
+                rIdx++;
+            }
+            // 如果右边没剩余了则把左边的依次加入
+            else {
+                arr[currIdx] = left[lIdx];
+                lIdx++;
+            } 
+            currIdx++; // 现在可以提取到最外面了
+        }
+
+        // 释放临时数组内存
+        free(left);
+        free(right);
+    }
+    ```
+9. 另一个稍有差别的实现
     ```cpp
     void merge (int* arr, int low, int mid, int high) {
 
@@ -113,7 +233,7 @@
         free(right);
     }
     ```
-9. 《算法导论》中的方法是在两个临时序列的底部分别放一个极大值，这样在一个序列移动到只剩下这个极大值时，再进行比较就只会移动另一个序列，不需要像上面那样判断一个序列是否移动完了
+10. 《算法导论》中的方法是在两个临时序列的底部分别放一个极大值，这样在一个序列移动到只剩下这个极大值时，再进行比较就只会移动另一个序列，不需要像上面那样判断一个序列是否移动完了
     ```cpp
     // C 中需要引入头文件 <limits.h> 来引用极大值 INT_MAX
     

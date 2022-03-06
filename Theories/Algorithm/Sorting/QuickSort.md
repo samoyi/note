@@ -7,6 +7,10 @@
     - [设计思想](#设计思想)
         - [`partition` 中的 `i`](#partition-中的-i)
     - [概述](#概述)
+    - [关键细节](#关键细节)
+        - [pivot 的选择](#pivot-的选择)
+        - [两个索引表示的位置](#两个索引表示的位置)
+        - [比较时指针的移动规则](#比较时指针的移动规则)
     - [分治描述](#分治描述)
     - [`partition` 实现](#partition-实现)
         - [划分要点](#划分要点)
@@ -36,12 +40,35 @@
 
 
 ## 概述
-1. The quicksort algorithm has a worst-case running time of $O(n^2)$ on an input array
-of n numbers. Despite this slow worst-case running time, quicksort is often the best
-practical choice for sorting because it is remarkably efficient on the average: its
-expected running time is $O(n \lg n)$, and the constant factors hidden in the $O(n \lg n)$
-notation are quite small. 
-2. It also has the advantage of sorting in place, and it works well even in virtual-memory environments.
+1. 快速排序是一种最坏情况下时间复杂度为 $O(n^2)$ 的排序算法。但它通常是实际排序应用中最好的选择，因为它在平均情况下的性能非常好。它的期望时间复杂度是 $O(n \lg n)$，而且 $O(n \lg n)$ 中隐含的常数因子非常小。
+2. 另外，它还能够进行原址排序，甚至在虚存环境中也能很好的工作。
+
+
+## 关键细节
+### pivot 的选择
+为什么选择最右？
+
+### 两个索引表示的位置
+1. 两个指针把数组分为三个区间，从左到右分别是：
+    * 小于等于 pivot 的
+    * 大于 pivot
+    * 未比较的
+2. 两个指针 `i` 和 `j` 分别在左边和右边两个区间最靠中间的位置。也就是第一个区间里最靠右的元素，和第三个区间里最靠左的元素。
+3. 划分开始前，都是未排序的，都是第三区间，所以指针 `j` 位于索引为 `leftIdx` 的位置；此时因为没有第一个区间，所以指针 `i` 位于 `leftIdx-1` 的位置。
+
+### 比较时指针的移动规则
+1. 选择 `j` 指向的指针和 pivot 比较：
+    * 如果小于等于 pivot，那么需要放入第一个区间；
+    * 如果大于 pivot，那么需要放入第二个区间。
+2. 每次比较后，`j` 都需要向右移动一位到下移待比较元素。但 `i` 的移动方式要根据比较结果来决定。
+3. 如果当前元素需要放入第一个区间：
+    1. 现在第一个区间没有空位，右边紧邻的就是第二区间；
+    2. 当前元素应该放在第二区间最左的位置，那就让当前元素和第二区间最左的元素交换；
+    3. 然后指针 `i` 向右移动一位，正好把当前匀速包括进第一区间；
+    4. 而被当前元素换到第三区间最左的元素，在 `j` 右移一位后仍然可以被包括到第二区间。但是注意，如果它直接右移，则占用了第二个空间的位置。
+4. 如果需要放入第二个区间，`j` 右移后正好把当前元素包括进了第二个区间，指针 `i` 不用动。
+5. 比较完最后一个元素后（pivot 左边的那个元素），`j` 走到了 pivot 的位置，只剩下前两个空间了。
+6. 现在需要把 pivot 交换到中间，显然只能和第二个空间的最左元素交换，也就是 `i` 右边的元素。
 
 
 ## 分治描述
