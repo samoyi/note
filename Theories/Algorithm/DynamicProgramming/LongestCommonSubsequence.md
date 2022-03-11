@@ -15,6 +15,7 @@
         - [重叠子问题](#重叠子问题)
     - [第一步：描绘最优解的结构](#第一步描绘最优解的结构)
     - [第二步：递归的定义最优解的值](#第二步递归的定义最优解的值)
+        - [C 实现](#c-实现)
     - [第三步：自底向上求解](#第三步自底向上求解)
     - [第四步：计算最优解的值](#第四步计算最优解的值)
     - [算法改进](#算法改进)
@@ -103,53 +104,7 @@ TODO
 
     console.log( LCS(X.length-1, Y.length-1) ); // BCBA
     ```
-3. TODO，C 实现不会
-    ```cpp
-    #define M 7
-    #define N 6
-
-    char* X[M] = {"A", "B", "C", "B", "D", "A", "B"};
-    char* Y[N] = {"B", "D", "C", "A", "B", "A"};
-
-
-    char* LCS (int m, int n) {
-        if (m == 0 || n == 0) {
-            return "";
-        }
-
-        if ( X[m] == Y[n] ) {
-            char* s = calloc(N+1, sizeof(char));
-            strcpy(s, LCS(m-1, n-1));
-            strcpy(s, X[m]);
-            // printf("1: %s\n", s);
-            return s;
-        }
-        else {
-            char* s1 = calloc(N+1, sizeof(char));
-            char* s2 = calloc(N+1, sizeof(char));
-            strcpy(s1, LCS(m, n-1));
-            strcpy(s2, LCS(m-1, n));
-            // printf("2: %s\n", s1);
-            // printf("3: %s\n", s2);
-            return strlen(s1) > strlen(s2) ? s1 : s2;
-        }
-    }
-
-    int main (void) {
-
-        char* lcs = LCS(M-1, N-1);
-        
-        printf("%d\n", strlen(lcs));
-        
-        for (int i=0; i<N-1; i++) {
-            printf("%c ", lcs[i]);
-        }
-        printf("\n");
-        
-        return 0;
-    }
-    ```
-4. 加入缓存。注意，在上面的实现中，`m` 和 `n` 都是可以为 0 的，所以其中的 `m-1` 和 `n-1` 都可能为是 -1。但是缓存的数组序号不能为 -1。因此修改一下两个序列，让它们从 1 开始，这样 `m-1` 和 `n-1` 最小就只能为 0
+3. 加入缓存。注意，在上面的实现中，`m` 和 `n` 都是可以为 0 的，所以其中的 `m-1` 和 `n-1` 都可能为是 -1。但是缓存的数组序号不能为 -1。因此修改一下两个序列，让它们从 1 开始，这样 `m-1` 和 `n-1` 最小就只能为 0
     ```js
 
     const X = [null, 'A', 'B', 'C', 'B', 'D', 'A', 'B'];
@@ -198,6 +153,158 @@ TODO
     // 6: (7) [empty × 4, 'BCA', empty, 'BCBA']
     // 7: (7) [empty × 5, 'BCAB', empty]
     ```
+
+### C 实现
+1. C 不能像上面 JS 那样直接返回字符串，所以需要在递归的过程中记录信息来构建最优解。
+2. 第一反应是在 `X[m] == Y[n]` 的分支里面记录。但考虑 `else` 中的两个子问题比较的两对个子问题序列，这两对子问题序列是很相似的，只有最后的元素不同。所以我尝试使用下面的方法记录会有很多重复结果
+    ```cpp
+    #define M 7
+    #define N 6
+
+    char X[M+1] = {'\0', 'A', 'B', 'C', 'B', 'D', 'A', 'B'};
+    char Y[N+1] = {'\0', 'B', 'D', 'C', 'A', 'B', 'A'};
+
+    char S[N];
+    int idx = 0;
+
+
+    int LCS (int m, int n) {
+        if (m < 1 || n < 1) {
+            return 0;
+        }
+
+        if (X[m] == Y[n]) {
+            S[idx++] = X[m];
+            return LCS(m-1, n-1) + 1;
+        }
+        else {
+            int len1 = LCS(m-1, n);
+            int len2 = LCS(m, n-1);
+            return len1 > len2 ? len1 : len2;
+        }
+    }
+    ```
+3. 但是既然是重复，那就可以看看能否识别出重复。怎样的标志可以唯一识别一个相同的字符？这个字符在两个序列中的索引号。所以可以用二维数组来记录哪些字符是公共的
+    ```cpp
+    int solutions[M][N] = {0};
+
+    int LCS (int m, int n) {
+        if (m < 1 || n < 1) {
+            return 0;
+        }
+
+        if (X[m] == Y[n]) {
+            solutions[m][n] = 1; // 标记公共字符
+            return LCS(m-1, n-1) + 1;
+        }
+        else {
+            int len1 = LCS(m-1, n);
+            int len2 = LCS(m, n-1);
+            return len1 > len2 ? len1 : len2;
+        }
+    }
+
+
+    int main() {
+
+        int n = LCS(M, N);
+        printf("%d\n\n", n);
+
+        for (int i=1; i<=M; i++) {
+            for (int j=1; j<=N; j++) {
+                printf("%d ", solutions[i][j]);
+            }
+            printf("\n");
+        }
+        // 0 0 0 1 0 0
+        // 1 0 0 0 0 0
+        // 0 0 1 0 0 0
+        // 1 0 0 0 1 0
+        // 0 1 0 0 0 0
+        // 0 0 0 1 0 1
+        // 0 0 0 0 1 0
+    }
+    ```
+4. 可以看到，还是有一些重复的，总共有 9 个相同的情况。但实际上最攻公共子序列长度为 4：BCBA 或者 BDAB。
+5. 现在我们只能先试着按照递归的方式来一步步推演，看看是怎么得出最优解的。
+6. 反推的起点就是最后一个字符，`solutions[7, 6]` 0，走的 `else` 分支。但是我们还需要它在 `else` 分支里走的是哪个子问题。
+7. 现在并不知道，但我们可以在递归中也把这个信息记录进去
+    ```js
+    int LCS (int m, int n) {
+        if (m < 1 || n < 1) {
+            return 0;
+        }
+
+        if (X[m] == Y[n]) {
+            solutions[m][n] = 1;
+            return LCS(m-1, n-1) + 1;
+        }
+        else {
+            int len1 = LCS(m-1, n);
+            int len2 = LCS(m, n-1);
+            if (len1 > len2) {
+                solutions[m][n] = 2;
+                return len1;
+            }
+            else {
+
+                solutions[m][n] = 3;
+                return len2;
+            }
+        }
+    }
+    ```
+8. 计算后重新打印 `solutions`
+    ```
+    3 3 3 1 0 0
+    1 3 3 3 0 0
+    2 3 1 3 0 0
+    1 3 2 3 1 0
+    0 1 3 3 2 0
+    0 0 0 1 0 1
+    0 0 0 0 1 3
+    ```
+9. 根据这个表可以如下递归推演：
+    1. 递归起点 `solutions[7, 6]` 的值为 3，所以走 `else` 里的第二个子问题，也就是子问题中第一个序列不变，第二个序列减去最后一位，来到了 `solutions[7, 5]`；
+    2. `solutions[7, 5]` 值为 1，字符相等，字符为 B；
+    3. 字符相等所以走 `if` 分支，子问题的两个参数分别减一，来到 `solutions[6, 4]`。还是相等，字符为 A；子问题进一步来到 `solutions[5, 3]`；
+    4. `solutions[5, 3]` 为 3，走 `else` 里的第二个子问题，来到 `solutions[5, 2]`；
+    5. `solutions[5, 2]` 为 1，相等字符为 D；来到 `solutions[4, 1]`；
+    6. `solutions[4, 1]` 为 1，相等字符为 B。
+    7. 再往前就没有相等字符了，递归结束，最长公共子序列为 BDAB。
+10. 实现如下
+    ```cpp
+    void print_solution (int len) {
+        if (len < 1) {
+            return;
+        }
+
+        char seq[len];
+        int idx = 0;
+
+        int m = M;
+        int n = N;
+        while (m >= 1 && n >= 1) {
+            if (solutions[m][n] == 1) {
+                seq[idx++] = X[m];
+                m--;
+                n--;
+            }
+            else if (solutions[m][n] == 2) {
+                m--;
+            }
+            else if (solutions[m][n] == 3) {
+                n--;
+            }
+        }
+
+        while (--idx >= 0) {
+            printf("%c", seq[idx]);
+        }
+        printf("\n");
+    }
+    ```
+
 
 ## 第三步：自底向上求解
 1. JS 实现

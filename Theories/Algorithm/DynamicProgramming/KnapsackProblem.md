@@ -473,10 +473,14 @@ int knapsack_01 (int itemNum, int capacity) {
     for (int n=1; n<=itemNum; n++) {
         for (int c=1; c<=capacity; c++) {
             if (weights[n] > c) {
+                // 想放第 n 个但是放不下
                 table[n][c] = table[n-1][c];
             }
             else {
+                // 选择放第 n 个并且放下了
                 int v1 = values[n] + table[n-1][c-weights[n]];
+                // 选择不放第 n 个
+                // 这里不能像递归解法那样放在 else 外面，否则会对 if 里面的 table 重新赋值
                 int v2 = table[n-1][c];
                 table[n][c] = v1 > v2 ? v1 : v2;
                 solutions[n][c] = v1 > v2; // 记录选择了当前物品
