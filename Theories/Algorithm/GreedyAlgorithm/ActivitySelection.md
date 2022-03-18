@@ -11,9 +11,12 @@
     - [如果使用动态规划](#如果使用动态规划)
     - [活动选择问题的最优子结构及动态规划解法](#活动选择问题的最优子结构及动态规划解法)
         - [产生两个子问题的最优子结构](#产生两个子问题的最优子结构)
+            - [C 实现可以求出活动数量，但不能正确求出那几个活动 TODO](#c-实现可以求出活动数量但不能正确求出那几个活动-todo)
         - [产生一个子问题的最优子结构](#产生一个子问题的最优子结构)
-        - [自底向上解法](#自底向上解法)
             - [C 实现](#c-实现)
+            - [背包问题方法的递归解法](#背包问题方法的递归解法)
+        - [自底向上解法](#自底向上解法)
+            - [C 实现](#c-实现-1)
     - [贪心选择](#贪心选择)
     - [递归贪心算法](#递归贪心算法)
     - [迭代贪心算法](#迭代贪心算法)
@@ -40,7 +43,7 @@
 1. 若干个活动使用同一个资源，而这个资源在某个时刻只能供一个活动使用。
 2. 每个活动都有一个开始时间和结束时间，任务发生在半开半闭的时间区间内。
 3. 如果两个任务的时间区间不重叠，则称它们是 **兼容的**。
-4. 在 **活动选择问题** 中，我们希望选出一个最大兼容活动集。也就是安排尽可能多的活动，而不是总活动时长更多。
+4. 在活动选择问题中，我们希望选出一个最大兼容活动集。也就是安排尽可能多的活动，而不是总活动时长更多。
 5. 假定活动已经按照结束时间的单调递增顺序排序。
 
 
@@ -134,6 +137,100 @@
     // 2: {start: 8, finish: 11}
     // 3: {start: 12, finish: 16}
     ```
+
+#### C 实现可以求出活动数量，但不能正确求出那几个活动 TODO
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <limits.h>
+
+#define ACT_COUNT 11
+#define MAX_FINISH 16
+
+// 按照结束时间升序
+int startTimes[ACT_COUNT] = {1, 3, 0, 5, 3, 5, 6, 8, 8, 2, 12};
+int finishTimes[ACT_COUNT] = {4, 5, 6, 7, 9, 9, 10, 11, 12, 14, 16};
+
+// 找到在 index 活动开始之前结束的最后活动
+int last_finish_before (int startIdx, int endIdx, int index) {
+    // 在 index 开始前结束，肯定也在它结束前结束
+    int i = index - 1;
+    while (i >= startIdx && finishTimes[i] > startTimes[index]) {
+        i--;
+    }
+    return i;
+}
+// 找到在当前活动结束之后开始的第一个活动
+int first_start_after (int startIdx, int endIdx, int index) {
+    // 因为开始时间活动没有排序，所以要比较所有之后开始的活动
+    // 找到里面开始时间在 index 结束之后的且开始时间最早的
+    int firstStartIdx = endIdx + 1; // 默认值超出范围，表示没找到
+    int firstStartTime = finishTimes[endIdx]; // 默认的最早开始时间比所有可能的都要大
+    for (int i = index+1; i <= endIdx; i++) {
+        if (startTimes[i] >= finishTimes[index] && startTimes[i] < firstStartTime) {
+            firstStartTime = startTimes[i];
+            firstStartIdx = i;
+        }
+    }
+    return firstStartIdx;
+}
+
+int actIndices[ACT_COUNT];
+
+int cache[ACT_COUNT][ACT_COUNT];
+
+void init_cache () {
+    for (int i=0; i<ACT_COUNT; i++) {
+        for (int j=0; j<ACT_COUNT; j++) {
+            cache[i][j] = -1;
+        }
+    }
+}
+
+int activity_selector (int startIdx, int endIdx) {
+    if (startIdx > endIdx) {
+        return 0;
+    }
+    if (startIdx == endIdx) {
+        return 1;
+    }
+    if (cache[startIdx][endIdx] != -1) {
+        return cache[startIdx][endIdx];
+    }
+    int max = 0;
+    int m;
+    int _p, _q;
+    for (int i=startIdx; i<=endIdx; i++) {
+        int p = last_finish_before(startIdx, endIdx, i);
+        int q = first_start_after(startIdx, endIdx, i);
+        int n = activity_selector(startIdx, p) + 1 + activity_selector(q, endIdx);
+        if (n > max) {
+            max = n;
+            m = i;
+        }
+    }
+    actIndices[m] = 1;
+    cache[startIdx][endIdx] = max;
+    return max;
+}
+
+
+int main() {
+    init_cache();
+
+    int n = activity_selector(0, ACT_COUNT-1);
+    printf("[%d]\n", n);
+
+    for (int i=0; i<ACT_COUNT; i++) {
+        printf("%d ", actIndices[i]);
+    }
+    printf("\n");
+
+
+    return 0;
+}
+```
 
 ### 产生一个子问题的最优子结构
 1. 如同钢条切割问题对初始的两个子问题的最优子结构进行的优化一样，这里也可以进行同样的优化。
@@ -237,6 +334,115 @@
     // 1: (2) [6, 10]
     // 2: (2) [12, 16]
     ```
+
+#### C 实现
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#define ACT_COUNT 11
+#define MAX_FINISH 16
+
+// 按照结束时间升序
+int startTimes[ACT_COUNT] = {1, 3, 0, 5, 3, 5, 6, 8, 8, 2, 12};
+int finishTimes[ACT_COUNT] = {4, 5, 6, 7, 9, 9, 10, 11, 12, 14, 16};
+
+// 找到在 index 活动开始之前结束的活动中最后一个结束的
+int last_finish_before (int startIdx, int endIdx, int index) {
+    // 在 index 开始前结束，肯定也在它结束前结束
+    int i = index - 1;
+    while (i >= startIdx && finishTimes[i] > startTimes[index]) {
+        i--;
+    }
+    return i;
+}
+
+int actIndices[ACT_COUNT]; // 记录最优解中的活动
+
+int cache[ACT_COUNT][ACT_COUNT];
+
+void init_cache () {
+    for (int i=0; i<ACT_COUNT; i++) {
+        for (int j=0; j<ACT_COUNT; j++) {
+            cache[i][j] = -1;
+        }
+    }
+}
+
+int activity_selector (int startIdx, int endIdx) {
+    if (startIdx > endIdx) {
+        return 0;
+    }
+    if (cache[startIdx][endIdx] != -1) {
+        return cache[startIdx][endIdx];
+    }
+
+    int max = 0; // 记录最优解活动数量
+    int m; // 记录最优解选定的最后一个活动
+    for (int i=startIdx; i<=endIdx; i++) {
+        int p = last_finish_before(startIdx, endIdx, i);
+        int n = activity_selector(startIdx, p) + 1;
+        if (n > max) {
+            max = n;
+            m = i;
+        }
+    }
+    actIndices[m] = 1;
+    cache[startIdx][endIdx] = max;
+    return max;
+}
+
+
+int main() {
+    init_cache();
+
+    int n = activity_selector(0, ACT_COUNT-1);
+    printf("%d\n", n); // 4
+
+    for (int i=0; i<ACT_COUNT; i++) {
+        printf("%d ", actIndices[i]);
+    }
+    printf("\n"); // 1 0 0 1 0 0 0 1 0 0 1
+
+
+    return 0;
+}
+```
+
+#### 背包问题方法的递归解法
+1. 按照 0-1 背包的思路，每次的两个选择是选不选最后一个活动：
+    * 如果选了最后一个活动，那子问题参数就是最后一个活动开始前的所有活动；
+    * 如果没选，子问题就是活动列表中最后一个活动前面的所有活动。
+2. 实现
+```cpp
+int activity_selector (int startIdx, int endIdx) {
+    if (startIdx > endIdx) {
+        return 0;
+    }
+    if (cache[startIdx][endIdx] != -1) {
+        return cache[startIdx][endIdx];
+    }
+
+    // 选最后一个活动
+    // 获得最后一个活动之前能兼容的活动，并计算子问题
+    int lastIdx = last_finish_before(startIdx, endIdx, endIdx);
+    int m = activity_selector(startIdx, lastIdx) + 1;
+    
+    // 不选最后一个活动
+    int n = activity_selector(startIdx, endIdx-1);
+
+    if (m > n) {
+        cache[startIdx][endIdx] = m;
+        actIndices[endIdx] = 1; // 选了就标记
+        return m;
+    }
+    else {
+        cache[startIdx][endIdx] = n;
+        return n;
+    }
+}
+```
 
 ### 自底向上解法
 1. 在产生一个子问题的最优子结构的递归式中，随着递归的深入，我们会不断的求解更早时间段的最大兼容活动集。例如最开始我们会在前 16 个小时里找到最大兼容活动集，然后递归的子问题中，我们就要在前 12 个小时里找到最大兼容活动集。
@@ -389,7 +595,7 @@ int main (void) {
 1. 假如我们不需要求解所有的子问题会怎样？如果每次选择一个活动不需要遍历当前的所有活动而是确定的选择一个。
 2. 对于活动选择问题，我们其实每次不需要遍历当前的所有活动，而只需要考虑一个选择，就是贪心选择。
 3. 我开始想到的贪心选择是时长最短的活动。但实际上正确的贪心选择是结束时间最早的活动。《算法导论》练习 16.1-3。虽然不知道怎么证明，但可以随便举出一个反例：$\{(1,9),(8,11),(10,20)\}$，显然如果选择 $(8, 11)$ 将不会得到最大兼容活动集。
-4. 另外，贪心的择与其他活动冲突最少的活动也不行，反例是 ${(−1,1),(2,5),(0,3),(0,3),(0,3),(4,7),(6,9),(8,11),(8,11),(8,11),(10,12)}$，和其他活动冲突最少的是 $(4,7)$，但唯一的最大兼容子集是 $ (−1,1), (2,5), (6,9), (10,12)$。
+4. 另外，贪心的选择与其他活动冲突最少的活动也不行，反例是 ${(−1,1),(2,5),(0,3),(0,3),(0,3),(4,7),(6,9),(8,11),(8,11),(8,11),(10,12)}$，和其他活动冲突最少的是 $(4,7)$，但唯一的最大兼容子集是 $ (−1,1), (2,5), (6,9), (10,12)$。
 5. 《算法导论》证明选择最早结束的活动是正确的。如果最早结束的活动不在最大兼容子集里，那它的结束时间肯定小于等于最大兼容子集里的第一个活动，那么它就至少可以替换掉这个活动，从而构成另一个最大兼容子集。
 6. 或者这么想，你如果选择了一个结束更晚的作为第一个，那剩下的时间肯定更短了，所以显然应该选结束更早的作为第一个；又如果你说选一个结束更晚的可能开始的也更晚，这样前面就可以再插一个。那显然前面插入的这个就成了结束更早的那个。
 7. 既然现在可以贪心的选择最早结束的活动，那就先从排好序的所有活动里选择第一个，也就是最早结束的；然后再从剩下的活动里面，选择与第一个活动兼容的且最早结束的；然后以此类推直到没有活动可选。
