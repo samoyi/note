@@ -6,6 +6,10 @@
 - [async-await](#async-await)
     - [异步逻辑](#异步逻辑)
         - [例子](#例子)
+            - [例1](#例1)
+            - [例2](#例2)
+            - [例3](#例3)
+            - [例4](#例4)
     - [返回值](#返回值)
         - [如果内部没有 `await`](#如果内部没有-await)
         - [有错误的情况](#有错误的情况)
@@ -21,10 +25,11 @@
 2. 正常情况下，`await` 命令后面是一个 promise 实例。如果不是，会被转成一个立即 resolve 的 promise 实例。
 3. 函数内部遇到 `await` 时，不会继续执行，而是等待异步返回结果。
 4. 但此时引擎本身的同步线程还会继续进行。所以，从静态代码上看这个 `async` 函数还没有执行完，但实际上函数已经返回，因此会接着执行函数调用后面的代码。查看调用栈时也会发现执行到 `await` 的异步操作时，这个 `aysnc` 函数的执行环境已经不在调用栈中。
-5. 等到 `await` 后面的 promise 出结果后，就需要调用该 promise 的回调，也就是 `aysnc` 里 `await` 后续的逻辑。这一部分逻辑也是和普通的 `then` 回调一样，被作为一个微任务加入队列，之后执行的时候，`await` 返回的值就是 promise 的结果值。
+5. 等到 `await` 后面的 promise 出结果后，就需要调用该 promise 的回调，也就是 `aysnc` 里 `await` 后续的逻辑。这一部分逻辑也是和普通的 `then` 回调一样，**被作为一个微任务加入队列**，之后执行的时候，`await` 返回的值就是 promise 的结果值。
 
 ### 例子
-1. 例1
+#### 例1
+1. 代码
     ```js
     let p;
 
@@ -65,19 +70,32 @@
     // 33
     // inner macro
     ```
-    1. 执行 `foo`，正常的打印 `"1"`;
-    2. 执行 `await` 后面的异步操作，异步操作中会在两秒钟后添加一个宏任务；
-    3. `foo` 函数返回一个 promise 实例给 `p`:
-    4. `p` 通过 `then` 添加回调。这个回调是 `foo` 返回的 promise 的回调，不是 `await` 后面 promise 的回调；
-    5. 打印 `foo` 返回的 `p`，是 pendding 状态；
-    6. 当前宏任务结束；
-    7. 约两秒钟执行 `setTimeout` 回调，分别添加一个微任务和宏任务，然后 resolve 掉 `await` 后面的 promise；
-    8. 该 promise 被 resolve 后，并不是立刻执行回调（也就是 `aysnc` 里 `await` 之后的逻辑），也是作为微任务。所以会先执行前一个微任务，也就是打印 `"inner micro"`；
-    9. 之后再执行 `await` 之后的逻辑，执行时通过 `await` 的返回值接收到 promise 的结果，也就是 `22`，因此首先打印出 `22`；
-    10. 之后再打印 `2`，然后 `return 33`。这个 `return 33` resolve `p` 指向的 promise，结果值为 33。
-    11. `p` 指向的 promise 解析出结果，因此它的回调作为微任务调用，打印 `33`；
-    12. 最后一步执行上一个宏任务，打印 `"inner macro"`。
-2. 例2
+2. 分析
+    1. 调用 `foo`：
+        1. 打印 `1`；
+        2. 调用 `resolveLater`
+            1. 调用 promise 构造函数，创建一个两秒钟后的执行的宏任务，在宏任务中 resolve；
+            2. resolveLater 返回 创建的 promise。
+        3. `await` 要等待该 promise 解析，因此 `foo` 先返回一个 promise 给 `p`。
+    2. 为 `p` 设置回调。
+    3. 打印 `p`，状态为 pendding。
+    4. 同步任务完成，当前宏任务完成。
+    5. 两秒钟后执行下一个宏任务，也就是 `setTimeout` 的回调：
+        1. 新创建一个立刻 resolve 的 promise，回调立刻被加入微任务列表，会打印 `"inner micro"`；
+        2. 创建第二个宏任务，会打印 `"inner macro"`；
+        3. `resolveLater` 返回的 promise 解析为 `22`。
+    6. `foo` 中 `await` 得到 `22`，之后的逻辑作为回调加入微任务。
+    7. 执行第一个微任务，打印 `"inner micro"`
+    8. 执行第二个微任务：
+        1. `await` 所在的 `console` 打印 `22`
+        2. 打印 `2`
+        3. `p` 解析为 `33`
+    9. `p` 回调加入微任务列表；
+    10. 执行该微任务，打印 `33`
+    11. 第二个宏任务执行，打印 `"inner macro"`。
+
+#### 例2
+1. 代码
     ```js
     async function foo () {
         console.log(1);
@@ -103,20 +121,28 @@
 
     // 输出顺序为：7 1 3 5 6 8 4 2 done 
     ```
-    1. 打印 7；
-    2. 调用 `foo`，打印 1；
-    3. 调用 `bar`，调用 `new Promise` 并传参 executor 函数，创建 promise 实例 `p`；
-    4. 执行 executor，打印 3；
-    5. 调用 `resolve`，`p` 解析为 4；
-    6. 打印 5，executor 返回，创建好 promise 实例 `p`；
-    7. 打印 6，`bar` 返回 `p` 给 `await`；
-    8. 由于 `p` 已经解析完成，因此 `await` 之后的代码被创建为一个微任务，到时 `result` 接受到的值为 4；
-    9. `foo` 函数实际返回，返回了另一个 promise 实例；该实例调用 `then`，传递回调；
-    10. 打印 8；
-    11. 调用栈准备清空，执行微任务，`result` 获得值 4，打印 4；
-    13. 打印 2；
-    14. 执行 `return "done"`，也就是 `foo` 返回的 promise 解析为 `"done"`；它的回调被加入微任务队列，得到结果 `"done"` 并打印。
-3. 例3
+2. 分析
+    1. 打印 `7`；
+    2. 调用 `foo`：
+        1. 打印 `1`；
+        2. 调用 `bar`：
+            1. 调用 `new Promise` 并传参 executor 函数，创建 promise 实例 `p`；
+            2. 执行 executor，打印 `3`；
+            3. `p` 解析为 `4`；
+            4. 打印 `5`；
+            5. 打印 `6`；
+            6. `bar` 返回 `p` 给 `await`；
+        3. 由于 `p` 已经解析完成，因此 `await` 之后的代码立刻被创建为一个微任务，执行时 `result` 接受到的值为 `4`；
+    3. `foo` 函数实际返回，返回了另一个 promise 实例；该实例调用 `then`，传递回调；
+    4. 打印 8；
+    5. 调用栈准备清空，执行微任务：
+        1. `result` 获得值 4，打印 `4`；
+        2. 打印 2；
+        3. `foo` 返回的 promise 解析为 `"done"`；
+    6. 它的回调被加入微任务队列，立刻执行得到结果 `"done"` 并打印。
+
+#### 例3
+1. 代码
     ```js
     let arr = [];
 
@@ -143,25 +169,29 @@
         console.log(arr); // [1, 2, 3, 4, 5, 6]
     }, 500);
     ```
-    1. 第一个 `setTimeout` 调用，回调加入任务队列；
+2. 分析
+    1. 创建 push 6 的宏任务
     2. 调用 `asyncReadFile`：
-        1. push 1；
-        2. 第一个 `await` 后的 promise 立刻解析为 22，它之后的代码加入微任务队列；
-    3. `asyncReadFile` 返回一个 promise，该 promise 通过 `then` 添加回调；
-    4. push 2；
-    5. 第二个 `setTimeout` 调用，500 毫秒后添加另一个宏任务;
-    6. 本轮同步任务结束，当前微任务队列里只有一个微任务，开始执行该微任务；
-        1. 解析为 22 的 promise 的回调微任务执行：
-            1. push 3
-            2. 第二个 `await` 后的 promise 立刻解析为 33，它之后的代码加入微任务队列，称为目前唯一的微任务；
-    7. 执行刚加入的微任务：
-            1. push 4
-            2. `asyncReadFile` 函数内部没有 `return`，因此返回的 promise 解析为 `undefined`；
-    8. 刚才通过 `then` 添加的回调加入微任务队列并立刻执行，push 5；
-    9. 微任务全部执行完；
-    10. 任务队列里第一个宏任务执行，push 6；
-    11. 任务队列里第二个宏任务执行，打印 `[1, 2, 3, 4, 5, 6]`
-4. 例4
+        1. push 1
+        2. 立刻解析为 22 的微任务，回调加入微任务队列
+        3. `asyncReadFile` 返回
+    3. `asyncReadFile` 返回的 promise 添加回调
+    4. push 2
+    5. 创建 `console` 的宏任务
+    6. 执行唯一的微任务：
+        1. `await` 获得 22
+        2. push 3
+        3. 立刻解析为 33 的微任务，回调加入微任务队列
+    7. 执行唯一的微任务：
+        1. `wait` 获得 33
+        2. push 4
+        3. `asyncReadFile` 返回的 promise 解析为 `undefined`
+    8. `asyncReadFile` 返回的 promise 的回调加入微任务队列，并立刻执行，push 5
+    9. 执行第一个宏任务，push 6
+    10. 半秒钟后执行第二个宏任务，打印 `arr`
+
+#### 例4
+1. 代码
     ```js
     setTimeout(function () {
         console.log("1");
@@ -196,6 +226,7 @@
         console.log("8");
     });
     ```
+2. 分析
     1. `setTimeout` 将 `console.log("1")` 加入宏任务队列；
     2. 执行 `async1`：
         1. 打印 2：
