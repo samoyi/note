@@ -51,7 +51,7 @@
     * 新旧 VNode 都有：
         * 需要用新节点整体替换旧节点；
         * 不需要整体替换，只需要进行修补（patch）。
-2. 使用 `sameVnode` 函数判断是否需要整体替换。如果是新旧 VNode 是 same 的，则不需要整体替换。但这里的 same 也不是指完全一样，只是说功能上一样，可以修补而不需要替换。
+2. 使用 `sameVnode` 函数判断是否需要整体替换。如果新旧 VNode 是 same 的，则不需要整体替换。但这里的 same 也不是指完全一样，只是说功能上一样，可以修补而不需要替换。
 3. 如果要根据新节点对旧节点进行 patch，则调用 `patchVnode` 函数计算哪些部分需要替换；
 4. `patchVnode` 需要分析新旧节点内部有哪些不一样的地方，所以要根据新旧节点各自是否有子节点分为四种情况，其他三种（都无、旧无新有、旧有新无）都好处理，也就是直接删除或者直接新增。只有在新旧节点都有子节点的时候，需要判断哪些节点可以复用，哪些只能增删。这部分是最核心的 diff 逻辑，由 `updateChildren` 函数处理。
 
@@ -64,7 +64,7 @@
 
 ## DOM 树变化差异比较（diff 算法）
 1. 查找任意两个树之间的差异是一个 $O(n^3)$ 问题，React 使用了一种简单强大并且直观的算法使得复杂度降至 $O(n)$。
-2. 这是因为 React 只会对两棵树的同层进行比较，也即是说，如果一个节点从上层移动到了下层，React 只会简单的认为上下两层都发生了变化，而不会更智能的识别传是发生了移动。TODO 复杂度分析，[参考](https://www.zhihu.com/question/66851503/answer/246766239)
+2. 这是因为 React 只会对两棵树的同层进行比较，也即是说，如果一个节点从上层移动到了下层，React 只会简单的认为上下两层都发生了变化，而不会更智能的识别出是发生了移动。TODO 复杂度分析，[参考](https://www.zhihu.com/question/66851503/answer/246766239)
     <img src="./images/01.png" width="400" style="display: block; margin: 5px 0 10px 0;" />
 3. 这样就大大降低了 diff 算法的复杂度。因为在 web 组件中很少会将节点移动到不同的层级，所以这种简化很少会影响性能。
 3. 比如如下变动
@@ -98,7 +98,7 @@
     * 如果不是，直接用 vnode 替换 oldVnode。
 
 ### patchVnode
-1. patchVnode 是比较 oldVnode 和 vnode 的子节点，看看有哪些复用的，所以要先比较子节点的情况。
+1. patchVnode 是比较 oldVnode 和 vnode 的子节点，看看有哪些可以复用的，所以要先比较子节点的情况。
 2. 这里只考虑子节点是元素节点的情况，实际上还要再考虑是文本节点的情况，不过逻辑也比较简单，可以直接看源码。
 3. oldVnode 和 vnode 的子节点情况分为以下几种：
     * 如果 oldVnode 没有子节点，那就直接添加 vnode 的子节点；
@@ -115,18 +115,18 @@
 1. 首先是首尾的四个节点两两比较是否是 sameVnode，比较分为四种方式：
     * oldStartVnode 和 newStartVnode 如果 sameVnode，patch 后两个指针分别向右移动一位；
     * oldEndVnode 和 newEndVnode 如果 sameVnode，patch 后两个指针分别向左移动一位；
-    * oldStartVnode 和 newEndVnode 如果 sameVnode，patch 后本应该在右边的节点（newEndVnode 位置）跑到了左边（oldStartVnode 位置），所以要把 DOM 元素的位置移动到正确的位置，也就是把 oldStartVnode 对应的元素移到 oldEndVnode 对应得元素右边；
+    * oldStartVnode 和 newEndVnode 如果 sameVnode，patch 后本应该在右边的节点（newEndVnode 位置）跑到了左边（oldStartVnode 位置），所以要把 DOM 元素的位置移动到正确的位置，也就是把 oldStartVnode 对应的元素移到 oldEndVnode 对应得元素右边；（因为 newEndVnode 本来是未比较元素里面最右边的，它现在 patch 之后，就是右边刚刚比较过的节点，所以要放到右指针的右边）
     * oldEndVnode 和 newStartVnode 如果 sameVnode，和上一种情况同理但是正好相反，因此 patch 后要把 oldEndVnode 对应的元素移动到 oldStartVnode 对应元素的左边。
 2. 如果上面四种 sameVnode 都没有命中，那就用 newStartVnode 作为比较对象，再找找看 oldCh 中间有没有 sameVnode 的节点：
-    * 如果找到，patch 之后还要移动元素，因为使用最左边的 newStartVnode 了中间的节点，所以要把那个中间节点对应的元素移动到 oldStartVnode 的左边；
+    * 如果找到，patch 之后还要移动元素，因为使用最左边的 newStartVnode patch 了中间的节点，所以要把那个中间节点对应的元素移动到 oldStartVnode 的左边；
     * 如果没找到就创建新节点，插入到 oldStartVnode 对应元素的左边。
-3. 随着比较和 patch，首尾指针逐渐靠拢，直到有一对指针先碰面并错过以为或者同时碰面并错过一位，比较结束。
+3. 随着比较和 patch，首尾指针逐渐靠拢，直到有一对指针先碰面并错过一位或者同时碰面并错过一位，比较结束。
 4. 如果此时 oldCh 还没碰面，说明 oldStartVnode 和 oldEndVnode 中间的子节点就是用不上的，直接删掉。
 5. 如果此时 newCh 还没碰面，说明 newStartVnode 和 newEndVnode 中间的子节点还没有插入，用这些子节点创建元素插入 DOM。
 
 #### 有 key 的情况
-1. 如果有 key 就先要通过 key 来寻找要 patch 的节点，找不到则创建新节点；找的话还要通过 sameVnode 逻辑检查，也通过的话才会进行 patch。
-2. 有 key 的话，key 相同不一定是 sameVnode，因为可能元素类型不同之类的。但是如果是 sameVnode 则 key 肯定相同。
+1. 如果有 key 就先要通过 key 来寻找要 patch 的节点，找不到则创建新节点；
+2. 找的话还要通过 sameVnode 逻辑检查，也通过的话才会进行 patch。因为即使 key 相同不一定是 sameVnode，比如可能元素类型不同。但是如果是 sameVnode 则 key 肯定相同。
 3. 此时首尾两两比较的四种比较方式依然成立，只不过此时的 sameVnode 要先要求 key 也一致，再要求之后的 sameVnode 逻辑一直，然后才能 patch。
 4. 上面四种比较没有命中，同样要在 oldCh 中寻找和 newStartVnode 的拥有相同 key 的节点：
     * 如果没找到的话就使用 newStartVnode 创建一个新元素，放到 oldStartVnode 左边。
@@ -996,13 +996,10 @@ function createKeyToOldIdx (children, beginIdx, endIdx) {
 
 
 ## 列表的情况
-不加 key 导致 bug：用源代码分析为什么导致 bug
-不加 key 影响复用
-
 ### Diff 算法并不知道用户操作
 1. 比如根据一个数组 `[1, 2, 3, 4, 5]` 循环渲染出一个列表。之后往数组里又插入了一项，变成了 `[1, 2, 3, 3.5, 4, 5]`。
 2. 你插入的时候当然是知道插入的 index 是 3，但是 diff 算法只是监听数据变化，它并不知道你插入的位置。
-3. 所以，它对比两个数组的差异，会发现：前三项 `1`、`2`、`3` 都没变，第四项 `4` 变成了 `3.5`，第五项 `5` 变成了 `4`，后面新加了一个第六项 `5`。
+3. 所以，`updateChildren` 对比两个数组是，会依次 `patchVnode` 前三项，然后 `patchVnode` 第四项的 4 和 3.5 的时候，发现仍然是 sameVnode，只不过里面的文本不同，直接复用了旧数组 4 那一项，然后把 4 改成了 3.5。之后就是把第五项 `5` 变成了 `4`，最后再新加了一个第六项 `5`。
 4. 删除的时候也是同样的问题。
 5. 当然如果只是这样的话，就算 diff 算法没有正确理解插入，它重新渲染列表后也是符合预期的。
 6. 比如说本来通过 `<li v-for="item in array">{{item}}</li>` 渲染出这个列表
@@ -1026,24 +1023,20 @@ function createKeyToOldIdx (children, beginIdx, endIdx) {
         <li>5</li>
     </ul>
     ```
-7. 但是如果在列表项里再加一个输入框 `<li v-for="item in array"><input>{{item}}</li>`，渲染好之后再往每个输入框里输入不一样的内容，比如这样
+8. 但是如果在列表项里再加一个输入框 `<li v-for="item in array"><input>{{item}}</li>`，渲染好之后再往每个输入框里输入不一样的内容，比如这样
     <img src="./images/02.png" width="200" style="display: block; margin: 5px 0 10px 0;" />
-8. 然后再改变数组触发重渲染，就成了下面的样子
+9. 然后再改变数组触发重渲染，就成了下面的样子
     <img src="./images/03.png" width="200" style="display: block; margin: 5px 0 10px 0;" />
-9. Diff 算法直接复用的前三个，没问题。
-10. 因为 diff 算法并不知道你是插在哪个位置，所以只是按顺序继续往后比较，然后发现第四项的值从 `4` 变成了 `3.5`，所以它并不需要重新渲染整个`<li>`，只需要修改里面的文本节点值就行了。
-11. 因为前面说了 diff 算法是同层比较，所以不会去看子节点 `<input>`，而且 `<input>` 也没有依赖什么数据，所以就直接复用它了，就出现了问题。
+10. Diff 算法直接复用的前三个，没问题。但是在 `patchVnode` 第四项时，因为没有 key，所以仍然是判定为 sameVnode 的，所以就是通过 `patchVnode` 对两个 `<li>` 进行复用。
+11. 因此接下来就是调用 `updateChilren`，然后分别对 `<li>` 里面的 `<input>` 和文本节点调用 `patchVnode`。而根据 `patchVnode` 的逻辑，不会对这里的 `<input>` 做任何事情，所以就是直接复用。
 
 ### 使用 `key` 给节点一个身边标识
 1. 为了解决这个问题，需要给每个列表元素提供一个身份标识，diff 算法根据这个标识来判断到底发生了什么改变
     ```js
     <li v-for="item in array" :key="item"><input>{{item}}</li>
     ```
-2. 现在五个列表项的 `key` 分别是 `1`、`2`、`3`、`4`、`5`。列表更新后，diff 算法发现这五个 `key` 所在的列表项都在，然后在第三项后面多了一个节点，现在就能正确的插入了。
+2. 现在五个列表项的 `key` 分别是 `1`、`2`、`3`、`4`、`5`。列表更新后，`updateChilren` 判断 sameVnode 时就要检查 `key`，这样就能发现 `3.5` 那个节点是新增的。
 3. 因为 `key` 必须是唯一的表明节点身份的，所以不能用列表循环的索引作为 `key`。
-
-
-
 
 
 ## References
