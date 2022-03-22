@@ -30,6 +30,7 @@
         - [从链表中删除结点](#从链表中删除结点)
         - [有序链表](#有序链表)
     - [指向指针的指针](#指向指针的指针)
+        - [内存表示](#内存表示)
     - [指向函数的指针](#指向函数的指针)
         - [函数指针作为参数](#函数指针作为参数)
         - [`qsort` 函数](#qsort-函数)
@@ -746,6 +747,21 @@ int read_line(char str[], int n)
     ```
 7. 所以在函数里面，`list` 接收到的就是该指针的指针的副本。所以 `*list` 就是首节点的指针，即 `first`。现在把 `new_node` 赋值给 `*list` 将会修改 `first` 指向的内容。
 
+### 内存表示
+1. 以下代码为例
+    ```js
+    int var = 10;
+    int* ptr1 = &var;
+    int** ptr2 = &ptr1;
+
+    printf("%d %d %d\n", var, *ptr1, **ptr2); // 10 10 10
+    ```
+2. 内存关系示意
+    <img src="./images/31.png" width="600" style=" display: block; margin: 5px 0 10px;" />
+3. 变量 `var` 的类型是 `int`，所在的内存位置 2008 保存的是 `int` 类型，值为 10；
+4. 变量 `ptr1` 的类型是 `int*`，也就是 `int` 类型的地址。`ptr1` 所在的内存位置 4020 保存的是 `int*` 类型，值为 `var` 的内存地址 2008；
+5. `ptr2` 的类型是 `int**`，也就是 `int*` 类型的地址。`ptr2` 所在的内存位置 3096 保存的是 `int**` 类型，值为 `ptr1` 的内存地址 4020。
+
 
 ## 指向函数的指针
 C 语言没有要求指针只能指向数据，它还允许指针指向函数。毕竟函数占用内存单元，所以每个函数都有地址，就像每个变量都有地址一样。
@@ -1313,56 +1329,6 @@ TODO
     ```
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## References
 * [C语言程序设计](https://book.douban.com/subject/4279678/)
+* [Double Pointer (Pointer to Pointer) in C](https://www.geeksforgeeks.org/double-pointer-pointer-pointer-c/)

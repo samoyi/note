@@ -6,14 +6,14 @@
 - [Instance Lifecycle](#instance-lifecycle)
     - [Misc](#misc)
     - [整体流程](#整体流程)
-        - [`beforeCreate` 之前](#beforecreate-之前)
-        - [`created` 之前](#created-之前)
-        - [`beforeMount` 之前](#beforemount-之前)
-        - [`mount` 之前](#mount-之前)
-        - [从数据更新到 `beforeUpdate` 之前](#从数据更新到-beforeupdate-之前)
-        - [`updated` 之前](#updated-之前)
-        - [`beforeDestroy` 之前](#beforedestroy-之前)
-        - [`destroyed` 之前](#destroyed-之前)
+        - [`beforeCreate` 之前——基本初始化](#beforecreate-之前基本初始化)
+        - [`created` 之前——初始化实例，实现响应式](#created-之前初始化实例实现响应式)
+        - [`beforeMount` 之前——模板编译为渲染函数](#beforemount-之前模板编译为渲染函数)
+        - [`mounted` 之前——依赖收集；生成虚拟 DOM 并挂载](#mounted-之前依赖收集生成虚拟-dom-并挂载)
+        - [从数据更新到 `beforeUpdate` 之前——数据更新，虚拟 DOM 还没有更新](#从数据更新到-beforeupdate-之前数据更新虚拟-dom-还没有更新)
+        - [`updated` 之前——虚拟 DOM 更新，然后 patch 实现重渲染](#updated-之前虚拟-dom-更新然后-patch-实现重渲染)
+        - [`beforeDestroy` 之前——准备销毁实例](#beforedestroy-之前准备销毁实例)
+        - [`destroyed` 之前——销毁实例](#destroyed-之前销毁实例)
     - [实例生命周期](#实例生命周期)
         - [第一步 实例初始化](#第一步-实例初始化)
             - [该阶段结束后的钩子函数——`beforeCreate`](#该阶段结束后的钩子函数beforecreate)
@@ -62,40 +62,40 @@
     ```
 
 ## 整体流程
-### `beforeCreate` 之前
+### `beforeCreate` 之前——基本初始化
 创建实例之间的一些初始化工作
 
-### `created` 之前
+### `created` 之前——初始化实例，实现响应式
 1. 处理实例的各个属性，创建实例。
 2. Observe 实例 `data` 属性，对其中的数据进行响应化。
 
-### `beforeMount` 之前
+### `beforeMount` 之前——模板编译为渲染函数
 将模板编译为渲染函数，分为以下三大步骤：
 1. 将模板编译为 AST；
 2. AST 进行静态子树优化；
 3. 用优化后的 AST 生成渲染函数。
 
-### `mount` 之前
+### `mounted` 之前——依赖收集；生成虚拟 DOM 并挂载
 1. 渲染函数被调用，主要完成两件事：
     * 调用过程会 touch 到模板依赖的数据，实现依赖订阅；
     * 调用结束后生成虚拟 DOM。
 2. 根据虚拟 DOM 进行挂载，也就是生成真实 DOM。
 
-### 从数据更新到 `beforeUpdate` 之前
+### 从数据更新到 `beforeUpdate` 之前——数据更新，虚拟 DOM 还没有更新
 1. 数据更新触发 setter，Dep 通知到 watcher。
 2. 一般是异步更新，watcher 加入到更新队列，在 nextTick 时 flush 掉更新队列。
 3. flush 的时候，看起来一个 vm 实例只会有一个总的 watcher，而不是几个订阅者就有几个 watcher。
 4. 在队列中该实例的 watcher 调用更新方法前，会调用该实例的 `beforeUpdate` 函数。
 
-### `updated` 之前
+### `updated` 之前——虚拟 DOM 更新，然后 patch 实现重渲染
 1. 每个实例的 watcher 调用完 `beforeUpdate` 后就进行实际的更新 patch。
 2. 异步队列中所有实例的 watcher 都 patch 完后，再一次调用每个实例的 `updated` 函数。
 
-### `beforeDestroy` 之前
+### `beforeDestroy` 之前——准备销毁实例
 1. 实例的 `$destroy()` 被调用后进入销毁阶段。
 2. `beforeDestroy` 钩子被调用前就只做了一件事，通过 `vm._isBeingDestroyed` 判断该是是否正在被销毁，是的话直接返回。
 
-### `destroyed` 之前
+### `destroyed` 之前——销毁实例
 1. 删除和修改与该实例相关的东西，比如
     * 从父实例中移除当前实例，同时销毁子实例
     * 解除和所有订阅者的关系
