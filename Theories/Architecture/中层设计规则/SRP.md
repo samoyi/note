@@ -13,8 +13,9 @@
 
 
 ## 思想
-1. 顶层设计原则：ETU 和 $ETC_h$。
+1. 顶层设计原则：ETU 和 $ETM$。
 2. 和低耦合一样，SRP 也有助于提高可维护性和复用性。
+3. 关注点分离（Separation of Concern，SoC）和 SRP 一个意思。只有 SRP 了才能关注点分离，为了关注点分离就要 SRP。
 
 
 ## 涉及的 bad codes
