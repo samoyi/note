@@ -15,7 +15,8 @@ inverse of: *Replace Parameter with Query*
 
 
 ## 思想
-低耦合
+1. 中层设计规则：低耦合。
+2. 纯函数的实现就要求这一点：函数内部不要自己直接使用外部可变的数据，而是把所有可变数据都作为参数传递。
 
 
 ## Motivation

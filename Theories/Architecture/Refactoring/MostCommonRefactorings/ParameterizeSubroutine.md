@@ -1,12 +1,12 @@
-# Parameterize Function
+# Parameterize Subroutine
+
 
 <!-- TOC -->
 
-- [Parameterize Function](#parameterize-function)
+- [Parameterize Subroutine](#parameterize-subroutine)
     - [思想](#思想)
         - [DRY 与 OCP 的关系](#dry-与-ocp-的关系)
     - [Motivation](#motivation)
-    - [Mechanics](#mechanics)
     - [References](#references)
 
 <!-- /TOC -->
@@ -14,8 +14,7 @@
 
 ## 思想
 * 中层设计规则：DRY 与 OCP
-* Parameterize Subroutine 的一种
-* 纯函数的必要条件
+* Pure Subroutine 的必要条件
 
 ### DRY 与 OCP 的关系
 1. 下面的例子中，把两个函数内部的数据提取位参数后，就实现了复用。
@@ -24,24 +23,7 @@
 
 
 ## Motivation
-```js
-// 从
-function tenPercentRaise (aPerson) {
-    aPerson.salary = aPerson.salary.multiply(1.1);
-}
-function fivePercentRaise (aPerson) {
-    aPerson.salary = aPerson.salary.multiply(1.05);
-}
-
-// 到
-function raise (aPerson, factor) {
-    aPerson.salary = aPerson.salary.multiply(1 + factor);
-}
-```
-
-
-## Mechanics
+不管是函数，还是更大的模块。
 
 
 ## References
-* [《重构（第2版）》](https://book.douban.com/subject/33400354/)
