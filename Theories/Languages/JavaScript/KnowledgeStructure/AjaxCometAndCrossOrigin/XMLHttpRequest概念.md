@@ -1,6 +1,40 @@
 # XMLHttpRequest
 
 
+<!-- TOC -->
+
+- [XMLHttpRequest](#xmlhttprequest)
+    - [`XMLHttpRequest` Object](#xmlhttprequest-object)
+    - [Use `open()` to specify the method and the URL](#use-open-to-specify-the-method-and-the-url)
+    - [Use `setRequestHeader()` to set the request headers](#use-setrequestheader-to-set-the-request-headers)
+    - [Use `send()` to specify the optional request body and send it off to the server](#use-send-to-specify-the-optional-request-body-and-send-it-off-to-the-server)
+        - [发送字符时的编码问题](#发送字符时的编码问题)
+    - [Aborting Requests and Timeouts](#aborting-requests-and-timeouts)
+        - [`XMLHttpRequest.abort()`](#xmlhttprequestabort)
+        - [`XMLHttpRequest.timeout`](#xmlhttprequesttimeout)
+    - [Retrieving the Response](#retrieving-the-response)
+        - [Listen the response](#listen-the-response)
+            - [`readyState`](#readystate)
+            - [`readystatechange` event](#readystatechange-event)
+        - [HTTP status](#http-status)
+        - [Response headers](#response-headers)
+    - [Response body](#response-body)
+        - [Handle text response](#handle-text-response)
+        - [Handle binary response](#handle-binary-response)
+            - [`response`](#response)
+            - [`responseType`](#responsetype)
+        - [`overrideMimeType()`](#overridemimetype)
+    - [Response progress](#response-progress)
+        - [Response progress events](#response-progress-events)
+        - [事件顺序](#事件顺序)
+        - [获取下载进度](#获取下载进度)
+    - [Upload progress](#upload-progress)
+    - [CORS Security Details](#cors-security-details)
+        - [`withCredentials`](#withcredentials)
+
+<!-- /TOC -->
+
+
 ## `XMLHttpRequest` Object
 1. 浏览器在 `XMLHttpRequest` 类上定义了它们的 HTTP API。
 2. 这个类的每个实例都表示一个独立的请求/响应对，并且这个对象的属性和方法允许指定请求细节和提取响应数据。
