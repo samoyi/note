@@ -117,6 +117,7 @@
     Set-cookie: user="mary17"; domain="airtravelbargains.com"
     ```
 4. 如果客户端访问 `www.airtravelbargains.com`、`specials.airtravelbargains.com` 或者任何以 `.airtravelbargains.com` 结尾的域，上面设置的 cookie 都会随着请求发送。
+5. 用途之一就是让同一个网站的不同子站可以共享身份信息，也就是在一个子站保存的身份信息，在另一个子站也可以提交进行验证。
 
 ### `Path`
 1. 使用这个字段可以指定主机中哪些路径可以接收 cookie。

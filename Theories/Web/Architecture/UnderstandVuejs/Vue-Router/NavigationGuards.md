@@ -4,6 +4,29 @@
 2. 有多种机会植入路由导航过程中：全局(路由器级别)的, 单个路由独享的, 或者组件内的。
 3. 参数或查询的改变并不会触发进入/离开的导航守卫。你可以通过 watch `$route`对象来应对这些变化，或使用`beforeRouteUpdate`的组件内守卫。
 
+
+<!-- TOC -->
+
+- [Navigation Guards](#navigation-guards)
+    - [分类一下](#分类一下)
+    - [`router.beforeEach`](#routerbeforeeach)
+        - [`next` 参数](#next-参数)
+    - [`router.beforeResolve`](#routerbeforeresolve)
+    - [`router.afterEach`](#routeraftereach)
+    - [Per-Route Guard   `beforeEnter`](#per-route-guard---beforeenter)
+    - [组件内的路由钩子](#组件内的路由钩子)
+        - [`beforeRouteLeave`](#beforerouteleave)
+        - [`beforeRouteEnter`](#beforerouteenter)
+        - [`beforeRouteUpdate`](#beforerouteupdate)
+    - [触发顺序](#触发顺序)
+        - [完整的导航解析流程](#完整的导航解析流程)
+        - [组件间导航](#组件间导航)
+        - [组件内导航](#组件内导航)
+        - [组件间导航时，与组件生命周期钩子的关系](#组件间导航时与组件生命周期钩子的关系)
+
+<!-- /TOC -->
+
+
 ## 分类一下
 * 路由器级别的：
     * `router.beforeEach`
