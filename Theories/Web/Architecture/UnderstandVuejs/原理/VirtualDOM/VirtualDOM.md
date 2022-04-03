@@ -82,16 +82,37 @@
 1. 可以直接看这个 [回答](https://www.zhihu.com/question/324992717/answer/707044362)，下面总结一下大意。
 2. DOM 是 C++ 写的，性能肯定不慢。而且 V8 Binding 会把原生 DOM 对象映射为包装的 JS 对象。因此，我们操作 DOM 和操作 JS 对象是一样的。
 3. 所以，修改 DOM 节点的属性（property）是和 JS 对象的属性一样的。例如 `document.a = 1` 的操作。
-4. 但是，如果修改的是 DOM 节点的特性（attribute），那就会慢得多了。例如 `document.title = 1` 的操作。
+4. 但是，如果修改的是 DOM 节点的特性（attribute），那就会变慢了。例如 `document.title = 1` 的操作。
 5. 因为 DOM 节点特性（attribute）的修改不是在被包装成的 JS 对象上的修改，而是要修改实际的 DOM 对象。
-6. 另外，如果修改了节点的 CSS，就会引起 relayout。甚至仅仅是读取样式都会触发 relayout。
-7. 而且，DOM 对象还会导致 GC 变复杂。 
+6. 但这还是不最慢的，因为浏览器并不是对任何 DOM 操作都同步的更新，例如在一个事件周期内多次更改一个节点内的文本，只会在本轮事件循环的结尾处进行一次重绘
+    ```html
+    <p>test</p>
+    ```
+    ```js
+    const p = document.querySelector('p');
+    p.textContent = 'sync';
+    alert(); // 此时页面还是 test
+    // 不能用 debugger，参考 https://stackoverflow.com/questions/62562845/any-example-proving-microtask-is-executed-before-rendering
+    Promise.resolve().then(function microtask() {
+        // 已经进到微任务了，但页面还是 test
+        alert(p.textContent);
+        p.textContent = 'Promise';
+        // 最终页面会跳过 sync，直接变为 Promise
+    });
+    ```
+7. 也就是说，这种更新其实也是通过异步重绘做了防抖处理。真正影响性能的会导致同步重绘操作，是那些要读取当前元素尺寸啊距离啊之类的操纵。
+8. 因为你的读取结果是要同步获得的，为了获得当前准确的尺寸，必须要重绘一下获得最新的尺寸。参考下面两篇：
+    * https://segmentfault.com/a/1190000038204886
+    * https://zhuanlan.zhihu.com/p/54811712
+9. 这里列出了哪些操作会导致同步重绘：https://gist.github.com/paulirish/5d52fb081b3570c81e3a
+10. 另外，DOM 对象还会导致 GC 变复杂。 
 
 
 ## Virtual DOM 的优点
 ### 避免频繁的 DOM 更新
-1. 如果一个节点只短时间内发生了好几次更新，就会连续触发页面的更新。但其实很多时候对于用户来说只有最后一次的更新才是有意义的。
+1. 如果一个节点只短时间内发生了好几次更新，就会连续触发相对更慢的 DOM 更新，。但其实很多时候对于用户来说只有最后一次的更新才是有意义的。
 2. 使用虚拟 DOM 就可以在一个更新周期内只多次触发虚拟 DOM 的更新，而虚拟 DOM 更新只是修改 JS 对象属性，所以速度很快。只在该周期结束后使用最终的只触发一个真实的 DOM 更新。
+3. 但是这个好像不能避免上面重绘的问题吧。TODO
 
 ### 避免不必要的 DOM 更新
 1. 有些 DOM 更新后，相比于之前的状态，会有一些元素（包括数据）实际上并未没有变化。这些元素的重复更新是没有必要的。

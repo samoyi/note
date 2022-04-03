@@ -685,6 +685,19 @@ setTimeout(() => {
         });
     });
     ```
+4. 所以如果没有捕获，那就是在所有微任务执行完之后才抛出错误
+    ```js
+    new Promise((resolve, reject) => {
+        reject();
+    })
+
+    new Promise((resolve, reject) => {
+        resolve();  
+    })
+    .then(() => {
+        console.log("resolved"); // 先打印这个再抛出错误
+    })
+    ```
 
 ### Error propagation
 1. If there's an exception, the browser will look down the chain for `.catch()` handlers or `onRejected`
@@ -1040,7 +1053,7 @@ p2 // 三秒钟之后 reject
     test3
     ```
     `"test3"` 是最后输出的，因为前四个都是最初的 `new Promise()` 返回的 promise 解析的结果，而 `"test3"` 是它前面那个 `then()` 返回的 promise 解析的结果，也就是说解析 `"test3"` 的微任务是排在前面几个微任务的后面。
-3. 但 `resolve` 和 `reject` 调用之后，并不是像 `return` 一样后面的代码就不执行。后面仍然会执行，只不过其中的错误既不会被捕获也不会被抛出。但是，仍然会中断执行。
+3. 但 `resolve` 和 `reject` 调用之后，并不是像 `return` 一样后面的代码就不执行。后面仍然会执行，只不过其中的错误既不会被捕获也不会被抛出。但是，错误仍然会导致中断执行。
     ```js
     new Promise((resolve, reject)=>{
         resolve(22); // 不管是 resolve
@@ -1352,7 +1365,8 @@ p2 // 三秒钟之后 reject
             for (let i=0; i<list.length; i++) {
                 let p = Promise.resolve(list[i]);
                 p.then((res)=>{
-                    results[i] = res;
+                    results[i] = res; // 不能 push 因为保证顺序
+                    // 左边不能使用 result.length 因为上面用的不是 push
                     if (++count === list.length) {
                         resolve(results);
                     }
@@ -1672,8 +1686,8 @@ class My_Promise {
     const timeout = time => {
         return new Promise(resolve => {
             setTimeout(resolve, time)
-        }
-    })
+        })
+    }
     
     const scheduler = new Scheduler()
     
