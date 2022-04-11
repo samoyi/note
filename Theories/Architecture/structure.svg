@@ -596,24 +596,26 @@
 <!-- 消除非必要的可变性 重构方法 -->
 <g id="node26" class="node">
 <title>消除非必要的可变性 重构方法</title>
-<polygon fill="none" stroke="#000000" points="3610.461,-74.9 3610.461,-223.7 3838.6954,-223.7 3838.6954,-74.9 3610.461,-74.9"/>
-<text text-anchor="start" x="3697.1676" y="-208.1" font-family="Times,serif" font-weight="bold" font-size="14.00" fill="#000000">重构方法</text>
-<polyline fill="none" stroke="#000000" points="3610.461,-198.9 3838.6954,-198.9 "/>
-<text text-anchor="start" x="3647.4214" y="-182.3" font-family="Times,serif" font-size="14.00" fill="#000000">Change Reference to Value</text>
-<polyline fill="none" stroke="#000000" points="3610.461,-174.1 3838.6954,-174.1 "/>
-<text text-anchor="start" x="3679.2798" y="-157.5" font-family="Times,serif" font-size="14.00" fill="#000000">Pure Subroutine</text>
-<polyline fill="none" stroke="#000000" points="3610.461,-149.3 3838.6954,-149.3 "/>
-<text text-anchor="start" x="3656.1406" y="-132.7" font-family="Times,serif" font-size="14.00" fill="#000000">Remove Setting Method</text>
-<polyline fill="none" stroke="#000000" points="3610.461,-124.5 3838.6954,-124.5 "/>
-<text text-anchor="start" x="3618.461" y="-107.9" font-family="Times,serif" font-size="14.00" fill="#000000">Replace Derived Variable with Query</text>
-<polyline fill="none" stroke="#000000" points="3610.461,-99.7 3838.6954,-99.7 "/>
-<text text-anchor="start" x="3650.3194" y="-83.1" font-family="Times,serif" font-size="14.00" fill="#000000">用常量代替基础类型值</text>
+<polygon fill="none" stroke="#000000" points="3610.461,-62.5 3610.461,-236.1 3838.6954,-236.1 3838.6954,-62.5 3610.461,-62.5"/>
+<text text-anchor="start" x="3697.1676" y="-220.5" font-family="Times,serif" font-weight="bold" font-size="14.00" fill="#000000">重构方法</text>
+<polyline fill="none" stroke="#000000" points="3610.461,-211.3 3838.6954,-211.3 "/>
+<text text-anchor="start" x="3647.4214" y="-194.7" font-family="Times,serif" font-size="14.00" fill="#000000">Change Reference to Value</text>
+<polyline fill="none" stroke="#000000" points="3610.461,-186.5 3838.6954,-186.5 "/>
+<text text-anchor="start" x="3679.2798" y="-169.9" font-family="Times,serif" font-size="14.00" fill="#000000">Pure Subroutine</text>
+<polyline fill="none" stroke="#000000" points="3610.461,-161.7 3838.6954,-161.7 "/>
+<text text-anchor="start" x="3656.1406" y="-145.1" font-family="Times,serif" font-size="14.00" fill="#000000">Remove Setting Method</text>
+<polyline fill="none" stroke="#000000" points="3610.461,-136.9 3838.6954,-136.9 "/>
+<text text-anchor="start" x="3618.461" y="-120.3" font-family="Times,serif" font-size="14.00" fill="#000000">Replace Derived Variable with Query</text>
+<polyline fill="none" stroke="#000000" points="3610.461,-112.1 3838.6954,-112.1 "/>
+<text text-anchor="start" x="3682.4893" y="-95.5" font-family="Times,serif" font-size="14.00" fill="#000000">缩小变量范围</text>
+<polyline fill="none" stroke="#000000" points="3610.461,-87.3 3838.6954,-87.3 "/>
+<text text-anchor="start" x="3650.3194" y="-70.7" font-family="Times,serif" font-size="14.00" fill="#000000">用常量代替基础类型值</text>
 </g>
 <!-- 消除非必要的可变性&#45;&gt;消除非必要的可变性 重构方法 -->
 <g id="edge28" class="edge">
 <title>消除非必要的可变性-&gt;消除非必要的可变性 重构方法</title>
-<path fill="none" stroke="#000000" d="M3565.8918,-334.8918C3576.6611,-324.5112 3590.1632,-311.1132 3601.5782,-298.6 3620.9135,-277.4047 3641.0413,-253.7296 3659.2795,-231.59"/>
-<polygon fill="#000000" stroke="#000000" points="3662.0096,-233.7803 3665.6473,-223.8295 3656.5982,-229.3399 3662.0096,-233.7803"/>
+<path fill="none" stroke="#000000" d="M3565.8918,-334.8918C3576.6611,-324.5112 3590.1632,-311.1132 3601.5782,-298.6 3617.3226,-281.341 3633.5925,-262.4377 3648.9398,-244.0581"/>
+<polygon fill="#000000" stroke="#000000" points="3651.755,-246.1467 3655.4565,-236.2195 3646.3722,-241.6717 3651.755,-246.1467"/>
 </g>
 </g>
 </svg>
