@@ -47,8 +47,10 @@
         - [基本的 promise](#基本的-promise)
             - [接口](#接口)
         - [逻辑](#逻辑)
+            - [实现功能](#实现功能)
+            - [then 逻辑](#then-逻辑)
         - [边界条件](#边界条件)
-        - [实现 TODO](#实现-todo)
+        - [实现](#实现)
     - [其他](#其他)
         - [并行数量限制的 promise](#并行数量限制的-promise)
     - [References](#references)
@@ -234,7 +236,7 @@ setTimeout(()=>{
 4. 可以看到这是逐层嵌套的结构，也就是所谓的回调地狱。我们必须在上一个异步操作回调函数的内部发起下一次异步操作并添加回调，所以就会形成嵌套。
 5. 不仅在形式上是嵌套的，从调用逻辑上看，外层的回调函数也一直不能返回，要等待内层所有的回调都执行完，这就导致了调用栈的累积。
 6. 而 `then` 实际可以通过返回值，让我们虽然在上一个异步操作回调函数的内部发起下一次异步操作，但是这一次的回调添加可以放到外部，从而就跳出了上一个回调函数，让它可以及时返回离开调用栈。
-7. 如果我们在 `then` 的回调里新发起的 promise 异步后，返回该 promise 实例，则 `then` 方法也会返回和这个实例状态相同的 promise。虽然**不是同一个**，但是可以当做同一个使用。
+7. 如果我们在 `then` 的回调里新发起的 promise 异步后，返回该 promise 实例，则 `then` 方法也会返回和这个实例状态相同的 promise。虽然 **不是同一个**，但是可以当做同一个使用。
 8. 这样，我们就可以在和上一个 `then` 平级的环境里添加链式异步操作后续 promise 的回调
     ```js
     new Promise((resolve) => {
@@ -1351,7 +1353,7 @@ p2 // 三秒钟之后 reject
         * 可遍历对象中的某项不是 promise，直接把每一项使用 `Promis.resolve()` 转换；
     4. 实现
     ```js
-        function my_promise_all (iterable) {
+    function my_promise_all (iterable) {
         if (typeof iterable[Symbol.iterator] !== "function") {
             throw new TypeError("object is not iterable \
                                 (cannot read property Symbol(Symbol.iterator))");
@@ -1594,81 +1596,245 @@ new Promise((res, rej)=>{
 
         }
 
-        resolve (msg) {
+        _resolve (msg) {
 
         }
 
-        reject (err) {
+        _reject (err) {
 
         }
 
         then (onFulfilled, onRejected) {
 
         }
-
-        catch (onRejected) {
-
-        }
     }
     ```
 
 ### 逻辑
-1. 调用 `My_Promise` 创建实例时需要传入一个函数作为 `executor`，`executor` 会在 `constructor` 里立刻执行。
-2. `executor` 有两个参数，一个是作为 `resolve` 函数，一个是作为 `reject`。这两个函数调用时接收异步操作的成功或失败消息。
-3. 这两个函数的实际实现是实例方法 `resolve` 和 `reject`。这两个实例方法接收参数，改变 promise 的状态，然后通知实例。
-4. 实例接到成功或失败的通知，需要调用用户提供的函数通知用户。所以用户需要调用实例方法 `then` 和 `catch` 提供回调函数。
-5. 只有 promise 的状态是 pending 的时候才能 `resolve` 和 `reject`。
-6. `then` 和 `catch` 接收用户的回调并保存，然后在 `resolve` 和 `reject` 时调用相应的回调。
-7. `then` 和 `catch` 要返回新的 promise
+#### 实现功能
+* resolve 或者 reject 之后就不能再次 resolve 或者 reject
+* 可以使用多个 then 给一个实例添加回调
+* then 可以链式调用，返回的 promise 分为三种情况：
+    * 回调返回 promise，则 then 返回的 promise 也是一个保持同步的 promise；
+    * 回调发生错误，则 then 返回的 promise reject 错误信息；
+    * 其他，则 then 返回的 promise resolve 回调返回值。
+
+#### then 逻辑
+1. 因为 then 的回调的结果决定了 then 返回的 promise 的结果，所以 then 的回调逻辑中必须要能访问到 then 返回的 promise 的 resolve 和 reject 函数。
+2. 因此，then 回调必须要在 then 返回的 promise 的 executor 中执行。
+3. 另外，如果 then 调用时前一个 promise 还是 pending，则先要把 then 的回调先加入列表中，等待前一个 promise 有了结果再执行回调。
+4. 但是，不能直接把回调加入队列中，因为要根据回调的结果来调用 then 返回的 promise 的 resolve 和 reject 函数。
+5. 所以 then 的回调需要包装到一个新函数里，内部调用 then 回调，然后根据结果调用 then 返回的 promise 的 resolve 和 reject 函数。
 
 ### 边界条件
-* 没有传 `executor`；`executor` 没有传函数类型的 `resolve` 和 `reject`；
-* 没有调用 `then` 和 `catch`；`then` 和 `catch` 没有传函数类型的参数；
+* 没有调用 `then` 和 `catch`；
+* `then` 和 `catch` 没有传函数类型的参数；
+* `executor` 中抛出错误
+* TODO，现在抛出错误只能在自身的 then 里捕获，不能在后续的捕获
 
-### 实现 TODO
+### 实现
 ```js
 class My_Promise {
     constructor (executor) {
-        this.status = "pending";
-        this.onFulfilled = null;
-        this.onRejected = null;
-        executor(this.resolve.bind(this), this.reject.bind(this));
-    }
+        this.state = "pendding";
+        this.res;
+        this.err;
+        // 因为可以给一个实例通过多个 then 绑定多个回调，所以要用列表保存
+        this.resolvedCBList = [];
+        this.rejectedCBList = [];
 
-    resolve (fulfillmentValue) {
-        if (this.status !== "pending") {
-            return;
-        }
-        this.status = "fulfilled";
-        this.onFulfilled && this.onFulfilled(fulfillmentValue);
-    }
-
-    reject (err) {
-        if (this.status !== "pending") {
-            return;
-        }
-        this.status = "rejected";
-        this.onRejected && this.onRejected();
-    }
-
-    then (onFulfilled, onRejected) {
+        // 因为调用时是普通调用，所以要绑定当前实例。
+        // 这个调用要放在 this.state 声明之后，
+        // 因为 executor 里面回调用 _resolve，而 _resolve 里面会判断 this.state 的值
         try {
-            this.onFulfilled = onFulfilled;
-            this.onRejected = onRejected;
-            if (this.status === "pending") {
-                return Promise.resolve(this.onFulfilled());
+            executor(this._resolve.bind(this), this._reject.bind(this)); 
+        }
+        catch(err) {
+            if (this.state === "pendding") {
+                // setTimeout 等待添加 then 回调
+                setTimeout(()=>{
+                    // 判断是否有针对 reject 的回调，如果没有就抛出错误
+                    // 本来这个应该在当前事件循环，但因为现在没有微任务，只能放到下一个事件循环
+                    if (this.rejectedCBList.length) {
+                        this.err = err;
+                        this._flushRejectedCBList();
+                    }
+                    else {
+                        throw new Error(err);    
+                    }
+                }, 0);
             }
         }
-        catch (err) {
-            return Promise.reject(err);
+    }
+
+    _flushResolvedCBList () {
+        while (this.resolvedCBList.length) {
+            this.resolvedCBList.shift()(this.res);
         }
     }
 
-    catch (onRejected) {
-        this.onRejected = onRejected;
-        return Promise.reject
+    _flushRejectedCBList () {
+        while (this.rejectedCBList.length) {
+            this.rejectedCBList.shift()(this.err);
+        }
+    }
+
+    _resolve (res) {
+        // 一旦出了结果就不能再变
+        if (this.state === "fulfilled" || this.state === "rejected") {
+            return;
+        }
+        this.state = "fulfilled";
+        this.res = res;
+        // 回调要异步执行
+        setTimeout(()=>{
+            this._flushResolvedCBList();
+        }, 0);
+    }
+    
+    _reject (err) {
+        if (this.state === "fulfilled" || this.state === "rejected") {
+            return;
+        }
+        this.state = "rejected";
+        this.err = err;
+        setTimeout(()=>{
+            // 判断是否有针对 reject 的回调，如果没有就抛出错误
+            // 本来这个应该在当前事件循环，但因为现在没有微任务，只能放到下一个事件循环
+            if (this.rejectedCBList.length) {
+                this._flushRejectedCBList();
+            }
+            else {
+                throw new Error("(in promise) " + err);        
+            }
+        }, 0);
+    }
+
+    then (resolvedCB, rejectedCB) {
+        return new My_Promise((resolve, reject)=>{
+            // 对 resolvedCB 和 rejectedCB 进行包装
+            function wrapCB (CB) {
+                return function (resOrRrr) {
+                    // resolvedCB 调用出现错误时 then 返回的 promise 要 reject 该错误
+                    try {
+                        let ret = CB(resOrRrr);
+                        if (ret instanceof My_Promise) {
+                            // 给 CB 返回的 promise 添加回调，
+                            // CB 返回的 promise 解析为什么结果，
+                            // 就让 then 返回的 promise 也解析为同样的结果
+                            ret.then((res) => {
+                                resolve(res);
+                            }, (err) => {
+                                reject(err);
+                            });
+                        }
+                        else {
+                            resolve(ret);
+                        }
+                    }
+                    catch (err) {
+                        reject(err);
+                    }
+                }
+            }
+            if (typeof resolvedCB === "function") {
+                this.resolvedCBList.push( wrapCB(resolvedCB) );
+            }
+            if (typeof rejectedCB === "function") {
+                this.rejectedCBList.push( wrapCB(rejectedCB) );
+            }
+        });
     }
 }
+
+
+
+// new My_Promise((resolve, reject) => {
+//     console.log(333)
+//     throw new Error("555555555");
+//     resolve(22);
+//     // reject(22);
+// })
+// .then((res)=> {
+//     console.log(res)
+// })
+// .then(null, (err)=> {
+//     console.error(err) // 这里无法捕获
+// });
+
+
+new My_Promise((resolve, reject) => {
+    console.log(333)
+    resolve(22);
+    // reject(22);
+})
+.then((res) => {
+    console.log(res);
+    return new My_Promise((resolve, reject) => {
+        setTimeout(()=>{
+            resolve(33);
+        }, 2222);
+    });
+}, (err) => {
+    console.error("second err");
+    console.error(err);
+})
+.then((res) => {
+    console.log("last");
+    console.log(res);
+}, (err) => {
+    console.error("last err");
+    console.error(err);
+});
+
+// const pro = new My_Promise((resolve, reject) => {
+//   setTimeout(resolve, 1000)
+//   setTimeout(reject, 2000)
+// })
+
+// pro
+//   .then(() => {
+//     console.log('2_1')
+//     const newPro = new My_Promise((resolve, reject) => {
+//       console.log('2_2')
+//       setTimeout(reject, 2000)
+//     })
+//     console.log('2_3')
+//     return newPro
+//   })
+//   .then(
+//     () => {
+//       console.log('2_4')
+//     },
+//     () => {
+//       console.log('2_5')
+//     }
+//   )
+  
+// pro
+//   .then(
+//     data => {
+//       console.log('3_1')
+//       throw new Error()
+//     },
+//     data => {
+//       console.log('3_2')
+//     }
+//   )
+//   .then(
+//     () => {
+//       console.log('3_3')
+//     },
+//     e => {
+//       console.log('3_4')
+//     }
+//   )
+// // 2_1
+// // 2_2
+// // 2_3
+// // 3_1
+// // 3_4
+// // 2_5
 ```
 
 
