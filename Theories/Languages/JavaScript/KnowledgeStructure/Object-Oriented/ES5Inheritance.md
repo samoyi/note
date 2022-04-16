@@ -4,7 +4,7 @@
 <!-- TOC -->
 
 - [Implement Inheritance](#implement-inheritance)
-    - [大体思路](#大体思路)
+    - [整体思路](#整体思路)
     - [子类复制父类的实例属性](#子类复制父类的实例属性)
     - [子类继承原型属性](#子类继承原型属性)
     - [完善](#完善)
@@ -13,9 +13,9 @@
 <!-- /TOC -->
 
 
-## 大体思路
-1. 通过借用父类的构造函数（constructor stealing）复制父类实例上的属性 **副本** 到子类实例，从而让子类每个实例都有和父类 **同名但独立** 的实例属性。
-2. 通过使用父类实例作为子类的原型，让子类有自己独立的原型对象，连接到原型链上继承父类的原型方法。
+## 整体思路
+1. 通过借用父类的构造函数，把父类的实例复制到子类实例上，从而让子类每个实例都有和父类 **同名但独立** 的实例属性。
+2. 使用父类原型创建一个新对象实例作为子类的原型，让子类有自己独立的原型对象的同时，该原型对象也连接到原型链上继承父类的原型方法。
 
 
 ## 子类复制父类的实例属性
@@ -27,14 +27,12 @@
     SuperType.prototype.sayName = function () {
         console.log(this.name);
     };
-    let superType = new SuperType("SuperType");
-    superType.sayName(); // "SuperType"
 
     function SubType (name) {}
     ```
-2. 实例属性就是子类自身的，不存在共享和继承，所以需要直接复制。
+2. 实例属性就是子类实例自身的，不存在共享和继承，所以需要直接复制。
 3. 添加实例属性的方法是调用构造函数，子类调用构造函数时为了复制父类的实例属性，也需要调用父类的构造函数。
-4. 但直接调用父类构造函数只会把实例属性复制到父类实例（也就是父类的 `this`）上，但我们需要把它复制到子类实例（子类 `this`）上。
+4. 直接调用父类构造函数只会把实例属性复制到父类实例（也就是父类的 `this`）上，但我们需要把它复制到子类实例（子类 `this`）上。
 5. 所以调用父类的构造函数的时候就要把其中的 `this` 设置为子类实例
     ```js
     function SubType (name) {
@@ -81,38 +79,11 @@
         anotheSubType.subTypeMethod();
         ```
 3. 所以原型方法必须要通过真正的继承，而不是直接引用。
-4. 所以，我们要给每个子类都创建一个独立的原型对象，然后这个原型对象要通过 `__proto__` 指针指向父类的原型。
-5. 怎么实现呢？我们知道一个类的实例上面就有 `__proto__` 指针指向自己的原型，所以就可以用父类的实例作为子类的原型
+4. 也就是说，我们要给每个子类都创建一个独立的原型对象，然后这个原型对象要通过 `__proto__` 指针指向父类的原型。
+5. 实现这个功能的就是 `Object.create()` 方法
     ```js
-    // SubType.prototype = SuperType.prototype;
-    SubType.prototype = new SuperType();
+    SubType.prototype = Object.create(SuperType.prototype);
     ```
-6. 这里有另一个缺点是，因为使用了父类实例作为原型，所以父类的实例属性也会出现在子类原型上。但普通情况下不会有问题，因为子类也有相同的实例属性，所以从子类实例访问实例属性的时候会先访问到自身的，而不是原型的。
-7. 不过如果子类删除了自身的实力属性，则会访问到父类的实例属性
-    ```js
-    function SuperType (name) {
-        this.name = name;
-        this.type = "Super"
-    }
-    SuperType.prototype.sayType = function () {
-        console.log(this.type);
-    };
-
-
-    function SubType (name) {
-        SuperType.call(this);
-        this.type = "Sub";
-    }
-    SubType.prototype = new SuperType();
-
-
-    let subType = new SubType();
-    subType.sayType(); // "Sub"
-    delete subType.type;
-    subType.sayType(); // "Super"
-    ```
-8. 也就是要，你要么直接用父类原型作为原型，那就要父类和所有子类共享原型；要么就使用父类实例作为原型，那就要保证不要删除子类实例中继承下来的属性。
-9. 其实最合理的是使用父类原型对象作为原型创建一个对象来作为子类原型对象，但 ES5 并没有这样的机制，除非使用 ES6 的 `Object.create` 方法。
 
 
 ## 完善
@@ -128,8 +99,9 @@
     function SubType (name) {
         SuperType.call(this);
     }
-    SubType.prototype = new SuperType();
-
+    SubType.prototype = Object.create(SuperType.prototype);
+2. 检测一下原型
+    ```js
     let sub = new SubType();
     
     console.log(sub instanceof SuperType) // true
@@ -137,21 +109,16 @@
     console.log(Object.getPrototypeOf(sub) === SubType.prototype); // true
     console.log(Object.getPrototypeOf(sub) === SuperType.prototype); // false
     ```
-2. 原型检测也正常了。但还有异常之处
+3. 但还有异常之处
     ```js
     console.log(sub.constructor === SubType); // false
     console.log(sub.constructor === SuperType); // true
     ```
     子类的实例居然是父类的构造函数构造出来的。
-3. 因为 `constructor` 是对象的原型属性，所以 `sub.constructor` 访问的实际上是 `SubType.prototype.constructor`。而 `SubType.prototype` 又是父类的实例，所以最终访问的实际上是 `SuperType.prototype.constructor`，那肯定就是父类的构造函数了。
-4. 根本的原因就是子类没有真正属于自己的原型，它要么直接使用父类的原型，要么使用父类的实例作为原型。而这两种情况下子类的 `constructor` 都是父类的 `constructor`。
-5. 既然子类和父类的 `constructor` 只能有一个是对的，一般情况下子类创建的比较多用途更多，那就牺牲掉父类的，让父类的 `constructor` 指向子类的构造函数
+3. 因为 `constructor` 是对象的原型属性，所以 `sub.constructor` 访问的实际上是 `SubType.prototype.constructor`。而 `SubType.prototype` 又是 `SuperType.prototype` 的实例，所以最终访问的实际上是 `SuperType.prototype.constructor`，那肯定就是父类的构造函数了。
+4. 这里只需要手动更改一下子类的构造函数指向即可
     ```js
-    SuperType.prototype.constructor = SubType;
-
-    console.log(sub.constructor === SubType); // true
-    console.log(sub.constructor === SuperType); // false
-    console.log(SuperType.prototype.constructor === SuperType); // false
+    SubType.prototype.constructor = SubType;
     ```
 6. 完整实现如下
     ```js
@@ -165,8 +132,8 @@
     function SubType (name) {
         SuperType.call(this);
     }
-    SubType.prototype = new SuperType();
-    SuperType.prototype.constructor = SubType;
+    SubType.prototype = Object.create(SuperType.prototype);
+    SubType.prototype.constructor = SubType;
     ```
 7. 检测原型和构造函数
     ```js
@@ -179,7 +146,7 @@
 
     console.log(sub.constructor === SubType); // true
     console.log(sub.constructor === SuperType); // false
-    console.log(SuperType.prototype.constructor === SuperType); // false
+    console.log(SuperType.prototype.constructor === SuperType); // true
     ```
 
 
