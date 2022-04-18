@@ -186,33 +186,53 @@ setTimeout(function(a, b){
 ```
 
 ### 使用 `setTimout` 模拟 `setInterval` 
-```js
-function my_setInterval (cb, ms, ...cbArgs) {
-    if ( typeof cb !== "function" ) {
-        throw new TypeError();
-    }
-    if ( !Number.isSafeInteger(ms) || ms < 0 ) {
-        throw new RangeError();
-    }
-
-    let status = true;
-
-    function run () {
-        setTimeout(()=>{
-            if (status) {
-                cb(...cbArgs);
-                run();
+1. 最初是这样实现
+    ```js
+    function my_setInterval (cb, ms) {
+        let timer = setTimeout(function () {
+            if (timer) {
+                cb();
+                timer = my_setInterval(cb, ms)
             }
         }, ms);
+        return timer;
     }
 
-    run();
 
-    return function clearInterval () {
-        status = false;
+    let timer = my_setInterval(function () {
+        console.log(22);
+    }, 1111)
+
+    setTimeout(() => {
+        timer = null;
+    }, 5555)
+    ```
+2. 首先，这样嵌套调用，每一个 `timer` 都是新的，而返回的只有第一个。
+3. 其次，让返回的 `timer` 等于 `null` 并没有用，只是让外部声明的 `timer` 指向了空而已，并不会影响 `my_setInterval` 内部的 `timer`。因为返回的是指针的副本，而不是指针的引用。
+4. 所以不能每次嵌套调用都创建一个 `timer`，然后需要在外部可以控制函数内部的那个变量。
+5. 针对第一点就需要在嵌套调用外面声明一个变量，但是又不想声明到 `my_setInterval` 外面，所以在 `my_setInterval` 在创建一个用来嵌套调用的函数。
+6. 针对第二点，典型的闭包应用。
+7. 实现如下
+    ```js
+    function my_setInterval (cb, ms, ...cbArgs) {
+        let status = true;
+
+        function run () {
+            setTimeout(()=>{
+                if (status) {
+                    cb(...cbArgs);
+                    run();
+                }
+            }, ms);
+        }
+
+        run();
+
+        return function clearInterval () {
+            status = false;
+        }
     }
-}
-```
+    ```
 
 ### `this` 只是省略惯了 `window` 就忘了是全局方法调用而已
 Code executed by `window.setTimeout()` is called from an execution context separate from the function from which `window.setTimeout` was called. The default this value of a `window.setTimeout` callback will still be the `window` object, and not `undefined`, even in strict mode.
