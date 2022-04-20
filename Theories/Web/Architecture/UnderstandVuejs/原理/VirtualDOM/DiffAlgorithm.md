@@ -99,8 +99,7 @@
 
 ### patchVnode
 1. patchVnode 是比较 oldVnode 和 vnode 的子节点，看看有哪些可以复用的，所以要先比较子节点的情况。
-2. 这里只考虑子节点是元素节点的情况，实际上还要再考虑是文本节点的情况，不过逻辑也比较简单，可以直接看源码。
-3. oldVnode 和 vnode 的子节点情况分为以下几种：
+2. 如果子节点是文本节点则直接替换文本，不是的话需要，oldVnode 和 vnode 的子节点情况分为以下几种：
     * 如果 oldVnode 没有子节点，那就直接添加 vnode 的子节点；
     * 如果 vnode 没有子节点，那就直接删除 oldVnode 的子节点；
     * 两者都有子节点，需要通过 updateChildren 实现的 diff 算法判断哪些子节点可以复用。
