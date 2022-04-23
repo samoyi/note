@@ -1650,13 +1650,13 @@ class My_Promise {
             executor(this._resolve.bind(this), this._reject.bind(this)); 
         }
         catch(err) {
+            this.err = err;
             if (this.state === "pendding") {
                 // setTimeout 等待添加 then 回调
                 setTimeout(()=>{
                     // 判断是否有针对 reject 的回调，如果没有就抛出错误
                     // 本来这个应该在当前事件循环，但因为现在没有微任务，只能放到下一个事件循环
                     if (this.rejectedCBList.length) {
-                        this.err = err;
                         this._flushRejectedCBList();
                     }
                     else {

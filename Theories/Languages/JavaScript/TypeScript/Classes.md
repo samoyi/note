@@ -1,6 +1,23 @@
 # Classes
 
 
+<!-- TOC -->
+
+- [Classes](#classes)
+    - [类的定义](#类的定义)
+    - [`public`、`private` 和 `protected`](#publicprivate-和-protected)
+        - [默认为 `public`](#默认为-public)
+        - [`protected`](#protected)
+        - [类型兼容](#类型兼容)
+    - [`readonly` 修饰符](#readonly-修饰符)
+        - [只读属性](#只读属性)
+        - [参数属性](#参数属性)
+    - [抽象类](#抽象类)
+    - [TODO](#todo)
+    - [References](#references)
+
+<!-- /TOC -->
+
 
 ## 类的定义
 ```ts

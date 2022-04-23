@@ -277,22 +277,49 @@ console.log(window.b); // undefined
         * `constructor` 不是函数；
     4. 实现
         ```js
-        function my_instanceof (instance, constructor) {
-            if (typeof constructor !== "function") {
-                throw new TypeError(`The second parameter is not a function.`);
-            }
+        function isRefType (ins) {
+            return (typeof ins === "object" && ins !== null) || typeof ins === "functon";
+            // 下面直接判断 isNotRefType 不好理解
+            // return (typeof ins !== "object" || ins === null) && typeof ins !== "functon";
+        }
 
-            let consProto = constructor.prototype;
-            let insProto = Object.getPrototypeOf(instance);
-            while (insProto && insProto !== consProto) {
-                insProto = Object.getPrototypeOf(insProto);
+        // 递归实现
+        function my_instanceof (instance, constructor) {
+            if( !isRefType(instance) || typeof constructor !== "function") {
+                return false;
             }
-            if (insProto && insProto === consProto) {
+            let proto = Object.getPrototypeOf(instance);
+            if (proto === constructor.prototype) {
                 return true;
             }
-
+            else {
+                return my_instanceof (proto, constructor);
+            }
+        }
+        // 循环实现
+        function my_instanceof (instance, constructor) {
+            if( !isRefType(instance) || typeof constructor !== "function") {
+                return false;
+            }
+            let proto = Object.getPrototypeOf(instance);
+            while (proto) {
+                if (proto === constructor.prototype) {
+                    return true;
+                }
+                proto = Object.getPrototypeOf(proto);
+            }
             return false;
         }
+
+
+        let Fn = function () { }
+        let p1 = new Fn()
+
+        console.log(my_instanceof({}, Object)) // true
+        console.log(my_instanceof(p1, Fn)) // true
+        console.log(my_instanceof({}, Fn)) // false
+        console.log(my_instanceof(null, Fn)) // false
+        console.log(my_instanceof(1, Fn)) // false
         ```
 4. 所有引用类型的值都是 `Object` 的实例。因此在检测一个引用类型值和 `Object` 构造函数时，`instanceof` 操作符始终会返回 `true`。
 5. 当然，使用 `instanceof` 操作符检测基本类型的值，始终会返回 `false`，因为基本类型不是对象实例。
