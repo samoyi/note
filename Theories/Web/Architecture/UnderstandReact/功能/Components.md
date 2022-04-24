@@ -13,6 +13,8 @@
 
 
 ## 组件定义
+组件从概念上类似于 JavaScript 函数。它接受任意的入参（即 “props”），并返回用于描述页面展示内容的 React 元素。
+
 ### 函数组件与 class 组件
 1. 定义组件最简单的方式就是编写 JavaScript 函数：
     ```js
@@ -20,7 +22,7 @@
         return <h1>Hello, {props.name}</h1>;
     }
     ```
-2. 该函数是一个有效的 React 组件，因为它接收唯一带有数据的 “props”（代表属性）对象与并返回一个 React 元素。这类组件被称为“函数组件”，因为它本质上就是 JavaScript 函数。
+2. 该函数是一个有效的 React 组件，因为它接收唯一带有数据的 “props”（代表属性）对象与并返回一个 React 元素。这类组件被称为 “函数组件”，因为它本质上就是 JavaScript 函数。（该函数内部的 `this` 为 `undefined`，因为经过 Babel 编译后会加上严格模式，且该函数会以普通形式调用）
 3. 你同时还可以使用 ES6 的 class 来定义组件：
     ```js
     class Welcome extends React.Component {
@@ -107,4 +109,3 @@
 3. React 调用 `Welcome` 组件，并将 `{name: 'Sara'}` 作为 props 传入。
 4. `Welcome` 组件将 `<h1>Hello, Sara</h1>` 元素作为返回值。
 5. React DOM 将 DOM 高效地更新为 `<h1>Hello, Sara</h1>`。
-
