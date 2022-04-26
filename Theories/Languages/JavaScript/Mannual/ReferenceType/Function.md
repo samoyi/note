@@ -8,6 +8,7 @@
         - [debounce](#debounce)
         - [Throttle](#throttle)
     - [Curring](#curring)
+        - [柯里化求和函数](#柯里化求和函数)
     - [bind](#bind)
     - [References](#references)
 
@@ -32,12 +33,10 @@
 4. 实现
     ```js
     function debounce (fn, ms) {
-        // assertArgsType();
-
         let timer;
         return function (...args) { // 普通函数保证能设置 this
             clearTimeout(timer);
-            timer = setTimeout( () => { // 箭头函数保证这里使用词法 this，也就是上面匿名函数的 this
+            timer = setTimeout(() => { // 箭头函数保证这里的 this 和返回函数的 this 相同
                 fn.call(this, ...args);
             }, ms);
         }
@@ -53,21 +52,18 @@
     ```
 2. 逻辑
     1. 返回一个包装后的函数 `throttled`
-    2. 每次调用这个函数时，如果没有正在进行的 `setTimeout` 则启动 `setTimeout`，`ms` 再实际的调用 `fn`。
-    3. 实际调用 `fn` 之后，要把计时器清空，下一次调用 `throttled` 时会重新计时。
-    4. 返回的 `throttled` 可以接收 this 设置，调用 `throttled` 时设置的 `this`，也应该传入实际调用的 `fn` 中。
+    2. 每次调用 `throttled` 时，如果节流器没有开启则调用原函数；然后开启节流器，并在指定时间后关闭。
+    3. 返回的 `throttled` 可以接收 this 设置，调用 `throttled` 时设置的 `this`，也应该传入实际调用的 `fn` 中。
 3. 边界
     * 参数类型
 4. 实现
     ```js
-    function throttle (fn, ms) {
-        // assertArgsType();
-        
-        let timer;
+    function throttle (fn, ms=50) {
+        let timer = null;
         return function (...args) {
             if ( !timer ) {
+                fn.call(this, ...args);
                 timer = setTimeout(() => {
-                    fn.call(this, ...args);
                     timer = null;
                 }, ms);
             }
@@ -94,7 +90,7 @@
 4. 实现
     ```js
     function curry (fn, ...initArgs) {
-        return function inner (...args) {
+        return function (...args) {
             let arr = initArgs.concat(args);
 
             if (arr.length >= fn.length) {
@@ -139,6 +135,54 @@
     fn4();               // 1 2 3
     ```
 
+### 柯里化求和函数
+1. 要求实现
+    ```js
+    sum(1, 2, 3).valueOf() // 6 
+    sum(2, 3)(2).valueOf() // 7 
+    sum(1)(2)(3)(4).valueOf() // 10
+    sum(2)(4, 1)(2).valueOf() // 9
+    ```
+2. `sum` 调用会保存参数，然后返回一个函数，这个函数的功能和 `sum` 一样。
+3. 返回的函数自身有 `valueOf` 方法，调用的话累加之前保存的所有参数。
+4. 按照这个思路可以如下实现
+    ```js
+    function sum (...args) {
+        sum.list.push(...args);
+        return sum;
+    }
+    sum.list = [];
+    sum.valueOf = function () {
+        let val = sum.list.reduce((accu, curr) => {
+            return accu + curr;
+        });
+        sum.list = []; // 记得清空
+        return val;
+    }
+    ```
+5. 但这封装性不好，最好只有一个单独的函数。
+6. 所以不能直接给 `sum` 添加方法，应该返回一个函数，这个函数就是用来添加参数。然后给这个返回的函数添加方法。
+7. 同时，`list` 可以作为闭包变量被返回的函数引用。
+8. 实现
+    ```js
+    function sum (...args) {
+        let argList = [...args];
+
+        // 返回的函数的唯一作用就是添加参数，同时要返回自身
+        // 因为不是递归的调用 sum，所以闭包的变量可以正常使用。递归调用的话每次都会生成新的变量
+        let re = (...innerArgs) => {
+            argList = [...argList, ...innerArgs];
+            return re;
+        }
+
+        re.valueOf = () => {
+            return argList.reduce((accu, curr) => {
+                return accu + curr;
+            });
+        }
+        return re;
+    }
+    ```
 
 ## bind
 1. `my_bind` 接收一个原函数 `fn` 和绑定的环境 `ctx`，返回一个函数 `bound`；
@@ -153,8 +197,8 @@
         return function (...innerArgs) {
             if (new.target) {
                 let obj = Object.create(fn.prototype);
-                let re = fn.call(obj, ...innerArgs);
-                if (typeof re === "object" && re !== "null" ) {
+                let re = fn.call(obj, ...args, ...innerArgs);
+                if (typeof re === "object" && re !== null) {
                     return re;
                 }
                 else {
