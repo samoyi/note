@@ -602,8 +602,9 @@
 2. `obj1.obj` 需要正常的深拷贝，也就是深拷贝 `obj2`。
 3. 遍历到 `obj2.obj` 时，因为也是对象，所以按照上面的算法流程也要深拷贝，也就是深拷贝 `obj1`。
 4. 但实际上此时不应该再深拷贝了，否则就进入无意义的循环了。这里只能进行浅拷贝，也就是直接引用。
-5. 那么怎么判断需要浅拷贝的这种情况呢？打算深拷贝的这个对象，之前是否进行过深拷贝。
-6. 所以应该将每个曾经深拷贝的对象都记录下来，每次准备深拷贝一个对象时，都看看历史记录。
+5. 那么怎么判断需要浅拷贝的这种情况呢？因为正常的深拷贝是越来越深的拷贝后代属性，但是你如果发现居然又回到了一个之前拷贝过的属性，那就说明又循环过来了，此时就不能继续深拷贝了。
+6. 所以打算深拷贝的一个对象前，先检查之前是否进行过深拷贝过，如果是的话就实际返回引用。
+7. 因此应该将每个曾经深拷贝的对象都记录下来，每次准备深拷贝一个对象时，都看看历史记录。
 
 #### 继承原型的问题
 1. 如果使用 `Object.setPrototypeOf` 来继承原型，那么不管 `src` 是数组还是平对象，都可以实现继承。
@@ -612,62 +613,68 @@
 4. 因为没有类似的方法来创建数组，再加上其实数组很少有索引号以外的属性继承和修改，所以这里数组不进行继承。
 
 ### 实现
-```js
-function get_type(obj) {
-    return Object.prototype.toString.call(obj).split(" ")[1].slice(0, -1);
-}
-
-function deep_clone(src, clonedList = []) {
-    let type = get_type(src);
-    if (  type !== "Array" && type !== "Object" ) {
-        return src;
+1. 逻辑步骤
+    1. 先检查 `src` 是否是对象，不是的话直接返回自身；
+    2. 是的话准备深拷贝，但要检查之前是否深拷贝过，防止循环；
+    3. 创建根据类型 `dest` 对象；
+    4. 递归深拷贝。
+2. 实现如下 
+    ```js
+    function get_type(obj) {
+        return Object.prototype.toString.call(obj).split(" ")[1].slice(0, -1);
     }
 
-    // 将要进行深拷贝时，先检查历史记录
-    if ( clonedList.includes(src) ) {
-        // 如果曾经深拷贝过，则直接返回引用
-        return src;
-    }
-    else {
-        // 否则记录本次新的深拷贝
-        clonedList.push(src)
-    }
+    // 深拷贝列表直接用默认参数
+    function deep_clone(src, clonedList = []) {
+        let type = get_type(src);
 
-    let dest;
-    if ( type === "Array" ) {
-        dest = [];
-    }
-    else {
-        dest = Object.create(Object.getPrototypeOf(src));
-    }
+        // 其他类型直接浅拷贝
+        if (  type !== "Array" && type !== "Object" ) { // 注意是大写
+            return src;
+        }
 
-    // Object.entries 方法遍历 可遍历 的 实例 属性
-    Object.entries(src).forEach((pair) => {
-        let t = get_type(pair[1]);
-        if ( t === "Array" || t === "Object" ) {
-            dest[pair[0]] = deep_clone(pair[1], clonedList);
+        // 将要进行深拷贝时，先检查之前是否深拷贝过
+        if ( clonedList.includes(src) ) {
+            // 如果曾经深拷贝过，说明马上要循环了，因此直接返回引用
+            return src;
         }
         else {
-            dest[pair[0]] = pair[1];
+            // 否则记录本次新的深拷贝
+            // 在这里就要 push 而不能等到最后要，因为下面是递归的
+            // push 的是 src 而不是 dest，因为递归拷贝永远不会递归到 dest 上
+            clonedList.push(src); 
         }
-    });
 
-    return dest;
-}
+        // 根据数组和平对象两种情况创建 dest
+        let dest;
+        if ( type === "Array" ) {
+            dest = [];
+        }
+        else {
+            dest = Object.create(Object.getPrototypeOf(src)); // 注意使用 src 的原型而不是 src
+        }
+
+        // Object.entries 方法遍历 可遍历 的 实例 属性
+        Object.entries(src).forEach((pair) => {
+            dest[pair[0]] = deep_clone(pair[1], clonedList);
+        });
+
+        return dest;
+    }
 
 
-let obj1 = {name: "obj1"};
-let obj2 = {name: "obj2"};
+    let obj1 = {name: "obj1"};
+    let obj2 = {name: "obj2"};
 
-obj1.obj = obj2;
-obj2.obj = obj1;
+    obj1.obj = obj2;
+    obj2.obj = obj1;
 
-let copy = deep_clone(obj1);
+    let copy = deep_clone(obj1);
 
-console.log(obj1 === copy);                 // false
-console.log(obj1.obj === copy.obj);         // false
-console.log(obj1.obj.obj === copy.obj.obj); // true   // 直接引用
-```
+    console.log(obj1 === copy);                 // false
+    console.log(obj1.obj === copy.obj);         // false
+    console.log(obj1.obj.obj === copy.obj.obj); // true   // 直接引用
+    ```
 
 ### 方法五：兼容多种类型的自定义方法 `clone`
 1. `PlainObject` 深拷贝 + `Array` 深拷贝 + `Node` 深拷贝 + 可拷贝原型属性 + 仅可枚举  

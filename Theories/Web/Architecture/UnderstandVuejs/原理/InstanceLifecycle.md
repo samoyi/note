@@ -89,7 +89,8 @@
 
 ### `updated` 之前——虚拟 DOM 更新，然后 patch 实现重渲染
 1. 每个实例的 watcher 调用完 `beforeUpdate` 后就进行实际的更新 patch。
-2. 异步队列中所有实例的 watcher 都 patch 完后，再一次调用每个实例的 `updated` 函数。
+2. 异步队列中所有实例的 watcher 都 patch 完后，再依次调用每个实例的 `updated` 函数。
+3. 也就是说队列中所有的 watcher 先依次调用 `beforeUpdate`，再依次 patch，再依次调用 `updated`。
 
 ### `beforeDestroy` 之前——准备销毁实例
 1. 实例的 `$destroy()` 被调用后进入销毁阶段。
@@ -897,7 +898,7 @@ child -- beforeMount
 child -- mounted
 parent -- mounted
 ```
-这里比较有意思的是子实例的创建时间，是在父实例编译完成之后。父实例编译的过程中才会发现子组件标签，所以应该就是发现之后，在编译完成后就紧接着开始创建刚发现的子实例。
+这里比较有意思的是子实例的创建时间，是在父实例编译完成之后，父实例渲染函数调用的过程中才会发现子组件标签。
 
 update prop 时的输出：
 ```shell

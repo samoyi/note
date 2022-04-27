@@ -35,7 +35,24 @@ key | value
 
 
 ## 优先使用 microtask 的原因
-根据这个 [回答](https://www.zhihu.com/question/55364497/answer/144215284) 及其链接的 [文档](https://html.spec.whatwg.org/multipage/webappapis.html#event-loop-processing-model)，可以看到在一个事件循环内，是先执行 microtask 然后再重渲染。所以使用 microtask 就可以在本次渲染的时候使用更新的数据，而不是下一次渲染才更新。
+1. 根据这个 [回答](https://www.zhihu.com/question/55364497/answer/144215284) 及其链接的 [文档](https://html.spec.whatwg.org/multipage/webappapis.html#event-loop-processing-model)，可以看到在一个事件循环内，是先执行 microtask 然后再重渲染，而响应式湖居更新就是要放到 nextTick 去执行。所以使用 microtask 就可以在本次渲染的时候使用更新后的数据，而不是下一次渲染才更新。如果使用宏任务就会出现下面 issue 6813 的 bug，也就是当前事件循环重绘后，下个事件循环数据更新又发生重绘。
+2. 但这里并不是说你在 nextTick 的回调里读取 DOM 读取的还是旧的数据。虽然没有找到很明确的资料，但感觉上就是，微任务是在 DOM 更新后执行，但是是在页面重新绘制之前执行。看这个例子
+    ```html
+    <p>test</p>
+    ```
+    ```js
+    const p = document.querySelector('p');
+    p.textContent = 'sync';
+    alert(); // 此时页面还是 test
+    Promise.resolve().then(function microtask() {
+        // 已经进到微任务了，但页面还是 test
+        alert(p.textContent);
+        p.textContent = 'Promise';
+        // 最终页面会跳过 sync，直接变为 Promise
+    });
+    ```
+3. 参考 [这个问题](https://stackoverflow.com/questions/62562845/any-example-proving-microtask-is-executed-before-rendering)。
+4. 既然本轮事件结尾时才会统一重绘，那所谓 DOM 性能差就并不是说只要一修改 DOM 数据就会立刻导致重绘，上面显然就是在最后使用最后一次更新的数据重绘了一次。
 
 
 ## 只用 microtask 实现 `nextTick` 的问题
