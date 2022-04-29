@@ -4,14 +4,32 @@
 <!-- TOC -->
 
 - [Events](#events)
-    - [事件处理函数中的`this`](#事件处理函数中的this)
+    - [语法](#语法)
+    - [事件处理函数中的 `this`](#事件处理函数中的-this)
     - [向事件处理程序传递参数](#向事件处理程序传递参数)
 
 <!-- /TOC -->
 
 
+## 语法
+1. React 事件的命名采用小驼峰式（camelCase），而不是纯小写。
+2. 使用 JSX 语法时你需要传入一个函数作为事件处理函数，而不是一个字符串。
+3. 下面是 HTML 的事件绑定
+    ```html
+    <button onclick="activateLasers()">
+        Activate Lasers
+    </button>
+    ```
+4. 下面是 JSX 的事件绑定
+    ```html
+    <button onClick={activateLasers}>
+        Activate Lasers
+    </button>
+    ```
+5. React 中不能通过返回 `false` 的方式阻止默认行为，必须显式的使用 `preventDefault`。
 
-## 事件处理函数中的`this`
+
+## 事件处理函数中的 `this`
 ```js
 class Foo extends React.Component {
     constructor(props) {
@@ -90,12 +108,12 @@ class Foo extends React.Component {
         );
     }, 3000);
     ```
-    上面的例子中，不管是用现在事件绑定写法，还是改成属性初始化器语法来定义 `handleClick`，`componentDidUpdate`都会不断被调用。
+    上面的例子中，不管是用现在事件绑定写法，还是改成属性初始化器语法来定义 `handleClick`，`componentDidUpdate` 都会不断被调用。
 6. 我们通常建议在构造函数中绑定或使用属性初始化器语法来避免这类性能问题。
 
 
 ## 向事件处理程序传递参数
-1. 第一种方法，和上面用到的最后一种绑定事件处理函数 `this` 的方法一样，将事件属性设定为一个新的函数，在该函数内部调用事件处理函数。这样就可以在调用时任意传递参数。同时通过这个新的函数来接受事件对象
+1. 第一种方法，和上面用到的最后一种绑定事件处理函数 `this` 的方法一样，将事件处理函数包装为一个新的函数，在该函数内部调用事件处理函数。这样就可以在调用时任意传递参数。同时通过这个新的函数来接受事件对象
     ```js
     handleClick = (ev, name, age, foo)=>{
         console.log(name); // "33"

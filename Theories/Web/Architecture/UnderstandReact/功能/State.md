@@ -6,6 +6,7 @@
 - [State](#state)
     - [一例](#一例)
     - [不能直接修改 State](#不能直接修改-state)
+    - [不能在构造函数内调用 `setState`](#不能在构造函数内调用-setstate)
     - [状态更新可能是异步的](#状态更新可能是异步的)
         - [不一定会同步更新 state 数据](#不一定会同步更新-state-数据)
     - [State 的更新会被合并](#state-的更新会被合并)
@@ -71,6 +72,37 @@
 3. 构造函数是唯一可以给 `this.state` 赋值的地方。
 
 
+## 不能在构造函数内调用 `setState`
+1. 例子
+    ```js
+    class Clock extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {age: 22};
+            
+            setTimeout(()=>{
+                this.setState({
+                    age: 33,
+                });
+            }, 1000);
+        }
+
+        render() {
+            return (
+                <div>
+                    <h1>Hello, world!</h1>
+                </div>
+            );
+        }
+    }
+    ```
+2. 警告如下
+    ```
+    Warning: Can't call setState on a component that is not yet mounted. This is a no-op, but it might indicate a bug in your application. Instead, assign to `this.state` directly or define a `state = {};` class property with the desired state in the Clock component.
+    ```
+3. 不懂。`setTimeout` 回调调用的时候组件已经 mounted 了，为什么不行。
+
+
 ## 状态更新可能是异步的
 ### 不一定会同步更新 state 数据
 1. 出于性能考虑，React 可能会把多个 `setState()` 调用合并成一个调用。
@@ -131,6 +163,7 @@
         }));
     }
     ```
+    注意函数返回的对象外面包了一层括号，这和 React 没关系。如果不加的话，大括号会被认为是函数体的标志。
 7. 但是这个函数并不是等到 `this.state` 更新后才调用的。通过下面的断点可以看到
     ```js
     this.setState((state, props) =>{
@@ -142,8 +175,7 @@
         }
     });
     ```
-    当这个函数调用时，`this.state` 并没有真的更新，只不过参数中的 `state` 是更新后的状态。
-
+    当这个函数调用时，`this.state` 并没有真的更新，只不过参数中的 `state` 是更新后的状态。TODO，很奇怪。
 8. 文档中说到 “可能是” 异步的，参考这个 [问题](https://www.zhihu.com/question/66749082)。
 
 

@@ -92,6 +92,6 @@
     ```
 2. 挂载三秒钟之后，`setState` 使用相同的值重新设置了 `names`，但这依然触发了 `render` 函数和 `componentDidUpdate` 钩子。
 3. 显然，如果单纯的类比到 Vue 的情况，这就很奇怪了，因为 Vue 不会在这种情况下触发 `updated` 并重渲染。这看起来似乎是只要调用了`setState` 就会导致重渲染，如果是这样，这显然是很消耗性能的。
-4. 然而 React 语境下的 render，是指渲染虚拟 DOM。参考[这个回答](https://stackoverflow.com/a/24719289)
+4. 然而 React 语境下的 render，是指渲染虚拟 DOM。参考 [这个回答](https://stackoverflow.com/a/24719289)。TODO，深入一下。
 5. 如果你没有在 `shouldComponentUpdate` 方法里返回 `false`，或者该组件不是 PureComponent，那么只要调用 `setState()`，就一定会触发虚拟 DOM 重渲染，进而触发相关的函数。
 6. 但是令人放心的是，只要 `setState()` 没有导致状态值的真正改变，并不会触发渲染真实 DOM。
