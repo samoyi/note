@@ -6,6 +6,7 @@
 - [Components](#components)
     - [组件定义](#组件定义)
         - [函数组件与 class 组件](#函数组件与-class-组件)
+        - [开发模式下函数式组件更新时函数调用两次 TODO](#开发模式下函数式组件更新时函数调用两次-todo)
         - [组件一般都必须有一个包裹元素](#组件一般都必须有一个包裹元素)
     - [组件渲染过程](#组件渲染过程)
 
@@ -65,6 +66,10 @@
         return <myComponents.datePicker color="blue" />;
     }
     ```
+
+### 开发模式下函数式组件更新时函数调用两次 TODO
+* https://www.zhihu.com/question/387196401
+* https://github.com/facebook/react/issues/17786
 
 ### 组件一般都必须有一个包裹元素
 1. 和 Vue 中的情况一样，这样是不行的
