@@ -1,6 +1,20 @@
 # StateHook 和 EffectHook
 
 
+<!-- TOC -->
+
+- [StateHook 和 EffectHook](#statehook-和-effecthook)
+    - [概述](#概述)
+    - [State Hook](#state-hook)
+    - [Effect Hook](#effect-hook)
+        - [无需清除的 effect](#无需清除的-effect)
+        - [需要清除的 effect](#需要清除的-effect)
+        - [更新控制](#更新控制)
+    - [只在最顶层使用 Hook](#只在最顶层使用-hook)
+
+<!-- /TOC -->
+
+
 ## 概述
 1. What is a Hook? A Hook is a special function that lets you “hook into” React features. For example, useState is a Hook that lets you add React state to function components.
 
@@ -8,6 +22,7 @@
 ## State Hook
 * 直接修改数据没有效果（也不会报错），必须要通过 `setCount`。
 * 类组件的 `setState` 参数如果是引用类型，它是会合并到原对象上；但是 state hook 如果参数是应用类型的话，是直接替换对应的 state。
+* 初始值参数也可以传一个函数，该函数返回初始值
 
 
 ## Effect Hook

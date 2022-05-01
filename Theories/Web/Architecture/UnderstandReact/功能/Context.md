@@ -1,83 +1,83 @@
 # Context
 
+
+<!-- TOC -->
+
+- [Context](#context)
+    - [When to Use Context](#when-to-use-context)
+    - [用法](#用法)
+        - [默认值](#默认值)
+    - [TODO](#todo)
+    - [节制使用](#节制使用)
+
+<!-- /TOC -->
+
+
 ## When to Use Context
-1. Context provides a way to pass data through the component tree without having
-to pass props down manually at every level.
-2. In a typical React application, data is passed top-down (parent to child) via
-props, but this can be cumbersome for certain types of props (e.g. locale
-preference, UI theme) that are required by many components within an application
-.
-3. Context provides a way to share values like these between components without
-having to explicitly pass a prop through every level of the tree.
-4. Context is designed to share data that can be considered “global” for a tree
-of React components, such as the current authenticated user, theme, or preferred
-language.
+
 
 
 ## 用法
-1. 创建一个环境“组件”
-2. 环境组件可以通过把内部存储的值传递给它的后代组件
-3. 后代组件通过环境组件的名字获取其中的值，需要将该值存储到静态属性`contextType`里
-4. 然后该后代组件就可以通过`this.context`访问到环境组件中保存的值。
-
-```js
-// Create a context for the current theme (with "light" as the default).
-const ThemeContext = React.createContext('light');
-
-class App extends React.Component {
-    render() {
-        // Use a Provider to pass the current theme to the tree below.
-        // Any component can read it, no matter how deep it is.
-        // In this example, we're passing "dark" as the current value.
+1. 和 Vue 中的 provide/inject 功能一样。
+2. 函数式组件中用法如下
+    ```js
+    const NameContext = React.createContext(); // 在这里创建 context “组件”
+    function Component1 () {
         return (
-            <ThemeContext.Provider value="dark">
-                <Toolbar />
-            </ThemeContext.Provider>
+            <div>
+                Component1
+                <NameContext.Provider value="Hina"> // 通过 context “组件” 把值传递给后代
+                    <Component2 />
+                </NameContext.Provider>
+            </div>
         );
     }
-}
+        
+    function Component2 () {
+        return (
+            <div>
+                Component2
+                <Component3 />
+            </div>
+        );
+    }
 
-// A component in the middle doesn't have to
-// pass the theme down explicitly anymore.
-function Toolbar(props) {
+    function Component3 () {
+    const name = useContext(NameContext); // 后代通过 context “组件” 接收传进来的值
     return (
         <div>
-            <ThemedButton />
+            Component3
+            {name}
         </div>
     );
-}
-
-class ThemedButton extends React.Component {
-    // Assign a contextType to read the current theme context.
-    // React will find the closest theme Provider above and use its value.
-    // In this example, the current theme is "dark".
-    static contextType = ThemeContext;
-    render() {
-        return <input type="button" value={this.context} />;
-    }
-}
-
-ReactDOM.render(
-    <App />,
-    document.getElementById('root')
-);
-```
-
-### 默认值
-1. 给环境变量赋值是通过`value`属性，但是触发默认值并不是没有设置`value`属性，而是没有
-使用 Provider
-2. 如果上面例子中的`App`组件如下定义，则`ThemedButton`中获得的环境变量值就是`lightn`
-    ```js
-    class App extends React.Component {
-        render() {
-            return (
-                // <ThemeContext.Provider value="dark">
-                    <Toolbar />
-                // </ThemeContext.Provider>
-            );
-        }
     }
     ```
+3. 不懂，既然后代要访问 `NameContext`，那为什么不直接定义一个 `name` 变量供后代使用。
+4. All consumers that are descendants of a Provider will re-render whenever the Provider’s `value` prop changes. 
+5. The propagation from Provider to its descendant consumers is not subject to the `shouldComponentUpdate` method, so the consumer is updated even when an ancestor component skips an update.
+6. 通过新旧值检测来确定变化，使用了与 `Object.is` 相同的算法。
+
+### 默认值
+1. 创建 context “组件” 时可以指定默认值
+    ```js
+    const NameContext = React.createContext("Hime");
+    ```
+2. 但是触发默认值并不是 `Provider` 中没有设置 `value` 属性时触发，而是没有使用 `Provider` 时触发。比如如果上面例子中的 `Component1` 如下定义，则 `Component3` 中 `name` 会获得默认值 `"Hime"`
+    ```js
+    function Component1 () {
+        return (
+            <div>
+                Component1
+                <Component2 />
+            </div>
+        );
+    }
+    ```
+
+
+## TODO
+* Context.Consumer
+* Context.displayName
 
 
 ## 节制使用
