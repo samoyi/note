@@ -13,6 +13,7 @@
     - [在构造函数中传入 props](#在构造函数中传入-props)
         - [`super(props)`](#superprops)
         - [为什么组件的构造函数以及内部的 `super()` 都要传参 `props`](#为什么组件的构造函数以及内部的-super-都要传参-props)
+    - [使用 PropTypes 进行类型检查](#使用-proptypes-进行类型检查)
 
 <!-- /TOC -->
 
@@ -212,3 +213,7 @@ ReactDOM.render(
         }
     }
     ```
+
+
+## 使用 PropTypes 进行类型检查
+TODO

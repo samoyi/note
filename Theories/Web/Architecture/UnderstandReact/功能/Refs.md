@@ -268,7 +268,7 @@ ReactDOM.render(
         document.getElementById('root')
     );
     ```
-4. React 将在组件挂载时将 DOM 元素传入 ref 回调函数并调用，当卸载时传入`null`并调用它。
+4. React 将在组件挂载时将 DOM 元素传入 ref 回调函数并调用，当卸载时传入 `null` 并调用它。
 5. ref 回调函数会在 `componentDidMout` 和 `componentDidUpdate` 生命周期函数前被调用。
 6. 如果 ref 回调以内联函数的方式定义，在更新期间它会被调用两次，第一次参数是 `null` ，之后参数是 DOM 元素。这是因为在每次渲染中都会创建一个新的函数实例。因此，React 需要清理旧的 ref 并且设置新的。通过将 ref 的回调函数定义成类的绑定函数的方式可以避免上述问题，但是大多数情况下无关紧要。
 

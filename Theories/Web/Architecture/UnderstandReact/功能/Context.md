@@ -18,15 +18,20 @@
 
 
 ## 用法
-1. 和 Vue 中的 provide/inject 功能一样。
+1. 和 Vue 中的 provide/inject 功能类似，但 context 是响应式的。
 2. 函数式组件中用法如下
     ```js
-    const NameContext = React.createContext(); // 在这里创建 context “组件”
+    const NameContext = createContext(); // 在这里创建 context “组件”
+
     function Component1 () {
+        const [name, setName] = useState("Hime");
         return (
             <div>
                 Component1
-                <NameContext.Provider value="Hina"> // 通过 context “组件” 把值传递给后代
+                <input type="button" value="set to Hina" onClick={()=>{setName("Hina")}} />
+
+                {/* 通过 context “组件” 把值传递给后代 */}
+                <NameContext.Provider value={name}> 
                     <Component2 />
                 </NameContext.Provider>
             </div>
@@ -42,20 +47,19 @@
         );
     }
 
-    function Component3 () {
-    const name = useContext(NameContext); // 后代通过 context “组件” 接收传进来的值
-    return (
-        <div>
-            Component3
-            {name}
-        </div>
-    );
+    function Component3() {
+        const name = useContext(NameContext); // 后代通过 context “组件” 接收传进来的值
+        return (
+            <div>
+                Component3
+                {name}
+            </div>
+        );
     }
     ```
-3. 不懂，既然后代要访问 `NameContext`，那为什么不直接定义一个 `name` 变量供后代使用。
-4. All consumers that are descendants of a Provider will re-render whenever the Provider’s `value` prop changes. 
-5. The propagation from Provider to its descendant consumers is not subject to the `shouldComponentUpdate` method, so the consumer is updated even when an ancestor component skips an update.
-6. 通过新旧值检测来确定变化，使用了与 `Object.is` 相同的算法。
+3. 与 Vue 中的 provide/inject 不同，context 是响应式的：all consumers that are descendants of a Provider will re-render whenever the Provider’s `value` prop changes. 
+4. The propagation from Provider to its descendant consumers is not subject to the `shouldComponentUpdate` method, so the consumer is updated even when an ancestor component skips an update.
+5. 通过新旧值检测来确定变化，使用了与 `Object.is` 相同的算法。
 
 ### 默认值
 1. 创建 context “组件” 时可以指定默认值
