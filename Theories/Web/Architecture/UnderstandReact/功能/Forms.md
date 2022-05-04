@@ -152,7 +152,8 @@ class Reservation extends React.Component {
     
 ## 非受控组件
 1. 在大多数情况下，我们推荐使用受控组件来实现表单。在受控组件中，表单数据由 React 组件处理。
-2. 如果让表单数据由 DOM 处理时，替代方案为使用非受控组件，可以使用 `ref` 从 `DOM` 获取表单值。
+2. 如果让表单数据由 DOM 处理时，替代方案为使用非受控组件，此时数据不保存在 React 的 `state` 中，而是保存在表单自身中。
+3. 为了获取表单自身保存的数据，可以使用 `ref` 从引用表单并获取
     ```js
     class NameForm extends React.Component {
         constructor(props) {
@@ -162,6 +163,7 @@ class Reservation extends React.Component {
         }
 
         handleSubmit(event) {
+            // 这里并不会用 setState 把新的数据保存到 state 中，所以每次取数据都要到表单里取
             alert('A name was submitted: ' + this.input.current.value);
             event.preventDefault();
         }

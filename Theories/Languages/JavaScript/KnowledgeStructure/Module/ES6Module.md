@@ -123,7 +123,51 @@ function foo() {
     import {year} from './test.js';
     year = 1987; // TypeError: Assignment to constant variable.
     ```
-5. `export` 通过接口输出的是同一个值。不同的脚本加载这个接口，得到的都是同样的实例。其中一个脚本对模块的值进行了更新，其他脚本再读取该值时，也会是更新后的值。不懂具体怎么实现
+5. `export` 通过接口输出的是同一个值。不同的脚本加载这个接口，得到的都是同样的实例。其中一个脚本对模块的值进行了更新，其他脚本再读取该值时，也会是更新后的值，即使这个值是基础类型而非引用类型
+    ```js
+    // ageModule
+    // 输出一个基础类型变量和修改该变量的函数，module1 和 module2 会引用该模块
+
+    let age = 22;
+
+    function setAge (newAge) {
+        age = newAge;
+    }
+
+    export {age, setAge};
+    ```
+    ```js
+    // module1
+    import {age, setAge} from "./ageModule";
+
+    setTimeout(() => {
+        console.log("module1 age: " + age); // 22
+    }, 1000);
+
+    setTimeout(() => {
+        // 修改了 ageModule 里的 age
+        setAge(33);
+        console.log("module1 setAge to: " + 33);
+    }, 2000);
+
+    setTimeout(() => {
+        console.log("module1 age: " + age); // 33
+    }, 3000);
+    ```
+    ```js
+    // module1
+    import {age, setAge} from "./ageModule";
+
+    setTimeout(() => {
+        console.log("module2 age: " + age); // 22
+    }, 1000);
+
+    setTimeout(() => {
+        // 因为 module1 修改了 ageModule 中的 age，所以 这里再读取 age 也变成了修改后的值
+        // 即使 age 是基础类型而非引用类型
+        console.log("module2 age: " + age); // 33
+    }, 3000);
+    ```
 
 ### ES6 模块与 CommonJS 模块的差异总结
 * CommonJS 模块是运行时加载并输出对象，ES6 模块是编译时输出接口。
@@ -143,6 +187,7 @@ export function multiply(x, y) {
 import {year, multiply} from './test.js';
 console.log(multiply(year, 2)); // 3916
 ```
+注意是输出单一变量声明，而不是单一变量
 
 #### 一次输出多个变量
 ```js
@@ -157,6 +202,7 @@ export {name, age, year as num1, year as num2};
 import {name, age, num1, num2} from './test.js';
 console.log([name, age, num1, num2]); // ["33", 22, 1958, 1958]
 ```
+可以看到，不管是输出单一变量声明还是输出多个变量，引入的时候都是要带大括号的形式。
 
 ### `import`
 1. 引入想要的变量时同样可以使用 `as` 重命名
@@ -229,7 +275,8 @@ console.log('圆周长：' + circle.circumference(14));
     // 错误
     export default var a = 1;
     ```
-4. 同样地，因为 `export default` 命令的本质是将后面的值，赋给 `default` 变量，所以可以直接将一个值写在 `export default` 之后
+4. Only expressions, functions or classes are allowed as the `default` export.
+5. 同样地，因为 `export default` 命令的本质是将后面的值，赋给 `default` 变量，所以可以直接将一个值写在 `export default` 之后
     ```js
     // 正确
     export default 42;
@@ -237,7 +284,7 @@ console.log('圆周长：' + circle.circumference(14));
     // 报错
     export 42; // SyntaxError: Unexpected token export
     ```
-5. 如果想在一条 `import` 语句中，同时输入默认方法和其他接口，可以写成下面这样:
+6. 如果想在一条 `import` 语句中，同时输入默认方法和其他接口，可以写成下面这样:
     ```js
     // ./test.js
     let num = 22;
