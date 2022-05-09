@@ -1,0 +1,147 @@
+# Basics
+
+
+<!-- TOC -->
+
+- [Basics](#basics)
+    - [CVCS 与 DVCS](#cvcs-与-dvcs)
+        - [CVCS](#cvcs)
+        - [DVCS](#dvcs)
+    - [Snapshots, Not Differences](#snapshots-not-differences)
+    - [Nearly Every Operation Is Local](#nearly-every-operation-is-local)
+    - [Git Has Integrity](#git-has-integrity)
+    - [Git Generally Only Adds Data](#git-generally-only-adds-data)
+    - [The Three States](#the-three-states)
+    - [First-Time Git Setup](#first-time-git-setup)
+        - [Your Identity](#your-identity)
+        - [Your default branch name](#your-default-branch-name)
+        - [Checking Your Settings](#checking-your-settings)
+    - [Getting Help](#getting-help)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
+## CVCS 与 DVCS
+### CVCS
+1. Centralized Version Control Systems 系统都有一个单一的集中管理的服务器，保存所有文件的修订版本，而协同工作的人们都通过客户端连到这台服务器，取出最新的文件或者提交更新
+    <img src="./images/01.png" width="600" style="display: block; margin: 5px 0 10px;" />
+2. 每个人都可以在一定程度上看到项目中的其他人正在做些什么。而管理员也可以轻松掌控每个开发者的权限，并且管理一个 CVCS 要远比在各个客户端上维护本地数据库来得轻松容易。
+3. 这么做最显而易见的缺点是中央服务器的单点故障。如果宕机一小时，那么在这一小时内，谁都无法提交更新，也就无法协同工作。如果中心数据库所在的磁盘发生损坏，又没有做恰当备份，毫无疑问你将丢失所有数据——包括项目的整个变更历史，只剩下人们在各自机器上保留的单独快照。
+
+### DVCS
+1. Distributed Version Control System 系统中，客户端并不只提取最新版本的文件快照，而是把代码仓库完整地镜像下来，包括完整的历史记录。 
+    <img src="./images/02.png" width="600" style="display: block; margin: 5px 0 10px;" />
+2. 这么一来，任何一处协同工作用的服务器发生故障，事后都可以用任何一个镜像出来的本地仓库恢复。因为每一次的克隆操作，实际上都是一次对代码仓库的完整备份。
+3. 更进一步，许多这类系统都可以指定和若干不同的远端代码仓库进行交互。籍此，你就可以在同一个项目中，分别和不同工作小组的人相互协作。你可以根据需要设定不同的协作流程，比如层次模型式的工作流，而这在以前的集中式系统中是无法实现的。
+
+
+## Snapshots, Not Differences
+1. Git 和其它版本控制系统的主要差别在于 Git 对待数据的方式。 
+2. 从概念上来说，其它大部分系统以文件变更列表的方式存储信息，这类系统将它们存储的信息看作是一组基本文件和每个文件随时间逐步累积的差异
+    <img src="./images/03.png" width="600" style="display: block; margin: 5px 0 10px;" />
+3. Git 不按照以上方式对待或保存数据。反之，Git 更像是把数据看作是对小型文件系统的一系列快照。在 Git 中，每当你提交更新或保存项目状态时，它基本上就会对当时的全部文件创建一个快照并保存这个快照的索引。
+4. 为了效率，如果文件没有修改，Git 不再重新存储该文件，而是只保留一个链接指向之前存储的文件。 Git 对待数据更像是一个快照流
+    <img src="./images/04.png" width="600" style="display: block; margin: 5px 0 10px;" />
+
+
+## Nearly Every Operation Is Local
+在 Git 中的绝大多数操作都只需要访问本地文件和资源，一般不需要来自网络上其它计算机的信息。因为你在本地磁盘上就有项目的完整历史，所以大部分操作看起来瞬间完成。
+
+
+## Git Has Integrity
+1. Everything in Git is checksummed before it is stored and is then referred to by that checksum. This means it’s impossible to change the contents of any file or directory without Git knowing about it. 
+2. This functionality is built into Git at the lowest levels and is integral to its philosophy. You can’t lose information in transit or get file corruption without Git being able to detect it.
+3. You will see these hash values all over the place in Git because it uses them so much. In fact, Git stores everything in its database not by file name but by the hash value of its contents.
+
+
+## Git Generally Only Adds Data
+1. 你执行的 Git 操作，几乎只往 Git 数据库中 **添加** 数据。 你很难使用 Git 从数据库中删除数据，也就是说 Git 几乎不会执行任何可能导致文件不可恢复的操作。
+2. 未提交更新时有可能丢失或弄乱修改的内容。但是一旦你提交快照到 Git 中， 就难以再丢失数据，特别是如果你定期的推送数据库到其它仓库的话。这使得我们使用 Git 成为一个安心愉悦的过程，因为我们深知可以尽情做各种尝试，而没有把事情弄糟的危险。
+
+
+## The Three States
+1.  Git 有三种状态，你的文件可能处于其中之一：**已修改**（modified）、**已暂存**（staged）和 **已提交**（committed）
+    * 已修改表示修改了文件，但还没保存到数据库中。
+    * 已暂存表示对一个已修改文件的当前版本做了标记，使之包含在下次提交的快照中。
+    * 已提交表示数据已经安全地保存在本地数据库中。
+2. 这会让我们的 Git 项目拥有三个阶段：工作区、暂存区以及 Git 目录
+    <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px;" />
+    * 工作区是对项目的某个版本独立提取出来的内容。这些从 Git 仓库的压缩数据库中提取出来的文件，放在磁盘上供你使用或修改。
+    * 暂存区是一个文件，保存了下次将要提交的文件列表信息，一般在 Git 仓库目录中。
+    * Git 仓库目录是 Git 用来保存项目的元数据和对象数据库的地方。这是 Git 中最重要的部分，从其它计算机克隆仓库时，复制的就是这里的数据。
+3. 基本的 Git 工作流程如下：
+    1. 在工作区中修改文件。
+    2. 将你想要下次提交的更改选择性地暂存，这样只会将更改的部分添加到暂存区。
+    3. 提交更新，找到暂存区的文件，将快照永久性存储到 Git 目录。
+4. 如果 Git 目录中保存着特定版本的文件，就属于 已提交 状态。 如果文件已修改并放入暂存区，就属于 已暂存 状态。 如果自上次检出后，作了修改但还没有放到暂存区域，就是 已修改 状态。
+5. If a particular version of a file is in the Git directory, it’s considered committed. If it has been modified and was added to the staging area, it is staged. And if it was changed since it was checked out but has not been staged, it is modified. 
+
+
+## First-Time Git Setup
+1. Git 自带一个 `git config` 的工具来帮助设置控制 Git 外观和行为的配置变量。 这些变量存储在三个不同的位置：
+    * `/etc/gitconfig` 文件: 包含系统上每一个用户及他们仓库的通用配置。 如果在执行 `git config` 时带上 `--system` 选项，那么它就会读写该文件中的配置变量。 （由于它是系统配置文件，因此你需要管理员或超级用户权限来修改它。）
+    * `~/.gitconfig` 或 `~/.config/git/config` 文件：只针对当前用户。 你可以传递 `--global` 选项让 Git 读写此文件，这会对你系统上 所有 的仓库生效。
+    * 当前使用仓库的 Git 目录中的 `config` 文件（即 `.git/config`）：针对该仓库。默认情况下用的就是它，虽然你可以传递 `--local` 选项让 Git 强制读写此文件。
+2. 每一个级别会覆盖上一级别的配置，所以 `.git/config` 的配置变量会覆盖 `/etc/gitconfig` 中的配置变量。
+
+### Your Identity
+1. 安装完 Git 之后，要做的第一件事就是设置你的用户名和邮件地址。这一点很重要，因为每一个 Git 提交都会使用这些信息，它们会写入到你的每一次提交中，不可更改：
+    ```
+    $ git config --global user.name "John Doe"
+    $ git config --global user.email johndoe@example.com
+    ```
+2. 注意，如果使用了 `--global` 选项，那么该命令只需要运行一次，因为之后无论你在该系统上做任何事情，Git 都会使用那些信息。 
+3. 当你想针对特定项目使用不同的用户名称与邮件地址时，可以在那个项目目录下运行没有 `--global` 选项的命令来配置。
+
+### Your default branch name
+1. By default Git will create a branch called `master` when you create a new repository with git init. From Git version 2.28 onwards, you can set a different name for the initial branch.
+2. To set main as the default branch name do:
+    ```
+    $ git config --global init.defaultBranch main
+    ```
+
+### Checking Your Settings
+1. 如果想要检查你的配置，可以使用 git config --list 命令来列出所有 Git 当时能找到的配置。
+    ```
+    $ git config --list
+    user.name=John Doe
+    user.email=johndoe@example.com
+    color.status=auto
+    color.branch=auto
+    color.interactive=auto
+    color.diff=auto
+    ...
+    ```
+2. 你可能会看到重复的变量名，因为 Git 会从不同的文件中读取同一个配置（例如：`/etc/gitconfig` 与 `~/.gitconfig`）。这种情况下，Git 会使用它找到的每一个变量的最后一个配置。
+3. 你可以通过输入 `git config <key>`： 来检查 Git 的某一项配置
+    ```
+    $ git config user.name
+    John Doe
+    ```
+4. 由于 Git 会从多个文件中读取同一配置变量的不同值，因此你可能会在其中看到意料之外的值而不知道为什么。 此时，你可以查询 Git 中该变量的原始值，它会告诉你哪一个配置文件最后设置了该值
+    ```
+    $ git config --show-origin rerere.autoUpdate
+    file:/home/johndoe/.gitconfig	false
+    ```
+
+
+## Getting Help
+1. If you ever need help while using Git, there are three equivalent ways to get the comprehensive manual page (manpage) help for any of the Git commands:
+    ```
+    $ git help <verb>
+    $ git <verb> --help
+    $ man git-<verb>
+    ```
+2. For example, you can get the manpage help for the git config command by running this:
+    ```
+    $ git help config
+    ```
+3. In addition, if you don’t need the full-blown manpage help, but just need a quick refresher on the available options for a Git command, you can ask for the more concise “help” output with the -h option, as in:
+    ```
+    $ git add -h
+    ```
+
+
+## References
+* [Pro Git](https://git-scm.com/book/en/v2)
