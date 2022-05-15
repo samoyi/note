@@ -21,7 +21,22 @@
 
 ## State Hook
 * 直接修改数据没有效果（也不会报错），必须要通过 `setCount`。
-* 类组件的 `setState` 参数如果是引用类型，它是会合并到原对象上；但是 state hook 如果参数是应用类型的话，是直接替换对应的 state。
+* 类组件的 `setState` 参数如果是引用类型，它是会合并到原对象上；但是 state hook 如果参数是应用类型的话，是直接替换对应的 state
+    ```js
+    function Component1 (props) {
+        const [person, setPerson] = useState({name: "Hime", age: 22});
+        setTimeout(() => {
+            // 三秒钟只会只会渲染出名字，年龄为空
+            setPerson({name: "Hina"});
+        }, 3333);
+        return (
+            <div>
+                <p>Name: {person.name}</p>
+                <p>Age: {person.age}</p>
+            </div>
+        );
+    }
+    ```
 * 初始值参数也可以传一个函数，该函数返回初始值
 
 

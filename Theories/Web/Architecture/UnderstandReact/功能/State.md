@@ -10,6 +10,7 @@
     - [状态更新可能是异步的](#状态更新可能是异步的)
         - [不一定会同步更新 state 数据](#不一定会同步更新-state-数据)
     - [State 的更新会被合并](#state-的更新会被合并)
+    - [对比 Vue](#对比-vue)
 
 <!-- /TOC -->
 
@@ -180,31 +181,46 @@
 
 
 ## State 的更新会被合并
-当你调用 `setState()` 的时候，React 会把你提供的对象合并到当前的 `state`。因此每个 `setState()` 可以只修改 `state` 的部分属性
-```js
-constructor(props) {
-    super(props);
-    this.state = {
-        posts: [],
-        comments: []
-    };
-}
+1. 当你在类组件中调用 `setState()` 的时候，React 会把你提供的对象合并到当前的 `state`。因此每个 `setState()` 可以只修改 `state` 的部分属性
+    ```js
+    constructor(props) {
+        super(props);
+        this.state = {
+            posts: [],
+            comments: []
+        };
+    }
 
-componentDidMount() {
-    fetchPosts().then(response => {
-        this.setState({
-            posts: response.posts
+    componentDidMount() {
+        fetchPosts().then(response => {
+            this.setState({
+                posts: response.posts
+            });
         });
-    });
 
-    fetchComments().then(response => {
-        this.setState({
-            comments: response.comments
+        fetchComments().then(response => {
+            this.setState({
+                comments: response.comments
+            });
         });
-    });
-}
-  ```
-
+    }
+    ```
+2. 函数式组件 `useState` 的设值方法不会合并，而是整体设值
+    ```js
+    function Component1 (props) {
+        const [person, setPerson] = useState({name: "Hime", age: 22});
+        setTimeout(() => {
+            // 三秒钟只会只会渲染出名字，年龄为空
+            setPerson({name: "Hina"});
+        }, 3333);
+        return (
+            <div>
+                <p>Name: {person.name}</p>
+                <p>Age: {person.age}</p>
+            </div>
+        );
+    }
+    ```
 
 ## 对比 Vue
 1. 代码

@@ -7,6 +7,7 @@ In Git, there are two main ways to integrate changes from one branch into anothe
 - [Rebasing](#rebasing)
     - [The Basic Rebase](#the-basic-rebase)
     - [More Interesting Rebases](#more-interesting-rebases)
+    - [The Perils of Rebasing](#the-perils-of-rebasing)
 
 <!-- /TOC -->
 
@@ -100,3 +101,12 @@ Fast-forward
     $ git branch -d server
     ```
     <img src="./images/32.png" width="1000" style="display: block; margin: 5px 0 10px;" />
+
+
+## The Perils of Rebasing   
+1. Rebase 操作的实质是丢弃一些现有的提交，然后相应地新建一些内容一样但实际上不同的提交。
+2. 所以如果你已经将提交推送至某个仓库，而其他人也已经从该仓库拉取提交并进行了后续工作，但你又通过 rebase 删除了这些提交并新建了一样的提交，然后有推送到远程仓库。之前那个人再拉取的话，它本地就会有两份一样的提交：一份是你 rebase 之前的提交，一份是你 rebase 新建的相同内容提交。
+3. 所以使用 rebase 要遵守一条准则：如果提交存在于你的仓库之外，而别人可能基于这些提交进行开发，那么不要执行 rebase。只对尚未推送或分享给别人的本地修改执行 rebase 操作清理历史，从不对已推送至别处的提交执行 rebase 操作。
+4. 如果你只对不会离开你电脑的提交执行 rebase，那就不会有事。 如果你对已经推送过的提交执行 rebase，但别人没有基于它的提交，那么也不会有事。 
+5. 如果你对已经推送至共用仓库的提交上执行 rebase 命令，并因此丢失了一些别人的开发所基于的提交，那你就有大麻烦了。
+6. 如果你或你的同事在某些情形下决意要这么做，请一定要通知每个人拉取代码时使用 `git pull --rebase` 命令而非 `git pull` 命令，这样尽管不能避免伤痛，但能有所缓解。
