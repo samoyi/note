@@ -10,6 +10,9 @@
         - [格式要求](#格式要求)
         - [Extended years](#extended-years)
     - [`Date()` constructor](#date-constructor)
+        - [数值类型的毫秒时间戳](#数值类型的毫秒时间戳)
+        - [字符串类型的 date 时间戳](#字符串类型的-date-时间戳)
+        - [Individual date and time component values](#individual-date-and-time-component-values)
     - [Static methods](#static-methods)
         - [`Date.now()`](#datenow)
         - [`Date.parse()`](#dateparse)
@@ -75,14 +78,74 @@ Field | Meaning
 
 ## `Date()` constructor
 1. Creates a JavaScript `Date` instance that represents a single moment in time in a platform-independent format. 
-2. `Date` objects contain a `Number` that represents milliseconds since 1 January 1970 UTC.
-3. 也就是说，表示的格式是基于当地时间，而内部存储的时间戳是基于 UTC 的。
+2. `Date` objects contain a `Number` that represents milliseconds since 1 January 1970 UTC. 表示的格式是基于当地时间，而内部存储的时间戳是基于 UTC 的。
     ```js
     let d = new Date('1970-01-01T00:00:00.000+00:00'); // 传入的是 UTC 时区的 0 点
     // 表示出来的格式，UTC 的 0 点就是东八区的 8 点
     console.log(d); // Thu Jan 01 1970 08:00:00 GMT+0800 (中国标准时间)
     // 但内部时间戳还是基于 UTC 的
     console.log( d.getTime() ); // 0
+    ```
+3. 如果不传参数，则生成的实例保存的是生成时的日期时间。如果传参数，分为下面的四种情况。
+
+### 数值类型的毫秒时间戳
+1. 该参数表示从 January 1, 1970, 00:00:00 UTC (the ECMAScript epoch, equivalent to the UNIX epoch) 以来的毫秒数。忽略闰秒。
+2. Keep in mind that most UNIX Timestamp functions are only accurate to the nearest second
+    ```js
+    let d0 = new Date(0);
+    console.log( d0.getMilliseconds() ); // 0
+    console.log( d0 ); // Thu Jan 01 1970 08:00:00 GMT+0800 (中国标准时间)
+
+    let d1 = new Date(1);
+    console.log( d1.getMilliseconds() ); // 1
+    console.log( d1 ); // Thu Jan 01 1970 08:00:00 GMT+0800 (中国标准时间)
+
+    let d999 = new Date(999);
+    console.log( d999.getMilliseconds() ); // 999
+    console.log( d999 ); // Thu Jan 01 1970 08:00:00 GMT+0800 (中国标准时间) // 并不是四舍五入，而是只去当前的秒数
+
+    let d1000 = new Date(1000);
+    console.log( d1000.getMilliseconds() ); // 0
+    console.log( d1000 ); // Thu Jan 01 1970 08:00:01 GMT+0800 (中国标准时间) 
+
+    let d1001 = new Date(1001);
+    console.log( d1001.getMilliseconds() ); // 1
+    console.log( d1001 ); // Thu Jan 01 1970 08:00:01 GMT+0800 (中国标准时间)
+    ```
+
+### 字符串类型的 date 时间戳
+1. A string value representing a date.
+2. Parsing of date strings with the `Date` constructor (and `Date.parse()`, which works the same way) is strongly discouraged due to browser differences and inconsistencies.
+
+### Individual date and time component values
+1. `year` 和 `monthIndex` 是必须的，`day`、`hours`、`minutes`、`seconds` 和 `milliseconds` 都是可选的。
+2. Any missing fields are given the lowest possible value (1 for `day` and 0 for every other component).
+3. `year` 的值如果设置为 0 to 99 map to the years 1900 to 1999. All other values are the actual year
+    ```js
+    new Date(0, 0)   // Mon Jan 01 1900 00:00:00 GMT+0805 (中国标准时间)
+    new Date(99, 0)  // Fri Jan 01 1999 00:00:00 GMT+0800 (中国标准时间)
+    new Date(100, 0) // Fri Jan 01 0100 00:00:00 GMT+0805 (中国标准时间)
+    ```
+4. `hours` 的范围是 0-23，`minutes` 和 `seconds` 的范围是 0-59。
+5. 一个值如果超过了它的允许范围会向前进位
+    ```js
+    // 2020年13月 变成了 2021年1月
+    new Date(2020, 12) // Fri Jan 01 2021 00:00:00 GMT+0800 (中国标准时间)
+
+    // 1月32日 变成了 2月1日
+    new Date(2020, 0, 32) // Sat Feb 01 2020 00:00:00 GMT+0800 (中国标准时间)
+
+    // 30日24点 变成了 31日0点
+    new Date(2020, 0, 30, 24) // Fri Jan 31 2020 00:00:00 GMT+0800 (中国标准时间)
+
+    // 10点60分 变成了 11点
+    new Date(2020, 0, 30, 10, 60) // Thu Jan 30 2020 11:00:00 GMT+0800 (中国标准时间)
+
+    // 40分60秒 变成了 41分6秒
+    new Date(2020, 0, 30, 10, 40, 66) // Thu Jan 30 2020 10:41:06 GMT+0800 (中国标准时间)
+
+    // 毫秒数上限是 1000，这里超出成了 10 天的毫秒数，所以日期变成了十天后
+    new Date(2020, 0, 10, 0, 0, 0, 1000*3600*24*10) // Mon Jan 20 2020 00:00:00 GMT+0800 (中国标准时间)
     ```
 
 
