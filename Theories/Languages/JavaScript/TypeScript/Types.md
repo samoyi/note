@@ -4,8 +4,11 @@
 <!-- TOC -->
 
 - [Types](#types)
+    - [Misc](#misc)
+        - [隐式推断类型](#隐式推断类型)
     - [基本类型](#基本类型)
         - [`any`](#any)
+            - [禁止隐式声明为 `any` 类型](#禁止隐式声明为-any-类型)
         - [`Void`](#void)
         - [`Null` 和 `Undefined`](#null-和-undefined)
     - [对象类型](#对象类型)
@@ -21,6 +24,22 @@
 
 <!-- /TOC -->
 
+
+## Misc
+### 隐式推断类型
+1. 如果通过声明变量时的初始化就能确定类型，就不需要明确指明类型
+    ```ts
+    let str = "hello";
+    str = 12; // Type 'number' is not assignable to type 'string'.
+    ```
+2. 但必须是是在声明变量的时候就赋值才会推断类型，声明时没有初始化赋值则变量的类型就是 `any`
+    ```ts
+    // Variable 'str' implicitly has an 'any' type, but a better type may be inferred from usage.
+    let str;  
+    str = "hello";
+    ```
+
+
 ## 基本类型
 ### `any`
 1. 声明 `any` 类型的变量就像是声明 JS 的变量一样，它可能是任何类型，所以 TSC 不会进行类型判断。
@@ -29,7 +48,7 @@
     notSure = "maybe a string instead";
     notSure = false; // okay, definitely a boolean
     ```
-2. 有时候，我们会想要为那些在编程阶段还不清楚类型的变量指定一个类型。 这些值可能来自于动态的内容，比如来自用户输入或第三方代码库。 这种情况下，我们不希望类型检查器对这些值进行检查而是直接让它们通过编译阶段的检查。 那么我们可以使用 `any` 类型来标记这些变量：
+2. 有时候，我们会想要为那些在编程阶段还不清楚类型的变量指定一个类型。这些值可能来自于动态的内容，比如来自用户输入或第三方代码库。这种情况下，我们不希望类型检查器对这些值进行检查而是直接让它们通过编译阶段的检查。 那么我们可以使用 `any` 类型来标记这些变量：
     ```ts
     let notSure: any = 4;
     notSure.ifItExists(); // okay, ifItExists might exist at runtime
@@ -39,6 +58,24 @@
     ```ts
     let list: any[] = [1, true, "free"];
     list[1] = 100;
+    ```
+
+#### 禁止隐式声明为 `any` 类型
+1. When you don’t specify a type, and TypeScript can’t infer it from context, the compiler will typically default to `any`.
+2. You usually want to avoid this, though, because any isn’t type-checked. Use the compiler flag `noImplicitAny` to flag any implicit any as an error.
+3. 命令行如下进行编译时会报错
+    ```ts
+    function fn(s) {
+        console.log(s.subtr(3));
+    }
+    ```
+    ```sh
+    tsc --noImplicitAny helloworld.ts 
+    # Parameter 's' implicitly has an 'any' type.
+    ```
+4. TODO，声明变量时隐式声明为 `any` 并不会报错
+    ```ts
+    let v;
     ```
 
 ### `Void`
