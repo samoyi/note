@@ -1,8 +1,8 @@
-# Strict Mode
+# Usage
 
 <!-- TOC -->
 
-- [Strict Mode](#strict-mode)
+- [Usage](#usage)
     - [3 possible APIs](#3-possible-apis)
         - [Hook API](#hook-api)
         - [Styled components API](#styled-components-api)
