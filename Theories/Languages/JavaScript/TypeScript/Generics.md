@@ -45,7 +45,7 @@
         return arg;
     }
     ```
-    如果我们想同时打印出arg的长度。 我们很可能会这样做：
+    如果我们想同时打印出 `arg` 的长度。 我们很可能会这样做：
     ```ts
     function loggingIdentity<T>(arg: T): T {
         console.log(arg.length);  // Error: Property 'length' does not exist on type 'T'.

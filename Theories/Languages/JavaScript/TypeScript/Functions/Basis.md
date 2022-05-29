@@ -11,6 +11,10 @@
     - [可选参数](#可选参数)
     - [默认参数](#默认参数)
     - [剩余参数](#剩余参数)
+    - [匿名函数的 Contextual typing](#匿名函数的-contextual-typing)
+    - [函数相关的一些类型](#函数相关的一些类型)
+        - [`void`](#void)
+        - [`never`](#never)
     - [TODO](#todo)
     - [References](#references)
 
@@ -79,6 +83,55 @@ function buildName(firstName: string, ...restOfName: string[]) {
     return firstName + " " + restOfName.join(" ");
 }
 ```
+
+## 匿名函数的 Contextual typing
+1. 看下面的例子
+    ```ts
+    const names = ["Alice", "Bob", "Eve"];
+    
+    names.forEach(function (s) {
+        console.log(s.toUppercase()); 
+        // Property 'toUppercase' does not exist on type 'string'. Did you mean 'toUpperCase'?
+    });
+    ```
+2. 回调匿名函数虽然没有指明参数类型，但通过它的调用环境可以判断出参数应该是字符串，进而判断出字符串没有 `toUppercase` 方法。
+
+
+   
+## 函数相关的一些类型
+### `void`
+1. 用来表示函数没有返回值
+    ```ts
+    function warnUser(): void {
+        console.log("This is my warning message");
+    }
+    ```
+2. 虽然可以声明 `void` 类型变量，但是只能赋值 `undefined` 和 `null`
+    ```ts
+    let unusable: void = undefined;
+    ```
+
+### `never`
+1. Some functions never return a value:
+    ```ts
+    function fail(msg: string): never {
+        throw new Error(msg);
+    }
+    ```
+2. The `never` type represents values which are never observed. In a return type, this means that the function throws an exception or terminates execution of the program.
+3. `never` also appears when TypeScript determines there’s nothing left in a union.
+    ```ts
+    function fn(x: string | number) {
+        if (typeof x === "string") {
+            // do something
+        } else if (typeof x === "number") {
+            // do something else
+        } else {
+            x; // has type 'never'!
+        }
+    }
+    ```
+
 
 ## TODO
 

@@ -6,6 +6,9 @@
 - [StateHook](#statehook)
     - [Summary](#summary)
     - [Usage](#usage)
+    - [同值更新的情况](#同值更新的情况)
+    - [Functional updates](#functional-updates)
+    - [Batching of state updates](#batching-of-state-updates)
     - [TypeScript 的情况](#typescript-的情况)
 
 <!-- /TOC -->
@@ -37,6 +40,47 @@ A Hook is a special function that lets you “hook into” React features. For e
     }
     ```
 6. 初始值参数也可以传一个函数，该函数返回初始值。
+
+
+## 同值更新的情况
+1. 如果新的 state 与当前的 state 相同（Object.is 比较算法），React 将跳过子组件的渲染并且不会触发 effect 的执行。
+2. 需要注意的是，React 可能仍需要在跳过渲染前渲染该组件。不过由于 React 不会对组件树的 “深层” 节点进行不必要的渲染，所以大可不必担心。
+3. 如果你在渲染期间执行了高开销的计算，则可以使用 `useMemo` 来进行优化。
+
+
+## Functional updates
+1. 如果一个 state 的新值需要在旧值的基础上计算得到，那可以给 `setState` 传递函数作为参数，该函数的参数是单签的 state 值
+    ```js
+    function Counter({ initialCount }) {
+        const [count, setCount] = useState(initialCount);
+        return (
+            <>
+                Count: {count}
+                <button onClick={() => setCount(initialCount)}>Reset</button>
+                <button onClick={() => setCount(prevCount => prevCount - 1)}>-</button>
+                <button onClick={() => setCount(prevCount => prevCount + 1)}>+</button>
+            </>
+        );
+    }
+    ```
+    这里第一个 `setCount` 设置的值不依赖旧的值，所以直接传递新值；后两个都是在现有值的基础上进行计算，所以传递了一个函数，参数是现有的值。
+2. 如果传递的函数的返回值与当前 state 完全相同，则随后的重渲染会被完全跳过。React 使用 `Object.is` 比较算法来比较 state。
+3. 上面说到 `setState` 参数如果是引用类型，它是会合并到原对象上。这种情况下可以利用函数式更新，在传递的函数中手动和原对象进行合并，然后返回最终的新对象
+    ```js
+    const [state, setState] = useState({});
+    setState(prevState => {
+        // 也可以使用 Object.assign
+        return {...prevState, ...updatedValues};
+    });
+    ```
+    `useReducer` 是另一种可选方案，它更适合用于管理包含多个子值的 state 对象。
+
+
+## Batching of state updates
+1. React may group several state updates into a single re-render to improve performance. Normally, this improves performance and shouldn’t affect your application’s behavior.
+2. Before React 18, only updates inside React event handlers were batched. Starting with React 18, batching is enabled for all updates by default. 
+3. Note that React makes sure that updates from several different user-initiated events — for example, clicking a button twice — are always processed separately and do not get batched. This prevents logical mistakes.
+4. In the rare case that you need to force the DOM update to be applied synchronously, you may wrap it in `flushSync`. However, this can hurt performance so do this only where needed.
 
 
 ## TypeScript 的情况
