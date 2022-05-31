@@ -4,24 +4,27 @@
 <!-- TOC -->
 
 - [Functions](#functions)
-    - [为函数指定参数和返回值类型](#为函数指定参数和返回值类型)
+    - [对函数参数和返回值的描述](#对函数参数和返回值的描述)
         - [函数声明的方式](#函数声明的方式)
         - [函数定义的方式](#函数定义的方式)
         - [完整写法](#完整写法)
-    - [可选参数](#可选参数)
-    - [默认参数](#默认参数)
-    - [剩余参数](#剩余参数)
-    - [匿名函数的 Contextual typing](#匿名函数的-contextual-typing)
-    - [函数相关的一些类型](#函数相关的一些类型)
-        - [`void`](#void)
-        - [`never`](#never)
-    - [TODO](#todo)
+        - [Optional Parameters](#optional-parameters)
+        - [Optional Parameters in Callbacks](#optional-parameters-in-callbacks)
+        - [剩余参数](#剩余参数)
+        - [匿名函数的 Contextual typing](#匿名函数的-contextual-typing)
+        - [函数相关的一些类型](#函数相关的一些类型)
+            - [`void`](#void)
+            - [`never`](#never)
+    - [定义一个整体的函数的类型](#定义一个整体的函数的类型)
+        - [Function Type Expressions](#function-type-expressions)
+        - [Call Signatures](#call-signatures)
+        - [Construct Signatures](#construct-signatures)
     - [References](#references)
 
 <!-- /TOC -->
 
 
-## 为函数指定参数和返回值类型
+## 对函数参数和返回值的描述
 ### 函数声明的方式
 ```ts
 function add(x: number, y: number): number {
@@ -53,30 +56,21 @@ let myAdd = function(x: number, y: number): number { return x + y; };
     let myAdd: (x: number, y: number) => number = function(x, y) { return x + y; };
     ```
 
-      
-## 可选参数
-```ts
-function buildName(firstName: string, lastName?: string) {
-    if (lastName)
-        return firstName + " " + lastName;
-    else
-        return firstName;
-}
-```
+### Optional Parameters
+1. 在参数名后面加上 `?` 可以表示可选参数
+    ```ts
+    function myFixed (num: number, digits?: number) {
+        return num.toFixed(digits)
+    }
+    console.log( myFixed(3.1415926) );    // 3
+    console.log( myFixed(3.1415926, 2) ); // 3.14
+    ```
+2. 可选参数指定了类型，但其实它真正的类型还要再加上一个 `undefined`。所以上面 `digits` 的实际类型是 `number | undefined`。
 
+### Optional Parameters in Callbacks
+不懂，既然定义了 `callback` 可能有第二个参数，那么在内部调用 `callback` 难道不应该考虑到第二个参数存在的情况吗？为什么要故意不加第二个参数？
 
-## 默认参数
-默认参数如果传了具体的参数，类型必须要相同
-```ts
-function buildName(firstName: string, lastName = "Smith") {
-    return firstName + " " + lastName;
-}
-
-console.log(buildName("John", 22)); // 错误
-```
-
-
-## 剩余参数
+### 剩余参数
 使用数组形式来约束类型
 ```ts
 function buildName(firstName: string, ...restOfName: string[]) {
@@ -84,7 +78,7 @@ function buildName(firstName: string, ...restOfName: string[]) {
 }
 ```
 
-## 匿名函数的 Contextual typing
+### 匿名函数的 Contextual typing
 1. 看下面的例子
     ```ts
     const names = ["Alice", "Bob", "Eve"];
@@ -96,10 +90,8 @@ function buildName(firstName: string, ...restOfName: string[]) {
     ```
 2. 回调匿名函数虽然没有指明参数类型，但通过它的调用环境可以判断出参数应该是字符串，进而判断出字符串没有 `toUppercase` 方法。
 
-
-   
-## 函数相关的一些类型
-### `void`
+### 函数相关的一些类型
+#### `void`
 1. 用来表示函数没有返回值
     ```ts
     function warnUser(): void {
@@ -111,7 +103,7 @@ function buildName(firstName: string, ...restOfName: string[]) {
     let unusable: void = undefined;
     ```
 
-### `never`
+#### `never`
 1. Some functions never return a value:
     ```ts
     function fail(msg: string): never {
@@ -133,8 +125,105 @@ function buildName(firstName: string, ...restOfName: string[]) {
     ```
 
 
-## TODO
+## 定义一个整体的函数的类型
+### Function Type Expressions
+1. 描述函数最简单的方式就是使用函数类型表达式，它的语法和箭头函数类似
+    ```ts
+    function greeter(fn: (a: string) => void) {
+        fn("Hello, World");
+    }
+    
+    function printToConsole(s: string) {
+        console.log(s);
+    }
+    
+    greeter(printToConsole);
+    ```
+2. 上面的 `(a: string) => void` 就是函数类型表达式，它说明 `greeter` 要接受的参数函数的类型：该函数有一个字符串参数，没有返回值。
+3. 如果函数类型表达式中的参数没有指定类型，它就是隐式的 `any` 类型。
+4. 函数类型表达式中的参数名是必须的，否则如果是 `(string) => void` 的话，`string` 就成了 `any` 类型的函数名了。
+5. 也可以使用 `type` 来定义一个函数类型
+    ```ts
+    type GreetFunction = (a: string) => void;
+    function greeter(fn: GreetFunction) {
+        // ...
+    }
+    ```
+
+### Call Signatures
+1. 函数除了参数和返回值以外还可以有其他属性，如果用上面函数类型表达式的话就无法描述函数的属性。可以使用对象形式的调用签名来描述函数的属性
+    ```ts
+    type DescribableFunction = {
+        (someArg: number): boolean; // 注意这里是 : 而不是 =>
+        description: string;
+    };
+    function doSomething(fn: DescribableFunction) {
+        console.log(fn.description + " returned " + fn(6));
+    }
+
+    function foo (n: number) {
+        return n > 5;
+    }
+    foo.description = "This is foo:";
+
+    doSomething(foo); // This is foo: returned true
+    ```
+2. 上面的对象签名中除了描述了函数的参数和返回值，还定义了一个 `description` 属性。注意对象签名中
+
+### Construct Signatures
+1. 可以通过调用签名的方式来实现构造函数签名
+    ```ts
+    type SomeObject = any;
+
+    type SomeConstructor = {
+        new (s: string): SomeObject;
+    };
+    function fn(ctor: SomeConstructor) {
+        return new ctor("hello");
+    }
+
+    class Cons {
+        constructor (str: string) {
+            console.log(str + " world");
+        }
+    }
+
+    fn(Cons) // hello world
+    ```
+2. 不懂，不用 `class` 直接使用普通函数要怎么实现
+    ```ts
+    function Cons (str: string) {
+        console.log(str + " world");
+        let obj: SomeObject;
+        return obj;
+    }
+
+    fn(Cons) // 报错
+    // Argument of type '(str: string) => any' is not assignable to parameter of type 'SomeConstructor'.
+    //   Type '(str: string) => any' provides no match for the signature 'new (s: string): any'.
+    ```
+3. 有些函数既可以作为构造函数调用也可以作为普通函数调用，这时可以同时定义构造函数签名和普通的调用签名。例如 `Date` 作为构造函数可以接受 `string | number` 类型参数并返回 `Date` 类型对象，而直接调用时可以接受 `number` 类型参数并返回 `string` 类型。
+    ```ts
+    interface CallOrConstruct {
+        new (s: string | number): Date;
+        (n?: number): string;
+    }
+
+    function consCall(ctor: CallOrConstruct) {
+        let obj = new ctor(22);
+        console.log(typeof obj, obj);
+    }
+    function normalCall(ctor: CallOrConstruct) {
+        let str = ctor(22)
+        console.log(typeof str, str);
+    }
+
+    consCall(Date) // object Thu Jan 01 1970 08:00:00 GMT+0800 (中国标准时间)
+    normalCall(Date) // string Tue May 31 2022 11:36:15 GMT+0800 (中国标准时间)
+    ```
+
 
 
 ## References
 * [中文文档](https://www.tslang.cn/docs/handbook/functions.html)
+* [More on Functions](https://www.typescriptlang.org/docs/handbook/2/functions.html)
