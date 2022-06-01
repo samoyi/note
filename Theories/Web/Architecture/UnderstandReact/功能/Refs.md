@@ -191,7 +191,7 @@ ReactDOM.render(
 
 ### 不能在函数式组件上使用 ref 属性
 1. 上面说到，当 `ref` 属性被用于一个自定义类组件时，ref 对象将接收该组件已挂载的实例作为它的 `current`。然而，函数式组件并没有实例，它只相当于单纯的 HTML 元素，所以无法引用。
-2. 如果要在函数组件中使用 ref，你可以使用 forwardRef（可与 useImperativeHandle 结合使用），或者可以将该组件转化为 class 组件。
+2. 如果要在函数组件中使用 ref，你可以使用 forwardRef（可与 `useImperativeHandle` 结合使用），或者可以将该组件转化为 class 组件。
 3. 但你仍然可以在函数组件内部使用 ref 属性，只要它指向一个 DOM 元素或 class 组件
     ```js
     function CustomTextInput(props) {

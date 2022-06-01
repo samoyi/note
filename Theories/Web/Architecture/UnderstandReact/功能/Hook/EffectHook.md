@@ -8,7 +8,13 @@
     - [需要清除的 effect](#需要清除的-effect)
         - [更好的设计](#更好的设计)
         - [何时清除](#何时清除)
-        - [更新控制](#更新控制)
+    - [更新控制](#更新控制)
+        - [导致循环渲染的情况](#导致循环渲染的情况)
+            - [`useEffect` 回调修改 state 导致重渲染](#useeffect-回调修改-state-导致重渲染)
+                - [第一种修改方法：Fixing dependencies](#第一种修改方法fixing-dependencies)
+                - [第二种修改方法：Using a reference instead of useEffect](#第二种修改方法using-a-reference-instead-of-useeffect)
+            - [`useEffect` 依赖引用类型值导致的循环渲染](#useeffect-依赖引用类型值导致的循环渲染)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -42,7 +48,67 @@
 1. 默认情况，effect 的清除阶段在每次重新渲染时都会执行，而不是只在卸载组件的时候执行一次。因为有些 effect 需要在数据更新后清除旧的然后使用重新执行。这也就是上面说到的为什么每次传给 `useEffect` 的函数都不相同。
 2. 同时，这也就是为什么上面说可以把 `useEffect` Hook 看做 `componentDidMount`、`componentDidUpdate` 和 `componentWillUnmount` 这三个函数的组合。函数式组件没有类组件那样的 `componentDidUpdate` 来单独处理更新逻辑，它的更新只是重新调用函数。
 
-### 更新控制
+
+## 更新控制
 1. 在某些情况下，每次渲染后都执行清理或者执行 effect 可能会导致性能问题。在 class 组件中，我们可以通过在 `componentDidUpdate` 中添加对 `prevProps` 或 `prevState` 的比较逻辑解决。在函数式组件中可以通过 `useEffect` 第二个参数的数组指定只有在数组项中的任意一个数据更新后才调用函数。
 2. 如果想执行只运行一次的 effect（仅在组件挂载和卸载时执行），可以传递一个空数组作为第二个参数。这就告诉 React 你的 effect 不依赖于 props 或 state 中的任何值，所以它永远都不需要重复执行。
 3. 如果你要使用此优化方式，请确保数组中包含了所有外部作用域中会随时间变化并且在 effect 中使用的变量，否则你的代码会引用到先前渲染中的旧变量。
+
+### 导致循环渲染的情况
+#### `useEffect` 回调修改 state 导致重渲染
+1. 如果 `useEffect` 回调中修改了 state，就会导致重渲染，进而导致 `useEffect` 回调再次执行，又一次修改 state，引发循环渲染的情况。
+2. 看下面的例子
+    ```js
+    function CountInputChanges() {
+        const [value, setValue] = useState(''); // 保存表单值
+        const [count, setCount] = useState(-1); // 记录更改次数
+
+        useEffect(() => setCount(count + 1)); // 更新更改次数
+
+        const onChange = ({ target }) => setValue(target.value); // 更改表单值
+
+        return (
+            <div>
+                <input type="text" value={value} onChange={onChange} />
+                <div>Number of changes: {count}</div>
+            </div>
+        )
+    }
+    ```
+    `useEffect` 回调执行后导致 `count` 这个 state 发生更新，导致组件重渲染，又一次导致 `useEffect` 回调执行并更新 `count`，继续触发重渲染。
+
+##### 第一种修改方法：Fixing dependencies
+1. 实际上，我们只是希望在 `value` 更新时才触发 `useEffect` 回调，但这里 `count` 更新后也触发了 `useEffect` 回调。
+2. 因此可以很简单的用 `useEffect` 的第二个参数来指定只有 `value` 更新才触发回调
+    ```js
+    useEffect(() => setCount(count + 1), [value]);
+    ```
+3. 现在，`useEffect` 回调中修改了 `count` 后会导致重渲染，但因为 `value` 并没有变，所以不会再次触发 `useEffect` 回调。
+
+##### 第二种修改方法：Using a reference instead of useEffect
+1. 因为使用 `useRef` 可以保存任何值，并且这个值更改后并不会导致组件重渲染，只有等到下次渲染时才能在页面上看到这个值的更新。因此在上面的例子中，可以把 count 值使用  `useRef` 保存。
+    ```js
+    function CountInputChanges() {
+        const [value, setValue] = useState('');
+        const countRef = useRef(0);
+        const onChange = ({ target }) => {
+            setValue(target.value);
+            countRef.current++;
+        };
+        return (
+            <div>
+                <input type="text" value={value} onChange={onChange} />
+                <div>Number of changes: {countRef.current}</div>
+            </div>
+        );
+    }
+    ```
+2. 现在，表单值更新后，`value` 发生更新之后会触发重渲染，而记录 count 的是 countRef.current，它的更新不会导致重渲染。
+
+#### `useEffect` 依赖引用类型值导致的循环渲染
+1. 如果 `useEffect` 依赖了一个引用类型，而这个引用类型在每次重渲染时又会重新创建，那么即使其中的属性值都一样，那也不是同一个对象，所以就会导致重渲染。
+2. 这种情况一般都不是真的要比较该引用类型整体是否一直，而是要比较其中的某些属性。所以应该依赖该引用类型其中的基础类型属性。
+
+
+## References
+* [How to Solve the Infinite Loop of React.useEffect()](https://dmitripavlutin.com/react-useeffect-infinite-loop/)
