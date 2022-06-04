@@ -7,6 +7,7 @@
     - [When to Use Context](#when-to-use-context)
     - [用法](#用法)
         - [默认值](#默认值)
+    - [`useContext` hook](#usecontext-hook)
     - [TODO](#todo)
     - [节制使用](#节制使用)
 
@@ -79,14 +80,20 @@
     ```
 
 
+## `useContext` hook
+1. 使用 `useContext(MyContext)` 获得外层注入的 context 对象 `MyContext` 的 `value` 值。
+2. 当外层 `MyContext` 的 `value` 值更新时，这个钩子会触发当前组件的重渲染并获得更新后的 `value` 值。
+3. 即使某个外层组件使用 `React.memo` 或 `shouldComponentUpdate`，这个使用 `useContext` 的组件也会重渲染。
+4. 调用了 `useContext` 的组件总会在 context 值变化时重新渲染。如果重渲染组件的开销较大，你可以通过使用 [memoization](https://github.com/facebook/react/issues/15156#issuecomment-474590693) 来优化。
+
+
+
 ## TODO
 * Context.Consumer
 * Context.displayName
 
 
 ## 节制使用
-1. Context is primarily used when some data needs to be accessible by many
-components at different nesting levels.
+1. Context is primarily used when some data needs to be accessible by many components at different nesting levels.
 2. Apply it sparingly because it makes component reuse more difficult.
-3. If you only want to avoid passing some props through many levels, component
-composition is often a simpler solution than context.
+3. If you only want to avoid passing some props through many levels, component composition is often a simpler solution than context.
