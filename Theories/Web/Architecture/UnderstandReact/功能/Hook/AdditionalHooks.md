@@ -3,11 +3,107 @@
 <!-- TOC -->
 
 - [Additional Hooks](#additional-hooks)
+    - [`useCallback`](#usecallback)
     - [useMemo](#usememo)
     - [useRef](#useref)
     - [References](#references)
 
 <!-- /TOC -->
+
+
+## `useCallback`
+1. 在默认情况下，组件内定义的函数在组件重渲染时都会被重新创建。下面的例子使用 `Set` 记录三个函数，可以看到每次组件渲染时，`funccount.size` 都会加 3，说明每次都是创建了新的函数
+    ```js
+    import React, { useState } from 'react'
+    
+    const funccount = new Set();
+    
+    const App = () => {
+        const [count, setCount] = useState(0)
+        const [number, setNumber] = useState(0)
+
+        const incrementCounter = () => {
+            setCount(count + 1)
+        }
+        const decrementCounter = () => {
+            setCount(count - 1)
+        }
+        const incrementNumber = () => {
+            setNumber(number + 1)
+        }
+
+        funccount.add(incrementCounter);
+        funccount.add(decrementCounter);
+        funccount.add(incrementNumber);
+        console.log(funccount.size);
+
+        return (
+            <div>
+                Count: {count}
+                <button onClick={incrementCounter}>
+                    Increase counter
+                </button>
+                <button onClick={decrementCounter}>
+                    Decrease Counter
+                </button>
+                <button onClick={incrementNumber}>
+                    increase number
+                </button>
+            </div>
+        )
+    }
+
+
+    export default App;
+    ```
+2. 理想的情况就是这三个函数一直存在，每次点击事件发生时调用函数，然后内部的变量去到外层最新的 `count` 或 `number`。但应该是词法作用域规则不支持这样，因为这样的话你的函数就要定义到 `App` 函数外部才能实现不重新创建，但定义在外部就无法访问 `App` 内部的变量了。
+3. 退一步的优化，就是这里的 `useCallback`。它会记录函数的依赖项，如果依赖项不变，就还是使用原来的函数，变得的话就重新创建新的函数。
+4. TODO，还没看具体原来，但感觉上，之所以可以不重新创建，是因为把外部的依赖项局部化了，调用的时候不是访问真正的外层的变量，而是使用局部化了的变量，所以只要依赖的变量没有变，那函数的调用就能和之前的效果保持一致。
+5. 优化如下
+    ```js
+    import React, { useState, useCallback } from 'react'
+
+    const funccount = new Set();
+
+    const App = () => {
+        const [count, setCount] = useState(0)
+        const [number, setNumber] = useState(0)
+
+        const incrementCounter = useCallback(() => {
+            setCount(count + 1)
+        }, [count])
+        const decrementCounter = useCallback(() => {
+            setCount(count - 1)
+        }, [count])
+        const incrementNumber = useCallback(() => {
+            setNumber(number + 1)
+        }, [number])
+
+        funccount.add(incrementCounter);
+        funccount.add(decrementCounter);
+        funccount.add(incrementNumber);
+        console.log(funccount.size);
+
+        return (
+            <div>
+                Count: {count}
+                <button onClick={incrementCounter}>
+                    Increase counter
+                </button>
+                <button onClick={decrementCounter}>
+                    Decrease Counter
+                </button>
+                <button onClick={incrementNumber}>
+                    increase number
+                </button>
+            </div>
+        )
+    }
+
+
+    export default App;
+    ```
+6. 现在可以看到：当 `count` 变化导致重渲染时，`funccount.size` 只会增加 2，因为只有两个函数依赖 `count`；当 `number` 变化导致重渲染时，`funccount.size` 只会增加 1，因为只有一个函数依赖 `number`。
 
 
 ## useMemo
@@ -56,5 +152,4 @@
 
 
 ## References
-* [Material-UI](https://v4.mui.com/zh/api/typography/)
-* [Material-UI](https://mui.com/material-ui/react-typography/)
+* [ReactJS useCallback Hook](https://www.geeksforgeeks.org/react-js-usecallback-hook/)
