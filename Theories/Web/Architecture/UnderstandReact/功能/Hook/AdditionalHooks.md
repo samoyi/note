@@ -4,8 +4,10 @@
 
 - [Additional Hooks](#additional-hooks)
     - [`useCallback`](#usecallback)
-    - [useMemo](#usememo)
-    - [useRef](#useref)
+    - [`useImperativeHandle`](#useimperativehandle)
+    - [`useMemo`](#usememo)
+    - [`useReducer`](#usereducer)
+    - [`useRef`](#useref)
     - [References](#references)
 
 <!-- /TOC -->
@@ -106,18 +108,108 @@
 6. 现在可以看到：当 `count` 变化导致重渲染时，`funccount.size` 只会增加 2，因为只有两个函数依赖 `count`；当 `number` 变化导致重渲染时，`funccount.size` 只会增加 1，因为只有一个函数依赖 `number`。
 
 
-## useMemo
-1. 相当于 Vue 的计算属性，只不过这里并不能直接根据函数参数的变动来更新缓存，而是必须要传递一个数组，数组项中指明依赖的数据
+## `useImperativeHandle`
+TODO
+
+
+## `useMemo`
+1. `useCallback` 是只要依赖不变，那 `useCallback` 返回的包装函数就不变，调用效果还是和之前一样；`useMemo` 是只要依赖不变，参数中的函数就不调用，那 `useMemo` 返回的值就不变，返回的还是之前参数函数调用时返回的值。
+2. 看下面的例子
     ```js
-    const memoizedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);
+    import React, { useState } from 'react';
+
+    function App() {
+        const [number, setNumber] = useState(0)
+        const squaredNum = squareNum(number);
+        const [counter, setCounter] = useState(0);
+
+        // Change the state to the input
+        const onChangeHandler = (e) => {
+            setNumber(e.target.value);
+        }
+
+        // Increases the counter by 1
+        const counterHander = () => {
+            setCounter(counter + 1);
+        }
+        return (
+            <div className="App">
+                <h1>Welcome to Geeksforgeeks</h1>
+                <input type="number" placeholder="Enter a number"
+                    value={number} onChange={onChangeHandler}>
+                </input>
+
+                <div>OUTPUT: {squaredNum}</div>
+                <button onClick={counterHander}>Counter ++</button>
+                <div>Counter : {counter}</div>
+            </div>
+        );
+    }
+
+    // function to square the value
+    function squareNum(number) {
+        console.log("Squaring will be done!");
+        return Math.pow(number, 2);
+    }
+
+    export default App;
     ```
-2. If no array is provided, a new value will be computed on every render.
-3. Remember that the function passed to `useMemo` runs during rendering. Don’t do anything there that you wouldn’t normally do while rendering. For example, side effects belong in `useEffect`, not `useMemo`.
-4. You may rely on `useMemo` as a performance optimization, not as a semantic guarantee. In the future, React may choose to “forget” some previously memoized values and recalculate them on next render, e.g. to free memory for offscreen components. Write your code so that it still works without `useMemo` — and then add it to optimize performance. 也就是说可能某些类型缓存的值也会被丢弃，所以不要从语义上确信一定会使用缓存，而只是应该作为一种锦上添花的优化手段，确保如果缓存即使被丢弃也不影响程序功能。
-5. 第一个参数的函数所依赖的所有值都应该出现在第二个参数的数组中，也包括函数参数。
+3. `setNumber` 执行时，`number` 被修改，组件重渲染，使用新的 `number` 调用 `squareNum`，这没有问题。但是 `counter` 被更改后组件重渲染，`squareNum` 还是会使用没变化的 `number` 再执行一遍并返回和之前一样的值，这样的执行就是可以被优化的。
+4. 使用 `useMemo` 优化如下
+    ```js
+    import React, { useState, useMemo } from 'react';
+
+    function App() {
+        const [number, setNumber] = useState(0)
+        // Using useMemo
+        // 如果 number 没有变化，useMemo 参数中的函数就不会执行，useMemo 返回给 squareNum 的就还是之前的值
+        const squaredNum = useMemo(() => {
+            return squareNum(number);
+        }, [number])
+
+        const [counter, setCounter] = useState(0);
+
+        const onChangeHandler = (e) => {
+            setNumber(e.target.value);
+        }
+
+        const counterHander = () => {
+            setCounter(counter + 1);
+        }
+        return (
+            <div className="App">
+                <h1>Welcome to Geeksforgeeks</h1>
+                <input type="number" placeholder="Enter a number"
+                    value={number} onChange={onChangeHandler}>
+                </input>
+
+                <div>OUTPUT: {squaredNum}</div>
+                <button onClick={counterHander}>Counter ++</button>
+                <div>Counter : {counter}</div>
+            </div>
+        );
+    }
+
+    function squareNum(number) {
+        console.log("Squaring will be done!");
+        return Math.pow(number, 2);
+    }
+
+    export default App;
+    ```
+
+5. 类似于 Vue 的计算属性，只不过这里并不能直接根据函数参数的变动来更新缓存，而是必须要传递一个数组，数组项中指明依赖的数据。
+6. If no array is provided, a new value will be computed on every render.
+7. Remember that the function passed to `useMemo` runs during rendering. Don’t do anything there that you wouldn’t normally do while rendering. For example, side effects belong in `useEffect`, not `useMemo`.
+8. You may rely on `useMemo` as a performance optimization, not as a semantic guarantee. In the future, React may choose to “forget” some previously memoized values and recalculate them on next render, e.g. to free memory for offscreen components. Write your code so that it still works without `useMemo` — and then add it to optimize performance. 也就是说可能某些类型缓存的值也会被丢弃，所以不要从语义上确信一定会使用缓存，而只是应该作为一种锦上添花的优化手段，确保如果缓存即使被丢弃也不影响程序功能。
+9. 第一个参数的函数所依赖的所有值都应该出现在第二个参数的数组中，也包括函数参数。
 
 
-## useRef
+## `useReducer`
+TODO
+
+
+## `useRef`
 1. `useRef` 返回一个可变的 ref 对象，其 `.current` 属性被初始化为传入的参数（`initialValue`）。返回的 ref 对象在组件的整个生命周期内持续存在。
 2. `useRef` 常见的用法是命令式的访问子组件或者子元素。但它可以很方便地保存任何可变值，其类似于在 class 中使用实例字段的方式。
 3. This works because `useRef()` creates a plain JavaScript object. The only difference between `useRef()` and creating a `{current: ...}` object yourself is that `useRef` will give you the same ref object on every render.
@@ -151,5 +243,10 @@
     ```
 
 
+
+
+
+
 ## References
 * [ReactJS useCallback Hook](https://www.geeksforgeeks.org/react-js-usecallback-hook/)
+* [ReactJS useMemo Hook](https://www.geeksforgeeks.org/react-js-usememo-hook/)

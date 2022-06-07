@@ -21,6 +21,8 @@
         - [String Literals](#string-literals)
         - [JSX Children](#jsx-children)
         - [JavaScript Expressions as Children](#javascript-expressions-as-children)
+        - [Functions as Children](#functions-as-children)
+        - [Booleans, Null, and Undefined Are Ignored](#booleans-null-and-undefined-are-ignored)
     - [JSX 表示对象](#jsx-表示对象)
     - [JSX 防注入攻击](#jsx-防注入攻击)
     - [比较 Vue](#比较-vue)
@@ -330,6 +332,67 @@ In JSX expressions that contain both an opening tag and a closing tag, the conte
     function Hello(props) {
         return <div>Hello {props.addressee}!</div>;
     }
+    ```
+
+### Functions as Children
+1. `props.children` 和其他 prop 一样，它可以传递任意类型的数据，而不仅仅是 React 已知的可渲染类型。
+2. 例如，如果你有一个自定义组件，你可以把回调函数作为 `props.children` 进行传递
+    ```js
+    function Repeat(props) {
+        let items = [];
+        for (let i = 0; i < props.numTimes; i++) {
+            items.push(props.children(i));
+        }
+        return <div>{items}</div>;
+    }
+
+    function ListOfTenThings() {
+        return (
+            <Repeat numTimes={10}>
+                {(index) => <div key={index}>This is item {index} in the list</div>}
+            </Repeat>
+        );
+    }
+    ```
+3. `Repeat` 函数组件接受两个 prop：`numTimes` 和 `chidlren`。组件函数调用时，循环 `numTimes` 来调用 `chidlren` 所引用的函数并传参。每轮循环 `chidlren` 所引用的函数会返回一个 `<div>` 并保存到 `items` 中，循环结束后所所有的 `<div>` 作为子元素插入到一个外层 `<div>` 中并作为函数组件的返回值。
+4. Children passed to a custom component can be anything, as long as that component transforms them into something React can understand before rendering. 
+
+### Booleans, Null, and Undefined Are Ignored
+1. `false`, `null`, `undefined`, and `true` are valid children, they simply don’t render. 
+2. These JSX expressions will all render to the same thing:
+    ```js
+    <div />
+
+    <div></div>
+
+    <div>{false}</div>
+
+    <div>{null}</div>
+
+    <div>{undefined}</div>
+
+    <div>{true}</div>
+    ```
+3. This can be useful to conditionally render React elements. This JSX renders the `<Header />` component only if `showHeader` is true:
+    ```js
+    <div>
+        {showHeader && <Header />}
+        <Content />
+    </div>
+    ```
+4. One caveat is that some “falsy” values, such as the `0` number, are still rendered by React. For example, this code will not behave as you might expect because `0` will be printed when `props.messages` is an empty array
+    ```js
+    <div>
+        {props.messages.length &&
+            <MessageList messages={props.messages} />
+        }
+    </div>
+    ```
+5. Conversely, if you want a value like `false`, `true`, `null`, or `undefined` to appear in the output, you have to convert it to a string first
+    ```js
+    <div>
+        My JavaScript variable is {String(myVariable)}.
+    </div>
     ```
 
 
