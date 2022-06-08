@@ -9,16 +9,19 @@
         - [函数定义的方式](#函数定义的方式)
         - [完整写法](#完整写法)
         - [Optional Parameters](#optional-parameters)
-        - [Optional Parameters in Callbacks](#optional-parameters-in-callbacks)
+            - [Optional Parameters in Callbacks](#optional-parameters-in-callbacks)
         - [剩余参数](#剩余参数)
         - [匿名函数的 Contextual typing](#匿名函数的-contextual-typing)
         - [函数相关的一些类型](#函数相关的一些类型)
             - [`void`](#void)
+        - [`object`](#object)
+        - [`unknown`](#unknown)
             - [`never`](#never)
     - [定义一个整体的函数的类型](#定义一个整体的函数的类型)
         - [Function Type Expressions](#function-type-expressions)
         - [Call Signatures](#call-signatures)
         - [Construct Signatures](#construct-signatures)
+    - [Generic Functions](#generic-functions)
     - [References](#references)
 
 <!-- /TOC -->
@@ -67,7 +70,7 @@ let myAdd = function(x: number, y: number): number { return x + y; };
     ```
 2. 可选参数指定了类型，但其实它真正的类型还要再加上一个 `undefined`。所以上面 `digits` 的实际类型是 `number | undefined`。
 
-### Optional Parameters in Callbacks
+#### Optional Parameters in Callbacks
 不懂，既然定义了 `callback` 可能有第二个参数，那么在内部调用 `callback` 难道不应该考虑到第二个参数存在的情况吗？为什么要故意不加第二个参数？
 
 ### 剩余参数
@@ -92,19 +95,47 @@ function buildName(firstName: string, ...restOfName: string[]) {
 
 ### 函数相关的一些类型
 #### `void`
-1. 用来表示函数没有返回值
+1. 用来表示函数没有 `return` 语句或者 `return` 后面没有值。下面三个函数的返回值类型都是 `void`
     ```ts
-    function warnUser(): void {
-        console.log("This is my warning message");
-    }
+    function foo (){}
+    const bar = () => {}
+    function baz () {return}
     ```
-2. 虽然可以声明 `void` 类型变量，但是只能赋值 `undefined` 和 `null`
+2. In JavaScript, a function that doesn’t return any value will implicitly return the value `undefined`. However, `void` and `undefined` are not the same thing in TypeScript.
+3. 虽然可以声明 `void` 类型变量，但是只能赋值 `undefined` 和 `null`
     ```ts
     let unusable: void = undefined;
     ```
 
+### `object`
+The special type 1 refers to any value that isn’t a primitive. This is different from the empty object type `{ }`, and also different from the global type `Object`.
+
+### `unknown`
+1. The `unknown` type represents any value. This is similar to the `any` type, but is safer because it’s not legal to do anything with an `unknown` value
+    ```ts
+    function f1(a: any) {
+        a.b(); // OK
+    }
+    function f2(a: unknown) {
+        a.b(); // Error - Object is of type 'unknown'.
+    }
+    ```
+2. 这里说不能做任何事，其实是说不能对它的类型做出任何假设，或者说只能做那种任何类型都能做的事情
+    ```ts
+    function f2(a: unknown) {
+        console.log(a); // OK
+    }
+    ```
+3. This is useful when describing function types because you can describe functions that accept any value without having any values in your function body.
+4. Conversely, you can describe a function that returns a value of `unknown` type:
+    ```ts
+    function safeParse(s: string): unknown {
+        return JSON.parse(s);
+    }
+    ```
+
 #### `never`
-1. Some functions never return a value:
+1. Some functions never return a value，例如下面这个函数连 `undefined` 也不会返回
     ```ts
     function fail(msg: string): never {
         throw new Error(msg);
@@ -222,6 +253,8 @@ function buildName(firstName: string, ...restOfName: string[]) {
     normalCall(Date) // string Tue May 31 2022 11:36:15 GMT+0800 (中国标准时间)
     ```
 
+
+## Generic Functions
 
 
 ## References
