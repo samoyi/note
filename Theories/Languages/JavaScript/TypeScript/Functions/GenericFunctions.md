@@ -74,7 +74,7 @@
         }
     }
     ```
-3. 我们可以约束 `Type` 只能说数组或者字符串
+3. 我们可以约束 `Type` 只能是数组或者字符串
     ```ts
     function longer<Type extends any[]|string>(a: Type, b: Type) {
         if (a.length >= b.length) {

@@ -17,11 +17,13 @@
         - [`object`](#object)
         - [`unknown`](#unknown)
             - [`never`](#never)
+            - [`Function`](#function)
     - [定义一个整体的函数的类型](#定义一个整体的函数的类型)
         - [Function Type Expressions](#function-type-expressions)
         - [Call Signatures](#call-signatures)
         - [Construct Signatures](#construct-signatures)
-    - [Generic Functions](#generic-functions)
+    - [Assignability of Functions](#assignability-of-functions)
+        - [Return type `void`](#return-type-void)
     - [References](#references)
 
 <!-- /TOC -->
@@ -155,6 +157,17 @@ The special type 1 refers to any value that isn’t a primitive. This is differe
     }
     ```
 
+#### `Function`
+1. The global type `Function` describes properties like `bind`, `call`, `apply`, and others present on all function values in JavaScript. 
+2. It also has the special property that values of type `Function` can always be called;不懂 these calls return `any`: 
+    ```ts
+    function doSomething(f: Function) {
+        return f(1, 2, 3);
+    }
+    ```
+    This is an untyped function call and is generally best avoided because of the unsafe `any` return type.
+3. If you need to accept an arbitrary function but don’t intend to call it, the type `() => void` is generally safer. 不懂，如果不调用那接收它干啥？
+
 
 ## 定义一个整体的函数的类型
 ### Function Type Expressions
@@ -254,7 +267,38 @@ The special type 1 refers to any value that isn’t a primitive. This is differe
     ```
 
 
-## Generic Functions
+## Assignability of Functions
+### Return type `void`
+1. The `void` return type for functions can produce some unusual, but expected behavior.
+2. Contextual typing with a return type of `void` does not force functions to not return something. Another way to say this is a contextual function type with a `void` return type (`type vf = () => void`), when implemented, can return any other value, but it will be ignored
+    ```ts
+    type voidFunc = () => void;
+    
+    const fn: voidFunc = () => {
+        return true;
+    };
+    ```
+3. 上面这个返回布尔值的函数依然可以定义为 `voidFunc` 类型。但是 “it will be ignored”，所以看看 `fn` 的返回值
+    ```ts
+    const v = fn();
+    console.log(typeof v); // boolean
+    console.log(!!v); // An expression of type 'void' cannot be tested for truthiness.
+    ```
+4. 虽然函数返回了布尔值，但是 TS 的类型系统仍然是按照 `voidFunc` 的类型把它认为是 `void` 类型。
+5. This behavior exists so that the following code is valid even though `Array.prototype.push` returns a number and the `Array.prototype.forEach` method expects a function with a return type of `void`
+    ```ts
+    const src = [1, 2, 3];
+    const dst = [0];
+    
+    src.forEach((el) => dst.push(el));
+    ```
+    不懂，`forEach` 的回调的返回值为什么期望的类型是 `void` 而不是 `any`？
+6. 但是注意，如果是定义函数时直接定义返回值的类型，而不是像上面 `fn` 那样定义函数整体的类型，则如果定义返回值为 `void`，那么返回值就必须是 `void`
+    ```ts
+    function fn(): void {
+        return true; // Error - Type 'boolean' is not assignable to type 'void'.
+    }
+    ```
 
 
 ## References
