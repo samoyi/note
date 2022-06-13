@@ -7,6 +7,7 @@
     - [泛型的用途](#泛型的用途)
     - [使用泛型变量](#使用泛型变量)
     - [Generic Types](#generic-types)
+    - [Generic Classes](#generic-classes)
     - [TODO](#todo)
     - [References](#references)
 
@@ -146,8 +147,33 @@
 9. 泛型函数是在函数定义时使用泛型，调用时确定具体的类型；而泛型类型是在定义该类型时使用泛型，而在使用该类型定义具体函数时确定具体的类型。
 
 
+## Generic Classes
+1. A generic class has a similar shape to a generic interface. Generic classes have a generic type parameter list in angle brackets (`<>`) following the name of the class
+    ```ts
+    class GenericNumber<T> {
+        zeroValue!: T;
+        add!: (x: T, y: T) => T;
+    }
+    ```
+2. 在实例化该类时，可以传入类型参数来确定具体的类型
+    ```ts
+    let myGenericNumber = new GenericNumber<number>();
+    myGenericNumber.zeroValue = 0;
+    myGenericNumber.add = function (x, y) {
+        return x + y;
+    };
+    ```
+3. Generic classes are only generic over their instance side rather than their static side, so when working with classes, static members can not use the class’s type parameter
+    ```ts
+    class GenericNumber<T> {
+        static str: T = "hello"; // Error - Static members cannot reference class type parameters.
+        zeroValue!: T;
+        add!: (x: T, y: T) => T;
+    }
+    ```
+
+
 ## TODO
-泛型类
 泛型约束
 
 
