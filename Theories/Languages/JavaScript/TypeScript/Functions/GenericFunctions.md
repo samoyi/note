@@ -121,6 +121,20 @@
     ```
     `minimumLength` 声明的返回值类型是 `Type`，它是 `{ length: number }` 的子类型而并不是 `{ length: number }` 本身，`Type` 很可能还会有 `length` 以外的其他属性，所以两者并不一样。
 
+### Using Type Parameters in Generic Constraints
+可以使用一个类型参数去约束另一个类型参数。例如下面的函数要求第二个参数必须是第一个参数的属性名
+```ts
+function getProperty<Type, Key extends keyof Type>(obj: Type, key: Key) {
+    return obj[key];
+}
+
+let x = { a: 1, b: 2, c: 3, d: 4 };
+
+getProperty(x, "a");
+getProperty(x, "m"); // Error
+// Argument of type '"m"' is not assignable to parameter of type '"a" | "b" | "c" | "d"'.
+```
+
 
 ## Specifying Type Arguments
 1. 在调用泛型函数式经常不需要明确指明类型参数的类型，TS 可以自己进行推断。但有些情况下并不能进行推断。看下面的例子

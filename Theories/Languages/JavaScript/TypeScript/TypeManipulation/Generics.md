@@ -8,7 +8,7 @@
     - [使用泛型变量](#使用泛型变量)
     - [Generic Types](#generic-types)
     - [Generic Classes](#generic-classes)
-    - [TODO](#todo)
+    - [Using Class Types in Generics](#using-class-types-in-generics)
     - [References](#references)
 
 <!-- /TOC -->
@@ -173,8 +173,8 @@
     ```
 
 
-## TODO
-泛型约束
+## Using Class Types in Generics
+TODO
 
 
 ## References
