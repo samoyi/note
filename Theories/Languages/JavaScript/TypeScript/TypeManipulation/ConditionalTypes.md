@@ -170,6 +170,17 @@
     type T1 = ReturnType<typeof stringOrNum>;
     // type T1 = string | number
     ```
+4. You can even use infer multiple times
+    ```ts
+    type Flip<T> = T extends [infer A, infer B] ? [B, A] : never
+    type Stairs = Flip<[Pear, Apple]>
+    // => [Apple, Pear]
+
+    type Union<T> = T extends [infer A, infer A] ? A : never
+    type Stairs = Union<[Apple, Pear]>
+    // => Apple | Pear
+    ```
+
 
 ## Distributive Conditional Types
 1. When conditional types act on a generic type, they become distributive when given a union type. 也就是分别作用于联合中的每个类型。
