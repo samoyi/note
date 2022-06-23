@@ -19,6 +19,8 @@
             - [两种声明方式](#两种声明方式)
             - [`ReadonlyArray`](#readonlyarray)
         - [Union Types](#union-types)
+        - [Intersection Types](#intersection-types)
+            - [函数参数的情况](#函数参数的情况)
         - [Tuple](#tuple)
         - [`enum`](#enum)
     - [Type Aliases](#type-aliases)
@@ -247,6 +249,89 @@
         }
     }
     ```
+
+### Intersection Types
+1. Intersection types represent values that simultaneously have multiple types. A value of an intersection type `A & B` is a value that is both of type `A` and type `B`.
+2. 下面的例子中，`A & B` 类型就要求有且仅有两个类型为 `number` 的属性 `a` 和属性 `b`
+    ```ts
+    interface A { a: number }
+    interface B { b: number }
+
+    var ab: A & B
+
+    ab = { a: 1, b: 1 }; // OK
+
+    ab = { a: 1 }; // Error
+    // Type '{ a: number; }' is not assignable to type 'A & B'.
+    //   Property 'b' is missing in type '{ a: number; }' but required in type 'B'.
+
+    ab = { a: 1, b: 1, c: 1 }; // Error
+    // Type '{ a: number; b: number; c: number; }' is not assignable to type 'A & B'.
+    //   Object literal may only specify known properties, and 'c' does not exist in type 'A & B'.
+
+    ab = { a: 1, b: "1" }; // Error
+    // Type 'string' is not assignable to type 'number'. 
+    ```
+3. 进一步，下面的例子
+    ```ts
+    // X 类型要求 有且仅有一个类型为 A 的属性 p
+    interface X { p: A }  
+    // Y 类型要求 有且仅有一个类型为 B 的属性 p
+    interface Y { p: B }
+
+    // X & Y 类型就要求 有且仅有一个类型为 A & B 的属性 p
+    var xy: X & Y;
+
+    xy = { p: ab };  // OK   上面 ab 的属性是 A & B
+
+    xy = { p: 22 }; // Error  虽然有属性 p，但是类型不是 A & B
+    // Type 'number' is not assignable to type 'A & B'.
+    //   Type 'number' is not assignable to type 'A'.
+
+    xy = { q: ab }; // Error 虽然类型是 A & B，但是不是属性 p
+    // Type '{ q: A & B; }' is not assignable to type 'X & Y'.
+    //   Object literal may only specify known properties, and 'q' does not exist in type 'X & Y'.
+    ```
+
+#### 函数参数的情况
+TODO，不懂
+```ts
+// 函数类型 F1 要求有且仅有两个 string 参数
+type F1 = (a: string, b: string) => void;  
+// 函数类型 F 要求有且仅有两个 number 参数
+type F2 = (c: number, d: number) => void; // 形参名不重要
+
+// F1 & F2
+var f: F1 & F2;
+
+f = (a: string | number, b: string | number) => { }; // OK
+
+f("hello", "world");  // Ok  
+f(1, 2);              // Ok  
+f(1, "test");         // Error  // TODO，不懂
+// No overload matches this call.
+//   Overload 1 of 2, '(a: string, b: string): void', gave the following error.
+//     Argument of type 'number' is not assignable to parameter of type 'string'.
+//   Overload 2 of 2, '(c: number, d: number): void', gave the following error.
+//     Argument of type 'string' is not assignable to parameter of type 'number'.
+
+
+f = (a: string | number, b: number | string) => { }; // OK 
+
+f = (a: number | number, b: string | string) => { }; // Error // TODO，不懂
+```
+不懂，下面那这个是可以的
+```ts
+function foo (a: string | number, b: string | number): void {
+
+}
+foo(1, "test")
+```
+那为什么上面的这个不行呢
+```ts
+f = (a: string | number, b: string | number) => { };
+f(1, "test");         // Error 
+```
 
 ### Tuple
 1. A tuple type is another sort of `Array` type that knows exactly how many elements it contains, and exactly which types it contains at specific positions.
@@ -477,3 +562,4 @@
 ## References
 * [中文文档](https://www.tslang.cn/docs/handbook/basic-types.html)
 * [英文文档](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html)
+* [3.5 Intersection Types](https://github.com/microsoft/TypeScript/blob/v4.5.4/doc/spec-ARCHIVED.md#35-intersection-types)

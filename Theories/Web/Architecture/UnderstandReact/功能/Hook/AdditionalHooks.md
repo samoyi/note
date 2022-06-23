@@ -6,6 +6,7 @@
     - [`useCallback`](#usecallback)
     - [`useImperativeHandle`](#useimperativehandle)
     - [`useMemo`](#usememo)
+        - [引用类型作为依赖的问题](#引用类型作为依赖的问题)
     - [`useReducer`](#usereducer)
     - [`useRef`](#useref)
     - [References](#references)
@@ -197,12 +198,40 @@ TODO
 
     export default App;
     ```
-
 5. 类似于 Vue 的计算属性，只不过这里并不能直接根据函数参数的变动来更新缓存，而是必须要传递一个数组，数组项中指明依赖的数据。
 6. If no array is provided, a new value will be computed on every render.
 7. Remember that the function passed to `useMemo` runs during rendering. Don’t do anything there that you wouldn’t normally do while rendering. For example, side effects belong in `useEffect`, not `useMemo`.
 8. You may rely on `useMemo` as a performance optimization, not as a semantic guarantee. In the future, React may choose to “forget” some previously memoized values and recalculate them on next render, e.g. to free memory for offscreen components. Write your code so that it still works without `useMemo` — and then add it to optimize performance. 也就是说可能某些类型缓存的值也会被丢弃，所以不要从语义上确信一定会使用缓存，而只是应该作为一种锦上添花的优化手段，确保如果缓存即使被丢弃也不影响程序功能。
 9. 第一个参数的函数所依赖的所有值都应该出现在第二个参数的数组中，也包括函数参数。
+
+### 引用类型作为依赖的问题
+1. 在 `useEffect` 那里说到，依赖引用类型值导致的循环渲染，因为每次渲染时虽然引用类型的属性值都一样，但还是一个全新的引用类型。
+2. 在这里，如果把引用类型作为依赖也会产生问题
+    ```ts
+    function Foo(props: { num: number }) {
+        let obj = { number: props.num } // eslint warning
+        // The 'obj' object makes the dependencies of useMemo Hook change on every render. 
+        // Move it inside the useMemo callback. Alternatively, wrap the initialization of 'obj' in its own useMemo() Hook.
+
+        useMemo(() => {
+            return obj.number + 1;
+        }, [obj])
+
+        return <div></div>
+    }
+    ```
+3. 每次渲染时，即使 `props.num` 没变，`obj` 也都会重新创建，导致 `useMemo` 回调重新求值，但其实返回值都是一样的。所以 eslint 建议可以把 `obj` 的创建放进 `useMemo` 回调里
+    ```ts
+    function Foo(props: { num: number }) {
+        useMemo(() => {
+            let obj = { number: props.num }
+            return obj.number + 1;
+        }, [props.num])
+
+        return <div></div>
+    }
+    ```
+
 
 
 ## `useReducer`

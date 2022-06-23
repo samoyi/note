@@ -34,6 +34,8 @@ Operators are unique in ECMAScript in that they can be used on a wide range of v
         - [逻辑或  `||`](#逻辑或--)
         - [使用逻辑运算符实现 `if` 的功能](#使用逻辑运算符实现-if-的功能)
         - [Nullish coalescing operator `??`](#nullish-coalescing-operator-)
+        - [Logical nullish assignment `??=`](#logical-nullish-assignment-)
+        - [Logical OR assignment `||=`](#logical-or-assignment-)
         - [Optional chaining `?.`](#optional-chaining-)
             - [Dealing with optional callbacks or event handlers](#dealing-with-optional-callbacks-or-event-handlers)
     - [乘性操作符](#乘性操作符)
@@ -339,6 +341,43 @@ callback && callback();
     ```
 2. 显然使用 `??` 来设定默认值就要更加合理，现在只有 `null` 和 `undefined` 才被认为是没有值，而是用后面的默认值。
 3. 优先级比 `||` 低，比 conditional (ternary) operator 高。
+
+### Logical nullish assignment `??=`
+1. 只有当左侧的值是 nullish (`null` or `undefined`) 才进行赋值操作，否则直接短路
+    ```js
+    const a = { duration: 50 };
+
+    a.duration ??= 10;
+    console.log(a.duration); // 50
+
+    a.speed ??= 10;
+    console.log(a.speed); // 10
+
+    function getSpeed () {
+        console.log("不会被调用");
+        return 10;
+    }
+    a.speed ??= getSpeed();
+    ```
+2. 看起来的作用是，只有一个属性或者变量为空时才能赋值，如果有了值就不能再改变，除非是使用 `=` 来清空或者强制改写
+    ```js
+    let n;
+
+    n ??= 22;
+    console.log(n); // 22
+
+    n ??= 33;
+    console.log(n); // 22
+
+    n ??= null;
+    console.log(n); // 22
+
+    n = null;
+    console.log(n); // null
+    ```
+
+### Logical OR assignment `||=`
+感觉大部分时候还是要使用 `??=`
 
 ### Optional chaining `?.`
 1. 属性链中如果某个属性或方法为 nullish (`null` or `undefined`)，则该表达式直接在此短路并返回 `undefined`，否则正常求值。这样就不用先判断该属性存在然后再向后求值了
