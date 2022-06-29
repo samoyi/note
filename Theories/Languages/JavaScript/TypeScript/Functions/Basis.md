@@ -14,8 +14,8 @@
         - [匿名函数的 Contextual typing](#匿名函数的-contextual-typing)
         - [函数相关的一些类型](#函数相关的一些类型)
             - [`void`](#void)
-        - [`object`](#object)
-        - [`unknown`](#unknown)
+            - [`object`](#object)
+            - [`unknown`](#unknown)
             - [`never`](#never)
             - [`Function`](#function)
     - [定义一个整体的函数的类型](#定义一个整体的函数的类型)
@@ -109,10 +109,10 @@ function buildName(firstName: string, ...restOfName: string[]) {
     let unusable: void = undefined;
     ```
 
-### `object`
+#### `object`
 The special type 1 refers to any value that isn’t a primitive. This is different from the empty object type `{ }`, and also different from the global type `Object`.
 
-### `unknown`
+#### `unknown`
 1. The `unknown` type represents any value. This is similar to the `any` type, but is safer because it’s not legal to do anything with an `unknown` value
     ```ts
     function f1(a: any) {
