@@ -16,6 +16,7 @@
     - [`Parameters<Type>`](#parameterstype)
     - [`ConstructorParameters<Type>`](#constructorparameterstype)
     - [`ReturnType<Type>`](#returntypetype)
+    - [`InstanceType<Type>`](#instancetypetype)
 
 <!-- /TOC -->
 
@@ -314,4 +315,30 @@ type T8 = ReturnType<Function>;
 // Error:
 // Type 'Function' does not satisfy the constraint '(...args: any) => any'.
 //   Type 'Function' provides no match for the signature '(...args: any): any'.
+```
+
+
+## `InstanceType<Type>`
+Constructs a type consisting of the instance type of a constructor function in `Type`
+```ts
+class C {
+    x = 0;
+    y = 0;
+}
+type T0 = InstanceType<typeof C>;
+// type T0 = C
+// TODO: type T = typeof C 又是什么？和这里的什么关系？
+
+type T1 = InstanceType<any>;
+// type T1 = any
+
+type T2 = InstanceType<never>;
+// type T2 = never
+
+type T3 = InstanceType<string>; // Error
+//   Type 'string' does not satisfy the constraint 'abstract new (...args: any) => any'.
+
+type T4 = InstanceType<Function>;// Error
+// Type 'Function' does not satisfy the constraint 'abstract new (...args: any) => any'.
+//   Type 'Function' provides no match for the signature 'new (...args: any): any'.
 ```
