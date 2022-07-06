@@ -7,6 +7,7 @@
     - [When to Use Context](#when-to-use-context)
     - [用法](#用法)
         - [默认值](#默认值)
+        - [createContext with TypeScript](#createcontext-with-typescript)
     - [`useContext` hook](#usecontext-hook)
     - [TODO](#todo)
     - [节制使用](#节制使用)
@@ -15,7 +16,6 @@
 
 
 ## When to Use Context
-
 
 
 ## 用法
@@ -77,6 +77,63 @@
             </div>
         );
     }
+    ```
+
+### createContext with TypeScript
+1. 在 JS 中，下面的用法是没问题的
+    ```js
+    import { createContext, useContext } from 'react';
+
+
+    const MyContext = createContext();
+
+    function Comp () {
+        const {age} = useContext(MyContext)
+        return <div>{age}</div>
+    }
+
+
+    const App = () => {
+        return (
+            <MyContext.Provider value={{age: 22}}>
+                <Comp />
+            </MyContext.Provider>
+        )
+    }
+    ```
+2. 但是在 TS 中，就会编译出错
+    ```ts
+    const MyContext = createContext(); // error
+    // expected 1 arguments, but got 0
+    // An argument for 'defaultValue' was not provided.
+
+    function Comp () {
+        const {age} = useContext(MyContext) // error
+        // Property 'age' does not exist on type 'unknown'.
+        return <div>{age}</div>
+    }
+    ```
+3. 因为 `createContext` 时既没有指定类型也没有传默认值让 TS 根据默认值推断类型，所以创建出的环境变量类型就是 `unknown`。
+4. 创建时提供默认值就可以让 TS 进行类型推断
+    ```ts
+    const MyContext = createContext({age: 22});
+    ```
+5. 如果环境是对象类型，此时又不想提供具体默认值，就可以提供 interface，默认值设置为空对象并 `as` 为 interface 的类型
+    ```ts
+    interface CtxType {
+        age: number;
+    }
+
+    const MyContext = createContext<CtxType>({} as CtxType);
+    ```
+6. 这么看起来明确提供类型好像没什么用，反正也是要提供默认值。但是如果环境对象里面有可选属性的话，那就只能通过明确类型来表示了
+    ```ts
+    interface CtxType {
+        name: string;
+        age?: number;
+    }
+
+    const MyContext = createContext<CtxType>({name: "33"});
     ```
 
 
