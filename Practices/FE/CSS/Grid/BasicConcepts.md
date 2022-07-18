@@ -7,6 +7,11 @@
     - [Grid tracks](#grid-tracks)
         - [Track listings with `repeat()` notation](#track-listings-with-repeat-notation)
         - [The implicit and explicit grid](#the-implicit-and-explicit-grid)
+        - [minmax](#minmax)
+    - [Grid lines](#grid-lines)
+    - [Gutters](#gutters)
+    - [Layering items with z-index](#layering-items-with-z-index)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -80,3 +85,26 @@
     ```
     1. 显式创建了 3 行，前三个元素占据三行之后，后两个元素放不下之后并不会 “换列” 而隐式的创建两列。
     2. 后两个元素还是继续排在前三个元素下面，所以实际的效果相当于 `grid-template-rows: repeat(5, 1fr)`。
+3. 对于隐式创建的行和列，可以通过 `grid-auto-rows` and `grid-auto-columns` 来规定它们的尺寸。
+
+### minmax
+1. 可以使用 `minmax()` 来设置显式或隐式轨道的最小和最大尺寸。
+2. 以行为例，最小尺寸保证了该行的高度不能低于最小值，而最大尺寸保证了该行的高度不能高于最大值。因为一行中每个格子的高度必须一致，所以如果有格子不是最高的，也会自动加高到和最高的格子一样的高度。
+
+
+## Grid lines
+1. 通过网格线来规定网格容器里的子元素放置在什么位置，跨越几个轨道。[例子](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout/Basic_Concepts_of_Grid_Layout#grid_lines)
+2. [简写](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout/Basic_Concepts_of_Grid_Layout#line-positioning_shorthands)
+
+
+## Gutters
+可以使用 `grid-column-gap` 和 `grid-row-gap` 属性来定义列间距和行间距。两个合并的缩写形式是 `grid-gap`。
+
+
+## Layering items with z-index
+1. If we return to our example with items positioned by line number, we can change this to make two items overlap.
+2. We can control the order in which items stack up by using the z-index property - just like positioned items.
+
+
+## References
+* [Basic Concepts of grid layout](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout/Basic_Concepts_of_Grid_Layout)

@@ -8,6 +8,8 @@
     - [`protected`](#protected)
         - [Exposure of protected members](#exposure-of-protected-members)
         - [Cross-hierarchy protected access](#cross-hierarchy-protected-access)
+    - [`private`](#private)
+        - [Cross-instance private access](#cross-instance-private-access)
 
 <!-- /TOC -->
 
@@ -101,3 +103,63 @@ cg.getName(); // Error - 不能在 Greeter 的后代类外部访问到 getName
     ```
 2. `Child` 的继承了 `Parent`，它可以在内部访问自身的 `x` 属性，但不能在内部访问父类的 `x` 属性。也就是说，一个 `protected` 字段，不仅不能在类的外部访问到，甚至也不能在子类的内部访问到。
 3. Java, for example, considers this to be legal. On the other hand, C# and C++ chose that this code should be illegal. TypeScript sides with C# and C++ here.
+
+
+## `private`
+1. `private` is like `protected`, but doesn’t allow access to the member even from subclasse
+    ```ts
+    class Base {
+        private x = 0;
+    }
+    const b = new Base();
+    console.log(b.x); // Error
+    // Property 'x' is private and only accessible within class 'Base'.
+
+    class Derived extends Base {
+        showX() {
+            console.log(this.x); // Error
+            // Property 'x' is private and only accessible within class 'Base'.
+        }
+    }
+    ```
+2. Because `private` members aren’t visible to derived classes, a derived class can’t increase its visibility
+    ```ts
+    class Base {
+        private x = 0;
+    }
+    class Derived1 extends Base {
+        // Class 'Derived1' incorrectly extends base class 'Base'.
+        //   Property 'x' is private in type 'Base' but not in type 'Derived1'.
+        x = 1;
+    }
+    class Derived2 extends Base {
+        // Class 'Derived2' incorrectly extends base class 'Base'.
+        //   Property 'x' is private in type 'Base' but not in type 'Derived2'.
+        protected x = 1;
+    }
+    ```
+3. 也不能在子类中声明同名 `private` 成员
+    ```ts
+    class Derived3 extends Base {
+        // Class 'Derived3' incorrectly extends base class 'Base'.
+        //   Types have separate declarations of a private property 'x'
+        private x = 1;
+    }
+    ```
+
+### Cross-instance private access
+Different OOP languages disagree about whether different instances of the same class may access each others’ `private` members. TypeScript does allow cross-instance `private` access
+```ts
+class A {
+    private x = 10;
+
+    public sameAs(other: A) {
+        // No error
+        return other.x === this.x;
+    }
+}
+
+const a1 = new A();
+const a2 = new A();
+a1.sameAs(a2);
+```
