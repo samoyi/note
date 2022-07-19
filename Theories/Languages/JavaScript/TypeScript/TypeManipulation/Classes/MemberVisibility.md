@@ -10,6 +10,15 @@
         - [Cross-hierarchy protected access](#cross-hierarchy-protected-access)
     - [`private`](#private)
         - [Cross-instance private access](#cross-instance-private-access)
+    - [Caveats](#caveats)
+- [Static Members](#static-members)
+    - [Basic](#basic)
+        - [Special Static Names](#special-static-names)
+- [Others](#others)
+    - [`static` Blocks in Classes](#static-blocks-in-classes)
+    - [Generic Classes](#generic-classes)
+        - [Type Parameters in Static Members](#type-parameters-in-static-members)
+    - [`this` at Runtime in Classes](#this-at-runtime-in-classes)
 
 <!-- /TOC -->
 
@@ -163,3 +172,113 @@ const a1 = new A();
 const a2 = new A();
 a1.sameAs(a2);
 ```
+
+
+## Caveats
+1. Like other aspects of TypeScript’s type system, `private` and `protected` are only enforced during type checking. 所以如果在运行时的 JavaScript 中创建访问 `private` 或 `protected` 的代码，则仍然可以访问到。
+2. `private` also allows access using bracket notation during type checking. This makes `private`-declared fields potentially easier to access for things like unit tests, with the drawback that these fields are *soft private* and don’t strictly enforce privacy
+    ```ts
+    class MySafe {
+        private secretKey = 12345;
+    }
+
+    const s = new MySafe();
+
+    console.log(s.secretKey); // Error
+    // Property 'secretKey' is private and only accessible within class 'MySafe'.
+
+    console.log(s["secretKey"]); // OK
+    ```
+3. Unlike TypeScripts’s private, JavaScript’s private fields (`#`) remain private after compilation and do not provide the previously mentioned escape hatches like bracket notation access, making them *hard private*
+    ```ts
+    class Dog {
+        #barkAmount = 0;
+        personality = "happy";
+
+        constructor() { }
+    }
+    ```
+    When compiling to ES2021 or less, TypeScript will use WeakMaps in place of #.
+    ```js
+    "use strict";
+    var _Dog_barkAmount;
+    class Dog {
+        constructor() {
+            _Dog_barkAmount.set(this, 0);
+            this.personality = "happy";
+        }
+    }
+    _Dog_barkAmount = new WeakMap();
+    ```
+4. If you need to protect values in your class from malicious actors, you should use mechanisms that offer hard runtime privacy, such as closures, WeakMaps, or private fields. Note that these added privacy checks during runtime could affect performance.
+
+
+
+# Static Members
+## Basic
+1. Static members can also use the same `public`, `protected`, and `private` visibility modifiers
+    ```ts
+    class MyClass {
+        private static x = 0;
+    }
+    console.log(MyClass.x);
+    // Property 'x' is private and only accessible within class 'MyClass'.
+    ```
+2. Static members are also inherite
+    ```ts
+    class Base {
+        static getGreeting() {
+            return "Hello world";
+        }
+    }
+    class Derived extends Base {
+        myGreeting = Derived.getGreeting();
+    }
+
+    const d = new Derived();
+    console.log(d.myGreeting); // "Hello world"
+    ```
+
+### Special Static Names
+1. It’s generally not safe/possible to overwrite properties from the `Function` prototype. Because classes are themselves functions that can be invoked with new, certain static names can’t be used.
+2. Function properties like `name`, `length`, and `call` aren’t valid to define as static members
+    ```ts
+    class S {
+        static name = "S!"; // Error
+        // Static property 'name' conflicts with built-in property 'Function.name' of constructor function 'S'.
+    }
+    ```
+
+
+
+# Others
+## `static` Blocks in Classes
+不懂。[文档](https://www.typescriptlang.org/docs/handbook/2/classes.html#static-blocks-in-classes)
+
+
+## Generic Classes
+1. Classes, much like interfaces, can be generic. When a generic class is instantiated with `new`, its type parameters are inferred the same way as in a function call
+```ts
+class Box<Type> {
+	contents: Type;
+	constructor(value: Type) {
+		this.contents = value;
+	}
+}
+
+const b = new Box("hello!");
+// const b: Box<string>
+```
+
+### Type Parameters in Static Members
+1. This code isn’t legal
+    ```ts
+    class Box<Type> {
+        static defaultValue: Type; // Error
+        // Static members cannot reference class type parameters.
+    }
+    ``` 
+2. Remember that types are always fully erased! At runtime, there’s only one `Box.defaultValue` property slot. This means that setting `Box<string>.defaultValue` (if that were possible) would also change `Box<number>.defaultValue` - not good. The static members of a generic class can never refer to the class’s type parameters. 不懂，但从上面的例子看，泛型参数是实例化时提供的，而且不同的实例化会提供不同的泛型参数。但是显然静态属性应该是不需要实例化的，而且也不可能根据不同的实例变化类型。
+
+
+## `this` at Runtime in Classes
