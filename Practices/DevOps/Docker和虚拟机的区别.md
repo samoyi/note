@@ -60,7 +60,7 @@
 
 ### Portability
 1. Virtual machines are isolated from their OS, and so, they are not ported across multiple platforms without incurring compatibility issues.
-2. Docker containers packages are self-contained and can run applications in any environment, and since they don’t need a guest OS, they can be easily ported across different platforms. 不懂，虚拟机和主机隔离为什么不容易移植，而容器可以访问 kernel subsystems 为什么反倒容易移植？
+2. Docker containers packages are self-contained and can run applications in any environment, and since they don’t need a guest OS, they can be easily ported across different platforms. 不懂，虚拟机和主机隔离为什么不容易移植，而容器可以访问 kernel subsystems 为什么反倒容易移植？从 [这篇文章](https://geekflare.com/docker-vs-virtual-machine/) 看，因为虚拟机有自己的操作系统，所以移植的时候需要考虑到操作系统的环境，所以可移植性相对较差。
 3. Docker containers can be easily deployed in servers since containers being lightweight can be started and stopped in very less time compared to virtual machines.
 4. At the development level, if an application is to be tested on different platforms, then Docker containers must be considered.
 
@@ -113,3 +113,4 @@
 
 ## References
 * [Docker vs. Virtual Machines: Differences You Should Know](https://cloudacademy.com/blog/docker-vs-virtual-machines-differences-you-should-know/)
+* [Docker vs Virtual Machine (VM) – Understanding the Differences](https://geekflare.com/docker-vs-virtual-machine/)
