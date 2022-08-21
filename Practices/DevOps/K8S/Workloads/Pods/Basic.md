@@ -67,7 +67,7 @@
 3. The containers can share resources and dependencies, communicate with one another, and coordinate when and how they are terminated.
 4. For example, you might have a container that acts as a web server for files in a shared volume, and a separate "sidecar" container that updates those files from a remote source, as in the following diagram
     < img />
-    <img src="../../images/02.svg" width="400" style="display: block; margin: 5px 0 10px;" />
+    <img src="../../../images/02.svg" width="400" style="display: block; margin: 5px 0 10px;" />
     A multi-container Pod that contains a file puller and a web server that uses a persistent volume for shared storage between the containers.
 5. Pods natively provide two kinds of shared resources for their constituent containers: networking and storage.
 6. Some Pods have init containers as well as app containers. Init containers run and complete before the app containers are started.
@@ -108,4 +108,4 @@
 
 
 ## References
-* [https://kubernetes.io/docs/concepts/workloads/pods/]
+* [Pods](https://kubernetes.io/docs/concepts/workloads/pods/)
