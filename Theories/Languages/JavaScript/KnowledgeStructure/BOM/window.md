@@ -26,6 +26,7 @@
             - [`encodeURIComponent`](#encodeuricomponent)
             - [`decodeURIComponent`](#decodeuricomponent)
     - [System Dialogs](#system-dialogs)
+    - [requestAnimationFrame](#requestanimationframe)
     - [未整理内容，直接看《Professional JavaScript for Web Developers》第八章](#未整理内容直接看professional-javascript-for-web-developers第八章)
 
 <!-- /TOC -->
@@ -403,6 +404,24 @@ console.log(typeof decodeURIComponent({age: 22}))
 * `confirm()` 点击取消或关闭时返回的是 `false`，`prompt()` 点击取消或关闭时返回的是 `null`
 * `window.print()`：Starting with Chrome 46.0 this method is blocked inside an `<iframe>` unless its sandbox attribute has the value allow-modals.
 * `Window.find()` 可以查找页面文本。但因为是非标准方法且存在 bug，所以不应该使用。
+
+
+## requestAnimationFrame
+1. `window.requestAnimationFrame()` 告诉浏览器——你希望执行一个动画，并且要求浏览器在下次重绘之前调用指定的回调函数更新动画。
+2. 该方法需要传入一个回调函数作为参数，该回调函数会在浏览器下一次重绘之前执行。若你想在浏览器下次重绘之前继续更新下一帧动画，那么回调函数自身必须再次调用 `window.requestAnimationFrame()`。
+3. 在大多数遵循 W3C 建议的浏览器中，回调函数执行次数通常与浏览器屏幕刷新次数相匹配。
+4. 回调函数会被传入 DOMHighResTimeStamp 参数，DOMHighResTimeStamp 指示当前被 `requestAnimationFrame()` 排序的回调函数被触发的时间。在同一个帧中的多个回调函数，它们每一个都会接受到一个相同的时间戳，即使在计算上一个回调函数的工作负载期间已经消耗了一些时间。
+5. 下面的例子中，在分别率为 60Hz 的显示器中，大约每 17ms 调用一次
+    ```js
+    function step(timestamp) {
+        console.log(timestamp)
+        if (timestamp < 1000) {
+            window.requestAnimationFrame(step);
+        }
+    }
+
+    window.requestAnimationFrame(step);
+    ```
 
 
 ## 未整理内容，直接看《Professional JavaScript for Web Developers》第八章
