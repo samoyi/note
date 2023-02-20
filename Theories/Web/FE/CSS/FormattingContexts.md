@@ -112,28 +112,55 @@
     ```
 
 #### 阻止外边距重叠
-创建新的 BFC 避免两个相邻元素之间的外边距重叠
-```html
-<div class="blue"></div>
-<div class="red-outer">
-  <div class="red-inner">red inner</div>
-</div>
-```
-```css
-.blue, .red-inner {
-  height: 50px;
-  margin: 10px 0;
-}
+1. 同级元素外边距重叠
+    ```html
+    <div class="wrapper">
+        <div class="blue"></div>
+    </div>
+    <div class="wrapper">
+        <div class="red"></div>
+    </div>
+    ```
+    ```css
+    .blue, .red {
+        height: 50px;
+        margin: 10px 0;
+    }
 
-.blue {
-  background: blue;
-}
+    .blue {
+        background: blue;
+    }
 
-.red-outer {
-  overflow: hidden;
-  background: red;
-}
-```
+    .red {
+        background: red;
+    }
+    
+    .wrapper {
+        display: flow-root;
+    }
+    ```
+2. 和同级元素的子元素外边距重叠
+    ```html
+    <div class="blue"></div>
+    <div class="red-outer">
+        <div class="red-inner">red inner</div>
+    </div>
+    ```
+    ```css
+    .blue, .red-inner {
+        height: 50px;
+        margin: 10px 0;
+    }
+
+    .blue {
+        background: blue;
+    }
+
+    .red-outer {
+        display: flow-root;
+        background: red;
+    }
+    ```
 
 
 ## 行内格式化上下文（Inline formatting contexts）

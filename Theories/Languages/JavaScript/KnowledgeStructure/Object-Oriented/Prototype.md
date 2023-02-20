@@ -48,7 +48,10 @@
     console.log( obj1.constructor.prototype === obj2.constructor.prototype ); // true
     console.log( obj1.constructor === obj2.constructor.prototype.constructor ); // true
     ```
-7. `Object.prototype` 是仅有的没有原型的对象，它不继承任何属性。
+7. `Object.prototype` 是仅有的没有原型的对象，它不继承任何属性
+    ```js
+    console.log(Object.getPrototypeOf(Object.prototype)) // null
+    ```
 8. 注意，并不是所有的原生原型都是 plain object
     ```js
     console.log( Object.prototype.toString.call(Array.prototype));    // [object Array]
@@ -99,7 +102,7 @@
 4. 所谓的原型链，就是每个类的原型对象组成的链。下图只有最下面的类画出了实例，其实上面两个也有实例
     <img src="./images/prototype_chain.png" width="600" style="display: block; margin: 5px 0 10px;" />
 5. 可以看到：一个实例通过 `__proto__` 指向原型链中自己的那个原型对象，然后该原型对象也是通过 `__proto__` 属性指向它的上一级的原型对象。
-6. 另外，像 `Array` 啊 `Function` 啊这样的类也都是 `Object` 的子类，它们的原型对象也是指向 `Object` 的原型对象
+6. 另外，像 `Array` 啊 `Function` 啊这样的类也都是 `Object` 的子类，它们的原型对象的原型也是指向 `Object` 的原型对象
     ```js
     // `Array` 类的构造函数的 `prototype` 属性和实例的 `__proto__` 属性指向 `Array` 类的原型对象
     // `Array` 类的原型继承 Object 类的原型，也就是原型链增加了一节，达到了两节
