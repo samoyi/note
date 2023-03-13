@@ -86,7 +86,7 @@
     ```
 4. 有时你可能需要为已有对象赋值多个新 property，比如使用 `Object.assign()` 或 `_.extend()`。但是，这样添加到对象上的新 property 不会触发更新。在这种情况下，你应该用原对象与要混合进去的对象的 property 一起创建一个新的对象。
     ```js
-    // 下面的不行，因为这是个 child 添加属性
+    // 下面的不行，因为这是给 child 添加属性
     // Object.assign(this.parent.child, { age: 22, sex: 'female' }); 
 
     // 下面的可以，因为直接修改了 child 而不是添加属性
