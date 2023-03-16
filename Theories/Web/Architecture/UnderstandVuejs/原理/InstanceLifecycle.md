@@ -37,10 +37,10 @@
 
 
 **看这篇笔记前，要先看懂这一篇：**
-`Theories\Web\Architecture\UnderstandVuejs\原理\Two-wayBinding.md`  
+`Theories\Web\Architecture\UnderstandVuejs\原理\Observer\基本原理\Two-wayBinding.md`  
 本篇中提到的以下四个模块都出自这篇笔记：`Compiler`、`Publisher`、`Observer`和`Subscriber`
 
-<img src="../images/lifecycle.png" width="600" style="display: block; margin: 5px 0 10px;" />
+<img src="../images/lifecycle.png" width="600" height="1600" style="display: block; margin: 5px 0 10px;" />
 
 
 ## Misc

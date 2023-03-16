@@ -25,8 +25,8 @@
 
 
 ## 后续内容
-* `./ReactivitySystem.md` 对 Vuejs 的响应式数据绑定做了进一步的说明
-* `./Two-wayBinding.md` 实现了一个简单的 ViewModel 构造器
+* `./Observer/基本原理/ReactivitySystem.md` 对 Vuejs 的响应式数据绑定做了进一步的说明
+* `./Observer/基本原理/Two-wayBinding.md` 实现了一个简单的 ViewModel 构造器
 
 
 ## Summary
