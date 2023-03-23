@@ -4,9 +4,13 @@
 <!-- TOC -->
 
 - [HTTPS](#https)
-    - [设计思想](#%E8%AE%BE%E8%AE%A1%E6%80%9D%E6%83%B3)
-    - [抽象本质](#%E6%8A%BD%E8%B1%A1%E6%9C%AC%E8%B4%A8)
+    - [设计思想](#设计思想)
+    - [抽象本质](#抽象本质)
     - [Summary](#summary)
+        - [基本原理](#基本原理)
+            - [通信过程](#通信过程)
+            - [证书](#证书)
+            - [前端相关](#前端相关)
     - [HTTPS Schemes](#https-schemes)
     - [Secure Transport Setup](#secure-transport-setup)
     - [SSL Handshake](#ssl-handshake)
@@ -36,6 +40,26 @@
 sending them to TCP
     <img src="./images/10.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
 5. Today, the HTTP security layer is implemented by SSL and its modern replacement, TLS. We follow the common practice of using the term “SSL” to mean either SSL or TLS.
+
+### 基本原理
+#### 通信过程
+1. HTTP 传输的是明文，HTTPS 在两端的应用层和传输层中间有加了一个加密算法中间层，传输的信息就是密文了。
+2. 先用非对称加密算法传递对称加密的秘钥，然后再使用对称加密算法传递信息。
+3. 使用非对称加密传递对称加密秘钥的过程
+    1. 浏览器发起 HTTPS 请求
+    2. 服务器把公钥发送给浏览器
+    3. 浏览器生成一个对称加密的秘钥，用公钥加密，发给服务器；
+    4. 服务器用私钥解密获得对称加密的秘钥。
+
+#### 证书
+1. 因为通信可能被第三方劫持，导致浏览器和第三方服务器建立安全连接。
+2. 所以需要使用数字证书确定服务器就是自己想要通信的那个服务器，而不是第三方的服务器。
+3. 数字证书会颁发给受信任的机构，服务器会把证书发送给浏览器，浏览器验证证书的颁发机构和里面的数字签名，是可靠的话才会继续连接。
+4. 签名是根据证书明文生成的，浏览器可以权威颁发机构提供的秘钥散列证书明文然后对比签名。第三方没有这个秘钥，即使篡改了证书也不能对证书进行正确散列。
+
+#### 前端相关
+1. 和前端直接相关的就是跨域问题了，因为协议和端口都不一样。
+2. HTTPS 也会更慢一些，加密解密也会多消耗一些资源，而且公钥认证需要购买证书。
 
 
 ## HTTPS Schemes
