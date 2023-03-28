@@ -68,7 +68,7 @@
     ```
     portal 有 “传送门” 的意思，它把第一个参数所表示的元素传送出 React 的组件结构之外，传送到了第二个参数指定的节点里。
 4. A typical use case for portals is when a parent component has an `overflow: hidden` or `z-index` style, but you need the child to visually “break out” of its container. For example, dialogs, hovercards, and tooltips. 看起来就是，你从源码上还能看出来比如一个弹出框在语义上是属于这个组件的，但实际使用中会渲染到组件之外。
-5. When working with portals, remember that managing keyboard focus becomes very important.For modal dialogs, ensure that everyone can interact with them by following the WAI-ARIA Modal Authoring Practices. TODO。
+5. When working with portals, remember that managing keyboard focus becomes very important. For modal dialogs, ensure that everyone can interact with them by following the WAI-ARIA Modal Authoring Practices. TODO。
 
 
 ## 但是 portal 中的事件还是可以冒泡到外层组件

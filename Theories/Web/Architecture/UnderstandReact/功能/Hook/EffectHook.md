@@ -23,7 +23,7 @@
 1. Effect Hook 可以让你在函数组件中执行副作用操作。也就是实现 “纯组件” 之外的功能，例如获取数据、修改 DOM 等。
 2. 你可以把 `useEffect` Hook 看做 `componentDidMount`、`componentDidUpdate` 和 `componentWillUnmount` 这三个函数的组合。
 4. React 会等待浏览器完成画面渲染之后才会延迟调用 `useEffect`，因此会使得额外操作很方便。
-5. `useEffect` 和 `useState` 一样都是在数据变化后响应式的做一些事情，只不过 `useEffect` 是响应式的重新渲染组件，而 `useEffect` 是响应式的做一些组件外面的事情。
+5. `useEffect` 和 `useState` 一样都是在数据变化后响应式的做一些事情，只不过 `useState` 是响应式的重新渲染组件，而 `useEffect` 是响应式的做一些组件外面的事情。
 6. 默认情况下，`useEffect` 会在第一次渲染之后和每次更新渲染之后都会执行你传递给它的函数（我们将它称之为 “effect”）。React 保证了每次运行 effect 时，DOM 都已经更新完毕。
 7. 实际上，传递给 `useEffect` 的函数在每次渲染中都会有所不同，这样做才使得可以在 effect 中获取最新的 state 值。每次我们重新渲染，都会生成新的 effect，替换掉之前的。某种意义上讲，effect 更像是渲染结果的一部分 —— 每个 effect “属于” 一次特定的渲染。
 8. 与 `componentDidMount` 或 `componentDidUpdate` 不同，使用 `useEffect` 调度的 effect 不会阻塞浏览器更新屏幕，这让你的应用看起来响应更快。大多数情况下，effect 不需要同步地执行。
