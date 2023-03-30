@@ -6,7 +6,7 @@
 - [4XX Client Error](#4xx-client-error)
     - [`400 Bad Request`](#400-bad-request)
     - [`401 Unauthorized`](#401-unauthorized)
-        - [`402 Payment Required`](#402-payment-required)
+    - [`402 Payment Required`](#402-payment-required)
     - [`403 Forbidden`](#403-forbidden)
     - [`404 Not Found`](#404-not-found)
     - [`405 Method Not Allowed`](#405-method-not-allowed)
@@ -47,7 +47,7 @@
     ```
 
 
-### `402 Payment Required`
+## `402 Payment Required`
 Currently this status code is not used, but it has been set aside for future use.
 
 
@@ -77,7 +77,7 @@ Currently this status code is not used, but it has been set aside for future use
 
 
 ## `406 Not Acceptable`
-1. 客户端的请求使用内容协商首部制定了期望的响应实体类型，但是如果服务器服务满足要求的类型，就可以返回 406。
+1. 客户端的请求使用内容协商首部制定了期望的响应实体类型，但是如果服务器服务不满足要求的类型，就可以返回 406。
 2. 客户端的内容协商首部包括以下三个：
     * Accept：期望的实体 MIME 类型；
     * Accept-Encoding：期望的实体编码方式，通常是压缩算法方式；

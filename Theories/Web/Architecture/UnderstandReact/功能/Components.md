@@ -9,6 +9,8 @@
         - [开发模式下函数式组件更新时函数调用两次 TODO](#开发模式下函数式组件更新时函数调用两次-todo)
         - [组件一般都必须有一个包裹元素](#组件一般都必须有一个包裹元素)
     - [组件渲染过程](#组件渲染过程)
+    - [返回值](#返回值)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -114,3 +116,16 @@
 3. React 调用 `Welcome` 组件，并将 `{name: 'Sara'}` 作为 props 传入。
 4. `Welcome` 组件将 `<h1>Hello, Sara</h1>` 元素作为返回值。
 5. React DOM 将 DOM 高效地更新为 `<h1>Hello, Sara</h1>`。
+
+
+## 返回值
+函数式组件（或者是类组件的 `render()` 方法）可以返回以下类型的值：
+* **React elements**. Typically created via JSX. For example, `<div />` and `<MyComponent />` are React elements that instruct React to render a DOM node, or another user-defined component, respectively.
+* **Arrays and fragments**. Let you return multiple elements from render.
+* **String and numbers**. These are rendered as text nodes in the DOM.
+* **Portals**. Let you render children into a different DOM subtree.
+* **`Booleans` or `null` or `undefined`**. Render nothing. (Mostly exists to support `return test && <Child />` pattern, where `test` is boolean).
+
+
+## References
+* [React.Component](https://legacy.reactjs.org/docs/react-component.html)

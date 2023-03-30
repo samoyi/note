@@ -11,6 +11,7 @@
         - [不一定会同步更新 state 数据](#不一定会同步更新-state-数据)
     - [State 的更新会被合并](#state-的更新会被合并)
     - [对比 Vue](#对比-vue)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -254,3 +255,7 @@
 2. Vue 只是没有同步渲染，但数据本身确实是同步更新了，只是把两次渲染合并为了一次。
 3. 这就保证了连续的数据更新不会错误。虽然等待最终合并的渲染结果要在下一次事件循环。
 4. 而 React 不仅是合并的渲染，连数据更新本身都合并了。 
+
+
+## References
+* [State & 生命周期](https://react.docschina.org/docs/state-and-lifecycle.html)

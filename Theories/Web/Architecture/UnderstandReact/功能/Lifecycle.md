@@ -88,7 +88,7 @@
     * 数组或 fragments。使得 render 方法可以返回多个元素。
     * Portals。可以渲染子节点到不同的 DOM 子树中。
     * 字符串或数值类型。它们在 DOM 中会被渲染为文本节点
-    * 布尔类型或 `null`。什么都不渲染。主要用于支持返回类似 `bool && <Child />` 的模式，其中 `bool` 为布尔类型，用来确定 `<Child />` 是否要渲染。
+    * 布尔类型、`undefined` 或 `null`。什么都不渲染。主要用于支持返回类似 `bool && <Child />` 的模式，其中 `bool` 为布尔类型，用来确定 `<Child />` 是否要渲染。
 3. `render()` 函数应该为纯函数，这意味着在 `this.props` 和 `this.state` 不变的情况下，每次调用时都返回相同的结果，并且它不会直接与浏览器交互。
 4. 如需与浏览器进行交互，请在 `componentDidMount()` 或其他生命周期方法中执行你的操作。保持 `render()` 为纯函数，可以使组件更容易思考。
 5. 如果 `shouldComponentUpdate()` 返回 `false`，则不会调用 `render()`。

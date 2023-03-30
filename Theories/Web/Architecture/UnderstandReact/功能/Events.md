@@ -7,6 +7,7 @@
     - [语法](#语法)
     - [事件处理函数中的 `this`](#事件处理函数中的-this)
     - [向事件处理程序传递参数](#向事件处理程序传递参数)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -57,7 +58,7 @@ class Foo extends React.Component {
     }
     ```
     这个语法在 Create React App 中默认开启。
-4. 上面两个方法都是直接绑定了方法的 `this`。如果希望灵活一些，不固定方法的 `this`，可以在事件绑定时使用箭头函数返回方法
+4. 上面两个方法都是直接绑定了方法的 `this`。如果希望灵活一些，不固定方法的 `this`，可以在事件绑定时使用箭头函数返回方法调用
     ```js
     <h1 onClick={()=>{this.handleClick()}}>111</h1>
     ```
@@ -118,7 +119,7 @@ class Foo extends React.Component {
     handleClick = (ev, name, age, foo)=>{
         console.log(name); // "33"
         console.log(age); // 22
-        console.log(ev.target.nodeName); // "IDV"
+        console.log(ev.target.nodeName); // "DIV"
         console.log(foo); // undefined
     }
 
@@ -148,3 +149,7 @@ class Foo extends React.Component {
         );
     }
     ```
+
+
+## References
+* [事件处理](https://react.docschina.org/docs/handling-events.html)

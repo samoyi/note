@@ -20,7 +20,7 @@
 
 
 ## `201 Created`
-1. 对于在服务器上创建对象的请求，例如使用 `PUT` 创建一个对象，如果创建成功则返回该状态码。
+1. 对于在服务器上创建对象的请求，如果创建成功则返回该状态码。
 2. 相对于 `200` 是一个单纯的成功来说，`201` 有更明确的成功意义，即成功处理了请求，并为此创建了新的资源。
 3. The entity body of the response should contain the various URLs for referencing the created resource, with the `Location` header containing the most specific reference. 
 4. 服务器必须在该响应之前就创建好对象。
