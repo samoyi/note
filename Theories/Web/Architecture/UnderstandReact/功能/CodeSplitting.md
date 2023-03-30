@@ -12,6 +12,7 @@
         - [Error boundaries](#error-boundaries)
         - [Route-based code splitting   TODO](#route-based-code-splitting---todo)
         - [Named Exports  TODO](#named-exports--todo)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -229,3 +230,7 @@
     import React, { lazy } from 'react';
     const MyComponent = lazy(() => import("./MyComponent.js"));
     ```
+
+
+## References
+* [代码分割](https://react.docschina.org/docs/code-splitting.html)

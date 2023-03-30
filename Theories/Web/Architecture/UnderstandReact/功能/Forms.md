@@ -13,6 +13,7 @@
         - [文件 input 标签](#文件-input-标签)
         - [表单默认值](#表单默认值)
         - [文件输入标签](#文件输入标签)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -147,7 +148,11 @@ class Reservation extends React.Component {
 ```
 
 ### 受控输入空值
-不懂
+1. 受控组件的 `value` 如果没有设置为某个 state 的值，而是设置为一个其他非 `undefined` 和 `null` 的值，则会阻止用户输入。下面的 `<input>` 中会保持 "hi"，不会响应用户输入
+    ```html
+    <input value="hi" />
+    ``` 
+2. 如果设置为 `undefined` 或 `null` 的话，则仍然可以正常输入。
 
     
 ## 非受控组件
@@ -238,3 +243,8 @@ class Reservation extends React.Component {
         document.getElementById('root')
     );
     ```
+
+
+## References
+* [表单](https://react.docschina.org/docs/forms.html)
+* [Forms](https://legacy.reactjs.org/docs/forms.html)

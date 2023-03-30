@@ -121,21 +121,21 @@ render() {
 3. 与 Vue 的 `v-if="false"` 比较，两者都是不会渲染组件，但是 Vue 中根本不会创建组件，即连 `beforeCreate()` 都不会被调用
     ```html
     <div id="app">
-        <child v-if="true" />
+        <child v-if="false" />
     </div>
     <script>
     "use strict";
     new Vue({
-    components: {
-        child: {
-            render(h){
-                return h('p', 'child');
-            },
-            beforeCreate(){ // 不会被调用
-                console.log('beforeCreate');
-            },
-        }
-    },
+        components: {
+            child: {
+                render(h){
+                    return h('p', 'child');
+                },
+                beforeCreate(){ // 不会被调用
+                    console.log('beforeCreate');
+                },
+            }
+        },
     }).$mount('#app');
     </script>
     ```
@@ -193,3 +193,7 @@ render() {
         document.getElementById('root')
     );
     ```
+
+
+    ## References
+    * [条件渲染](https://react.docschina.org/docs/conditional-rendering.html)

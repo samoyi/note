@@ -5,6 +5,9 @@
 
 - [Lists](#lists)
     - [Keys](#keys)
+    - [错误使用的情况](#错误使用的情况)
+        - [使用随机数作为 key 的问题](#使用随机数作为-key-的问题)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -46,3 +49,7 @@
             </form>)
         }
         ```
+
+
+## References
+* [列表 & Key](https://react.docschina.org/docs/lists-and-keys.html)
