@@ -9,13 +9,16 @@
         - [默认值](#默认值)
         - [createContext with TypeScript](#createcontext-with-typescript)
     - [`useContext` hook](#usecontext-hook)
-    - [TODO](#todo)
     - [节制使用](#节制使用)
+    - [References](#references)
 
 <!-- /TOC -->
 
 
 ## When to Use Context
+1. Usually, you will pass information from a parent component to a child component via props. But passing props can become verbose and inconvenient if you have to pass them through many components in the middle, or if many components in your app need the same information. 
+2. Context lets the parent component make some information available to any component in the tree below it—no matter how deep—without passing it explicitly through props.
+3. 也就是跨级传递数据，或者为一个组件树提供统一数据。
 
 
 ## 用法
@@ -144,13 +147,12 @@
 4. 调用了 `useContext` 的组件总会在 context 值变化时重新渲染。如果重渲染组件的开销较大，你可以通过使用 [memoization](https://github.com/facebook/react/issues/15156#issuecomment-474590693) 来优化。
 
 
-
-## TODO
-* Context.Consumer
-* Context.displayName
-
-
 ## 节制使用
 1. Context is primarily used when some data needs to be accessible by many components at different nesting levels.
 2. Apply it sparingly because it makes component reuse more difficult.
-3. If you only want to avoid passing some props through many levels, component composition is often a simpler solution than context.
+3. If you only want to avoid passing some props through many levels, component composition is often a simpler solution than context. 也就是把需要使用那些属性的子组件作为 props 传入，而不是传入属性。但好像感觉也没有更简单？不懂
+
+
+## References
+* [Passing Data Deeply with Context](https://react.dev/learn/passing-data-deeply-with-context)
+* [Context](https://legacy.reactjs.org/docs/context.html)

@@ -15,9 +15,9 @@
     - [Props](#props)
         - [JavaScript 表达式作为 Props](#javascript-表达式作为-props)
         - [字符串字面量](#字符串字面量)
-        - [Props 默认值为 “True”](#props-默认值为-true)
+        - [Props 默认值为 `true`](#props-默认值为-true)
         - [属性展开](#属性展开)
-    - [Children in JSX](#children-in-jsx)
+    - [JSX 中的子元素](#jsx-中的子元素)
         - [String Literals](#string-literals)
         - [JSX Children](#jsx-children)
         - [JavaScript Expressions as Children](#javascript-expressions-as-children)
@@ -63,7 +63,7 @@
 
     const element = (
         <h1>
-        Hello, {formatName(user)}!
+            Hello, {formatName(user)}!
         </h1>
     );
     ```
@@ -130,7 +130,7 @@ function App() {
 ```
 
 ### 在运行时选择类型
-1. 你不能将通用表达式作为 React 元素类型,如果你想通过通用表达式来动态决定元素类型，你需要首先将它赋值给大写字母开头的变量。
+1. 你不能将通用表达式作为 React 元素类型，如果你想通过通用表达式来动态决定元素类型，你需要首先将它赋值给大写字母开头的变量。
 2. 这通常用于根据 prop 来渲染不同组件的情况下
     ```js
     function PhotoStory () {
@@ -141,13 +141,13 @@ function App() {
     }
 
     const components = {
-    photo: PhotoStory,
-    video: VideoStory
+        photo: PhotoStory,
+        video: VideoStory
     };
 
     function Story(props) {
-    const SpecificStory = components[props.storyType];
-    return <SpecificStory />;
+        const SpecificStory = components[props.storyType];
+        return <SpecificStory />;
     }
 
     function App() {
@@ -177,7 +177,7 @@ function App() {
     ```js
     <MyComponent foo={1 + 2 + 3 + 4} />
     ```
-2. 区别
+2. 表达式和语句的区别：
     * Expression: Something which evaluates to a value. Example: `1+2/x`
     * Statement: A line of code which does something. Example: `GOTO 100`
 
@@ -195,7 +195,7 @@ function App() {
     <MyComponent message={'<3'} />
     ```
 
-### Props 默认值为 “True”
+### Props 默认值为 `true`
 如果你没给 prop 赋值，它的默认值是 `true`。以下两个 JSX 表达式是等价的：
 ```js
 <MyTextBox autocomplete />
@@ -236,8 +236,8 @@ function App() {
 3. 属性展开在某些情况下很有用，但是也很容易将不必要的 props 传递给不相关的组件，或者将无效的 HTML 属性传递给 DOM。我们建议谨慎的使用该语法。
 
 
-## Children in JSX
-In JSX expressions that contain both an opening tag and a closing tag, the content between those tags is passed as a special prop: `props.children`. There are several different ways to pass children.
+## JSX 中的子元素
+包含在开始和结束标签之间的 JSX 表达式内容将作为特定属性 `props.children` 进行传递。有几种不同的方法来传递子元素。
 
 ### String Literals
 1. You can put a string between the opening and closing tags and `props.children` will just be that string
@@ -276,15 +276,15 @@ In JSX expressions that contain both an opening tag and a closing tag, the conte
         <MySecondComponent />
     </MyContainer>
     ```
-2. A React component can also return an array of elements. 但是如果在 TS 中这样使用则无法通过检查
+2. A React component can also return an array of elements
     ```js
     function Foo () {
         // No need to wrap list items in an extra element!
         return [
             // Don't forget the keys :)
-            <li key="A">First item</li>,
-            <li key="B">Second item</li>,
-            <li key="C">Third item</li>,
+            <li key="A">First item</li>
+            <li key="B">Second item</li>
+            <li key="C">Third item</li>
         ];
     }
 
@@ -296,12 +296,30 @@ In JSX expressions that contain both an opening tag and a closing tag, the conte
         );
     }
     ```
+3. 但上面的代码在 TS 中会报错
+    ```
+    'Foo' cannot be used as a JSX component.
+      Its return type 'Element[]' is not a valid JSX element.
+        Type 'Element[]' is missing the following properties from type 'ReactElement<any, any>': type, props, key
+    ```
+    因为 TS 要求组件返回值必须是 `JSX.Element`。因此可以改成下面的写法：
+    ```ts
+    function Foo() {
+        return <>
+            <li key="A">First item</li>,
+            <li key="B">Second item</li>,
+            <li key="C">Third item</li>,
+        </>;
+    }
+    ```
 
 ### JavaScript Expressions as Children
 1. You can pass any JavaScript expression as children, by enclosing it within `{}`. For example, these expressions are equivalent:
     ```js
+    {/* 直接插入字符串字面量 */}
     <MyComponent>foo</MyComponent>
 
+    {/* 通过 {} 插入 JS 表达式，但是表达式的内容是字符串字面量 */}
     <MyComponent>{'foo'}</MyComponent>
     ```
 2. This is often useful for rendering a list of JSX expressions of arbitrary length. For example, this renders an HTML list
@@ -461,4 +479,7 @@ In JSX expressions that contain both an opening tag and a closing tag, the conte
 
 
 ## References
+* [JSX 简介](https://react.docschina.org/docs/introducing-jsx.html)
+* [JSX In Depth](https://legacy.reactjs.org/docs/jsx-in-depth.html)
 * [Expression Versus Statement](https://stackoverflow.com/a/19224/10404867)
+* [Type 'Element[]' is missing the following properties from type 'Element': type, props, key](https://stackoverflow.com/questions/58311442/type-element-is-missing-the-following-properties-from-type-element-type)
