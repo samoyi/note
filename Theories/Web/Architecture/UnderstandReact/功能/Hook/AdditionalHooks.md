@@ -61,7 +61,7 @@
     ```
 2. 理想的情况就是这三个函数一直存在，每次点击事件发生时调用函数，然后内部的变量去到外层最新的 `count` 或 `number`。但应该是词法作用域规则不支持这样，因为这样的话你的函数就要定义到 `App` 函数外部才能实现不重新创建，但定义在外部就无法访问 `App` 内部的变量了。
 3. 退一步的优化，就是这里的 `useCallback`。它会记录函数的依赖项，如果依赖项不变，就还是使用原来的函数，变得的话就重新创建新的函数。
-4. TODO，还没看具体原来，但感觉上，之所以可以不重新创建，是因为把外部的依赖项局部化了，调用的时候不是访问真正的外层的变量，而是使用局部化了的变量，所以只要依赖的变量没有变，那函数的调用就能和之前的效果保持一致。
+4. TODO，还没看具体原理，但感觉上，之所以可以不重新创建，是因为把外部的依赖项局部化了，调用的时候不是访问真正的外层的变量，而是使用局部化了的变量，所以只要依赖的变量没有变，那函数的调用就能和之前的效果保持一致。
 5. 优化如下
     ```js
     import React, { useState, useCallback } from 'react'
@@ -233,14 +233,57 @@ TODO
     ```
 
 
-
 ## `useReducer`
-TODO
+1. `useReducer` 接收一个执行实际 reduce 逻辑的函数 `reducer` 和 reduce 初始值，返回的两项数组是，分别是 reduce 值变量（此时返回的就是初始值）和一个触发 reduce 的 dispatch 函数。
+2. 想要进行一次 reduce 时，就调用 dispatch 函数，然后就会执行 `reducer` 函数。
+3. `reducer` 函数接受两个参数，第一个参数是上次 reduce 之后的值，第二个参数是  dispatch 函数调用时传入的参数
+    ```js
+    import { useReducer } from 'react';
+
+    function reducer(state, action) {
+        if (action.type === 'incremented_age') {
+            return {
+                age: state.age + 1
+            };
+        }
+        throw Error('Unknown action.');
+        }
+
+        export default function Counter() {
+        const [state, dispatch] = useReducer(reducer, { age: 42 });
+
+        return (
+            <>
+                <button onClick={() => {
+                    dispatch({ type: 'incremented_age' })
+                }}>
+                    Increment age
+                </button>
+                <p>Hello! You are {state.age}.</p>
+            </>
+        );
+    }
+    ```
 
 
 ## `useRef`
 1. `useRef` 返回一个可变的 ref 对象，其 `.current` 属性被初始化为传入的参数（`initialValue`）。返回的 ref 对象在组件的整个生命周期内持续存在。
-2. `useRef` 常见的用法是命令式的访问子组件或者子元素。但它可以很方便地保存任何可变值，其类似于在 class 中使用实例字段的方式。
+2. `useRef` 常见的用法是命令式的访问子组件或者子元素。但它可以很方便地保存任何可变值，其类似于在 class 中使用实例字段的方式
+    ```js
+    function TextInputWithFocusButton() {
+        const inputEl = useRef(null);
+        const onButtonClick = () => {
+            // `current` points to the mounted text input element
+            inputEl.current.focus();
+        };
+        return (
+            <>
+                <input ref={inputEl} type="text" />
+                <button onClick={onButtonClick}>Focus the input</button>
+            </>
+        );
+    }
+    ```
 3. This works because `useRef()` creates a plain JavaScript object. The only difference between `useRef()` and creating a `{current: ...}` object yourself is that `useRef` will give you the same ref object on every render.
 4. Keep in mind that `useRef` doesn’t notify you when its content changes. Mutating the `.current` property doesn’t cause a re-render. If you want to run some code when React attaches or detaches a ref to a DOM node, you may want to use a callback ref instead
     ```js
@@ -270,10 +313,6 @@ TODO
 
     export default App;
     ```
-
-
-
-
 
 
 ## References

@@ -10,6 +10,7 @@
     - [Functional updates](#functional-updates)
     - [Batching of state updates](#batching-of-state-updates)
     - [TypeScript 的情况](#typescript-的情况)
+    - [References](#references)
 
 <!-- /TOC -->
 
@@ -79,8 +80,48 @@ A Hook is a special function that lets you “hook into” React features. For e
 ## Batching of state updates
 1. React may group several state updates into a single re-render to improve performance. Normally, this improves performance and shouldn’t affect your application’s behavior.
 2. Before React 18, only updates inside React event handlers were batched. Starting with React 18, batching is enabled for all updates by default. 
-3. Note that React makes sure that updates from several different user-initiated events — for example, clicking a button twice — are always processed separately and do not get batched. This prevents logical mistakes.
-4. In the rare case that you need to force the DOM update to be applied synchronously, you may wrap it in `flushSync`. However, this can hurt performance so do this only where needed.
+3. Note that React makes sure that updates from several different user-initiated events — for example, clicking a button twice — are always processed separately and do not get batched. This prevents logical mistakes. TODO，但看起来这里只是说了不 batch，但好像并不会同步渲染，更不是同步更新 state 的值
+    ```js
+    function MyComp() {
+        const [age, setAge] = useState(0);
+        const onButtonClick = () => {
+            setAge(222)
+            console.log(age)
+            debugger
+        };
+
+        return (
+            <button onClick={onButtonClick}>{age}</button>
+        );
+    }
+    ```
+    debugger 的时候 age 的值和按钮上的显示都没有变。
+4. In the rare case that you need to force the DOM update to be applied synchronously, you may wrap it in `flushSync`. However, this can hurt performance so do this only where needed. [例子](https://react.dev/learn/manipulating-the-dom-with-refs#flushing-state-updates-synchronously-with-flush-sync)
+    ```js
+    flushSync(() => {
+        setSomething(123);
+    });
+    // By this line, the DOM is updated.
+    ```
+    但是 `flushSync` 这里只是说会同步渲染，并不是说修改 state 之后会同步查询到新的值
+    ```js
+    function MyComp() {
+        const [age, setAge] = useState(0);
+        const onButtonClick = () => {
+            flushSync(() => {
+            setAge(222)
+            });
+            console.log(age)
+            debugger
+        };
+        
+
+        return (
+            <button onClick={onButtonClick}>{age}</button>
+        );
+    }
+    ```
+    点击按钮后 debugger 时，按钮上的数字已经变成 222，但是 `age` 此时显示的值还是 0。
 
 
 ## TypeScript 的情况
@@ -105,3 +146,8 @@ A Hook is a special function that lets you “hook into” React features. For e
     const [age, setAge] = useState<User>();
     setAge({name: "33", age: 22}); 
     ```
+
+
+## References
+* [Flushing state updates synchronously with flushSync ](https://react.dev/learn/manipulating-the-dom-with-refs#flushing-state-updates-synchronously-with-flush-sync)
+
