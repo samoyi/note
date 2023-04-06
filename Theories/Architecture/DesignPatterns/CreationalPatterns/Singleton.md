@@ -20,6 +20,7 @@
         - [使用静态方法](#使用静态方法)
     - [惰性单例](#惰性单例)
         - [通用的惰性单例代理](#通用的惰性单例代理)
+    - [实例](#实例)
     - [与其他模式的关系](#与其他模式的关系)
     - [References](#references)
 
@@ -348,6 +349,10 @@ Queen2.sayName();  // "Athena"
 console.log(King1 === King2);    // true
 console.log(Queen1 === Queen2);  // true
 ```
+
+
+## 实例
+* Vuex
 
 
 ## 与其他模式的关系

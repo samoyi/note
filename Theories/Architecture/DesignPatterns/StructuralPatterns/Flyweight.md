@@ -33,6 +33,7 @@
         - [缓存——空间换时间](#缓存空间换时间-1)
         - [实现](#实现)
         - [通用对象池实现](#通用对象池实现)
+    - [实例](#实例)
     - [与其他模式的关系](#与其他模式的关系)
     - [References](#references)
 
@@ -365,7 +366,12 @@ maleModel.color = 'black'; // TypeError: Cannot set property color of #<Model> w
     ```
 
 
-##　与其他模式的关系
+## 实例
+* 可复用组件
+* Vue 中的 mixin
+
+
+## 与其他模式的关系
 
 
 ## References
