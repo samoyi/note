@@ -75,7 +75,7 @@
     function fn(x: string): string;
     function fn(x: number): boolean; // This overload signature is not compatible with its implementation signature.
     function fn(x: string | number) {
-    return "oops";
+        return "oops";
     }
     ```
 

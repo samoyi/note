@@ -110,7 +110,7 @@ function buildName(firstName: string, ...restOfName: string[]) {
     ```
 
 #### `object`
-The special type 1 refers to any value that isn’t a primitive. This is different from the empty object type `{ }`, and also different from the global type `Object`.
+The special type refers to any value that isn’t a primitive. This is different from the empty object type `{ }`, and also different from the global type `Object`.
 
 #### `unknown`
 1. The `unknown` type represents any value. This is similar to the `any` type, but is safer because it’s not legal to do anything with an `unknown` value

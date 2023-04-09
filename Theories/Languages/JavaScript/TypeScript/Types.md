@@ -71,7 +71,7 @@
 
 #### 禁止隐式声明为 `any` 类型
 1. When you don’t specify a type, and TypeScript can’t infer it from context, the compiler will typically default to `any`.
-2. You usually want to avoid this, though, because any isn’t type-checked. Use the compiler flag `noImplicitAny` to flag any implicit any as an error.
+2. You usually want to avoid this, though, because `any` isn’t type-checked. Use the compiler flag `noImplicitAny` to flag any implicit any as an error.
 3. 命令行如下进行编译时会报错
     ```ts
     function fn(s) {
@@ -113,13 +113,6 @@
     ```
 3. 上面的例子可以看到，`undefined` 和 `null` 可能会导致意外的错误。在 `tsconfig.json` 中设置
 `"strictNullChecks": true` 可以禁止这种赋值，使得 `null` 和 `undefined` 只能赋值给 `void` 和它们自身。
-4. 另外还有一个类似于 JS 中 `?` 的操作符 `!`，可以保证前面的值不是 `null` 或者 `undefined` 才继续调用后面的内容
-    ```ts
-    function liveDangerously(x?: number | null) {
-        // No error
-        console.log(x!.toFixed());
-    }
-    ```
     
 #### 断言非 `null` 或 `undefined`
 1. 下面的代码会有编译错误
@@ -145,8 +138,8 @@
 1. 定义对象类型时，只需要列出它们的属性名和类型
     ```ts
     function printCoord(pt: { x: number, y: number }) {
-    console.log("The coordinate's x value is " + pt.x);
-    console.log("The coordinate's y value is " + pt.y);
+        console.log("The coordinate's x value is " + pt.x);
+        console.log("The coordinate's y value is " + pt.y);
     }
     printCoord({ x: 3, y: 7 });
     ```
@@ -203,15 +196,16 @@
     ```
 
 #### `ReadonlyArray`
-    ```ts
-    function doStuff(values: ReadonlyArray<string>) {
-        const copy = values.slice();
-        console.log(`The first value is ${values[0]}`);
-    
-        values.push("hello!"); // 编译报错
-        // Property 'push' does not exist on type 'readonly string[]'.
-    }   
-    ```
+```ts
+function doStuff(values: readonly string[]) {
+// 或者 function doStuff(values: ReadonlyArray<string>) {
+    const copy = values.slice();
+    console.log(`The first value is ${values[0]}`);
+
+    values.push("hello!"); // 编译报错
+    // Property 'push' does not exist on type 'readonly string[]'.
+}   
+```
 
 ### Union Types
 1.  A union type is a type formed from two or more other types, representing values that may be any one of those types. 
@@ -242,10 +236,10 @@
     ```ts
     function printId(id: number | string) {
         if (typeof id === "string") {
-        console.log(id.toUpperCase());
+            console.log(id.toUpperCase());
         } 
         else {
-        console.log(id);
+            console.log(id);
         }
     }
     ```
@@ -272,7 +266,7 @@
     ab = { a: 1, b: "1" }; // Error
     // Type 'string' is not assignable to type 'number'. 
     ```
-3. 进一步，下面的例子
+3. 接着上面的例子，进一步
     ```ts
     // X 类型要求 有且仅有一个类型为 A 的属性 p
     interface X { p: A }  
@@ -282,7 +276,7 @@
     // X & Y 类型就要求 有且仅有一个类型为 A & B 的属性 p
     var xy: X & Y;
 
-    xy = { p: ab };  // OK   上面 ab 的属性是 A & B
+    xy = { p: ab };  // OK   上面例子中 ab 的属性是 A & B
 
     xy = { p: 22 }; // Error  虽然有属性 p，但是类型不是 A & B
     // Type 'number' is not assignable to type 'A & B'.
@@ -298,7 +292,7 @@ TODO，不懂
 ```ts
 // 函数类型 F1 要求有且仅有两个 string 参数
 type F1 = (a: string, b: string) => void;  
-// 函数类型 F 要求有且仅有两个 number 参数
+// 函数类型 F2 要求有且仅有两个 number 参数
 type F2 = (c: number, d: number) => void; // 形参名不重要
 
 // F1 & F2
@@ -557,6 +551,13 @@ f(1, "test");         // Error
         ```ts
         const req = { url: "https://example.com", method: "GET" } as const;
         ```
+
+
+
+
+Literal Types
+as const
+https://stackoverflow.com/questions/37978528/typescript-type-string-is-not-assignable-to-type
 
 
 ## References

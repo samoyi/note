@@ -153,7 +153,6 @@ Index Signatures
     ```ts
     interface CountInfo {
         [key: string]: number;
-        total: number;
         name: string; // Error
         // Property 'name' of type 'string' is not assignable to 'string' index type 'number'.
     }
@@ -162,7 +161,6 @@ Index Signatures
     ```ts
     interface CountInfo {
         [key: string]: number | string;
-        total: number;
         name: string; // Ok
     }
     ```

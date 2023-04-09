@@ -5,6 +5,7 @@
 - [Generic Functions](#generic-functions)
     - [描述类型关系](#描述类型关系)
     - [Constraints](#constraints)
+        - [Using Type Parameters in Generic Constraints](#using-type-parameters-in-generic-constraints)
     - [Specifying Type Arguments](#specifying-type-arguments)
     - [Guidelines for Writing Good Generic Functions](#guidelines-for-writing-good-generic-functions)
         - [Push Type Parameters Down](#push-type-parameters-down)
@@ -16,7 +17,7 @@
 
 
 ## 描述类型关系
-1. 有时我们的函数并不关心具体的参数和返回值是什么，之关系参数和返回值之间的关系，或者参数之间的关系。比如我们希望一个函数的参数是数组，而返回值是数组第一项，此时我们并不关心具体类型，只是要求返回值的类型应该和参数数组项的类型相同。
+1. 有时我们的函数并不关心具体的参数和返回值是什么，只关心参数和返回值之间的关系，或者参数之间的关系。比如我们希望一个函数的参数是数组，而返回值是数组第一项，此时我们并不关心具体类型，只是要求返回值的类型应该和参数数组项的类型相同。
 2. 因为不关心参数类型，如果不使用泛型函数，那么参数只能使用 `any[]` 类型才行
     ```ts
     function firstElement(arr: any[]) {
@@ -40,7 +41,8 @@
     firstElement([]);              // function firstElement<never>(arr: never[]): undefined
     ```
     通过传递不同类型的数组，TS 推断出类型参数的类型值，进而在参数和返回值之间建立了明确的类型关系。
-6. 多个类型参数的情况
+6. 也就是说，泛型实现的是“类型的形参”，而不再是之前只能写具体的类型。在调用时，使用什么类型的参数，就相当于给类型的形参传递了实际的类型实参。
+7. 多个类型参数的情况
     ```ts
     function my_map<Input, Output>(arr: Input[], func: (arg: Input) => Output): Output[] {
         return arr.map(func);
@@ -50,8 +52,8 @@
     // function my_map<string, number>(arr: string[], func: (arg: string) => number): number[]
     ```
     TS 推断出此时的类型参数 `Input` 和 `Output` 分别 `string` 和 `number`。
-7. 不懂，上面的例子都是约束返回值和参数之间的关系，但是只要通过函数的内部实现就可以实现这种约束，比如最初没有用到泛型的 `firstElement`，它内部就明确返回数组项，那就是参数数组项的类型。这种情况下看起来只是从类型的名字上没有明确，但功能上完全和使用泛型没区别。不懂这种泛型还存在其他用途把。
-8. 但是如果泛型是用来约束参数之间的类型关系，那就很有用了，因为参数是调用者传递的，并不能像返回值那样可以在函数体内通过逻辑表达出类型
+8. 不懂，上面的例子都是约束返回值和参数之间的关系，但是只要通过函数的内部实现就可以实现这种约束，比如最初没有用到泛型的 `firstElement`，它内部就明确返回数组项，那就是参数数组项的类型。这种情况下看起来只是从类型的名字上没有明确，但功能上完全和使用泛型没区别。不懂这种泛型还存在其他用途把。
+9. 但是如果泛型是用来约束参数之间的类型关系，那就很有用了，因为参数是调用者传递的，并不能像返回值那样可以在函数体内通过逻辑表达出类型
     ```ts
     function my_indexOf<Type>(arr: Type[], ele: Type) {
         return arr.indexOf(ele);
