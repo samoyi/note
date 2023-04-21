@@ -247,9 +247,9 @@ TODO
             };
         }
         throw Error('Unknown action.');
-        }
+    }
 
-        export default function Counter() {
+    export default function Counter() {
         const [state, dispatch] = useReducer(reducer, { age: 42 });
 
         return (

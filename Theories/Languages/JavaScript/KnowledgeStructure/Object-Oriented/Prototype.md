@@ -16,7 +16,7 @@
 <!-- /TOC -->
 
 
-1. 随便声明一个函数，它的 `prototype` 属性指向哪里。例如
+1. 随便声明一个非箭头函数，它的 `prototype` 属性指向哪里。例如
     ```js
     function foo () {}
     foo.prototype // ?
@@ -43,10 +43,8 @@
     <img src="./images/prototype.png" width="600" style="border: 3px solid white; display: block; margin: 5px 0 10px;" />
 6. 原型的 `constructor` 属性指向引用该原型的构造函数
     ```js
-    let obj1 = {},
-    	obj2 = {};
-    console.log( obj1.constructor.prototype === obj2.constructor.prototype ); // true
-    console.log( obj1.constructor === obj2.constructor.prototype.constructor ); // true
+    // constructor 不是 person1 的实例属性，这里访问的实际上是 person1.__proto__.constructor
+    console.log(person1.constructor === Person); // true
     ```
 7. `Object.prototype` 是仅有的没有原型的对象，它不继承任何属性
     ```js
@@ -64,15 +62,22 @@
     
     console.log( Object.prototype.toString.call(Date.prototype));     // [object Object]
     ```
+9. 箭头函数没有 `prototype`，所以它也不能作为构造函数
+    ```js
+    const bar = () => {};
+    console.log(bar.prototype); // undefined
+    new bar(); // TypeError: bar is not a constructor
+    ```
 
 
 ## Prototype chain
 1. 示例代码
     ```js
     // 最终原型是 Object 类的原型
+    console.log( Object.getPrototypeOf(Object.prototype) ); // null
+    
     // Object 类的构造函数的 prototype 属性和 Object 类的实例的 __proto__ 属性指向该原型
     console.log( Object.prototype === Object.getPrototypeOf({}) ); // true
-    console.log( Object.getPrototypeOf(Object.prototype) ); // null
 
     // 自定义类的构造函数的 prototype 属性和自定义类的实例的 __proto__ 属性指向自定义类的原型
     // 自定义的类的原型继承 Object 类的原型，也就是原型链增加了一节，达到了两节
@@ -105,19 +110,19 @@
 6. 另外，像 `Array` 啊 `Function` 啊这样的类也都是 `Object` 的子类，它们的原型对象的原型也是指向 `Object` 的原型对象
     ```js
     // `Array` 类的构造函数的 `prototype` 属性和实例的 `__proto__` 属性指向 `Array` 类的原型对象
-    // `Array` 类的原型继承 Object 类的原型，也就是原型链增加了一节，达到了两节
     console.log( Array.prototype === Object.getPrototypeOf([]) ); // true
+    // `Array` 类的原型继承 Object 类的原型，也就是原型链增加了一节，达到了两节
     console.log( Object.getPrototypeOf(Array.prototype) === Object.prototype ); // true
 
     // `Function` 类的构造函数的 `prototype` 属性和实例的 `__proto__` 属性指向 `Function` 类的原型对象
-    // `Function` 类的原型继承 Object 类的原型，也就是原型链增加了一节，达到了两节
     console.log( Function.prototype === Object.getPrototypeOf(()=>{}) ); // true
+    // `Function` 类的原型继承 Object 类的原型，也就是原型链增加了一节，达到了两节
     console.log( Object.getPrototypeOf(Function.prototype) === Object.prototype ); // true
     ```
 7. 要注意，前面说 Object 类，这里的 “Object” 是指类名。但平时在代码中看到的 `Object` 实际上是个函数，也就是 Function 类的实例。`Array` 函数也是同理
     ```js
-    console.log( Function.prototype === Object.getPrototypeOf(Object) ); // true
-    console.log( Function.prototype === Object.getPrototypeOf(Array) ); // true
+    console.log( Object.getPrototypeOf(Object) === Function.prototype ); // true
+    console.log( Object.getPrototypeOf(Array) === Function.prototype ); // true
     ```
 
 
@@ -134,8 +139,8 @@
 
 ## 检测原型
 ### 三种方法
-* `Object.prototype.isPrototypeOf()`: checks if an object exists in another object's prototype chain.
-* `instanceof` operator : tests to see if the prototype property of a constructor appears anywhere in the prototype chain of an object.
+* `Object.prototype.isPrototypeOf()`: checks if an object exists in another object's prototype **chain**.
+* `instanceof` operator : tests to see if the prototype property of a constructor appears anywhere in the prototype **chain** of an object.
 * `Object.getPrototypeOf()`: returns the prototype (i.e. the value of the internal `[[Prototype]]` property) of the specified object.
 
 ### 区别

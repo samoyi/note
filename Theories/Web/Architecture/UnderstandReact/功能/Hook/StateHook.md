@@ -20,7 +20,7 @@ A Hook is a special function that lets you “hook into” React features. For e
 
 
 ## Usage
-1. 组件首次渲染时， `useState` 会声明一个变量并对其进行初始化。如果这个变量没有被设值函数改变，那组件在先吃渲染时，`useState` 还会返回相同的值给这个变量。
+1. 组件首次渲染时， `useState` 会声明一个变量并对其进行初始化。如果这个变量没有被设值函数改变，那组件在下次渲染时，`useState` 还会返回相同的值给这个变量。
 2. 如果使用了设值函数改变了变量，那会触发组件重新渲染，然后 `useState` 就会返回更新后的值给这个变量。
 3. 这也是为什么这个钩子不叫 `createState`，因为它只有在组件第一次渲染时才是 create，之后都是 use。
 4. 直接修改变量没有效果（也不会报错），必须要通过设值函数。
@@ -50,7 +50,7 @@ A Hook is a special function that lets you “hook into” React features. For e
 
 
 ## Functional updates
-1. 如果一个 state 的新值需要在旧值的基础上计算得到，那可以给 `setState` 传递函数作为参数，该函数的参数是单签的 state 值
+1. 如果一个 state 的新值需要在旧值的基础上计算得到，那可以给 `setState` 传递函数作为参数，该函数的参数是当前的 state 值
     ```js
     function Counter({ initialCount }) {
         const [count, setCount] = useState(initialCount);
