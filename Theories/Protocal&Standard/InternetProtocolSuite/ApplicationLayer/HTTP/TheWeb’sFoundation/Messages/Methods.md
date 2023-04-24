@@ -11,6 +11,7 @@
     - [HEAD](#head)
     - [POST](#post)
     - [PUT](#put)
+    - [REST API 规范](#rest-api-规范)
     - [GET 和 POST 的比较](#get-和-post-的比较)
     - [TRACE](#trace)
     - [OPTIONS](#options)
@@ -42,16 +43,28 @@
 
 
 ## POST
-1. 该方法是设计用来向服务器发送输入数据的，最典型的场景就是发送表单数据。
-2. `POST` 方法用来向服务器发送数据，而 `PUT` 方法用来把提交的数据作为一个资源保存在服务器。
+1. 注意，REST API 规范与下面描述的不同。
+2. 该方法是设计用来向服务器发送输入数据的，最典型的场景就是发送表单数据。
+3. `POST` 方法用来向服务器发送数据，而 `PUT` 方法用来把提交的数据作为一个资源保存在服务器。
 
 
 ## PUT
-1. `PUT` 方法和 `GET` 方法相反，它把文档写入到服务器。
-2. 某些发布系统应用允许用户创建页面，然后通过 `PUT` 方法直接添加到服务器。
-3. `PUT` 方法的语义就是让服务器使用请求实体去创建一个新文档并保存在请求 URL 的位置，或者如果这个 URL 已经存在，则替换掉当前文档
+1. 注意，REST API 规范与下面描述的不同。
+2. `PUT` 方法和 `GET` 方法相反，它把文档写入到服务器。
+3. 某些发布系统应用允许用户创建页面，然后通过 `PUT` 方法直接添加到服务器。
+4. `PUT` 方法的语义就是让服务器使用请求实体去创建一个新文档并保存在请求 URL 的位置，或者如果这个 URL 已经存在，则替换掉当前文档
     <img src="./images/05.png" width="600" style="display: block; margin: 5px 0 10px 0;" />
-4. 可以看到与 `POST` 的明显不同时，`PUT` 提交的内容会被创建为一个独立的资源，之后的响应也会返回这个资源的 URL。而 `POST` 提交的数据可以只是用来验证身份或者在数据库里插入一条记录，并不是一个独立的资源。
+5. 可以看到与 `POST` 的明显不同时，`PUT` 提交的内容会被创建为一个独立的资源，之后的响应也会返回这个资源的 URL。而 `POST` 提交的数据可以只是用来验证身份或者在数据库里插入一条记录，并不是一个独立的资源。
+
+
+## REST API 规范
+* GET：查询资源；幂等
+* POST：创建资源；不幂等
+* PUT：整体更新资源；幂等，同样的资源会替换旧的
+* PATCH：修改资源的一部分，不幂等
+* DELETE：幂等
+
+[REST – PUT vs POST](https://restfulapi.net/rest-put-vs-post/)
 
 
 ## GET 和 POST 的比较
@@ -242,3 +255,4 @@ what you send, be liberal in what you accept.”
     
 ## References
 * [*HTTP: the definitive guide*](https://book.douban.com/subject/1440226/)
+* [REST – PUT vs POST](https://restfulapi.net/rest-put-vs-post/)

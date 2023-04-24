@@ -123,8 +123,8 @@
 * **React elements**. Typically created via JSX. For example, `<div />` and `<MyComponent />` are React elements that instruct React to render a DOM node, or another user-defined component, respectively.
 * **Arrays and fragments**. Let you return multiple elements from render.
 * **String and numbers**. These are rendered as text nodes in the DOM.
-* **Portals**. Let you render children into a different DOM subtree.
 * **`Booleans` or `null` or `undefined`**. Render nothing. (Mostly exists to support `return test && <Child />` pattern, where `test` is boolean).
+* **Portals**. Let you render children into a different DOM subtree.
 
 
 ## References
