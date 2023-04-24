@@ -14,3 +14,4 @@
 * 不需要插槽，子组件直接插入节点标签中或者通过 props 传递子组件。
 * 手动双绑
 * Vue 中用 `mixin`，React 中用 HOC
+* Vue 的 provide/inject 是非响应的，React 的 context 是响应更新的。
