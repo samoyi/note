@@ -1,5 +1,112 @@
 # Proxy
 
+
+<!-- TOC -->
+
+- [Proxy](#proxy)
+    - [概述](#概述)
+    - [构造函数](#构造函数)
+        - [Terminology](#terminology)
+        - [Syntax](#syntax)
+    - [实例方法](#实例方法)
+        - [`handler.get()`](#handlerget)
+            - [Parameters](#parameters)
+            - [`this` is bound to the handler](#this-is-bound-to-the-handler)
+            - [可以继承](#可以继承)
+            - [`receiver`不继承](#receiver不继承)
+            - [不能`get`拦截的属性](#不能get拦截的属性)
+        - [`handler.set()`](#handlerset)
+            - [Parameters](#parameters-1)
+            - [Return value](#return-value)
+            - [`this` is bound to the handler](#this-is-bound-to-the-handler-1)
+            - [`get`方法可以继承，但和`get`情况一样，`receiver`指向真正接受请求的代理](#get方法可以继承但和get情况一样receiver指向真正接受请求的代理)
+            - [不可写的属性`set`代理了仍然不可写](#不可写的属性set代理了仍然不可写)
+        - [`handler.apply()`](#handlerapply)
+            - [Interceptions](#interceptions)
+            - [Parameters](#parameters-2)
+        - [`handler.has()`](#handlerhas)
+            - [Interceptions](#interceptions-1)
+                - [对`for...in`不生效](#对forin不生效)
+            - [Parameters](#parameters-3)
+            - [Return value](#return-value-1)
+            - [Invariants](#invariants)
+        - [`handler.construct()`](#handlerconstruct)
+            - [Parameters](#parameters-4)
+            - [Return value](#return-value-2)
+            - [Interceptions](#interceptions-2)
+            - [Invariants](#invariants-1)
+        - [`handler.deleteProperty()`](#handlerdeleteproperty)
+            - [Parameters](#parameters-5)
+            - [Return value](#return-value-3)
+            - [Interceptions](#interceptions-3)
+            - [Invariants](#invariants-2)
+        - [`handler.defineProperty()`](#handlerdefineproperty)
+            - [Parameters](#parameters-6)
+            - [Return value](#return-value-4)
+            - [Interceptions](#interceptions-4)
+            - [Invariants](#invariants-3)
+        - [`handler.getOwnPropertyDescriptor()`](#handlergetownpropertydescriptor)
+            - [Parameters](#parameters-7)
+            - [Return value](#return-value-5)
+            - [Interceptions](#interceptions-5)
+            - [Invariants](#invariants-4)
+        - [`handler.getPrototypeOf()`](#handlergetprototypeof)
+            - [Parameters](#parameters-8)
+            - [Return value](#return-value-6)
+            - [Interceptions](#interceptions-6)
+            - [Invariants](#invariants-5)
+        - [`handler.isExtensible()`](#handlerisextensible)
+            - [Parameters](#parameters-9)
+            - [Return value](#return-value-7)
+            - [Interceptions](#interceptions-7)
+            - [Invariants](#invariants-6)
+        - [`handler.ownKeys()`](#handlerownkeys)
+            - [Parameters](#parameters-10)
+            - [Return value](#return-value-8)
+            - [可能会被自动过滤的属性](#可能会被自动过滤的属性)
+            - [Interceptions](#interceptions-8)
+            - [Invariants](#invariants-7)
+        - [`handler.preventExtensions()`](#handlerpreventextensions)
+            - [Parameters](#parameters-11)
+            - [Return value](#return-value-9)
+            - [Interceptions](#interceptions-9)
+            - [Invariants](#invariants-8)
+        - [`handler.setPrototypeOf()`](#handlersetprototypeof)
+            - [Parameters](#parameters-12)
+            - [Return value](#return-value-10)
+            - [Interceptions](#interceptions-10)
+            - [Invariants](#invariants-9)
+    - [Methods](#methods)
+        - [Parameters](#parameters-13)
+        - [Return value](#return-value-11)
+        - [Revocable `Proxy` object](#revocable-proxy-object)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
+## 概述
+1. Proxy 用来代理对对象的操作。
+2. 例如，下面代理了一个对象的属性读写操作
+  ```js
+  const obj = new Proxy({}, {
+    get: function (target, propKey, receiver) {
+      console.log(`getting ${propKey}!`);
+      return Reflect.get(target, propKey, receiver);
+    },
+    set: function (target, propKey, value, receiver) {
+      console.log(`setting ${propKey}!`);
+      return Reflect.set(target, propKey, value, receiver);
+    }
+  });
+  obj.count = 1
+  // setting count!
+  ++obj.count
+  //  getting count!
+  //  setting count!
+  ```
+
+
 ## 构造函数
 ### Terminology
 * **handler**：Placeholder object which contains traps.
