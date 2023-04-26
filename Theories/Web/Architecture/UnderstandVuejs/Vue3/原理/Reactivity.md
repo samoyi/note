@@ -6,7 +6,7 @@
 - [Reactivity](#reactivity)
     - [需要实现的功能](#需要实现的功能)
     - [实现原理](#实现原理)
-    - [`reactive()` 的局限性](#reactive-的局限性)
+    - [Proxy 比 defineProperty 好的地方](#proxy-比-defineproperty-好的地方)
     - [References](#references)
 
 <!-- /TOC -->
@@ -71,9 +71,9 @@
 6. 现在，当 `update` 函数调用并访问到 `A0` 和 `A1` 时，就会出发它们对应的 `track` 函数收集副作用 `update` 函数；然后 `A0` 和 `A1` 更新时，就会触发它们对应的 `track` 函数来调用副作用函数 `update`，实现响应式的更新 `A2`。
 
 
-
-## `reactive()` 的局限性
-TODO
+## Proxy 比 defineProperty 好的地方
+1. defineProperty 只能代理对象属性的读取和设置，新增删除都不行。尤其是数组方法，Vue2 中为此单独包装了一组数组操作。
+2. Proxy 可以代理对象的很多操作，包括新增和删除。所以同时对数组项的增删也可以代理。
 
 
 ## References
