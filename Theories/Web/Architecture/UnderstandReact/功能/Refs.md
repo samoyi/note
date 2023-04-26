@@ -10,6 +10,7 @@
         - [为 DOM 元素添加 ref 的例子](#为-dom-元素添加-ref-的例子)
         - [为类组件添加 Ref 的例子](#为类组件添加-ref-的例子)
         - [不能在函数式组件上使用 ref 属性](#不能在函数式组件上使用-ref-属性)
+        - [利用 current 的不变性](#利用-current-的不变性)
     - [回调 Refs](#回调-refs)
         - [ref 可以像普通 prop 一样传递](#ref-可以像普通-prop-一样传递)
     - [将 DOM Refs 暴露给父组件](#将-dom-refs-暴露给父组件)
@@ -209,6 +210,11 @@ ReactDOM.render(
         );
     }
     ```
+
+### 利用 current 的不变性
+1. 组件重渲染不会重建 current 对象，current 上的属性变更也不会触发组件重渲染。
+2. current 对象在组件整个生命周期都是同一个对象，不会因为重渲染而重建新的对象。因此可以用来保存不应受到重渲染影响的值。参考 Theories\Web\Architecture\UnderstandReact\功能\Hook\Hooks.md 中的 重渲染时闭包问题。
+3. current 上的属性更改也不会触发组件重渲染，因此如果需要某个数据变更而不触发重渲染，则可以使用 ref。
 
 
 ## 回调 Refs
