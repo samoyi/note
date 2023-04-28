@@ -74,6 +74,17 @@
 ## Proxy 比 defineProperty 好的地方
 1. defineProperty 只能代理对象属性的读取和设置，新增删除都不行。尤其是数组方法，Vue2 中为此单独包装了一组数组操作。
 2. Proxy 可以代理对象的很多操作，包括新增和删除。所以同时对数组项的增删也可以代理。
+3. 而且新增的属性也会自动实现响应式，而不需要用 `Vue.set`
+    ```js
+    const proxy = reactive({})
+
+    const raw = {}
+    // 新添加了一个属性，并引用一个对象。但引用的不是 raw 本身，而是 raw 的代理
+    // 新添加的嵌套的引用类型属性也会自动的使用 proxy 实现响应式
+    proxy.nested = raw
+
+    console.log(proxy.nested === raw) // false
+    ```
 
 
 ## References
