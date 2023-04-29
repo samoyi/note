@@ -22,8 +22,8 @@
     如果你知道在某些情况下你的组件不需要更新，你可以在`shouldComponentUpdate`内返回
     `false`来跳过整个渲染进程，该进程包括了对该组件和之后的内容调用`render()`指令。
 4. 注意，这里说的渲染是指对虚拟 DOM 的渲染。当然，阻止了虚拟 DOM 的渲染也会阻止真是的。
-4. 例如你想让组件只在`props.color`或者`state.count`的值变化时重新渲染，你可以像下面这
-样设定`shouldComponentUpdate`：
+5. 例如你想让组件只在 `props.color` 或者 `state.count` 的值变化时重新渲染，你可以像下面这
+样设定 `shouldComponentUpdate`
     ```js
     class CounterButton extends React.Component {
         constructor(props) {
@@ -62,13 +62,13 @@
         document.getElementById('root')
     );
     ```
-5. 看起来这种阻止重新渲染的功能和 Vue 的`v-once`组件类似，是不是也会和使用`v-once`组件
+5. 看起来这种阻止重新渲染的功能和 Vue 的 `v-once` 组件类似，是不是也会和使用 `v-once` 组件
 有同样的风险呢？
 
 ### PureComponent
 1. 只有输入值（state 和 props）改变时才会重渲染虚拟 DOM 的组件。
-2. 使用纯组件，就不用像上面例子中那样手动在`shouldComponentUpdate`方法中做判断。
-3. 纯组件继承自`React.PureComponent`
+2. 使用纯组件，就不用像上面例子中那样手动在 `shouldComponentUpdate` 方法中做判断。
+3. 纯组件继承自 `React.PureComponent`
     ```js
     class CounterButton extends React.PureComponent {
         constructor(props) {
@@ -177,3 +177,5 @@ class CounterButton extends React.PureComponent {
         })
     }, 3000);
     ```
+
+### `React.memo`
