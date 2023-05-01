@@ -1,23 +1,32 @@
 # Event Handling
 
 
+<!-- TOC -->
+
+- [Event Handling](#event-handling)
+    - [从事件绑定来看 DOM 和 MVVM 的风格差异](#从事件绑定来看-dom-和-mvvm-的风格差异)
+    - [参数](#参数)
+    - [Modifiers](#modifiers)
+        - [`.stop`](#stop)
+        - [`.prevent`](#prevent)
+        - [`.capture`](#capture)
+        - [`.self`](#self)
+        - [`.passive`](#passive)
+        - [`.once`](#once)
+    - [按键修饰符和系统修饰符](#按键修饰符和系统修饰符)
+
+<!-- /TOC -->
+
+
 ## 从事件绑定来看 DOM 和 MVVM 的风格差异
-1. 在使用原生 JS 时，在 HTML 里绑定事件处理程序显然是不符合 separation of concerns
-规范的。
-2. DOM 风格中，JS 把 HTML 看成一个被动被操作的对象（DOM），JS 会对这个对象执行各种各样
-的操作。核心的思路是 **操作文档**。
-3. 而在 MVVM 风格中，JS 所在的 ViewModel 尽量的不关心文档，只关心数据。ViewModel 的理
-想就是只 **操作数据**，至于这些数据会对文档造成什么影响，那都交给包括事件绑定在内的各种
-指令去处理。
-4. 指令接触文档，ViewModel 只接触数据。ViewModel 的事件处理函数也不关心到底发生了什么
-事件（事件名）、以怎样的形式（事件修饰符）发生，事件对于 ViewModel 来说只是单纯的数据输
-入。
+1. 在使用原生 JS 时，在 HTML 里绑定事件处理程序显然是不符合 separation of concerns规范的。
+2. DOM 风格中，JS 把 HTML 看成一个被动被操作的对象（DOM），JS 会对这个对象执行各种各样的操作。核心的思路是 **操作文档**。
+3. 而在 MVVM 风格中，JS 所在的 ViewModel 尽量的不关心文档，只关心数据。ViewModel 的理想就是只 **操作数据**，至于这些数据会对文档造成什么影响，那都交给包括事件绑定在内的各种指令去处理。
+4. 指令接触文档，ViewModel 只接触数据。ViewModel 的事件处理函数也不关心到底发生了什么事件（事件名）、以怎样的形式（事件修饰符）发生，事件对于 ViewModel 来说只是单纯的数据输入。
 
 
 ## 参数
-1. 因为很多时候参数都可以从实例中获得，所以事件处理函数很多时候没有传参的必要。但可能这
-时还是需要一个参数，就是事件对象。如果事件处理函数不实际传参，则和 JS 的事件绑定一样，第
-一个形参就是事件对象
+1. 因为很多时候参数都可以从实例中获得，所以事件处理函数很多时候没有传参的必要。但可能这时还是需要一个参数，就是事件对象。如果事件处理函数不实际传参，则和 JS 的事件绑定一样，第一个形参就是事件对象
     ```html
     <div id="components-demo" @click.prevent="say">
         111
@@ -33,8 +42,7 @@
         },
     });
     ```
-2. 当然也可以传其他参数，而且这在父子组件通信是很必要的。如果在调用时传递了其他参数，那
-显然第一个形参就不再对应事件对象了，这时就必须通过实参`$event`来显式的传递事件对象
+2. 当然也可以传其他参数，而且这在父子组件通信是很必要的。如果在调用时传递了其他参数，那显然第一个形参就不再对应事件对象了，这时就必须通过实参`$event`来显式的传递事件对象
     ```html
     <div id="components-demo" @click.prevent="say('hi', $event)">
         111
@@ -50,14 +58,11 @@
             }
         },
     });
-```
+    ```
 
 
 ## Modifiers
-在事件处理程序中调用`event.preventDefault()`或`event.stopPropagation()`是非常常见的
-需求。尽管我们可以在方法中轻松实现这点，**但更好的方式是：方法只有纯粹的数据逻辑，而不
-是去处理 DOM 事件细节**。所以通过一下几个修饰符，使得本来需要在实例方法里做的工作现在可
-以放在模板里。
+在事件处理程序中调用 `event.preventDefault()` 或 `event.stopPropagation()` 是非常常见的需求。尽管我们可以在方法中轻松实现这点，**但更好的方式是：方法只有纯粹的数据逻辑，而不是去处理 DOM 事件细节**。所以通过以下几个修饰符，使得本来需要在实例方法里做的工作现在可以放在模板里。
 
 ### `.stop`
 `ev.stopPropagation()`
@@ -114,7 +119,6 @@ methods: {
 ```
 以及`<div @click.passive.prevent="say()"></div>`会导致 Vue 报错
 
-
 ### `.once`
 * `el.addEventListener('click', handler, {once: true})`
 * 与其他修饰符只能对原生 DOM 事件有效不同，`.once`修饰符还能被用到自定义的组件事件上。
@@ -126,5 +130,6 @@ methods: {
 ```
 
 
-## 按键和鼠标事件修饰符
-用的时候直接查[文档](https://vuejs.org/v2/guide/events.html#Key-Modifiers)吧
+## 按键修饰符和系统修饰符
+1. 直接看文档： [按键修饰符](https://v2.cn.vuejs.org/v2/guide/events.html#%E6%8C%89%E9%94%AE%E4%BF%AE%E9%A5%B0%E7%AC%A6) 和 [系统修饰符](https://v2.cn.vuejs.org/v2/guide/events.html#%E7%B3%BB%E7%BB%9F%E4%BF%AE%E9%A5%B0%E9%94%AE)
+2. 包括对很多按键以及组合方式的响应，以及对鼠标三个键的响应。
