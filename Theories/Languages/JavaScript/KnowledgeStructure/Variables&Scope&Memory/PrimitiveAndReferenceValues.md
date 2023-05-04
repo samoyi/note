@@ -3,7 +3,7 @@
 
 - [Primitive And Reference Values](#primitive-and-reference-values)
     - [Misc](#misc)
-    - [能用 `let`/`const` 就别用`var`](#能用-letconst-就别用var)
+    - [能用 `let`/`const` 就别用 `var`](#能用-letconst-就别用-var)
         - [块级作用域](#块级作用域)
         - [声明提升](#声明提升)
         - [不会作为全局属性](#不会作为全局属性)
@@ -34,7 +34,7 @@
 2. 在很多语言中，字符串以对象的形式表示，因此被认为是引用类型。ECMAScript 放弃了这一传统。
 
 
-## 能用 `let`/`const` 就别用`var`
+## 能用 `let`/`const` 就别用 `var`
 ### 块级作用域
 1. `let` 会生成块级作用域
     ```js
@@ -132,13 +132,15 @@
     块级作用域（使用 `{}` ）的出现，就使得省略 `{}` 的情况不一定安全。在块级作用域出现之前，这里的 `{}` 是可有可无的，但因为块级作用域要求必须使用 `{}`，所以这里就会出错。同样的情况在严格模式下声明函数时也会出现。
 
 ### 声明提升
-1. `let` 声明的变量不会被提升
+1. `let` 声明的变量 **也会被提升但是在声明前不可使用**，也就是说会形成 **暂时性死区**（Temporal Dead Zone）
     ```js
-    console.log(i); // ReferenceError: i is not defined
-    let i = 0;
+    // console.log(m); // ReferenceError: m is not defined
+    console.log(n);    // ReferenceError: Cannot access 'n' before initialization
+    
+    let n = 2
     ```
-    这很合理直观，因为 `console.log(i)` 的时候还没有定义 `i`
-2. `var` 变量声明会被提前。不过变量初始化并不会
+    访问 `m` 和 `n` 的错误并不相同，前者是完全没声明，后者是声明了但是没初始化。
+2. `var` 变量声明会被提前并使用，不过变量初始化并不会
     ```js
     console.log(i); // undefined
     var i = 0;
