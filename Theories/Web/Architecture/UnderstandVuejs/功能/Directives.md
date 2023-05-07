@@ -4,24 +4,24 @@
 <!-- TOC -->
 
 - [Directives](#directives)
-    - [作用](#%E4%BD%9C%E7%94%A8)
-    - [Arguments 和 Modifiers](#arguments-%E5%92%8C-modifiers)
-    - [自定义指令](#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8C%87%E4%BB%A4)
-    - [自定义指令钩子函数](#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8C%87%E4%BB%A4%E9%92%A9%E5%AD%90%E5%87%BD%E6%95%B0)
-        - [bind](#bind)
-        - [inserted](#inserted)
-        - [update](#update)
-        - [componentUpdated](#componentupdated)
-        - [unbind](#unbind)
-        - [执行时间测试](#%E6%89%A7%E8%A1%8C%E6%97%B6%E9%97%B4%E6%B5%8B%E8%AF%95)
+    - [作用](#作用)
+    - [Arguments 和 Modifiers](#arguments-和-modifiers)
+    - [自定义指令](#自定义指令)
+    - [自定义指令钩子函数](#自定义指令钩子函数)
+        - [`bind`](#bind)
+        - [`inserted`](#inserted)
+        - [`update`](#update)
+        - [`componentUpdated`](#componentupdated)
+        - [`unbind`](#unbind)
+        - [执行时间测试](#执行时间测试)
     - [Directive Hook Arguments](#directive-hook-arguments)
-        - [el](#el)
-        - [binding](#binding)
-        - [vnode](#vnode)
-        - [oldVnode](#oldvnode)
-    - [钩子函数不是方法调用](#%E9%92%A9%E5%AD%90%E5%87%BD%E6%95%B0%E4%B8%8D%E6%98%AF%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8)
-    - [在 bind 和 update 时触发相同行为时的简写](#%E5%9C%A8-bind-%E5%92%8C-update-%E6%97%B6%E8%A7%A6%E5%8F%91%E7%9B%B8%E5%90%8C%E8%A1%8C%E4%B8%BA%E6%97%B6%E7%9A%84%E7%AE%80%E5%86%99)
-    - [可以传入引用类型字面量](#%E5%8F%AF%E4%BB%A5%E4%BC%A0%E5%85%A5%E5%BC%95%E7%94%A8%E7%B1%BB%E5%9E%8B%E5%AD%97%E9%9D%A2%E9%87%8F)
+        - [`el`](#el)
+        - [`binding`](#binding)
+        - [`vnode`](#vnode)
+        - [`oldVnode`](#oldvnode)
+    - [钩子函数不是方法调用](#钩子函数不是方法调用)
+    - [在 `bind` 和 `update` 时触发相同行为时的简写](#在-bind-和-update-时触发相同行为时的简写)
+    - [可以传入引用类型字面量](#可以传入引用类型字面量)
 
 <!-- /TOC -->
 
@@ -99,6 +99,8 @@
         },
     });
     ```
+5. 若你需要在不同的钩子间共享信息，推荐通过元素的 `dataset` attribute 实现。
+
 
 ## 自定义指令钩子函数
 规定指令什么时候生效
