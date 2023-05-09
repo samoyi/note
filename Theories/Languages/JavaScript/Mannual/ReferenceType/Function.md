@@ -90,16 +90,17 @@
 4. 实现
     ```js
     function curry (fn, ...initArgs) {
-        return function (...args) {
-            let arr = initArgs.concat(args);
-
-            if (arr.length >= fn.length) {
-                fn.apply(this, arr);
+        return function inner (...args) {
+            let argList = [...initArgs, ...args];
+            if (argList.length >= fn.length) {
+                return fn.call(this, ...argList);
             }
             else {
-                return curry(fn, ...arr);
+                return curry(fn, ...argList);
+                // return inner; 
+                // 如果返回 inner，则其中的 initArgs 永远都是调用 curry 时的 initArgs
             }
-        };
+        }
     }
 
 
@@ -187,23 +188,13 @@
 ## bind
 1. `my_bind` 接收一个原函数 `fn` 和绑定的环境 `ctx`，返回一个函数 `bound`；
 2. 普通调用 `bound` 时，内部调动 `fn`，使用 `ctx` 作为 `this`;
-3. 作为构造函数调用 `bound` 时，因为要把 `ctx` 作为构造函数的 `this`，所以不能直接 `new fn()`，只能手动实现创造实例：
-    1. 以 `fn` 的原型作为原型创建实例对象 `obj`；
-    2. 以 `ctx` 作为 `this` 调用函数 `fn`；
-    3. 如果 `fn` 没有返回对象，就返回 `obj`。
+3. 作为构造函数调用 `bound` 时，构造函数的 `this` 绑定优先级比 `bind` 更高，所以不需要使用 `ctx` 调用。
 4. 实现
     ```js
     function my_bind (fn, ctx, ...args) {
         return function (...innerArgs) {
             if (new.target) {
-                let obj = Object.create(fn.prototype);
-                let re = fn.call(obj, ...args, ...innerArgs);
-                if (typeof re === "object" && re !== null) {
-                    return re;
-                }
-                else {
-                    return obj;
-                }
+                return new fn(...args, ...innerArgs);
             }
             else {
                 return fn.call(ctx, ...args, ...innerArgs);
