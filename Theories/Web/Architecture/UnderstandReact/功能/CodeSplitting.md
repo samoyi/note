@@ -7,7 +7,7 @@
     - [Bundling](#bundling)
     - [Code Splitting](#code-splitting)
         - [`import()` 动态引入模块](#import-动态引入模块)
-    - [`React.lazy` 动态加载组件](#reactlazy-动态加载组件)
+        - [使用 `React.lazy` 动态加载组件](#使用-reactlazy-动态加载组件)
         - [Avoiding fallbacks](#avoiding-fallbacks)
         - [Error boundaries](#error-boundaries)
         - [Route-based code splitting   TODO](#route-based-code-splitting---todo)
@@ -18,7 +18,7 @@
 
 
 ## Bundling
-1. Bundling is the process of following imported files and merging them into a single file: a “bundle”. This bundle can then be included on a webpage to load an entire app at once.
+1. 打包是将多个文件引入并合并到一个单独文件的过程，最终形成一个 “bundle”。接着在页面上引入该 bundle，整个应用即可一次性加载。
 2. 原理示意：下面两个原文件
     ```js
     // app.js
@@ -43,15 +43,13 @@
 
 
 ## Code Splitting
-1. Bundling is great, but as your app grows, your bundle will grow too. Especially if you are including large third-party libraries. 
-2. You need to keep an eye on the code you are including in your bundle so that you don’t accidentally make it so large that your app takes a long time to load.
-3. To avoid winding up with a large bundle, it’s good to get ahead of the problem and start “splitting” your bundle. 
-4. Code-Splitting is a feature supported by bundlers like Webpack which can create multiple bundles that can be dynamically loaded at runtime.
-5. Code-splitting your app can help you “lazy-load” just the things that are currently needed by the user, which can dramatically improve the performance of your app. 
-6. While you haven’t reduced the overall amount of code in your app, you’ve avoided loading code that the user may never need, and reduced the amount of code needed during the initial load.
+1. 打包是个非常棒的技术，但随着你的应用增长，你的代码包也将随之增长。尤其是在整合了体积巨大的第三方库的情况下。
+2. 你需要关注你代码包中所包含的代码，以避免因体积过大而导致加载时间过长。为了避免搞出大体积的代码包，在前期就思考该问题并对代码包进行分割是个不错的选择。代码分割是由诸如 Webpack 这类打包器支持的一项技术，能够创建多个包并在运行时动态加载。
+3. 对你的应用进行代码分割能够帮助你懒加载当前用户所需要的内容，能够显著地提高你的应用性能。
+4. 尽管并没有减少应用整体的代码体积，但你可以避免加载用户永远不需要的代码，并在初始加载的时候减少所需加载的代码量。
 
 ### `import()` 动态引入模块
-1. The best way to introduce code-splitting into your app is through the dynamic `import()` syntax.
+1. 在你的应用中引入代码分割的最佳方式是通过动态 `import()` 语法
     ```js
     // Before:
     import { add } from './math';
@@ -63,11 +61,12 @@
         console.log(math.add(16, 26));
     });
     ```
-2. When Webpack comes across this syntax, it automatically starts code-splitting your app. 
+2. 当 Webpack 解析到该语法时，会自动进行代码分割。
 
-
-## `React.lazy` 动态加载组件
-1. The `React.lazy` function lets you render a dynamic import as a regular component.
+### 使用 `React.lazy` 动态加载组件
+1. `React.lazy` 函数能让你像渲染常规组件一样处理动态引入的组件。
+2. `React.lazy` 接受一个函数，这个函数需要必须返回一个 Promise（或者有 `then` 实现的对象），它必须返回一个 Promise，该 Promise 需要解析为 React 组件。
+3. 因此可以实用上面提到的 `import()`
     ```js
     // Before:
     import OtherComponent from './OtherComponent';
@@ -76,9 +75,8 @@
     // After:
     const OtherComponent = React.lazy(() => import('./OtherComponent'));
     ```
-2. This will automatically load the bundle containing the `OtherComponent` when this component is first rendered. `React.lazy` 执行时并不会加载组件，只有当 `<OtherComponent />` 需要渲染的时候才回去加载 `./OtherComponent`。
-3. `React.lazy` takes a function that must call a dynamic `import()`. This must return a `Promise` which resolves to a module with a `default` export containing a React component.
-4. The lazy component should then be rendered inside a `Suspense` component, which allows us to show some fallback content (such as a loading indicator) while we’re waiting for the lazy component to load.
+4. `React.lazy` 执行时并不会加载组件，只有当 `<OtherComponent />` 需要渲染的时候才回去加载 `./OtherComponent`。
+5. 然后应在 `Suspense` 组件中渲染 lazy 组件，如此使得我们可以使用在等待加载 lazy 组件时做优雅降级（如 loading 指示器等）
     ```js
     const OtherComponent = React.lazy(() => new Promise((resolve) => {
         // 模拟三秒钟才能加载好组件
@@ -100,8 +98,7 @@
     }
     ```
     当 `MyComponent` 渲染的时候，内部首先显示 `<div>Loading...</div>`，然后同时加载 `./OtherComponent`，三秒钟之后显示 `<OtherComponent />`。
-5. The `fallback` prop accepts any React elements that you want to render while waiting for the component to load. You can place the `Suspense` component anywhere above the lazy component. 
-6. You can even wrap multiple lazy components with a single `Suspense` component.
+5. `fallback` 属性接受任何在组件加载过程中你想展示的 React 元素。你可以将 `Suspense` 组件置于懒加载组件之上的任何位置。你甚至可以用一个 `Suspense` 组件包裹多个懒加载组件
     ```js
     import React, { Suspense } from 'react';
 
