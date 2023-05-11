@@ -4,19 +4,43 @@
 <!-- TOC -->
 
 - [Event](#event)
-    - [React 事件机制](#react-事件机制)
+    - [合成事件](#合成事件)
+    - [与原生事件不同](#与原生事件不同)
     - [References](#references)
 
 <!-- /TOC -->
 
 
-## React 事件机制
-1. JSX 上写的事件并没有绑定在对应的真实 DOM 上，而是通过事件代理的方式，将所有的事件都统一绑定在了 `document` 上。
-2. 这样的方式不仅减少了内存消耗，还能在组件挂载销毁时统一订阅和移除事件。
-3. 另外冒泡到 `document` 上的事件也不是原生浏览器事件，而是 React 自己实现的合成事件（SyntheticEvent）。实现合成事件的目的如下：
-    * 合成事件首先抹平了浏览器之间的兼容问题，另外这是一个跨浏览器原生事件包装器，赋予了跨浏览器开发的能力；
-    * 对于原生浏览器事件来说，浏览器会给监听器创建一个事件对象。如果你有很多的事件监听，那么就需要分配很多的事件对象，造成高额的内存分配问题。但是对于合成事件来说，有一个事件池专门来管理它们的创建和销毁，当事件需要被使用时，就会从池子中复用对象，事件回调结束后，就会销毁事件对象上的属性，从而便于下次复用事件对象。
+## 合成事件
+1. SyntheticEvent 实例将被传递给你的事件处理函数，它是浏览器的原生事件的跨浏览器包装器。除兼容所有浏览器外，它还拥有和浏览器原生事件相同的接口，包括 `stopPropagation()` 和 p`reventDefault()`。
+2. 当你需要使用浏览器的底层事件时，只需要使用 `nativeEvent` 属性来获取即可。
+3. 事件处理函数在冒泡阶段被触发。如需注册捕获阶段的事件处理函数，则应为事件名添加 `Capture`。例如，处理捕获阶段的点击事件请使用 `onClickCapture`。注意有些事件原生的即没有冒泡，因此也没有捕获阶段。
+4. React 17 中移除了 event pooling（事件池）。
+
+
+## 与原生事件不同
+1. 合成事件与浏览器的原生事件不同，也不会直接映射到原生事件。
+2. 看下面组件中的事件绑定
+    ```js
+    function Foo () {
+        return <div className="outer">
+                    outer
+                    <div className="middle">
+                        middle
+                        <div className="inner" onMouseEnter={handleMouseEnter}>
+                            inner
+                        </div>
+                    </div>
+                </div>
+    }
+    ```
+3. 合成事件中：`type` 是 "mouseenter"，`relatedTarget` 是 `div.middle`，`target` 是 `div.inner`；是从 middle 进入 inner。
+4. `nativeEvent` 中：`type` 是 "mouseout"，`target` 是 `div.middle`，`relatedTarget` 是 `div.inner`；是离开 middle 到 inner。
+5. 事件本身都是从 middle 到 inner，只不过合成事件是按照预期的绑定在了 inner 上，所以就正常的是 mouseenter 事件；而原生事件被绑定到了父级，所以按照鼠标的移动顺序就只能是 mouseout。不懂。
+6. 而且，合成事件的 `eventPhase` 是 3，也就是正常的冒泡阶段；但原生事件不同的 `eventPhase` 是 0。
+
 
 
 ## References
 * [React 事件机制](https://juejin.cn/post/6941546135827775525#heading-2)
+* [合成事件](https://zh-hans.legacy.reactjs.org/docs/events.html)

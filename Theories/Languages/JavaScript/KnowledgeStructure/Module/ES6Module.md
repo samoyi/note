@@ -26,6 +26,7 @@
     - [加载方式](#加载方式)
         - [浏览器加载](#浏览器加载)
             - [与普通 `<script>` 标签加载的不同之处](#与普通-script-标签加载的不同之处)
+    - [模块路径大小写问题 TODO](#模块路径大小写问题-todo)
     - [References](#references)
 
 <!-- /TOC -->
@@ -430,6 +431,20 @@ export default function(x) {
 
 
 TODO：再看一遍`<script>`标签加载[后面的内容](http://es6.ruanyifeng.com/#docs/module-loader)
+
+
+## 模块路径大小写问题 TODO
+1. windows 中，bash 路径中的一段是 `www`，但实际的路径是 `WWW`，npm run dev 的时候报错
+    ```
+    failed to load config from D:\www\vue3-test\vite.config.js
+    error when starting dev server:
+    D:\www\vue3-test\vite.config.js:1
+    import { fileURLToPath, URL } from 'node:url'
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement outside a module
+    ```
+2. bash 中更改大小写后正常。
 
 
 ## References
