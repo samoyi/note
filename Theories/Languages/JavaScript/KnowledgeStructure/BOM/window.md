@@ -234,6 +234,25 @@ setTimeout(function(a, b){
         }
     }
     ```
+8. 更合适的是直接使用 `clearTimeout` 来终止计时
+    ```js
+    function my_setInterval (cb, ms, ...args) {
+        let timer = null;
+
+        function run () {
+            timer = setTimeout(() => {
+                cb(...args);
+                run();      
+            }, ms)
+        }
+
+        run();
+
+        return function () {
+            clearTimeout(timer);
+        };
+    }
+    ```
 
 ### `this` 只是省略惯了 `window` 就忘了是全局方法调用而已
 Code executed by `window.setTimeout()` is called from an execution context separate from the function from which `window.setTimeout` was called. The default this value of a `window.setTimeout` callback will still be the `window` object, and not `undefined`, even in strict mode.

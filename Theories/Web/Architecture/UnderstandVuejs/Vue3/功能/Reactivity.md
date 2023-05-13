@@ -1,6 +1,21 @@
 # Reactivity
 
 
+<!-- TOC -->
+
+- [Reactivity](#reactivity)
+    - [shallowReactive](#shallowreactive)
+    - [响应式代理 vs. 原始对象](#响应式代理-vs-原始对象)
+        - [选项式 API 看起来更费解](#选项式-api-看起来更费解)
+    - [用 `ref()` 定义响应式变量](#用-ref-定义响应式变量)
+        - [ref 在模板中的解包（Unwrapping）](#ref-在模板中的解包unwrapping)
+        - [数组和集合类型的 ref 解包​](#数组和集合类型的-ref-解包​)
+    - [选项式 API 时的有状态方法​](#选项式-api-时的有状态方法​)
+    - [References](#references)
+
+<!-- /TOC -->
+
+
 ## shallowReactive
 
 
