@@ -165,7 +165,22 @@
 
 
 ## Server-side Rendering
-需要输出的函数是 `getServerSideProps`
+To use Server-side Rendering for a page, you need to export an `async` function called `getServerSideProps`. This function will be called by the server on every request
+```js
+export default function Page({ data }) {
+  // Render data...
+}
+ 
+// This gets called on every request
+export async function getServerSideProps() {
+  // Fetch data from external API
+  const res = await fetch(`https://.../data`);
+  const data = await res.json();
+ 
+  // Pass data to the page via props
+  return { props: { data } };
+}
+```
 
 
 ## SWR
