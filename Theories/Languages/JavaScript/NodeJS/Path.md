@@ -1,14 +1,23 @@
 # Path
 
+
+<!-- TOC -->
+
+- [Path](#path)
+    - [Nodejs中的路径](#nodejs中的路径)
+    - [方法](#方法)
+        - [`basename()` and `extname()`](#basename-and-extname)
+        - [`path.join([...paths])`](#pathjoinpaths)
+
+<!-- /TOC -->
+
+
 ## Nodejs中的路径
 * `__dirname`：文件所在的绝对路径目录
 * `__filename`：文件的绝对路径
-* `process.cwd()`：returns the current working directory of the Node.js process.
-`cwd` is the directory in which you are currently working. 在下面的例子里，因为是
-在`D:\WWW\gits\Kaze-no-Toorimichi\Back`运行的node，所以这个目录就是`cwd`。至于node
-调用其他目录的文件，那些目录只能算是资源所在的目录了。
+* `process.cwd()`：returns the current working directory of the Node.js process. `cwd` is the directory in which you are currently working. 在下面的例子里，因为是在 `D:\WWW\gits\Kaze-no-Toorimichi\Back` 运行的 node，所以这个目录就是 `cwd`。至于 node 调用其他目录的文件，那些目录只能算是资源所在的目录了。
 * Relative paths will be resolved relative to the current working directory
-* 不过`require()`中的相对路径并不是相对于cwd，参考[文档](https://nodejs.org/api/modules.html#modules_file_modules)
+* 不过 `require()` 中的相对路径并不是相对于cwd，参考 [文档](https://nodejs.org/api/modules.html#modules_file_modules)
 * `/`是永远是绝对路径根目录
 
 ```js
@@ -68,7 +77,7 @@ D:\
 
 ### `path.join([...paths])`
 1. 将多个路径连接到一起，返回一个合理的结果路径。
-2. 路径分隔符会采用当前平台所使用的分隔符。比如在 windows 系统里是`\`而不是`/`
+2. 路径分隔符会采用当前平台所使用的分隔符。比如在 windows 系统里是 `\` 而不是 `/`
     ```js
     const {join} = require('path');
     let path = join('/foo', 'bar', 'baz/asdf', 'quux', '..');
