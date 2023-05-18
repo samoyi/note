@@ -373,7 +373,7 @@ setTimeout(() => {
 ```
 
 #### 如果回调抛出错误
-则 `then` 返回的 promise 状态变为，rejected 的错误就是抛出的错误
+则 `then` 返回的 promise 状态变为 rejected，rejected 的错误就是抛出的错误
 ```js
 let p = Promise.resolve(22)
 .then((res) => {
@@ -383,12 +383,14 @@ let p = Promise.resolve(22)
 console.log("Sync:", p);
 setTimeout(() => {
     p.catch((err) => {
+        console.log("Macro:", p); 
         console.error("Macro:", err);
     })
 });
 // 依次输出：
 // Sync: Promise {<pending>}
 // 22
+// Macro: Promise {<rejected>: Error: 33
 // Macro: Error: 33
 ```
 
@@ -1203,16 +1205,16 @@ p2 // 三秒钟之后 reject
 
     async function async1() {
         console.log("2");
-        const data = await async2();
+        const data = await async2(); // p3
         console.log("3");
         return data;
     }
 
     async function async2() {
-        return new Promise((resolve) => {
+        return new Promise((resolve) => { // p1
             console.log("4");
             resolve("async2的结果");
-        }).then((data) => {
+        }).then((data) => { // p2
             console.log("5");
             return data;
         });
@@ -1220,8 +1222,8 @@ p2 // 三秒钟之后 reject
 
     async1()
     .then((data) => {
-    console.log("6");
-    console.log(data);
+        console.log("6");
+        console.log(data);
     });
 
     new Promise(function (resolve) {
@@ -1232,22 +1234,42 @@ p2 // 三秒钟之后 reject
     });
     ```
 2. 其实只要知道 promise 和 async-await 异步逻辑，一步一步线性的推导就行了，毕竟 JS 主线程就是线性的。
-3. 调用栈推入全局执行环境；
+3. 调用栈推入全局执行环境：
     1. 调用 `setTimeout`，创建 【宏任务1】，该宏任务之后会打印 1；
     2. `setTimeout` 返回；
     3. 调用 `async1`：
-        1. 【打印2】；
+        1. 【打印 2】；
         2. 调用 `async2`：
-            1. 调用 Promise 构造函数并传入参数函数；
-            2. 参数函数执行，【打印4】，`resolve` 建立【微任务1】，该微任务会解析为 `"async2的结果"`;
-            3. Promise 构造函数返回 promise 实例，该实例紧接着调用 `then` 方法，传递【微任务1的回调】；
-            4. `then` 方法也创建了一个 promise 实例，建立【微任务2】
-        3. `async2` 返回 `then` 返回的 promise 实例给 `await`，`await` 之后的代码也相当于 【微任务2的回调】
-    4. `async1` 返回 promise 实例，该实例创建【微任务3】，之后会解析为 `data` 的值；
-    5. 该实例调用 `then` 方法并接受函数作为 【微任务3的回调】
-    6. 全局环境创建 promise，调用参数函数，【打印7】；但是 没有 `resolve`，不会创建微任务；之后虽然通过 `then` 传递了回调但不会执行；
+            1. 调用 Promise 构造函数并传入 executor；
+            2. executor 执行，【打印 4】，`resolve` 该 promise 为 `"async2的结果"`;
+            3. Promise 构造函数返回 promise 实例，记为 p1。该实例紧接着调用 `then` 方法，传递 p1 的回调；
+            4. 因为 p1 已经 resolve 了，所以这个回调直接加入微任务队列，作为 【微任务1】；
+            5. `then` 方法也创建了一个 promise 实例，记为 p2，将解析为 `data` 的值；
+        3. `async2` 返回 `then` 返回的 promise 实例给 `await`，`await` 后续的代码相当于 【p2的回调】。
+    4. `async1` 在 await 处就返回 promise 实例，记为 p3；
+    5. p3 调用 `then` 方法并接受函数作为 【p3 的回调】；
+    6. 全局环境创建 promise，调用 executor，【打印 7】；但是没有 `resolve`，之后虽然通过 `then` 传递了回调但不会执行；
 4. 全局执行环境准备清空，开始调用微任务：
-    1. 微任务1 解析为 `"async2的结果"`，它的回调 【打印5】并返回 `"async2的结果"`，
+    1. 当前微任务队列中唯一的微任务【微任务1】回调执行， 【打印 5】并返回 `"async2的结果"`；
+    2. p2 解析为 `"async2的结果"`；
+    3. 【p2的回调】作为微任务加入空的微任务队列，立刻执行：
+        1. data 被赋值为 `"async2的结果"`；
+        2. 【打印 3】；
+        3. `async1` 返回，也就相当于 p3 解析为 `"async2的结果"`；
+        4. 【p3 的回调】加入空的队列并立刻执行：
+            1. 【打印 6】；
+            2. 【打印 "async2的结果"】；
+5. 全局执行环境清空，本轮宏任务结束；
+6. 下一个宏任务开始，【打印 1】
+5. 打印顺序为：
+    1. 2
+    2. 4
+    3. 7
+    4. 5
+    5. 3
+    6. 6
+    7. "async2的结果"
+    8. 1
 
 
 ## `Promise.all(iterable)`
@@ -1353,27 +1375,27 @@ p2 // 三秒钟之后 reject
         * 可遍历对象中的某项不是 promise，直接把每一项使用 `Promis.resolve()` 转换；
     4. 实现
     ```js
-    function my_promise_all (iterable) {
+    function my_promise_all(iterable) {
         if (typeof iterable[Symbol.iterator] !== "function") {
             throw new TypeError("object is not iterable \
-                                (cannot read property Symbol(Symbol.iterator))");
+                            (cannot read property Symbol(Symbol.iterator))");
         }
 
-        let list = [...iterable];
-        let results = [];
+        const list = [...iterable];
+        const results = [];
         let count = 0;
 
         return new Promise((resolve, reject) => {
-            for (let i=0; i<list.length; i++) {
-                let p = Promise.resolve(list[i]);
-                p.then((res)=>{
+            for (let i = 0; i < list.length; i++) {
+                Promise.resolve(list[i])
+                .then((res) => {
                     results[i] = res; // 不能 push 因为保证顺序
                     // 左边不能使用 result.length 因为上面用的不是 push
                     if (++count === list.length) {
                         resolve(results);
                     }
                 })
-                .catch((err)=>{
+                .catch((err) => {
                     reject(err);
                 });
             }
@@ -1440,15 +1462,15 @@ p2 // 三秒钟之后 reject
                                 (cannot read property Symbol(Symbol.iterator))");
         }
 
-        let list = [...iterable];
+        const list = [...iterable];
 
         return new Promise((resolve, reject) => {
-            for (let i=0; i<list.length; i++) {
-                let p = Promise.resolve(list[i]);
-                p.then((res)=>{
+            for (let i = 0; i < list.length; i++) {
+                Promise.resolve(list[i])
+                .then((res) => {
                     resolve(res);
                 })
-                .catch((err)=>{
+                .catch((err) => {
                     reject(err);
                 });
             }

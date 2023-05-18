@@ -9,6 +9,8 @@
     - [事件属性](#事件属性)
         - [`isTrusted`](#istrusted)
     - [`mouseover`/`mouseout` 和 `mouseenter``mouseleave` 的区别](#mouseovermouseout-和-mouseentermouseleave-的区别)
+    - [特殊情况](#特殊情况)
+        - [SVG 图片无法响应鼠标和触摸事件](#svg-图片无法响应鼠标和触摸事件)
 
 <!-- /TOC -->
 
@@ -38,3 +40,9 @@
 ## `mouseover`/`mouseout` 和 `mouseenter``mouseleave` 的区别
 前者会冒泡后者不会
 <img src="./images/01.png" width="600" style="display: block; margin: 5px 0 10px;" />
+
+
+## 特殊情况
+### SVG 图片无法响应鼠标和触摸事件
+1. 测试了 onclick 和 onmouseenter，都无法响应。
+2. 可以通过包一个 `<a>` 来监听事件。

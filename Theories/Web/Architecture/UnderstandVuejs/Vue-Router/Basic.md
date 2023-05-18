@@ -1,7 +1,21 @@
 # Basic
 
+
+<!-- TOC -->
+
+- [Basic](#basic)
+    - [基本原理](#基本原理)
+    - [基本用法](#基本用法)
+    - [Matching Priority](#matching-priority)
+    - [Named Routes](#named-routes)
+    - [`$route.matched`](#routematched)
+    - [Route Meta Fields](#route-meta-fields)
+
+<!-- /TOC -->
+
+
 ## 基本原理
-* 监听 URL 变化，使用动态组件方法在`<router-view>`上渲染不同的不同的组件
+* 监听 URL 变化，使用动态组件方法在 `<router-view>` 上渲染不同的不同的组件
 * 实现一个很简单的路由器插件：
 
 ```js
@@ -96,58 +110,99 @@ new Vue({
 
 
 ## 基本用法
-1. 使用 Vue.js ，我们已经可以通过组合组件来组成应用程序，当你要把 Vue Router 添加进来，
-我们需要做的是，将组件 (components) 映射到路由 (routes)，然后告诉 Vue Router 在哪里渲
-染它们。这段描述其实和上面基本原理相同。
-2. 通过注入路由器，我们可以在任何组件内通过`this.$router`访问路由器，也可以通过
-`this.$route`访问当前路由。
+1. 使用 Vue.js ，我们已经可以通过组合组件来组成应用程序，当你要把 Vue Router 添加进来，我们需要做的是，将组件 (components) 映射到路由 (routes)，然后告诉 Vue Router 在哪里渲染它们。这段描述其实和上面基本原理相同。
+2. 通过注入路由器，我们可以在任何组件内通过 `this.$router` 访问路由器，也可以通过 `this.$route` 访问当前路由。
+3. 示例
+    ```html
+    <div id="app">
+        <h1>Hello App!</h1>
+        <p>
+            <!--使用 router-link 组件进行导航 -->
+            <!--通过传递 `to` 来指定链接 -->
+            <!--`<router-link>` 将呈现一个带有正确 `href` 属性的 `<a>` 标签-->
+            <router-link to="/">Go to Home</router-link>
+            <router-link to="/about">Go to About</router-link>
+        </p>
+        <!-- 路由出口 -->
+        <!-- 路由匹配到的组件将渲染在这里 -->
+        <router-view></router-view>
+    </div>
+    ```
+    ```js
+    import { createRouter, createWebHashHistory } from 'vue-router'
+    
+    // 1. 定义路由组件.
+    // 也可以从其他文件导入
+    const Home = { template: '<div>Home</div>' }
+    const About = { template: '<div>About</div>' }
 
-```html
-<div id="app">
-    <p>
-        <!-- 使用 router-link 组件来导航. -->
-        <!-- 通过传入 `to` 属性指定链接. -->
-        <!-- <router-link> 默认会被渲染成一个 `<a>` 标签 -->
-        <router-link to="/foo">Go to Foo</router-link>
-        <router-link to="/bar">Go to Bar</router-link>
-    </p>
-    <!-- 路由出口 -->
-    <!-- 路由匹配到的组件将渲染在这里 -->
-    <router-view></router-view>
-</div>
-```
-```js
-// 1. 定义 (路由) 组件。
-// 可以从其他文件 import 进来
-const Foo = { template: '<div>foo</div>' };
-const Bar = { template: '<div>bar</div>' };
+    // 2. 定义一些路由
+    // 每个路由都需要映射到一个组件。
+    // 我们后面再讨论嵌套路由。
+    const routes = [
+        { path: '/', component: Home },
+        { path: '/about', component: About },
+    ]
 
-// 2. 定义路由
-// 每个路由应该映射一个组件。 其中 "component" 可以是
-// 通过 Vue.extend() 创建的组件构造器，
-// 或者，只是一个组件配置对象。
-const routes = [
-    { path: '/foo', component: Foo },
-    { path: '/bar', component: Bar },
-];
+    // 3. 创建路由实例并传递 `routes` 配置
+    // 你可以在这里输入更多的配置，但我们在这里
+    // 暂时保持简单
+    const router = VueRouter.createRouter({
+        // 4. 内部提供了 history 模式的实现。为了简单起见，我们在这里使用 hash 模式。
+        history: VueRouter.createWebHashHistory(),
+        routes, // `routes: routes` 的缩写
+    })
 
-// 3. 创建 router 实例，然后传 routes 配置
-const router = new VueRouter({
-    routes,
-});
+    // 5. 创建并挂载根实例
+    const app = Vue.createApp({})
+    //确保 _use_ 路由实例使
+    //整个应用支持路由。
+    app.use(router)
 
-// 通过 router 配置参数注入路由，
-// 从而让整个应用都有路由功能
-const app = new Vue({
-    router,
-    created(){
-        console.log(this.$router);
-    },
-    updated(){
-        console.log(this.$route);
-    },
-}).$mount('#app');
-```
+    app.mount('#app')
+    ```
+4. 通过调用 `app.use(router)`，我们会触发第一次导航且可以在任意组件中以 `useRouter` 使用它
+    ```js
+    import { useRouter } from 'vue-router'
+
+    const router = useRouter();
+
+    onMounted (() => {
+        router.push('/about')
+    })
+    ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
 
 ## Matching Priority
