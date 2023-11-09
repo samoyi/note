@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Widget version="2" screenWidth="1080" frameRate="0" useVariableUpdater="DateTime.Minute"
+	resDensity="480" extraResources="sw1440:den560:1" disableCutRoundCorner="true">
+
+
+	<!-- 
+		初始化控制 
+	-->
+	<ExternalCommands>
+		<Trigger action="init,resume">
+			<FrameRateCommand rate="60" />
+			<!-- 入场动画 -->
+			<AnimationCommand target="bottomInAni" command="play" condition="#aniSwitch" />
+			<!-- 刷新数据 -->
+			<BinderCommand name="DeskClockProvider" command="refresh" />
+			<FrameRateCommand rate="0" delay="1000" condition="!eqs(@isPreviewMode,'true')" />
+		</Trigger>
+		<Trigger action="pause">
+			<FrameRateCommand rate="60" />
+			<!-- 入场动画置于初始位置 -->
+			<AnimationCommand target="bottomInAni" command="play(0,0)" condition="#aniSwitch" />
+			<FrameRateCommand rate="0" delay="1" condition="!eqs(@isPreviewMode,'true')" />
+		</Trigger>
+	</ExternalCommands>
+
+
+	<!-- 
+		数据获取 
+	-->
+	<VariableBinders>
+		<ContentProviderBinder name="DeskClockProvider" whereFormat="enabled=='%d'" whereParas="1"
+			columns="message,enabled,hour,minutes,alarmtime,daysofweek"
+			uri="content://com.android.deskclock/alarm" countName="hasdeskclock">
+			<!-- 备注 -->
+			<Variable name="clock_message" type="string[]" column="message" />
+			<!-- 开关 -->
+			<Variable name="clock_enabled" type="string[]" column="enabled" />
+			<!-- 时 -->
+			<Variable name="clock_hour" type="string[]" column="hour" />
+			<!-- 分 -->
+			<Variable name="clock_minute" type="string[]" column="minutes" />
+			<!-- 响铃时间 -->
+			<Variable name="clock_alarmtime" type="string[]" column="alarmtime" />
+			<!-- 重复方式 -->
+			<!-- 0: 一次性 -->
+			<!-- 1: 周一 -->
+			<!-- 2: 周二 -->
+			<!-- 4: 周三 -->
+			<!-- 8: 周四 -->
+			<!-- 16: 周五 -->
+			<!-- 32: 周六 -->
+			<!-- 64: 周日 -->
+			<!-- 128: 法定工作日 -->
+			<!-- 256: 法定节假日 -->
+			<Variable name="clock_daysofweek" type="string[]" column="daysofweek" />
+		</ContentProviderBinder>
+	</VariableBinders>
+
+
+	<!-- 
+		全局变量和全局值
+	-->
+	<!-- 自适应像素比 -->
+	<Var name="vwh_s" expression="min(min(#view_width/440,#view_height/440),1)" type="number" />
+	<Var name="vw_s" expression="#view_width/440" type="number" />
+	<Var name="vh_s" expression="#view_height/440" type="number" />
+	<!-- fontPath -->
+	<Var name="fontPath" type="string" const="true"
+		expression="'etc/KNFONTYUANMO.otf'"
+	/>
+	<!-- 布局相关的变量 -->
+	<!-- 不支持变量的全局值 -->
+	<!-- 
+		fontFamily: "mipro-bold" 
+	-->
+
+
+	<!-- 
+		配置读取
+	-->
+	<!-- 深色模式设置 -->
+	<Var name="surfaceConfig" type="string" const="true"
+		expression="'config/surface_2.png'"
+	/>
+	<Var name="surfaceVar"
+		expression="strReplaceAll(strReplaceAll(@surfaceConfig,'config/surface_',''),'.png','')"
+	/>
+	<Var name="darkMode" expression="ifelse(#surfaceVar==2,#__darkmode,#surfaceVar)" />
+	<Var name="bgColor" type="string" expression="ifelse(#darkMode,'#2b2b2b','#ffffff')" />
+	<Var name="textColor" type="string" expression="ifelse(#darkMode,'#ffffff','#000000')" />
+	<Var name="dateColor" type="string" expression="ifelse(#darkMode,'#ffffff','#454545')" />
+	<!-- 圆角设置 -->
+	<Var name="radiusConfig" expression="47" type="number" const="true" />
+	<!-- 透明度设置 -->
+	<Var name="alphaConfig" expression="256" type="number" const="true" />
+	<!-- 小部件整体边框设置 -->
+	<Var name="borderConfig" expression="0" type="number" const="true" />
+	<!-- 主题色设置 -->
+	<Var name="themeColor" expression="'#fbbc05'" type="string" const="true" />
+
+
+	<!-- 
+		入场动画 
+	-->
+	<!-- 入场动画开关 -->
+	<Var name="aniSwitch" expression="1" type="number" const="true" />
+	<!-- 入场动画 -->
+	<Var name="bottomInAniSwitch" expression="ifelse(#aniSwitch, -1, 0)" type="number" />
+	<Var name="bottomInAni">
+		<VariableAnimation initPause="true" loop="false">
+			<Item value="#bottomInAniSwitch" time="0" easeType="ExpoEaseOut" />
+			<Item value="0" time="300" />
+		</VariableAnimation>
+	</Var>
+
+
+	<!-- 
+		全局数据格式化 
+	-->
+	<!-- 最近一次闹钟的日期和时间 -->
+	<Var name="next_alarm_dateStr" type="string"
+		expression="substr(@next_alarm_time, 0, ifelse(#time_format, 2, 4))" />
+	<Var name="next_alarm_timeStr" type="string"
+		expression="substr(@next_alarm_time, ifelse(#time_format, 2, 4))" />
+
+
+	<!-- 
+		布局 
+	-->
+	<Group w="#view_width" h="#view_height"
+		pivotX="#view_width" pivotY="#view_height"
+	>
+		<!-- 背景色 -->
+		<Rectangle x="0" y="0"
+			w="#view_width" h="#view_height"
+			fillColor="@bgColor" alpha="#alphaConfig-1"
+			cornerRadiusExp="#radiusConfig-1"
+		/>
+
+		<!-- 点击跳转 -->
+		<Button x="0" y="0" w="#view_width" h="#view_height">
+			<Triggers>
+				<Trigger action="up">
+					<IntentCommand action="android.intent.action.MAIN"
+						package="com.android.deskclock"
+						class="com.android.deskclock.DeskClockTabActivity"
+					/>
+				</Trigger>
+			</Triggers>
+		</Button>
+
+
+		<!-- 整个小部件的边框 -->
+		<!-- 这里的圆角值要更小一些，否则会露出后面 -->
+		<Rectangle x="0" y="0"
+			w="#view_width" h="#view_height"
+			strokeColor="ifelse(#darkMode,'#696969' ,'#000000')" weight="4"
+			strokeAlign="inner"
+			cornerRadiusExp="#radiusConfig-4"
+			visibility="#borderConfig"
+		>
+		</Rectangle>
+	</Group>
+
+
+	<!-- 
+		配置页拖动滑动条时显示数值并震动（圆角和透明度滑动条）
+	-->
+	<!-- 圆角 1 像素对应滑动条一个单位，透明度 alpha 一单位对应滑动条一单位 
+		 圆角改变两个像素时、或者透明度 alpha 值改变 4 单位时，触发一次震动
+		 因为设置透明度显示为百分比，1% 相当于 alpha 2.25，所以透明度也是显示变化 2% 时震动一次，
+		 和圆角变化两个像素变化一次保持相同频率。
+	-->
+	<Var expression="#radiusConfig/2+#alphaConfig/40" threshold="1">
+		<Trigger>
+			<AnimationCommand target="isSetting" command="play" condition="#isSetting==0" />
+			<AnimationCommand target="timingAni" command="play" />
+			<IntentCommand action="com.miui.intent.action.VIBRATE" broadcast="true">
+				<Extra name="linear_effect" type="int" expression="2" />
+				<Extra name="vibrate_milli" type="long" expression="22" />
+			</IntentCommand>
+		</Trigger>
+	</Var>
+	<!--  tipsType 标记正在设置什么。设置圆角时，tipsType 为 0；设置时透明度，tipsType 为 1 -->
+	<Var expression="#radiusConfig" threshold="1">
+		<Trigger>
+			<VariableCommand name="tipsType" expression="0" type="number" />
+		</Trigger>
+	</Var>
+	<Var expression="#alphaConfig" threshold="1">
+		<Trigger>
+			<VariableCommand name="tipsType" expression="1" type="number" />
+		</Trigger>
+	</Var>
+	<!-- 延迟变量，动画结束后切换为非设置状态。动画结束前如果再次调节，则动画重新计时 -->
+	<Var name="timingAni">
+		<VariableAnimation name="timing_Ani" loop="false" initPause="true">
+			<AniFrame value="0" time="0" />
+			<AniFrame value="1" time="1200" />
+			<Triggers>
+				<Trigger action="end" condition="#timing_Ani.current_frame == -1">
+					<AnimationCommand target="isSetting" command="play" condition="#isSetting==1" />
+				</Trigger>
+			</Triggers>
+		</VariableAnimation>
+	</Var>
+	<!-- 翻转是否正在设置 -->
+	<Var name="isSetting">
+		<VariableAnimation initPause="true" loop="false">
+			<Item value="#isSetting" time="0" easeType="SineEaseOut" />
+			<Item value="!#isSetting" time="200" />
+		</VariableAnimation>
+	</Var>
+	<!-- 显示设置数值 -->
+	<Group align="center" x="int(#view_width/2)" y="(#isSetting-1)*88+30"
+		w="340" h="88"
+		alpha="#isSetting*255" visibility="eqs(@isPreviewMode,'true')"
+	>
+		<Rectangle align="center" x="170" y="0"
+			w="340" h="88" cornerRadius="44"
+			fillColor="#ffffff"
+			strokeColor="#33000000" weight="2" strokeAlign="center" 
+		/>
+		<!-- 透明度数值显示为百分比，圆角数值一比一显示 -->
+		<Text align="center" x="170" y="20"
+			size="36" fontFamily="mipro-medium" color="#000000"
+			textExp="ifelse(
+				#tipsType, 
+				'透明度: ' + round((#alphaConfig-1)/2.55)+'%',
+				'圆角大小: ' + int(#radiusConfig-1)+'px'
+			)"
+		/>
+	</Group>
+</Widget>
