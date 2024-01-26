@@ -241,10 +241,116 @@
     ```
 
 
+## 类类型
+### 定义构造函数的接口
+1. 上面的 interface 都是定义的类的实例属性和方法，还可以对类的构造函数进行参数和返回值的定义。如下
+    ```ts
+    // 首先定义类的类型
+    interface ClockInterface {
+        tick(): void;
+    }
+    // 然后定义该类的构造函数的类型，制定接收的参数，返回的实例的类型就是上面定义的该类的类型
+    interface ClockConstructor {
+        new(hour: number, minute: number): ClockInterface;
+    }
+    ```
+2. 然后根据 `ClockInterface` 定义两个类
+    ```ts
+    class DigitalClock implements ClockInterface {
+        constructor(h: number, m: number) { }
+        tick() {
+            console.log("beep beep");
+        }
+    }
+    ```
+3. 注意此时 `DigitalClock` 的构造函数并没有受到 `ClockConstructor` 的约束。
+4. 实现一个工厂函数，这个函数接收 `ClockConstructor` 类型的构造函数和两个参数，在内部调用该构造函数
+    ```ts
+    function createClock(ctor: ClockConstructor, hour: number, minute: number): ClockInterface {
+        return new ctor(hour, minute);
+    }
+    ```
+5. `createClock` 要接受的构造函数必须是 `ClockConstructor` 类型，而 `DigitalClock` 类构造函数的参数和返回值（返回 `ClockInterface` 实例）满足该构造函数类型接口，所以可以传值给 `createClock`
+    ```ts
+    createClock(DigitalClock, 7, 32) // ok
+    ```
+6. 但如果 `DigitalClock` 的构造函数不满足 `ClockConstructor`，例如
+    ```ts
+    class DigitalClock implements ClockInterface {
+        // 第一个参数变成了 string
+        constructor(h: string, m: number) { }
+        tick() {
+            console.log("beep beep");
+        }
+    }
+    ```
+    虽然此时定义的时候不会有问题，但如果还要往 `createClock` 里面传递就不行了，因为 `createClock` 要求的类型是 `ClockConstructor`。
+
+
+## 继承接口
+1. 和类一样，接口也可以相互继承。 这让我们能够从一个接口里复制成员到另一个接口里，可以更灵活地将接口分割到可重用的模块里
+    ```ts
+    interface Shape {
+        color: string;
+    }
+
+    interface Square extends Shape {
+        sideLength: number;
+    }
+
+    let square = <Square>{};
+    square.color = "blue";
+    square.sideLength = 10;
+
+    ```
+2. 一个接口可以继承多个接口，创建出多个接口的合成接口
+    ```ts
+    interface Shape {
+        color: string;
+    }
+
+    interface PenStroke {
+        penWidth: number;
+    }
+
+    interface Square extends Shape, PenStroke {
+        sideLength: number;
+    }
+
+    let square = <Square>{};
+    square.color = "blue";
+    square.sideLength = 10;
+    square.penWidth = 5.0;
+    ```
+
+
+## 混合类型
+1.  因为JavaScript其动态灵活的特点，有时你会希望一个对象可以同时具有多种类型。
+2. 一个例子就是，一个对象可以同时做为函数和对象使用，并带有额外的属性
+    ```ts
+    interface Counter {
+        (start: number): string;
+        interval: number;
+        reset(): void;
+    }
+
+    function getCounter(): Counter {
+        let counter = <Counter>function (start: number) { };
+        counter.interval = 123;
+        counter.reset = function () { };
+        return counter;
+    }
+
+    let c = getCounter();
+    c(10);
+    c.reset();
+    c.interval = 5.0;
+    ```
+
+
+
 ## TODO
-类类型
-继承接口
-混合类型
+
 接口继承类
 
 

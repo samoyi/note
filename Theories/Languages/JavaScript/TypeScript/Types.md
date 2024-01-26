@@ -184,6 +184,29 @@
     }
     ```
 
+#### 解构赋值的情况
+1. 如下解构复制的情况
+    ```ts
+    let o = {
+        a: "foo",
+        b: 12,
+        c: "bar"
+    };
+    let { a, b } = o;
+    ```
+2. 如果想要明确指定 `a` `b` 的类型,不能这样,因为这是解构赋值重命名的语法
+    ```ts
+    let { a: string, b: number } = o;
+    ```
+3. 而是应该
+    ```ts
+    let { a, b }: { a: string, b: number } = o;
+    ```
+4. 如果在解构赋值重命名的时候还要指定变量类型,注意制定类型时使用的是重命名之前的变量名
+    ```ts
+    let { a: a1, b: b1 }: { a: string, b: number } = o;
+    ```
+
 ### 数组
 #### 两种声明方式
 1. 第一种
@@ -346,7 +369,7 @@ f(1, "test");         // Error
     p[2]; // Tuple type '[string, number]' of length '2' has no element at index '2'.
     ```
 
-### `enum`
+### enum
 1. 默认起始的值从 0 开始
     ```ts
     enum Color {Red, Green, Blue}
@@ -368,8 +391,24 @@ f(1, "test");         // Error
 4. 可以通过值来得到它的名字
     ```ts
     enum Color {Red=8, Green=99, Blue=3}
-    let colorName :string = Color[3];
+    let colorName: string = Color[3];
     console.log(colorName); // "Blue"
+    ```
+
+### `object` 类型
+1. 表示所有的引用类型，包括函数和 `null`.
+2. 使用 `object` 类型，就可以更好的表示像 `Object.create` 这样的 API。例如：
+    ```ts
+    declare function create(o: object | null): void;
+
+    create({ prop: 0 }); // OK
+    create(null); // OK
+    create(() => {}); // OK
+
+    create(42); // Error
+    create("string"); // Error
+    create(false); // Error
+    create(undefined); // Error
     ```
 
 

@@ -1,4 +1,19 @@
-# Path
+<!-- vscode-markdown-toc -->
+* 1. [Nodejs 中的路径](#Nodejs)
+* 2. [`basename()`](#basename)
+* 3. [`extname()`](#extname)
+* 4. [`dirname()`](#dirname)
+* 5. [获取路径中的各部分信息](#)
+* 6. [`join([...paths])`](#join...paths)
+* 7. [`resolve([...paths])`](#resolve...paths)
+* 8. [`normalize(path)`](#normalizepath)
+* 9. [References](#References)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
 
 
 <!-- TOC -->
@@ -16,7 +31,7 @@
 <!-- /TOC -->
 
 
-## Nodejs 中的路径
+##  1. <a name='Nodejs'></a>Nodejs 中的路径
 * `__dirname`：文件所在的绝对路径目录
 * `__filename`：文件的绝对路径
 * `process.cwd()`：returns the current working directory of the Node.js process. `cwd` is the directory in which you are currently working. 在下面的例子里，因为是在 `D:\WWW\gits\Kaze-no-Toorimichi\Back` 运行的 node，所以这个目录就是 `cwd`。至于 node 调用其他目录的文件，那些目录只能算是资源所在的目录了。
@@ -57,7 +72,7 @@ D:\
 ```
 
 
-## `basename()` 
+##  2. <a name='basename'></a>`basename()` 
 1. 获取路径中的文件名（包含扩展名），或者路径的最后一级路径。
 2. 不包括前后的路径分隔符
     ```js
@@ -69,7 +84,7 @@ D:\
     console.log( path.basename('htaccess.') );   // 'htaccess.'
     ```
 
-## `extname()`
+##  3. <a name='extname'></a>`extname()`
 1. 获取文件扩展名。注意扩展名是包括 `.` 的
     ```js
     const path = require('path');
@@ -88,7 +103,7 @@ D:\
     console.log( path.extname('.htaccess') );    // ''
     ```
 
-## `dirname()`
+##  4. <a name='dirname'></a>`dirname()`
 1. 获取当前路径的父级目录。
     ```js
     console.log( path.dirname('/foo/bar/baz///') );       // '/foo/bar'
@@ -105,7 +120,19 @@ D:\
     console.log( path.dirname('.htaccess') );             // '.'
     ```
 
-## `join([...paths])`
+##  5. <a name=''></a>获取路径中的各部分信息
+```js
+path.parse('/home/user/dir/file.txt');
+// Returns:
+// { root: '/',
+//   dir: '/home/user/dir',
+//   base: 'file.txt',
+//   ext: '.txt',
+//   name: 'file' } 
+```
+
+
+##  6. <a name='join...paths'></a>`join([...paths])`
 1. 将多个路径连接到一起，返回一个合理的结果路径。
 2. 路径分隔符会采用当前平台所使用的分隔符。比如在 windows 系统里是 `\` 而不是 `/`
     ```js
@@ -130,7 +157,7 @@ D:\
     ```
 
 
-## `resolve([...paths])`
+##  7. <a name='resolve...paths'></a>`resolve([...paths])`
 1. 根据参数解析出一个绝对路径。
 2. 如果所有的路径参数中都不包含 `/`，则解析出的绝对路径是根据 CWD。假设当前 CWD 是 `/Users/joe/`
     ```js
@@ -151,7 +178,7 @@ D:\
     ```
 
 
-## `normalize(path)`
+##  8. <a name='normalizepath'></a>`normalize(path)`
 1. 规范路径格式，处理里面的当前路径`./`、上级路径 `..` 和多余的分隔符，连续多个分隔符会被处理为一个。
 2. 返回路径中的分隔符是基于当前系统的，并不需要和参数中的一致
     ```js
@@ -161,5 +188,5 @@ D:\
     ```
 
 
-## References
+##  9. <a name='References'></a>References
 * [nodejs.dev](https://nodejs.dev/en/learn/)

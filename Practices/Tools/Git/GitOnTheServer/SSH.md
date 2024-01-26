@@ -11,6 +11,24 @@ TODO，不懂，为什么 Github 的公钥指纹是固定的？为什么不是�
 https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
 
 
+## 遇到的问题
+### `Connection timed out`
+1. 错误信息如下
+    ```
+    ssh: connect to host github.com port 22: Connection timed out
+    fatal: Could not read from remote repository.
+    ```
+2. 根据 [这个回答](https://stackoverflow.com/a/52817036) 解决
+    1. 找到这个文件 `用户名 ~/.ssh/config`，没有的话新建
+    2. 添加如下内容
+        ```
+        Host github.com
+         Hostname ssh.github.com
+         Port 443
+        ```
+3. 使用如下命令测试一下看看是否好了 `ssh -T git@github.com`
+4. [这篇](https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port) 解释了原因
+
 
 ## References
 * [详述 SSH 的原理及其应用](https://github.com/guobinhit/cg-blog/blob/master/articles/others/detail-ssh.md)

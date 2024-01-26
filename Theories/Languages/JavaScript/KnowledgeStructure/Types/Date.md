@@ -38,6 +38,16 @@
 1. ECMAScript defines a string interchange format for date-times based upon a simplification of the ISO 8601 Extended Format. 
 2. The format is as follows: `YYYY-MM-DDTHH:mm:ss.sssZ`，`Z`可以换成表示时区的时间格式。一个例子：`2011-10-10T14:48:00.000+09:00`。
 3. `Date` 对象的 `toISOString()` 会返回这种格式的字符串，使用 UTC 时区。
+4. 各种字符串化的结果
+    ```js
+    const date = new Date(1696089600000);
+
+    console.log(date)               // 2023-09-30T16:00:00.000Z
+    console.log('' + date)          // Sun Oct 01 2023 00:00:00 GMT+0800 (中国标准时间)
+    console.log(date.toString())    // Sun Oct 01 2023 00:00:00 GMT+0800 (中国标准时间)
+    console.log(date.toISOString()) // 2023-09-30T16:00:00.000Z
+    console.log(date.toUTCString()) // Sat, 30 Sep 2023 16:00:00 GMT
+    ```
 
 ### Fields
 Field | Meaning

@@ -1,26 +1,28 @@
 # fs
 
 
-<!-- TOC -->
+<!-- vscode-markdown-toc -->
+* 1. [读取信息](#)
+* 2. [File descriptors](#Filedescriptors)
+* 3. [Reading files](#Readingfiles)
+* 4. [Writing a file](#Writingafile)
+* 5. [Working with folders](#Workingwithfolders)
+	* 5.1. [检查文件是否存在以及是否有读写权限](#-1)
+	* 5.2. [创建文件夹](#-1)
+	* 5.3. [读取目录](#-1)
+	* 5.4. [重命名/移动 文件和文件夹](#-1)
+	* 5.5. [删除文件夹和文件](#-1)
+	* 5.6. [复制文件和目录](#-1)
+* 6. [References](#References)
 
-- [fs](#fs)
-    - [读取信息](#读取信息)
-    - [File descriptors](#file-descriptors)
-    - [Reading files](#reading-files)
-    - [Writing a file](#writing-a-file)
-    - [Working with folders](#working-with-folders)
-        - [检查文件是否存在以及是否有读写权限](#检查文件是否存在以及是否有读写权限)
-        - [创建文件夹](#创建文件夹)
-        - [读取目录](#读取目录)
-        - [重命名/移动 文件和文件夹](#重命名移动-文件和文件夹)
-        - [删除文件夹和文件](#删除文件夹和文件)
-    - [References](#references)
-
-<!-- /TOC -->
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
 
 
-
-## 读取信息
+##  1. <a name=''></a>读取信息
 1. 读取文件和目录信息
     ```js
     const fs = require('fs');
@@ -115,7 +117,7 @@
     ```
 
 
-## File descriptors
+##  2. <a name='Filedescriptors'></a>File descriptors
 1. 文件描述符是对一个打开的文件的引用，是通过 `fs.open()` 获得的一个数值。在一个操作系统中，每一个打开的文件都有不同的文件描述符
     ```js
     fs.open('package.json', 'r', (err, fd) => {
@@ -150,7 +152,7 @@
     ```
 
 
-## Reading files
+##  3. <a name='Readingfiles'></a>Reading files
 1. 回调方法
     ```js
     const fs = require('fs');
@@ -190,7 +192,7 @@
 4. 这三个方法会在返回数据之前把整个文件的内容写入内存中，所以如果是大文件的话，对于内存消耗和程序执行速度就会有较大影响。一个更好的读取文件内容的方法是使用 stream。
 
 
-## Writing a file
+##  4. <a name='Writingafile'></a>Writing a file
 1. 回调方法
     ```js
     const fs = require('fs');
@@ -250,8 +252,8 @@
 6. 也有对应的 `fs.appendFileSync()` 和 `fsPromises.appendFile()`。
 
 
-## Working with folders
-### 检查文件是否存在以及是否有读写权限
+##  5. <a name='Workingwithfolders'></a>Working with folders
+###  5.1. <a name='-1'></a>检查文件是否存在以及是否有读写权限
 1. `fs.access(path[, mode], callback)`。
 2. 不写 `mode` 参数时，默认为 `constants.F_OK`，用来检查文件是否存在；设置其他值可以检查读写权限。
 3. 如果 `err` 为 `null`，则表明得到正向结果
@@ -281,9 +283,9 @@
         console.log(`${file} ${err ? 'is not' : 'is'} readable and writable`);
     });
     ```
-4. `fs.exists()` 已经被启用；另一个可以检查是否存在的方法是 ` fs.access()`。但 `fs.existsSync` 没有被弃用。
+4. `fs.exists()` 已经被弃用；另一个可以检查是否存在的方法是 ` fs.access()`。但 `fs.existsSync` 没有被弃用。
 
-### 创建文件夹
+###  5.2. <a name='-1'></a>创建文件夹
 `fs.mkdir()` or `fs.mkdirSync()` or `fsPromises.mkdir()`
 ```js
 const fs = require('fs');
@@ -300,8 +302,8 @@ catch (err) {
 }
 ```
 
-### 读取目录
-1. `fs.readdir()` or `fs.readdirSync()` or `fsPromises.readdir()`，读取目录中的文件和子文件夹，返回它们的相对路径
+###  5.3. <a name='-1'></a>读取目录
+1. `fs.readdir()` or `fs.readdirSync()` or `fsPromises.readdir()`，读取目录中的文件和子文件夹，默认返回它们的相对路径字符串。如果第二个参数设置了属性 `withFileTypes: true`，则返回的是 `Dirent` 对象
     ```js
     const fs = require('fs');
 
@@ -318,7 +320,7 @@ catch (err) {
     fs.readdirSync(folderPath).filter(isFile);
     ```
 
-### 重命名/移动 文件和文件夹
+###  5.4. <a name='-1'></a>重命名/移动 文件和文件夹
 1. `fs.rename()` or `fs.renameSync()` or `fsPromises.rename()`
 2. 重命名文件
     ```js
@@ -357,7 +359,7 @@ catch (err) {
     });
     ```
 
-### 删除文件夹和文件
+###  5.5. <a name='-1'></a>删除文件夹和文件
 1. `fs.rmdir()` or `fs.rmdirSync()` or `fsPromises.rmdir()`，删除一个空文件夹 
     ```js
     const dir = 'haha'
@@ -393,5 +395,25 @@ catch (err) {
 4. 第二个对象参数是可选的，[四个属性值](https://nodejs.org/docs/latest/api/fs.html#fsrmpath-options-callback)。
 
 
-## References
+###  5.6. <a name='-1'></a>复制文件和目录
+#### 复制文件
+1. 包括异步/同步/promise 三个方法。如果已有会替换。
+    ```js
+    fs.copyFile
+    ```
+2. `dest` 参数必须是具体的文件名，而不是其所在的目录，否则会报错 `EPERM: operation not permitted`、`errno: -4048`。
+
+#### 复制目录
+1. Experimental。
+2. 包括异步/同步/promise 三个方法，如果已有会替换。
+    ```js
+    fs.cp
+    ```
+3. 至少在使用同步方法时，需要如下设置第三个参数
+    ```js
+    fs.cpSync(srcPath, destPath, { recursive: true })
+    ```
+
+
+##  6. <a name='References'></a>References
 * [nodejs.dev](https://nodejs.dev/en/learn/)

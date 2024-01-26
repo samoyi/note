@@ -15,11 +15,6 @@
 <!-- /TOC -->
 
 
-
-
-
-Index Signatures
-
 3. An index signature parameter type must be `string`, `number`, `symbol`, or a template literal type
     ```ts
     export interface Foo {
@@ -33,6 +28,30 @@ Index Signatures
     }
     ```
 
+### 索引签名类型不能使用字面量或者泛型
+1. 如下
+    ```ts
+    type myType = 'a' | 'b';
+    interface Bar {
+        [key: `${myType}`]: string;
+    }
+    // An index signature parameter type cannot be a literal type or generic type.Consider using a mapped object type instead.
+    ```
+2. 可以使用 `in` 操作符。但是注意此时不能用 `interface` 定义
+    ```ts
+    type myType = 'a' | 'b';
+    interface Bar {
+        [key in myType]: string;
+    }
+    // A mapped type may not declare properties or methods.
+    ```
+3. 只能使用 `type`
+    ```ts
+    type myType = 'a' | 'b';
+    type Bar = {
+        [key in myType]: string;
+    }
+    ```
 
 
 ### 一个继承的例子

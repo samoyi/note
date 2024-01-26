@@ -207,6 +207,17 @@ dad.name = "Man with the 3-piece suit"; // 错误
     department.generateReports(); // 错误: 方法在声明的抽象类中不存在
     ```
 4. 抽象方法可以包含访问修饰符。
+5. 抽象类中实现可选方法
+    ```ts
+    export interface ManifestFile {
+        bar?(): string;
+    }
+    export abstract class ManifestFile {
+        foo () {
+            this.bar && this.bar();
+        }
+    }
+    ```
 
 
 ## TODO

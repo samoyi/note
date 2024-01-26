@@ -54,7 +54,7 @@
         }
     }
     ```
-3. It’s important to understand that an `implements` clause is only a check that the class can be treated as the interface type. It doesn’t change the type of the class or its methods at all. 不懂这里的 ”can be treated as the interface type“ 是什么意思，但从下面的例子看，就是只保证类要实现接口中指定的方法，但是方法中的类型还是独立的，和接口没关系
+3. It’s important to understand that an `implements` clause is only a check that the class can be treated as the interface type. It doesn’t change the type of the class or its methods at all. 不懂这里的 “can be treated as the interface type” 是什么意思，但从下面的例子看，就是只保证类要实现接口中指定的方法，但是方法中的类型还是独立的，和接口没关系
     ```ts
     interface Checkable {
         check(name: string): boolean;
@@ -80,6 +80,7 @@
     c.y = 10; // Error
     // Property 'y' does not exist on type 'C'.
     ```
+5. 接口描述了类的公共部分，而不是公共和私有两部分。它不会帮你检查类是否具有某些私有成员。
 
 
 ## `extends` Clauses
