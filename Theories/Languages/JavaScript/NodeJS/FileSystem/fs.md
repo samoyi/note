@@ -16,7 +16,7 @@
 * 6. [References](#References)
 
 <!-- vscode-markdown-toc-config
-	numbering=true
+	numbering=false
 	autoSave=true
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
@@ -284,6 +284,10 @@
     });
     ```
 4. `fs.exists()` 已经被弃用；另一个可以检查是否存在的方法是 ` fs.access()`。但 `fs.existsSync` 没有被弃用。
+
+### 检查目录是否存在
+`fs.existsSync`
+
 
 ###  5.2. <a name='-1'></a>创建文件夹
 `fs.mkdir()` or `fs.mkdirSync()` or `fsPromises.mkdir()`

@@ -1057,7 +1057,51 @@ C 语言没有要求指针只能指向数据，它还允许指针指向函数。
     q = p;
     *q = 0;     /* causes undefined behavior */
     ```
-TODO
+6. 如果一个对象有多种访问方式，通常把这些方式互称为 **别名**。通过将 `p` 和 `q` 指针指向同一个对象，可以使 `*p` 和 `*q` 互为别名。
+7. 结合 [这篇](https://www.geeksforgeeks.org/restrict-keyword-c/) 和 [这篇](https://stackoverflow.com/questions/745870/realistic-usage-of-the-c99-restrict-keyword)，可以看到，`int * restrict p` 就是告诉编译器，指针 `p` 指向的对象的全部或者部分都不会再被其他指针所指。也就是说，只能通过指针 `p` 改变这个对象。或者，更贴近实际用法的说法是，只要没有用指针 `p` 去改变这个对象，那就可以保证这个对象是没发生变化的。
+8. 它的用途，就是提示编译器可以进行这样的优化：只要没有用指针 `p` 去改变这个对象，那就不用重复的加载 `p` 指向的对象的值。
+9. 例子。 没有使用 `restrict` 时
+    ```cpp
+    void f(int *a, int *b, int *x) {
+        *a += *x;
+        *b += *x;
+    }
+    ```
+    上面代码对应的汇编指令示意如下
+    ```assembly
+    load R1 ← *x    ; Load the value of x pointer
+    load R2 ← *a    ; Load the value of a pointer
+    add R2 += R1    ; Perform Addition
+    set R2 → *a     ; Update the value of a pointer
+    ; Similarly for b, note that x is loaded twice,
+    ; because x may point to a (a aliased by x) thus 
+    ; the value of x will change when the value of a
+    ; changes.
+    load R1 ← *x
+    load R2 ← *b
+    add R2 += R1
+    set R2 → *b
+    ```
+    编译器不确定指针 `a` 指向的对象是否全部或部分和 `x` 指向的对象充电，所以在计算完 `*a += *x` 之后再计算 `*b += *x` 时，需要重新 `load` 一遍 `x` 指向对象的值，因为假如 `a` 指向的对象和 `x` 指向的对象有重叠，那此时 `x` 指向对象的值就发生改变了。
+10. 而如果我们确定 `a` 指向的对象和 `x` 指向的对象没有重叠，那就通过  `restrict` 告诉编译器这一点
+    ```cpp
+    void fr(int *restrict a, int *restrict b, int *restrict x);
+    ```
+    现在再看它对应的汇编指令示意
+    ```assembly
+    load R1 ← *x
+    load R2 ← *a
+    add R2 += R1
+    set R2 → *a
+    ; Note that x is not reloaded,
+    ; because the compiler knows it is unchanged
+    ; "load R1 ← *x" is no longer needed.
+    load R2 ← *b
+    add R2 += R1
+    set R2 → *b
+    ```
+    在计算 `*b += *x` 时，就不需要重新 `load` 一遍 `x` 指向对象的值了。
+
 
 
 ## 灵活数组成员 
@@ -1332,3 +1376,5 @@ TODO
 ## References
 * [C语言程序设计](https://book.douban.com/subject/4279678/)
 * [Double Pointer (Pointer to Pointer) in C](https://www.geeksforgeeks.org/double-pointer-pointer-pointer-c/)
+* [restrict keyword in C](https://www.geeksforgeeks.org/restrict-keyword-c/)
+* [Realistic usage of the C99 'restrict' keyword?](https://stackoverflow.com/q/745870)

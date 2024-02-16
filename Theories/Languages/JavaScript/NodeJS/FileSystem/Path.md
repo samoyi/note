@@ -10,25 +10,10 @@
 * 9. [References](#References)
 
 <!-- vscode-markdown-toc-config
-	numbering=true
+	numbering=false
 	autoSave=true
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
-
-
-<!-- TOC -->
-
-- [Path](#path)
-    - [Nodejs 中的路径](#nodejs-中的路径)
-    - [`basename()`](#basename)
-    - [`extname()`](#extname)
-    - [`dirname()`](#dirname)
-    - [`join([...paths])`](#joinpaths)
-    - [`resolve([...paths])`](#resolvepaths)
-    - [`normalize(path)`](#normalizepath)
-    - [References](#references)
-
-<!-- /TOC -->
 
 
 ##  1. <a name='Nodejs'></a>Nodejs 中的路径

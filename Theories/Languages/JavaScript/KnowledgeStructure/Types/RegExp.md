@@ -32,5 +32,13 @@ You construct a regular expression in one of two ways: literal and constructor.
 3. Use the constructor function when you know the regular expression pattern will be changing, or you don't know the pattern and are getting it from another source, such as user input.
 
 
+## 规则
+### 容易误解的几个
+* `[^ab]`：中括号里开头的 `^` 并不是匹配字符串的开始，而是表示排除掉中括号里的字符。对于本例，也就是说任何不是 `a` 或 `b` 的字符。
+* `[a^b]`：中括号里非开头的 `^` 就是它的字面值。对于本例，就是匹配 `a` 或 `^` 或 `b` 三个字符。
+* `[a|b]`：中括号里 `|` 就不说或，而是它的字面值。
+* `.`：匹配换行符(`\n`)以外的任意字符。
+
+
 ## References
 * [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions)

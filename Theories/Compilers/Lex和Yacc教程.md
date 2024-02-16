@@ -263,7 +263,7 @@ int main(void) {
     ```
 3. Tokens are numerical representations of strings, and simplify processing. 
 4. Yacc 生成的 *y.tab.h* 中，就会包含上面的 `INTEGER`，并且可以看到它被定义为整数的宏
-    ```h
+    ```cpp
     #ifndef YYSTYPE 
     #define YYSTYPE int 
     #endif 
