@@ -20,6 +20,14 @@
     <img src="../images/01.png" width="700" style="display: block; margin: 5px 0 10px;" />
 5. 属性名对空格、大小写、连字符和下划线不敏感，例如下面的写法都是等价的：`\p{Lu}`, `\p{lu}`, `\p{uppercase letter}`, `\p{Uppercase Letter}`, `\p{Uppercase_Letter}`, 和 `\p{uppercaseletter}`。
 6. 上表中带星号的属性是一些特殊类型，具体看 [文档](https://unicode.org/reports/tr18/#General_Category_Property) 。
+7. 汉字属于 `Letter` 大类 `Other Letter` 小类
+    ```js
+    ('a1啊').match(/\p{Lo}/ug) // ['啊']
+    ```
+8. 标点属于 `Punctuation` 大类 `Other punctuation` 小类
+    ```js
+    ('a(,，.。1)啊').match(/\p{Po}/ug) // [',', '，', '.', '。']
+    ```
 
 
 ## Script and Script Extensions Properties

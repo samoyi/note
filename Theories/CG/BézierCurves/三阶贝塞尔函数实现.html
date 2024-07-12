@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <style>
+    .wrapper {
+      width: 600px;
+      height: 600px;
+      border: 1px solid;
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+
+    .dot {
+      width: 2px;
+      height: 2px;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background-color: black;
+    }
+
+    .ctlPoint {
+      width: 8px;
+      height: 8px;
+      position: absolute;
+      color: red;
+      border-radius: 50%;
+      background-color: red;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <div id="app">
+    <div class="wrapper">
+      <div v-for="([x, y], idx) in dots" :key="x+''+y" :style="{left: x*600+'px', top: y*600+'px'}" class="dot"></div>
+      <a :title="`1: [0, 0]`" class="ctlPoint ctlPoint1" style="left: -4px; bottom: -4px;"></a>
+      <a :title="`2: [${ctlPoints[0]*600}, ${ctlPoints[1]*600}]`" class="ctlPoint ctlPoint2" :style="{left: ctlPoints[0]*600-4+'px', top: ctlPoints[1]*600-4+'px'}"></a>
+      <a :title="`3: [${ctlPoints[2]*600}, ${ctlPoints[3]*600}]`" class="ctlPoint ctlPoint3" :style="{left: ctlPoints[2]*600-4+'px', top: ctlPoints[3]*600-4+'px'}"></a>
+      <a :title="`4: [600, 600]`" class="ctlPoint ctlPoint4" style="right: -4px; bottom: -4px"></a>
+    </div>
+  </div>
+
+
+</body>
+<script src="./vue-2.5.21.js"></script>
+<script>
+  'use strict';
+
+  // 三阶贝塞尔函数参考了这篇文章中
+  // 文章中的两个确定的控制点的坐标是 [0, 0]，[1, 1]，我这里改成了 [0, 1]，[1, 1]，也就是
+  // 在矩形范围内，把左上角作为坐标零点，然后两个确定的控制点分别位于左下角和右下角
+  // https://juejin.cn/post/6844903666361565191
+
+  class CubicBezier {
+    constructor(x1, y1, x2, y2) {
+      this.controlPoints = [x1, y1, x2, y2];
+    }
+
+    getCoord(t) {
+      if (t > 1 || t < 0) {
+        throw new RangeError("t的取值范围应该是 [0,1]")
+      };
+      const _t = 1 - t;
+      const [x1, y1, x2, y2] = this.controlPoints;
+      const coefficient1 = 3 * t * Math.pow(_t, 2);
+      const coefficient2 = 3 * _t * Math.pow(t, 2);
+      const coefficient3 = Math.pow(t, 3);
+      const px = coefficient1 * x1 + coefficient2 * x2 + coefficient3;
+      const py = Math.pow(_t, 3) + coefficient1 * y1 + coefficient2 * y2 + coefficient3;
+      return [parseFloat(px.toFixed(3)), parseFloat(py.toFixed(3))];
+    }
+  }
+
+
+  const app = new Vue({
+    el: '#app',
+    data() {
+      return {
+        dots: [],
+        dotsCount: 80,
+        ctlPoints: [0.1, 0.1, 0.9, 0.1]
+      };
+    },
+    methods: {},
+
+    created() {
+      const cb = new CubicBezier(...this.ctlPoints);
+      for (let i = 0; i < this.dotsCount; i++) {
+        this.dots.push(cb.getCoord(i / (this.dotsCount - 1)))
+      }
+    },
+  })
+
+
+
+
+</script>
+
+</html>

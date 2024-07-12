@@ -4,7 +4,13 @@
 * 2. [Using Commands](#UsingCommands)
 	* 2.1. [接收参数并返回结果](#-1)
 	* 2.2. [命令的 URI](#URI)
-* 3. [References](#References)
+* 3. [Creating new commands](#Creatingnewcommands)
+	* 3.1. [Creating a user facing command](#Creatingauserfacingcommand)
+		* 3.1.1. [`onCommand`](#onCommand)
+	* 3.2. [Controlling when a command shows up in the Command Palette](#ControllingwhenacommandshowsupintheCommandPalette)
+	* 3.3. [Enablement of commands](#Enablementofcommands)
+	* 3.4. [Using a custom when clause context](#Usingacustomwhenclausecontext)
+* 4. [References](#References)
 
 <!-- vscode-markdown-toc-config
 	numbering=true
@@ -143,8 +149,8 @@ TODO
     ```
 
 
-## Creating new commands
-### Creating a user facing command
+##  3. <a name='Creatingnewcommands'></a>Creating new commands
+###  3.1. <a name='Creatingauserfacingcommand'></a>Creating a user facing command
 1. 上面已经看到了通过 `vscode.commands.registerCommand` 来注册命令，当执行这个命令是，就会调用第二个参数的回调函数。
 2. 但此时用户在使用插件时并不能在命令面板里找到该命令。比如在上面的例子中，用户在命令面板里输入 `myExtension.sayHello` 并不会有该命令。还需要在插件的 `package.json` 中进行注册才行
     ```json
@@ -160,7 +166,7 @@ TODO
 3. 现在，在命令面板里就能找到命令 `SayHello`。
 4. 并且，现在用户在命令面板里调用命令 `SayHello` 时，对应的插件就会被激活，`registerCommand` 函数就会把 `myExtension.sayHello` 绑定到对应的处理回调上。TODO，怎么还是循环的感觉？
 
-#### `onCommand`
+####  3.1.1. <a name='onCommand'></a>`onCommand`
 1. 1.74.0 之前的 VS Code，如果要注册面向用户的命令时，必须要定义带 `onCommand` 的 `activationEvents` 属性
     ```json
     {
@@ -173,7 +179,7 @@ TODO
     * 需要通过V S Code UI 调用，比如在编辑器标题栏上触发
     * 意在供其他插件使用时
 
-### Controlling when a command shows up in the Command Palette
+###  3.2. <a name='ControllingwhenacommandshowsupintheCommandPalette'></a>Controlling when a command shows up in the Command Palette
 1. 默认情况下，所有命令面板中出现的命令都可以在 package.json 的 `commands` 部分中配置。不过，有些命令是场景相关的，比如在特定的语言的编辑器中，或者只有用户设置了某些选项时才展示。
 2. `menus.commandPalette` 发布内容配置运行你限制命令出现在命令面板的时机。你需要配置命令 ID 和一条 `when` 语句
     ```json
@@ -192,15 +198,15 @@ TODO
     ```
 3. 现在 `myExtension.sayHello` 命令只会出现在用户的 Markdown 文件中了。
 
-### Enablement of commands
+###  3.3. <a name='Enablementofcommands'></a>Enablement of commands
 1. `when` 语句一般用来表示这个命令要在什么类型文件中才会出现，而 `enablement` 属性表示在什么更具体的情况下在可用。
 2. 例如，有一个分析 JS 正则表达式的命令，那么就需要通过 `when` 来让它只在 JS 文件中才可用，并进一步通过 `enablement` 来让它只在光标放在正则表达式上面的时候才可用。
 3. Last, menus showing commands, like the Command Palette or context menus, implement different ways of dealing with enablement. Editor and explorer context menus render enablement/disablement items while the Command Palette filters them.
 
-### Using a custom when clause context
+###  3.4. <a name='Usingacustomwhenclausecontext'></a>Using a custom when clause context
 TODO
 
 
-##  3. <a name='References'></a>References
+##  4. <a name='References'></a>References
 * [命令](https://liiked.github.io/VS-Code-Extension-Doc-ZH/#/extension-guides/command)
 * [Commands](https://code.visualstudio.com/api/extension-guides/command)

@@ -36,6 +36,39 @@ class Greeter {
 let greeter = new Greeter("world");
 ```
 
+### 实例属性初始化
+1. 在严格模式下（`"strict": true`），实例属性要么在定义时就被初始化，要么就要在构造函数中赋值，要么就要把它的类型定义为可以是 `undefined`。所以下面的情况是会报错的
+    ```ts
+    class Greeter {
+        greeting: string;
+        // Property 'greeting' has no initializer and is not definitely assigned in the constructor.
+
+        constructor(greeting: string) {
+            console.log(greeting)
+        }
+
+        greet() {
+            return "Hello, " + this.greeting;
+        }
+    }
+    ```
+2. 这个特性对应了 TS 的 `strictPropertyInitialization` 这个配置 flag。
+3. 如果开启了严格模式但不需要这个约束，那就可以在配置中把这个 flag 设置为 `false`。但注意要写在严格模式的配置后面。
+4. 如果需要这个约束，那有以下三种解决方法：
+    * 给它初始化
+        ```ts
+        greeting: string = "";
+        ```
+    * 使用 *definite assignment assertion modifiers* 告诉 TS 会在其他地方对这个属性初始化
+        ```ts
+        greeting!: string;
+        ```
+    * 因为它没初始化时的值是 `undefined`，而如果它确实可以接受 `undefined`，那就增加这个类型
+        ```ts
+        greeting: string | undefined;
+        ```
+5. [文档](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-7.html#strict-class-initialization)
+
 
 ## `public`、`private` 和 `protected`
 ### 默认为 `public`

@@ -191,6 +191,13 @@
     ```
 4. 这三个方法会在返回数据之前把整个文件的内容写入内存中，所以如果是大文件的话，对于内存消耗和程序执行速度就会有较大影响。一个更好的读取文件内容的方法是使用 stream。
 
+### 文件格式
+1. 遇到过创建的文件格式 `UTF-8 with BOM`，以 `'utf8'` 读取到字符串之后，使用 `JSON.parse` 结息时报错
+    ```
+    Unexpected token  in JSON at position 0
+    ```
+2. 可以在 VS Code 把文件格式转换为 UTF-8。
+
 
 ##  4. <a name='Writingafile'></a>Writing a file
 1. 回调方法
@@ -386,7 +393,7 @@ catch (err) {
         console.log(`${dir} is deleted!`);
     });
     ```
-3. `fs.rm()` 删除文件
+3. `fs.rm()` / `fs.rmSync()` 删除文件
     ```js
     fs.rm(file, err => {
         if (err) {
