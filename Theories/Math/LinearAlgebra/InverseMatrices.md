@@ -1,8 +1,21 @@
 # Inverse matrices
 
+<!-- vscode-markdown-toc -->
+* 1. [数学思想](#)
+	* 1.1. [公理](#-1)
+* 2. [线性方程组和线性变换](#-1)
+* 3. [逆矩阵](#-1)
+* 4. [References](#References)
 
-## 数学思想
-### 公理
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+
+##  1. <a name=''></a>数学思想
+###  1.1. <a name='-1'></a>公理
 1. 线性方程组是线性变换的抽象，所以你可以用线性方程组去计算线性变换的相关属性。但是，为什么也可以用线性变换去计算线性方程组呢？
 2. 感觉上，从更抽象的推导更具体的没问题，但从具体的推导抽象的就感觉不够严谨。就好像只使用例子来得出一个理论一样。比如你现在从几个例子得出一个理论，但感觉你还是要从理论上证明这个理论是正确的，而不能只使用举例法，除非你穷举所有的例子。
 3. 但是话说回来，理论其实也是基于现实的例子的，我们不是先验的得出一个理论的，而都是从现实总结的。就像休谟的怀疑论，你可以很多次的看到炭会燃烧，然后你得出炭会燃烧的理论，但这里理论的得出不正是基于很多次的举例的吗？你觉得你的理论是正确的，只是当前还没出现反例而已。
@@ -10,7 +23,7 @@
 5. 公理并不是真理，只是尚未发现反例。
 
 
-## 线性方程组和线性变换
+##  2. <a name='-1'></a>线性方程组和线性变换
 1. 从下图可以看出，线性方程组（linear system of equations）和向量空间线性变换具有相同的形式
     <img src="./images/019.png" width="600" style="display: block; margin: 5px 0 10px;" />
     * 方程组的参数对应线性变换的基向量矩阵 $\boldsymbol{A}$
@@ -26,7 +39,7 @@
 9. 那能否颠倒过来说空间线性变换的本质是线性方程组的函数映射呢？其实也不能，空间变换就是空间变换，一个点的位置移动就是位置移动，这就是它的本质。你可以用线性方程组来描述空间的变换和位置的移动，那只能说明线性方程组是一种描述的工具而已，并不能说是本质。
 
 
-## 逆矩阵
+##  3. <a name='-1'></a>逆矩阵
 1. 矩阵 $\boldsymbol{A}$ 的逆矩阵 $\boldsymbol{A^{-1}}$ 满足下面的等式
     $\boldsymbol{A^{-1}}\boldsymbol{A} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}$
 2. $\begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}$ 对应的变换是恒等变换（identity transformation），也就是相当于没变换。那么，逆矩阵 $\boldsymbol{A^{-1}}$ 也就是相当于先进行 $\boldsymbol{A}$ 变换之后再原路返回变换回来。
@@ -34,5 +47,5 @@
 4. 要求解原向量 $\vec{\boldsymbol{X}}$ 就要找到 $\boldsymbol{A}$ 的逆矩阵。那同样，要求解线性方程组的解，就要找到系数矩阵的逆矩阵。
 
 
-## References
+##  4. <a name='References'></a>References
 * [线性代数的本质（Essence of linear algebra）](https://www.bilibili.com/video/BV1ys411472E/)
