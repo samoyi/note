@@ -91,9 +91,9 @@
 5. 我们先不讨论上面的形式应该如何计算，我们直接从几何的角度来看，可以知道最初默认的基向量矩阵在这两次连续变换之后的基向量矩阵是什么（下图中的复合矩阵），然后上图形式计算后的矩阵应该是和这个复合矩阵是相等的
     <img src="./images/009.png" width="600" style="display: block; margin: 5px 0 0;" />
     <img src="./images/010.png" width="400" style="display: block; margin: -20px 0 10px;" />
-6. 现在我们看看，两次线性变化到底发生了什么，然后就可以知道两个矩阵放在一起应该如何计算。
+6. 现在我们看看，两次线性变换到底发生了什么，然后就可以知道两个矩阵放在一起应该如何计算。
 7. 最初，有一组基向量 $\begin{bmatrix} 0& -1 \\ 1 & 0 \end{bmatrix}$。现在，我们对这个向量空间进行变换，变换的方式是 $\begin{bmatrix} 1 & 1 \\ 0 & 1 \end{bmatrix}$。
-8. 我们知道，线性变化的方法就是用当前向量空间的一组系数向量去乘要变换为的基向量矩阵。而基向量本身其实也是一个系数向量，它的系数是 1。
+8. 我们知道，线性变换的方法就是用当前向量空间的一组系数向量去乘要变换为的基向量矩阵。而基向量本身其实也是一个系数向量，它的系数是 1。
 9. 所以，$\begin{bmatrix}1&1\\0&1\end{bmatrix} \begin{bmatrix}0&-1\\1&0\end{bmatrix}$，其实就是在对 $\begin{bmatrix} 0 \\ 1 \end{bmatrix}$ 和 $\begin{bmatrix} -1 \\ 0 \end{bmatrix}$ 这两个（基）向量进行变换。
 10. 那么我们分别对这两个进行变换，也就是 $\begin{bmatrix} 1 & 1 \\ 0 & 1 \end{bmatrix} \begin{bmatrix} 0 \\ 1 \end{bmatrix}$ 和 $\begin{bmatrix} 1 & 1 \\ 0 & 1 \end{bmatrix} \begin{bmatrix} -1 \\0 \end{bmatrix}$。
 11. 它们的结果分别是 $\begin{bmatrix} 1 \\ 1 \end{bmatrix}$ 和 $\begin{bmatrix} -1 \\ 0 \end{bmatrix}$，把他们写成矩阵的形式就是 $\begin{bmatrix} 1 & -1 \\ 1 & 0\end{bmatrix}$，正好就是上图等号右边。
