@@ -223,7 +223,7 @@ class Token {
 ##  4. <a name='RegularLanguagesandExpressions'></a>Regular Languages and Expressions
 1. 扫描器的核心是一个循环，从源代码的第一个字符开始，扫描器会确定该字符属于哪个词素，并使用该字符以及属于该词素的任何后续字符。当它到达该词素的末尾时，它会发出一个标记。
 2. 然后它循环回去，从源代码中的下一个字符开始重复这一过程。
-3. 决定特定语言如何将字符分组为词素的规则称为这个语言的 lexical grammar，也就是怎样对这个语言进行词法分析的语法。在 Lox 中，与大多数编程语言一样，Lox 使用正则表达式的方法机型词法分析，所以 Lox 是一种 regular language。
+3. 决定特定语言如何将字符分组为词素的规则称为这个语言的 lexical grammar，也就是怎样对这个语言进行词法分析的语法。在 Lox 中，与大多数编程语言一样，Lox 使用正则表达式的方法进行词法分析，所以 Lox 是一种 regular language。
 
 
 ##  5. <a name='TheScannerClass'></a>The Scanner Class
