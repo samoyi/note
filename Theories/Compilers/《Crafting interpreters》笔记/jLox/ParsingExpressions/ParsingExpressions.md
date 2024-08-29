@@ -21,7 +21,12 @@
 	* 2.5. [`unary` 规则](#unary-1)
 	* 2.6. [`primary` 规则](#primary-1)
 * 3. [Syntax Errors](#SyntaxErrors)
-* 4. [References](#References)
+	* 3.1. [错误处理需要满足的要求](#-1)
+	* 3.2. [Panic mode error recovery](#Panicmodeerrorrecovery)
+	* 3.3. [Entering panic mode](#Enteringpanicmode)
+	* 3.4. [Synchronizing a recursive descent parser](#Synchronizingarecursivedescentparser)
+* 4. [Wiring up the Parser](#WiringuptheParser)
+* 5. [References](#References)
 
 <!-- vscode-markdown-toc-config
 	numbering=true
@@ -405,14 +410,14 @@ private Expr primary() {
     * 给定无效的标记序列，检测任何错误并告诉用户他们的错误。
 2. 在现代 IDE 和编辑器中，解析器会不断重新解析代码（通常是在用户仍在编辑代码时），以便突出显示语法并支持自动完成等功能。这意味着它会一直遇到不完整、半错误状态的代码。
 
-### 错误处理需要满足的要求
+###  3.1. <a name='-1'></a>错误处理需要满足的要求
 * **Detect and report the error**
 * **Avoid crashing or hanging**: Segfaulting or getting stuck in an infinite loop isn’t allowed. While the source may not be valid code, it’s still a valid input to the parser because users use the parser to learn what syntax is allowed.
 * **Be fast**: We expect editors to reparse files in milliseconds after every keystroke.
 * **Report as many distinct errors as there are**: 尽可能让用户一次性修改更多的错误，而不是改一个编译一遍再报错一个。
 * **Minimize cascaded errors**: 如果是一个错误的原因而导致其他多个地方出错，那应该只报真正根源的那个错误。
 
-### Panic mode error recovery
+###  3.2. <a name='Panicmodeerrorrecovery'></a>Panic mode error recovery
 1. 解析器响应错误并继续查找后续错误的方式称为 **错误恢复**（error recovery）。
 2. 在过去设计的所有恢复技术中，最经得起时间考验的技术被称为 **恐慌模式**（panic mode）。解析器一旦检测到错误，就会进入恐慌模式。它知道在某些 grammar 产生式栈中间，至少一个 token 在其当前状态下是没有意义的。
 3. 在重新开始解析之前，它需要将其状态与即将出现的 token 序列对齐，以便下一个 token 与正在解析的规则相匹配。这个过程称为 **同步**（synchronization）。看起来的意思是，在解析一个表达式发现错误时，需要跳过错误区域的 token，找到下一个可以继续解析的 token。
@@ -420,7 +425,7 @@ private Expr primary() {
 5. 隐藏在这些丢弃的标记中的任何其他实际语法错误都不会被报告，但这也意味着任何由初始错误引起的错误级联错误也不会被错误地报告，这是一个不错的权衡。一个发生错误的表达式只会报告第一个错误。
 6. Grammar 中同步的传统位置是在语句之​​间。我们还没有这些，所以我们实际上不会在本章中同步，但我们会为以后做好准备。也就是说，在一个语句里发生了解析错误，那就回跳过这个语句，同步到下一个语句开始 token 来继续解析？
 
-### Entering panic mode
+###  3.3. <a name='Enteringpanicmode'></a>Entering panic mode
 1. 上面在匹配括号表达式时，我们用到了 `consume` 方法，第一个参数是所期待的反括号 token 类型，第二个参数是如果没有匹配到反括号时的错误提示
     ```java
     private Token consume(TokenType type, String message) {
@@ -453,7 +458,7 @@ private Expr primary() {
 5. This is a simple sentinel class we use to unwind the parser. The `error()` method *returns* the error instead of *throwing* it because we want to let the calling method inside the parser decide whether to unwind or not. 这里是返回给 `consume` 方法，让 `consume` 方法决定是否抛出？
 6. Some parse errors occur in places where the parser isn’t likely to get into a weird state and we don’t need to synchronize. In those places, we simply report the error and keep on truckin’. 例如，Lox 限制了可以传递给函数的参数数量，如果传递的参数太多，解析器需要报告该错误，但它可以并且应该继续解析额外的参数，而不是进入恐慌模式。所以什么情况才算是进入恐慌模式？`error` 方法外层抛出错误时？不懂
 
-### Synchronizing a recursive descent parser
+###  3.4. <a name='Synchronizingarecursivedescentparser'></a>Synchronizing a recursive descent parser
 1. 对于递归下降，解析器的状态（它正在识别哪些规则）不会明确存储在字段中。我们使用 Java 自己的调用栈来跟踪解析器正在做什么。
 2. 解析过程中的每个规则都是栈上的一个调用帧。为了重置该状态，我们需要清除这些调用帧。这里说的重置就是指同步？
 3. 在 Java 中，实现这一点的自然方式是 exception。当我们想要同步时，我们会抛出 `ParseError` 对象（上面 `consume` 那样抛出），在我们要同步的语法规则方法的更高层，我们会捕获它。
@@ -488,7 +493,7 @@ private Expr primary() {
 9. 现在我们还不能看到这种方法的实际应用，因为我们还没有语句。
 
 
-## Wiring up the Parser
+##  4. <a name='WiringuptheParser'></a>Wiring up the Parser
 1. 还有一个地方我们需要添加一些错误处理。当解析器逐一解析每个 grammar 规则的解析方法时，它最终会命中 `primary()`。如果其中没有任何情况匹配，则意味着我们处于无法启动表达式的标记上。我们也需要处理该错误
     ```java
     throw error(peek(), "Expect expression.");
@@ -540,5 +545,5 @@ private Expr primary() {
 8. 编译之后运行 Lox.java。
 
 
-##  4. <a name='References'></a>References
+##  5. <a name='References'></a>References
 * [*Crafting interpreters*: Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html)
