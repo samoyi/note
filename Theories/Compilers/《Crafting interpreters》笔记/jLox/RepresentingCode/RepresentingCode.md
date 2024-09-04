@@ -9,7 +9,10 @@
 	* 2.4. [A Grammar for Lox expressions](#AGrammarforLoxexpressions)
 * 3. [Implementing Syntax Trees](#ImplementingSyntaxTrees)
 	* 3.1. [Metaprogramming the trees](#Metaprogrammingthetrees)
-* 4. [References](#References)
+* 4. [Working with Trees](#WorkingwithTrees)
+	* 4.1. [使用访问者模式](#-1)
+* 5. [A (Not Very) Pretty Printer](#ANotVeryPrettyPrinter)
+* 6. [References](#References)
 
 <!-- vscode-markdown-toc-config
 	numbering=true
@@ -251,13 +254,13 @@
 8. 现在，运行 `GenerateAst.java` 就可以生成 `Expr.java`，里面包含了所有表达式类的定义。
 
 
-## Working with Trees
+##  4. <a name='WorkingwithTrees'></a>Working with Trees
 1. 对于不同的表达式对象，解释器对其有不同的处理方法。我们当然可以给每个表达式类都添加一个比如 `interpret` 方法，然后在里面写对应的处理逻辑。
 2. 但对于表达式对象的操作不只有 `interpret` 这一种，如果其他操作也都写在表达式对象里面，那就使得不同的功能的代码都混在同一个对象里了。
 3. 我们这里希望把每种功能的操作都放在各自独立的模块里，也就是负责 `interpret` 放在一个模块里，放在另一个功能的代码放在另一个模块里。
 4. 这里我们使用访问者模式来设计
 
-### 使用访问者模式
+###  4.1. <a name='-1'></a>使用访问者模式
 1. 访问者类型的接口定义如下，访问者对象里有对每种表达式的处理方法
     ```java
     interface Visitor<R> {
@@ -304,7 +307,7 @@
 4. 上述代码都是通过 `GenerateAst.java` 生成的。
 
 
-## A (Not Very) Pretty Printer
+##  5. <a name='ANotVeryPrettyPrinter'></a>A (Not Very) Pretty Printer
 1. 我们想要打印出语法树的结构，但并不是真的打印树的形状，而是像下面这样，把
     <img src="../../images/expression.png" width="600" style="display: block; margin: 5px 0 10px;" />
     打印成
@@ -387,5 +390,5 @@
 
 
 
-##  4. <a name='References'></a>References
+##  6. <a name='References'></a>References
 * [*Crafting interpreters*: Representing Code](https://craftinginterpreters.com/representing-code.html)

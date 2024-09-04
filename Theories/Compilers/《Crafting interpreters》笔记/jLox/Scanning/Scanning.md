@@ -80,7 +80,7 @@
 ###  2.2. <a name='-1'></a>执行方式
 1. `main` 方法会读取命令行参数：
     * 如果参数大于 1，会给出一个提示并退出程序，因为这是非正常的使用方式；
-    * 如果有一个参数，那么期望这个参数是一个 jLox 源文件路径，例如 `test.jLox`。然后 `runFile` 会读取这个文件并扫描里面的代码；例如执行命令 `java com/craftinginterpreters/lox/Lox test.jLox`
+    * 如果有一个参数，那么期望这个参数是一个 jLox 源文件路径，例如 `test.jLox`。然后 `runFile` 会读取这个文件并扫描里面的代码；例如执行命令 `java com/craftinginterpreters/lox/Lox test.jLox`。`test.jLox` 应该放在 `Lox.java` 所在目录里，而不是 `com/craftinginterpreters/lox/` 里。
     * 如果没有参数，那会以 REPL 方式运行，`runPrompt` 被调用，用户输入一行代码就分析一行代码。
 2. `runFile` 和 `runPrompt` 内部都是调用 `run` 方法进行扫描
     ```java
