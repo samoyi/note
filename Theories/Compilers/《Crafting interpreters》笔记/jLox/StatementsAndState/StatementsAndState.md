@@ -41,6 +41,7 @@
                     | printStmt ;
 
     exprStmt       → expression ";" ;
+    
     printStmt      → "print" expression ";" ;
     ```
 3. The first rule is now `program`, which is the starting point for the grammar and represents a complete Lox script or REPL entry. 
@@ -773,10 +774,16 @@
     declaration    → varDecl
                     | statement ;
 
+    varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+
     statement      → exprStmt
                     | printStmt
                     | block ;
     
+    exprStmt       → expression ";" ;
+
+    printStmt      → "print" expression ";" ;
+
     block          → "{" declaration* "}" ;
     ```
 2. 语法树中增加对应的语句节点
