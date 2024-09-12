@@ -37,6 +37,9 @@
 4. 而 grammar 和它俩不是一个类型的概念，grammar 是用来定义 syntax 的规则。
 5. The syntax of a language defines its surface form. Semantics assigns computational meaning to valid strings in a programming language syntax.
 
+### parse 和 revolve
+这两个词都可以翻译成 “解析”，所以在表示 revolve 时全部使用英文原文。
+
 
 ##  1. <a name=''></a>实现一个语言的路径图
 <img src="./images/mountain.png" width="800" style="display: block; margin: 5px 0 10px;" />
