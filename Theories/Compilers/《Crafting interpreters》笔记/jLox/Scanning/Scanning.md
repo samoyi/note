@@ -184,9 +184,9 @@ enum TokenType {
 ```
 
 ####  3.1.2. <a name='Literalvalue'></a>Literal value
-1. There are lexemes for literal values—numbers and strings and the like. 
+1. There are lexemes for literal values: numbers and strings and the like. 
 2. Since the scanner has to walk each character in the literal to correctly identify it, it can also convert that textual representation of a value to the living runtime object that will be used by the interpreter later.
-3. 看起来就是 lexeme 本身。
+3. 如果一个 lexeme 表示的是数值字面量或者字符串字面量，那这个 literal 就是对应类型的值。lexeme 是源代码中的一段文本，它本身是没有意义的；而 literal 是有明确类型的字面量值。
 
 ####  3.1.3. <a name='Locationinformation'></a>Location information
 1. 一些 token 实现将位置存储为两个数字：从源文件开头到 lexeme 开头的偏移量，以及词素的长度。扫描器无论如何都需要知道这些，因此计算它们没有任何开销。

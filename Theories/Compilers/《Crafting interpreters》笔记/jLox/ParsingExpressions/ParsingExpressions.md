@@ -85,14 +85,14 @@
         (5 - 3) - 1
         ```
     * **右结合**（right-associative）则相反：
-    ```
-    a = b = c
-    ```
-    ```
-    a = (b = c)
-    ```
+        ```
+        a = b = c
+        ```
+        ```
+        a = (b = c)
+        ```
 3. 如果没有明确定义的优先级和结合性，使用多个运算符的表达式就会产生歧义，它可以解析为不同的语法树，而这些语法树又可能得出不同的结果。
-4. Lox 中通过应用与 C 相同的优先级规则（从最低到最高）来解决这个问题
+4. Lox 中通过应用与 C 相同的优先级规则（从上到下优先级依次增高）来解决这个问题
     Name       | Operators | Associates
     --|--|--
     Equality   | == !=     | Left
@@ -223,6 +223,8 @@ primary        → NUMBER | STRING | "true" | "false" | "nil"
 ###  2.1. <a name='Theparserclass'></a>The parser class
 1. 每个规则都成为下面这个类中的一个方法
     ```java
+    // Parser.java
+
     package com.craftinginterpreters.lox;
 
     import java.util.List;
@@ -270,7 +272,7 @@ primary        → NUMBER | STRING | "true" | "false" | "nil"
     ```
     equality       → comparison ( ( "!=" | "==" ) comparison )* ;
     ```
-3. 产生式 body 里的 `comparison` 是非终结符，所以要转换为转换为它对应规则的函数，在这里就是 `comparison` 函数。
+3. 产生式 body 里的 `comparison` 是非终结符，所以要转换为它对应规则的函数，在这里就是 `comparison` 函数。
 3. `Expr expr = comparison();` 把第一个 `comparison` 非终结符转换为函数，返回的表达式保存在变量 `expr` 中。
 4. `(...)*` 要转换为循环，所以 `( ( "!=" | "==" ) comparison )*` 转换为后面的 `while` 循环。
 5. 因为 `( "!=" | "==" ) comparison` 有零个、一个或者多个，它的每一个都是 `"!=" | "=="` 符号再接一个 `comparison`。所以遍历得以开始和继续条件就是，每轮都可以匹配到 `"!=" | "=="` 符号。对应到这里的 Java 代码就是 `while (match(BANG_EQUAL, EQUAL_EQUAL))`。
@@ -467,6 +469,8 @@ private Expr primary() {
 6. `;` 不是语句结尾的一个情况是它也会出现在 `for` 循环中作为分隔符。Our synchronization isn’t perfect, but that’s OK. We’ve already reported the first error precisely, so everything after that is kind of “best effort”. 不懂，这里说没关系，但如果把 `for` 循环中作为分隔符的 `;` 作为语句的结尾，那之后的解析不就会从这里开始了吗？但这里并不是一个语句的开始，解析不就还会出错吗？
 7. 下面是  `synchronize` 方法
     ```java
+    // Parser.java
+
     private void synchronize() {
         advance();
 
@@ -496,10 +500,14 @@ private Expr primary() {
 ##  4. <a name='WiringuptheParser'></a>Wiring up the Parser
 1. 还有一个地方我们需要添加一些错误处理。当解析器逐一解析每个 grammar 规则的解析方法时，它最终会命中 `primary()`。如果其中没有任何情况匹配，则意味着我们处于无法启动表达式的标记上。我们也需要处理该错误
     ```java
+    // Parser.java
+
     throw error(peek(), "Expect expression.");
     ```
 2. 最后，初始方法来启动解析。稍后我们将在语言中添加语句时重新讨论此方法。目前，它解析单个表达式并返回它
     ```java
+    // Parser.java
+
     Expr parse() {
         try {
             return expression();
@@ -530,6 +538,8 @@ private Expr primary() {
     ```
 7. 现在我们实现了解析为语法树，就可以把 `Scanner` 输出的字节流解析为语法树并打印
     ```java
+    // Lox.java
+    
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();

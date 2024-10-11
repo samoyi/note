@@ -243,22 +243,22 @@
 
 ##  2. <a name='GlobalVariables'></a>Global Variables
 1. A **variable declaration** statement brings a new variable into the world.
-    ```
+    ```js
     var beverage = "espresso";
     ```
 2. This creates a new binding that associates a name with a value.
 3. Once that’s done, a **variable expression** accesses that binding. When the identifier `beverage` is used as an expression, it looks up the value bound to that name and returns it.
-    ```
+    ```js
     print beverage; // "espresso"
     ```
 
 ###  2.1. <a name='Variablesyntax'></a>Variable syntax
 1. 我们要把变量声明语句和普通语句 `statement` 分开处理，因为变量声明语句不能作为在控制流语句的从句。例如，
-    ```
+    ```js
     if (monday) print "Ugh, already?";
     ```
     是可以的。但是
-    ```
+    ```js
     if (monday) var beverage = "espresso";
     ```
     是不行的。

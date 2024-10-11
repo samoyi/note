@@ -793,6 +793,45 @@ class LoxClass {
     不知道这个图为什么没画原本的 `taste` 方法，就是 `closure` 指向全局环境的那个。难道是因为用不上所以会被删除或者垃圾回收？
 
 ###  4.1. <a name='this'></a>实现 `this`
+1. `primary` 的 rule 改成
+	```
+	primary        → "true" | "false" | "nil" | "this"
+					| NUMBER | STRING
+					| "(" expression ")"
+					| IDENTIFIER ;
+	```
+2. 完整的表达式 rule
+    ```
+    expression     → assignment ;
+
+    assignment     → ( call "." )? IDENTIFIER "=" assignment
+                    | logic_or ;
+
+	logic_or       → logic_and ( "or" logic_and )* ;
+
+	logic_and      → equality ( "and" equality )* ;
+
+    equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+
+    comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+
+    term           → factor ( ( "-" | "+" ) factor )* ;
+
+    factor         → unary ( ( "/" | "*" ) unary )* ;
+
+	unary          → ( "!" | "-" ) unary | call ;
+
+    call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
+
+    primary        → "true" | "false" | "nil" | "this"
+                    | NUMBER | STRING
+                    | "(" expression ")"
+                    | IDENTIFIER ;
+
+	arguments      → expression ( "," expression )* ;
+	
+	parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
+    ```
 1. 新增 `this` 表达式节点
     ```java
     // tool/GenerateAst.java
