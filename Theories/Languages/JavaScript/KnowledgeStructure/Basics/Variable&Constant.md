@@ -161,6 +161,35 @@ let [x, y] = [1, 2, 3];
     // TypeError: Cannot destructure property `b` of 'undefined' or 'null'.
     ```
 
+#### 解构赋值重命名时使用变量的情况
+1. 下面的解构赋值进行了重命名
+    ```js
+    const obj = {num1: 22, num2: 33};
+    const {num1: m, num2: n} = obj; // ok
+    ```
+2. 但如果对象 `obj` 的属性名不一定是固定的，而是根据一个值动态生成的，比如
+    ```js
+    const KEY_PREFIX = "num";
+
+    function createObj (keyPrefix) {
+        const obj = {};
+        obj[keyPrefix+'1'] = 22;
+        obj[keyPrefix+'2'] = 33;
+        return obj;
+    }
+    ```
+3. 假设 `KEY_PREFIX` 的值是外部生成的，我们不能确定每次这个 `KEY_PREFIX` 具体是什么；或者为了解耦，我们不想直接使用它的字面量。
+4. 那我们在结构赋值重命名的时候，就不能确定属性名是什么。可以如下使用动态的属性名
+    ```js
+    const {[`${KEY_PREFIX}1`]: num1, [`${KEY_PREFIX}1`]: num2} = obj;
+    ```
+    或者定义成变量再使用
+    ```js
+    const key1 = `${KEY_PREFIX}1`;
+    const key2 = `${KEY_PREFIX}2`;
+    const {[key1]: num1, [key2]: num2} = obj;
+    ```
+
 ### 使用基本类型结构赋值
 1. 解构赋值时，如果等号右边是数值和布尔值，则会先转为对象。
     ```js
