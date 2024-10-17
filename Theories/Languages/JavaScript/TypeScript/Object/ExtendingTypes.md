@@ -56,6 +56,15 @@ const cc: ColorfulCircle = {
     // Argument of type '{ color: string; raidus: number; }' is not assignable to parameter of type 'ColorfulCircle'.
     //   Object literal may only specify known properties, but 'raidus' does not exist in type 'ColorfulCircle'. Did you mean to write 'radius'?
     ```
+3. 使用 `type` 定义类型时不能使用 `extends` 继承，只能使用 `&`
+    ```ts
+    interface Colorful {
+        color: string;
+    }
+
+    type ColorfulCircle = {radius: number} & Colorful; // Ok
+    type AnotherColorfulCircle = {radius: number} extends Colorful; // Error
+    ```
 
 ### 和上面使用 `extends` 的区别
 1. The principle difference between the two is how conflicts are handled, and that difference is typically one of the main reasons why you’d pick one over the other between an interface and a type alias of an intersection type.

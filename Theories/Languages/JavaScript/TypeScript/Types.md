@@ -219,16 +219,123 @@
     ```
 
 #### `ReadonlyArray`
-```ts
-function doStuff(values: readonly string[]) {
-// 或者 function doStuff(values: ReadonlyArray<string>) {
-    const copy = values.slice();
-    console.log(`The first value is ${values[0]}`);
+1. 示例
+    ```ts
+    function doStuff(values: readonly string[]) {
+    // 或者 function doStuff(values: ReadonlyArray<string>) {
+        const copy = values.slice();
+        console.log(`The first value is ${values[0]}`);
 
-    values.push("hello!"); // 编译报错
-    // Property 'push' does not exist on type 'readonly string[]'.
-}   
-```
+        values.push("hello!"); // 编译报错
+        // Property 'push' does not exist on type 'readonly string[]'.
+    }   
+    ```
+2. 只读数组不能增、删和整个替换，但如果数组项本身是引用类型，那修改该引用类型的属性是允许的
+    ```ts
+    const arr: readonly string[] = ["foo", "bar"];
+
+    // 这里是直接替换
+    arr[0] = "qux"; // Index signature in type 'readonly string[]' only permits reading.
+    ```
+    ```ts
+    const arr: readonly {name: string}[] = [{name: "foo"}, {name: "bar"}];
+
+    // 这里是直接替换
+    arr[0] = {name: "qux"}; 
+    // Index signature in type 'readonly { name: string; }[]' only permits reading.
+
+    // 这里是修改数组项的属性
+    arr[0].name = "qux" // ok
+    ```
+
+#### 解决类型为数组元素类型但无法检测某个值是否在该数组的情况
+1. 下面的例子中，我们定义了函数 `handleArrItem`，希望它的参数必须是 `arr` 的数组项，但并没有实现
+    ```ts
+    const arr = ["foo", "bar"];
+    type ArrItem = typeof arr[number];
+    // type ArrItem = string
+
+    function handleArrItem(item: ArrItem) {}
+
+    handleArrItem("qux"); // 可以接受不是 arr 元素的字符串
+    ```
+2. 因为这里 `arr` 是可变的，所以 `typeof` 获取到的不是数组项的字面值联合，而是数组项类型的联合。
+3. 如果把数组设为 `const` 的话，它确实不可变了，获取到的类型也确实是字面值联合了，函数参数类型检测也符合预期了
+    ```ts
+    const arr = ["foo", "bar"] as const;
+    // const arr: readonly ["foo", "bar"]
+    type ArrItem = typeof arr[number];
+    // ttype ArrItem = "foo" | "bar"
+
+    function handleArrItem(item: ArrItem) {}
+
+    // 这里也可以检查出类型不对了
+    handleArrItem("qux"); 
+    // Argument of type '"qux"' is not assignable to parameter of type '"foo" | "bar"'
+    ```
+4. 但实际情况中，我们通常会先检查一个值，如果它是 `arr` 的数组项，我们才会对它调用 `handleArrItem`。但此时就出问题了
+    ```ts
+    const arr = ["foo", "bar"] as const;
+    type ArrItem = typeof arr[number];
+
+    function handleArrItem(item: ArrItem) {}
+
+    // 虽然 val 此时的值 "foo" 确实是 arr 中的值，但它是变量，所以不保证它在运行时的值一直会是 arr 中的值
+    let val = "foo";
+    // let val: string
+
+    if ( arr.includes(val) ) {
+        // Argument of type 'string' is not assignable to parameter of type '"foo" | "bar"'.
+        handleArrItem(val); 
+        // Argument of type 'string' is not assignable to parameter of type '"foo" | "bar"'.
+    }
+    ```
+5. 解决方法是，在使用 `includes`，把 `arr` 作为只读的字符串数组
+    ```ts
+    const arr = ["foo", "bar"] as const;
+    // const arr: readonly ["foo", "bar"]
+    type ArrItem = typeof arr[number];
+
+
+    function handleArrItem(item: ArrItem) {}
+
+    let val = "foo";
+
+    // 可以使用 includes
+    if ( (arr as readonly string[]).includes(val) ) {
+        // 这里也需要 as
+        handleArrItem(val as ArrItem); 
+    }
+
+
+    // 可以检查出不对的类型
+    handleArrItem("any"); 
+    // Argument of type '"any"' is not assignable to parameter of type '"foo" | "bar"'.
+    ```
+6. 必须要转成 `readonly string[]` 而不能是 `string[]`，因为 `arr` 开始就用 `const` 定义成了只读的。如果不加 `readonly` 的话
+    ```ts
+    const arr = ["foo", "bar"] as const;
+    type ArrItem = typeof arr[number];
+
+
+    function handleArrItem(item: ArrItem) {
+
+    }
+
+    let val = "foo";
+
+    if ( (arr as string[]).includes(val) ) {
+        /*
+        Conversion of type 'readonly ["foo", "bar"]' to type 'string[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+            The type 'readonly ["foo", "bar"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+        */
+        handleArrItem(val as ArrItem); 
+    }
+    ```
+7. 参考
+    * https://stackoverflow.com/a/53035048/10404867
+    * https://github.com/microsoft/TypeScript/issues/26255
+    * https://stackoverflow.com/q/69007705/10404867
 
 ### Union Types
 1.  A union type is a type formed from two or more other types, representing values that may be any one of those types. 

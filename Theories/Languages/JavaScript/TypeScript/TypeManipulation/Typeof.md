@@ -34,6 +34,16 @@
     //     y: number;
     // }
     ```
+3. 结合 `typeof` 可以获取一个对象的 key 的字面量属性
+    ```ts
+    const obj = {
+        x: 1,
+        y: 2,
+    };
+    type ObjKeys = keyof typeof obj;
+    // type ObjKeys = "x" | "y"
+    ```
+    
 
 ## Limitations
 1. TypeScript intentionally limits the sorts of expressions you can use typeof on. Specifically, it’s only legal to use typeof on identifiers (i.e. variable names) or their properties. 

@@ -19,7 +19,16 @@
     let p2:P = "y"; // OK
     let p3:P = "z"; // Error - Type '"z"' is not assignable to type 'keyof Point'.
     ```
-3. TODO，下面的例子没看懂
+3. 结合 `typeof` 可以获取一个对象的 key 的字面量属性
+    ```ts
+    const obj = {
+        x: 1,
+        y: 2,
+    };
+    type ObjKeys = keyof typeof obj;
+    // type ObjKeys = "x" | "y"
+    ```
+4. TODO，下面的例子没看懂
     ```ts
     If the type has a string or number index signature, keyof will return those types instead:
 

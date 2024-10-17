@@ -16,6 +16,11 @@
 <!-- /TOC -->
 
 
+## TODO
+要求多个可选属性至少要选一个，或者多个可选属性必须选且只能选一个
+https://stackoverflow.com/questions/40510611/typescript-interface-require-one-of-two-properties-to-exist
+
+
 ## 接口的基本用途
 1. 下面的 `printLabel` 函数要求参数是一个对象，该对象必须要有一个名为 `label` 的属性，且该属性的值为字符串类型
     ```ts
