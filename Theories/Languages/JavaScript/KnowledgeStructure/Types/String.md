@@ -93,28 +93,37 @@
 
 
 ## 模板字符串
-### 基本用法
+### Multi-line strings
 1. 如果使用模板字符串表示多行字符串，所有的空格和缩进都会被保留在输出之中
     ```js
-    $('#list').html(`
-    <ul>
-        <li>first</li>
-        <li>second</li>
-    </ul>
-    `);
+    console.log(`string text line 1
+    string text line 2`);
+    // string text line 1
+    // string text line 2
     ```
-    上面代码中，所有模板字符串的空格和换行，都是被保留的，比如`<ul>`标签前面会有一个换
-    行。如果你不想要这个换行，可以使用`trim`方法消除它。
+2. 如果只是希望换行写源代码中的字符串而并不想输出时真的有换行，也是可以通过反斜杠
     ```js
-    $('#list').html(`
-    <ul>
-        <li>first</li>
-        <li>second</li>
-    </ul>
-    `.trim());
+    console.log(`string text line 1 \
+    string text line 2`);
+    // "string text line 1 string text line 2"
     ```
-2. 模板字符串中可以通过`${}`嵌入任意的 JavaScript 表达式，如果表达式的值不是字符串，会
-    被转化为字符串
+
+#### 转义
+1. 模版字符串可以处理 JS 中合理的转义字符，例如 `\n`、`\x41`
+    ```js
+    console.log('\u4F60\u597D\n\x41');
+    // 你好
+    // A
+    ```
+2. 但如果是像是 JS 中的转义但格式不对，那就会报错
+    ```js
+    console.log(`\xyz`) // SyntaxError: Invalid hexadecimal escape sequence
+    ```
+    `\x` 会被识别为 `\xHH` 格式的字符转义，但后面的 `yz` 并不是两个十六进制数位，所谓报错。
+3. 下面 Tagged templates 遇到这种错误转义的情况时不会报错，而是会转为 `undefined`
+
+### String interpolation
+1. 模板字符串中可以通过 `${}` 嵌入任意的 JavaScript 表达式，如果表达式的值不是字符串，会被转化为字符串
     ```js
     let name = '33';
     let num1 = 2;
@@ -125,15 +134,126 @@
     console.log(`${sayHi()}, I'm ${name}, ${num1+num2} years old.`);
     // "Hi, I'm 33, 5 years old."
     ```
-    既然说可以嵌入任意表达式，那也可以再嵌入一个模板字符串
+2. 既然可以嵌入任意表达式，那也可以再嵌入一个模板字符串
     ```js
     let name = '33';
     let age = 22;
     console.log(`Name: ${name}, ${`Age: ${age}`}.`); // "Name: 33, Age: 22."
     ```
 
-### TODO
-[http://es6.ruanyifeng.com/#docs/string#%E6%A8%A1%E6%9D%BF%E5%AD%97%E7%AC%A6%E4%B8%B2](其他高级用法)
+#### 和 `+` 转字符串的不同
+`+` 转字符串是调用被转对象的 `valueOf` 方法，而模板字符串以及 `concat` 方法转字符串时是调用 `toString` 方法
+```js
+const obj = {
+    valueOf() {
+        return "hello";
+    },
+    toString() {
+        return "world";
+    },
+};
+
+console.log("" + obj);       // hello
+console.log(`${obj}`);       // world
+console.log("".concat(obj)); // world
+```
+
+### Tagged templates
+1. 模版字符串可以作为一种特殊的函数参数，函数可以直接接受模版字符串中被表达式分隔的字符串字面量以及每个表达式
+    ```js
+    function tag(literals, ...exprs) {
+        literals.forEach((l) => {
+            console.log(`[${l}]`);
+        });
+        exprs.forEach((e) => {
+            console.log(e);
+        });
+    }
+    
+    tag `${22} puls ${33} equals ${55}.`
+    // []
+    // [ puls ]
+    // [ equals ]
+    // [.]
+    // 22
+    // 33
+    // 55
+    ```
+2. 上例中的模板字符串有三个表达式，保存在 `exprs` 中。模板字符串被三个表达式分隔出四个字面量，其中第一个是空字符串。
+3. 如果两个表达式紧挨在一起，它们中间也会作为一个空字符串的字面量。例如下面的 `literals` 是四个空字符串
+    ```js
+    tag `${22}${33}${55}`
+    ```
+4. 因此第一个参数 `literals` 的 `length` 值永远是之后参数数量加一。
+5. 这一功能得以实现并不是因为定义的函数有特别之处，而是模版字符串作为参数的特别之处。所以其他任意函数也可以这样使用模版字符串作为参数
+    ```js
+    console.log `${22} puls ${33} equals ${55}.`; // ['', ' puls ', ' equals ', '.']
+
+    ```
+    模板字符串会把自己的字面量数组传给调用它的函数的第一个形参，而 `console.log` 会接受唯一的参数正好就是这个数组。
+6. 但这一功能不能出现在可选链式上
+    ```js
+    console.log?.`Hello`; // SyntaxError: Invalid tagged template on optional chain
+    console?.log`Hello`;  // SyntaxError: Invalid tagged template on optional chain
+    ```
+
+#### `raw` 属性
+1. 第一个参数还有一个 `raw` 属性，它保存着每个人字面量的源代码，也就是说会忽略里面的转义
+    ```js
+    function tag(strings) {
+        console.log(`[${strings[0]}]`);
+        console.log(`[${strings[1]}]`);
+        console.log(`[${strings[2]}]`);
+        console.log(`[${strings[3]}]`);
+    }
+
+    function tagRaw(strings) {
+        console.log(`[${strings.raw[0]}]`);
+        console.log(`[${strings.raw[1]}]`);
+        console.log(`[${strings.raw[2]}]`);
+        console.log(`[${strings.raw[3]}]`);
+    }
+
+
+    tag `hellow, \n ${22} puls ${33} equals ${55}.`;
+    // [hellow, 
+    //  ]
+    // [ puls ]
+    // [ equals ]
+    // [.]
+
+
+    tagRaw `hellow, \n ${22} puls ${33} equals ${55}.`;
+    // [hellow, \n ]
+    // [ puls ]
+    // [ equals ]
+    // [.]
+    ```
+2. 还有一个静态方法 `String.raw` 用来从模板字符串生成不转义的字符串
+    ```js
+    console.log( `Hi\n${2 + 3}!` ); 
+    // Hi
+    // 5!
+
+    const rawStr = String.raw`Hi\n${2 + 3}!`;
+    console.log( rawStr );
+    // Hi\n5!
+
+    console.log( Array.from(rawStr).join(",") );
+    // H,i,\,n,5,!
+    ```
+
+#### 对于无法处理的转义
+上面 `\xyz` 错误的情况，在 Tagged template 中不会报错，而是会如下处理
+```js
+function foo (literals) {
+    console.log(literals[0]);
+    console.log(literals.raw[0]);
+}
+foo `\xyz`;
+// undefined
+// \xyz
+```
 
 
 ## 四字节字符的处理方法
@@ -210,31 +330,46 @@ console.log(str1.concat(str2, str3)); // "123"
 console.log(str1); // "1"
 ```
 
+#### 和 `+` 转字符串的不同
+`+` 转字符串是调用被转对象的 `valueOf` 方法，而 `concat` 方法以及模板字符串转字符串时是调用 `toString` 方法
+```js
+const obj = {
+    valueOf() {
+        return "hello";
+    },
+    toString() {
+        return "world";
+    },
+};
+
+console.log("" + obj);       // hello
+console.log(`${obj}`);       // world
+console.log("".concat(obj)); // world
+```
+
 ### `padStart()`和`padEnd()`
 #### Syntax
 `str.padStart(targetLength [, padString])`
 
-#### `targetLength`参数
+#### `targetLength` 参数
 1. The length of the resulting string once the current string has been padded.
-2. If the value is lower than the current string's length, the current string
-will be returned as is.
-```js
-let str = '123';
-console.log(str.padEnd(8, '456')); // "12345645"
-console.log(str.padEnd(2, '456')); // "123"
-console.log(str); // "123"  不改变原字符串
-```
+2. If the value is lower than the current string's length, the current string will be returned as is
+    ```js
+    let str = '123';
+    console.log(str.padEnd(8, '456')); // "12345645"
+    console.log(str.padEnd(2, '456')); // "123"
+    console.log(str); // "123"  不改变原字符串
+    ```
 
-#### 可选的`padString`参数
+#### 可选的 `padString` 参数
 1. The string to pad the current string with.
-2. If this string is too long to stay within the target length, it will be
-truncated and the left-most part will be applied.
-3. The default value for this parameter is " " (U+0020).
-```js
-let str = '123';
-console.log(str.padEnd(5, '4567890')); // "12345"
-console.log(str.padEnd(5) + '.'); // "123  ."
-```
+2. If this string is too long to stay within the target length, it will be truncated and the left-most part will be applied.
+3. The default value for this parameter is `" "` (U+0020)
+    ```js
+    let str = '123';
+    console.log(str.padEnd(5, '4567890')); // "12345"
+    console.log('[' + str.padEnd(8) + ']'); // [123     ]
+    ```
 
 ### `repeat()`
 #### Syntax

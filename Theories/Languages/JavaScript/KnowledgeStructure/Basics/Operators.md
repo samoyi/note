@@ -76,6 +76,24 @@ Operators are unique in ECMAScript in that they can be used on a wide range of v
 2. 在对非数值应用时，一元加操作符会像 `Number()` 转型函数一样对这个值执行转换。布尔值转换为 `0` 和 `1`，字符串值按照一组特殊的规则进行解析，而对象是先调用它们的 `valueOf()` 和（或）`toString()` 方法，再转换得到的值。
 3. 一元减操作符主要用于表示负数。而当应用于非数值时，一元减操作符遵循与一元加操作符相同的规则，最后再将得到的数值转换为负数。
 
+#### 和模板字符串以及 `concat` 方法转字符串的不同
+1. `+` 转字符串是调用被转对象的 `valueOf` 方法，而模板字符串以及 `concat` 方法转字符串时是调用 `toString` 方法
+    ```js
+    const obj = {
+        valueOf() {
+            return "hello";
+        },
+        toString() {
+            return "world";
+        },
+    };
+
+    console.log("" + obj);       // hello
+    console.log(`${obj}`);       // world
+    console.log("".concat(obj)); // world
+    ```
+2. 如果不确定被转对象的 `valueOf` 是否会符合预期，那建议还是使用模板字符串或 `concat` 方法转字符串。
+
 ### Spread syntax
 Spread syntax allows an iterable such as an array expression or string to be expanded in places where zero or more arguments (for function calls) or elements (for array literals) are expected, or an object expression to be expanded in places where zero or more key-value pairs (for object literals) are expected.
 
