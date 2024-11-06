@@ -164,6 +164,42 @@ console.log(Number.isInteger(3.1))
     ```
 
 
+## 分隔符（Numeric separators）
+1. To improve readability for numeric literals, underscores (`_`, U+005F) can be used as separators
+    ```js
+    1_000_000_000_000
+    1_050.95
+    0b1010_0001_1000_0101
+    0o2_2_5_6
+    0xA0_B0_C0
+    1_000_000_000_000_000_000_000n
+    ```
+2. 非法使用的情况
+    * 放在数值的最前或最后
+        ```js
+        _22 // ReferenceError: _22 is not defined. 这是变量名 
+        22_ // Numeric separators are not allowed here.
+        ```
+    * 放在小数点前后
+        ```js
+        2_.2 // Numeric separators are not allowed here.
+        2._2 // Numeric separators are not allowed here.
+        ```
+    * 放在科学计数法的 e 前后
+        ```js
+        1_e12 // Numeric separators are not allowed here.
+        1E_12 // Numeric separators are not allowed here.
+        ```
+    * 放在进制前缀之后或中间
+        ```js
+        0x_10 // Numeric separators are not allowed here.
+
+        0_b11 
+        // Numeric separators are not allowed here.
+        // An identifier or keyword cannot immediately follow a numeric literal.
+        ```
+        
+
 ## 类型转换
 `Number()` `Number.parseInt()` `Number.parseFloat()`
 1. 第一个函数，即转型函数可以用于任何数据类型。另外两个函数则专门用于把字符串转换成数值。实测后两个也可以转换首项是数字或数字字符串的数组，但不能转换布尔值。

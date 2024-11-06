@@ -1,4 +1,62 @@
-# Promise
+<!-- vscode-markdown-toc -->
+* 1. [Basic](#Basic)
+	* 1.1. [给你一个承诺（promise）：](#promise)
+	* 1.2. [基本用法](#)
+* 2. [对结果不可变的承诺](#-1)
+* 3. [Promise 对象](#Promise)
+	* 3.1. [构造函数直接返回的 promise 状态会同步改变](#promise-1)
+* 4. [`Promise.prototype.then()`](#Promise.prototype.then)
+	* 4.1. [回调调用机制](#-1)
+	* 4.2. [返回值——使用微任务取代嵌套调用栈](#-1)
+	* 4.3. [详细的返回值规则](#-1)
+		* 4.3.1. [如果之后回调返回一个 promise 实例](#promise-1)
+		* 4.3.2. [如果之后回调返回的不是 promise](#promise-1)
+		* 4.3.3. [如果回调抛出错误](#-1)
+	* 4.4. [返回的 promise 的状态改变时间](#promise-1)
+		* 4.4.1. [如果 `then` 的回调明确返回了 promise 实例](#thenpromise)
+		* 4.4.2. [如果 `then` 的回调返回了其他值](#then)
+	* 4.5. [链式调用](#-1)
+* 5. [`Promise.prototype.catch()`](#Promise.prototype.catch)
+	* 5.1. [Error propagation](#Errorpropagation)
+* 6. [Promise rejection events](#Promiserejectionevents)
+	* 6.1. [示例](#-1)
+* 7. [`Promise.prototype.finally()`](#Promise.prototype.finally)
+* 8. [Nested promise](#Nestedpromise)
+	* 8.1. [如果嵌套实例提前 resolve 了](#resolve)
+	* 8.2. [如果嵌套实例提前 reject 了](#reject)
+	* 8.3. [如果被嵌套实例提前 resolve 了](#resolve-1)
+	* 8.4. [如果被嵌套实例提前 reject 了](#reject-1)
+* 9. [捕获错误](#-1)
+* 10. [Promise 的执行顺序](#Promise-1)
+	* 10.1. [结合 async-await 函数的例子分析](#async-await)
+* 11. [`Promise.all(iterable)`](#Promise.alliterable)
+* 12. [`Promise.allSettled(iterable)`](#Promise.allSettlediterable)
+* 13. [`Promise.race()`](#Promise.race)
+* 14. [`Promise.any(iterable)`](#Promise.anyiterable)
+* 15. [`Promise.resolve()` & `Promise.reject()`](#Promise.resolvePromise.reject)
+	* 15.1. [`Promise.resolve()` 返回类型](#Promise.resolve)
+		* 15.1.1. [如果参数是 promise 实例](#promise-1)
+		* 15.1.2. [如果参数是一个 thenable 对象](#thenable)
+		* 15.1.3. [其他参数](#-1)
+	* 15.2. [`Promise.reject()` 返回类型](#Promise.reject)
+* 16. [其他一些自定义的有用的方法](#-1)
+* 17. [自己实现加深理解](#-1)
+	* 17.1. [基本的 promise](#promise-1)
+		* 17.1.1. [接口](#-1)
+	* 17.2. [逻辑](#-1)
+		* 17.2.1. [实现功能](#-1)
+		* 17.2.2. [then 逻辑](#then-1)
+	* 17.3. [边界条件](#-1)
+	* 17.4. [实现](#-1)
+* 18. [其他](#-1)
+	* 18.1. [并行数量限制的 promise](#promise-1)
+* 19. [References](#References)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc --># Promise
 
 
 <!-- TOC -->
@@ -58,13 +116,13 @@
 <!-- /TOC -->
 
 
-## Basic
-### 给你一个承诺（promise）：
+##  1. <a name='Basic'></a>Basic
+###  1.1. <a name='promise'></a>给你一个承诺（promise）：
 1. 你不用管，我帮你做这个事情：异步操作。
 2. 到时候不管成功或失败，都会告诉你情况：异步操作成功时调用 `resolve`，结果作为参数；异步操作失败时调用 `reject`，错误作为参数。
 3. 你记住我这个承诺，等待我的消息：获得 Promise 实例，通过 `then` 和 `catch` 监听成功或失败。
 
-### 基本用法
+###  1.2. <a name=''></a>基本用法
 1. 作为构造函数的参数是一个函数，记为 `executor`。`executor` 是负责异步操作的对象；
 2. 调用构造函数返回一个 Promise 实例，记为 `promise`。使用该实例的是接受承诺并使用该异步操作的用户。
 3. `executor` 内部会进行异步操作。
@@ -118,7 +176,7 @@ setTimeout(()=>{
 ```
 
 
-## 对结果不可变的承诺
+##  2. <a name='-1'></a>对结果不可变的承诺
 1. 不管是调用 `resolve` 了还是 `reject`，后面的代码都会继续执行。但是，后面的 `resolve` 和 `reject` 都是无效的。而且如果后面有错误，错误不会被抛出到外部也不会被捕获，但是会阻止之后代码的执行
     ```js
     new Promise((resolve, reject)=>{
@@ -138,7 +196,7 @@ setTimeout(()=>{
 2. 因为 Promise 的状态一旦改变，就永久保持该状态，不会再变了。因此除了之后不能再调用 `resolve` 和 `reject`，因为抛出错误也是相当于 `reject`，所以错误也不会被抛出到外部。
 
 
-## Promise 对象
+##  3. <a name='Promise'></a>Promise 对象
 1. Promise 对象代表着一个异步操作，从中可以读取到它的状态，可能是正在进行，可能是成功了，也可能是失败了；如果成功或失败了，可以得到成功的返回值和失败的原因。
 2. 与普通异步操作需要在发起时就传递回调不同，使用 promise 可以在之后的任何时候调用它的实例方法获得回调的状态和结果
     ```js
@@ -165,7 +223,7 @@ setTimeout(()=>{
     ```
 3. 你在异步操作结束前就添加回调，可以在刚结束时就及时得到结果；而之后再添加的话，异步操作已经完成了，所以添加完就能得到结果。（不过并不是添加完立刻得到，因为 promise 的回调要作为微任务执行）
 
-### 构造函数直接返回的 promise 状态会同步改变
+###  3.1. <a name='promise-1'></a>构造函数直接返回的 promise 状态会同步改变
 1. 下面的例子中，在调用 `resolve` 后，实例立刻变成了
     ```js
     let fn;
@@ -181,8 +239,8 @@ setTimeout(()=>{
 2. 这里强调了是 “构造函数直接返回的 promise”，在下面 `then` 方法返回的 promise 的情况下会有所不同。
 
 
-## `Promise.prototype.then()`
-### 回调调用机制
+##  4. <a name='Promise.prototype.then'></a>`Promise.prototype.then()`
+###  4.1. <a name='-1'></a>回调调用机制
 1. 这个方法是用来给 promise 所代表的的异步操作添加回调的。
 2. 使用这个方法添加的回调会在 promise 的异步操作得到结果后被调用，但并不是同步调用
     ```js
@@ -200,7 +258,7 @@ setTimeout(()=>{
     调用 `resolve` 使异步操作完成后，并不会立刻打印 `"success"`，还是要先打印 `1`。显然回调的优先级不可能强到插入到两行同步执行的代码之间。
 3. 准确地说，异步操作完成后，并不是调用回调，而是把回调加入到微任务队列里。
 
-### 返回值——使用微任务取代嵌套调用栈
+###  4.2. <a name='-1'></a>返回值——使用微任务取代嵌套调用栈
 1. `then` 方法是用来给异步操作传递回调的，那为什么需要返回值呢？
 2. 假设我们有一个链式的异步操作：
     1. 第一个异步操作结束后调用回调，在回调里调用第二个异步操作；
@@ -283,12 +341,12 @@ setTimeout(()=>{
     })
     ```
 
-### 详细的返回值规则
+###  4.3. <a name='-1'></a>详细的返回值规则
 1. 实际上，即使没有在 `then` 的回调里明确的返回 promise 对象，`then` 也会返回一个 promise 对象。但是，这个 promise 的状态仍然取决于 `then` 的回调的返回值。
 2. 因为 `then` 的调用是在同步的主线程，而它的回调是作为微任务之后异步调用。所以 `then` 刚返回的 promise 对象的状态是 pendding。
 3. 之后等它的回调执行时，根据回调的返回值，`then` 返回的 promise 的状态会发生相应的变化。
 
-#### 如果之后回调返回一个 promise 实例
+####  4.3.1. <a name='promise-1'></a>如果之后回调返回一个 promise 实例
 则 `then` 返回的 promise 实例的状态会变成和该 promise 实例相同的状态。注意只是状态相同，但并不是同一个。
 ```js
 let p0 = Promise.resolve(22)
@@ -354,7 +412,7 @@ setTimeout(() => { // 下一个事件循环
 // 之后通过 catch 捕获了 rejct，所以异常抛出消失
 ```
 
-#### 如果之后回调返回的不是 promise
+####  4.3.2. <a name='promise-1'></a>如果之后回调返回的不是 promise
 则 `then` 返回的 promise 的状态变为 fulfilled，resolved 的值就是回调的返回值；
 ```js
 let p = Promise.resolve(22)
@@ -372,7 +430,7 @@ setTimeout(() => {
 // Macro: Promise {<fulfilled>: 33}
 ```
 
-#### 如果回调抛出错误
+####  4.3.3. <a name='-1'></a>如果回调抛出错误
 则 `then` 返回的 promise 状态变为 rejected，rejected 的错误就是抛出的错误
 ```js
 let p = Promise.resolve(22)
@@ -394,10 +452,10 @@ setTimeout(() => {
 // Macro: Error: 33
 ```
 
-### 返回的 promise 的状态改变时间
+###  4.4. <a name='promise-1'></a>返回的 promise 的状态改变时间
 上面说到构造函数直接返回的 promise 状态会同步改变，但这里的情况不同，而且还很奇怪且不统一。
 
-#### 如果 `then` 的回调明确返回了 promise 实例
+####  4.4.1. <a name='thenpromise'></a>如果 `then` 的回调明确返回了 promise 实例
 1. 如下例子，`p` 是最初的 promise，`p1` 是 `then` 返回的 promise，`p2` 是 `then` 回调返回的 promise。
 2. 按照上面说到的，`p1` 和 `p2` 不同但是状态相同。不过其实它们的状态最终会相同，但是并不是一开始就相同
     ```js
@@ -459,7 +517,7 @@ setTimeout(() => {
 4. 而且甚至，`p1` 的改变也不是作为微任务。因为如果是作为微任务改变，那就应该在 `Micro next` 中改变。
 5. 而且状态改变也不应该并且确实不是通过宏任务，因为如果是通过宏任务，那这个宏任务就应该排在 `setTimeout` 的回调宏任务之后。但显然在 `setTimeout` 的回调里就已经更新了状态。不懂
 
-#### 如果 `then` 的回调返回了其他值
+####  4.4.2. <a name='then'></a>如果 `then` 的回调返回了其他值
 1. 如下例子
     ```js
     let p = Promise.resolve(22);
@@ -490,7 +548,7 @@ setTimeout(() => {
 2. 这里就和通过构造函数返回的 promise 实例改变状态的时间一样了，是同步改变，因为在第一个微任务里返回了数值后，第二个微任务就看到改变了。
 3. 抛出错误的情况也是一样。
 
-### 链式调用
+###  4.5. <a name='-1'></a>链式调用
 1. 因为 `then` 方法返回的是和回调里返回的 promise 状态相同的 promise 实例，而回调是处理之前一个 promise 的，所以就可以通过链式调用 `then` 方法来处理链式的异步操作。
 2. 同时，因为 `catch` 方法是 `then(null, rejection)` 方法的别名，所以后面依然可以继续链
     ```js
@@ -643,7 +701,7 @@ setTimeout(() => {
     12. 一秒钟后执行目前唯一的宏任务，`string` 变成 `"foobarbaz"`，然后【打印】
 
 
-## `Promise.prototype.catch()`
+##  5. <a name='Promise.prototype.catch'></a>`Promise.prototype.catch()`
 1. 异步操作中调用了 `reject` 函数，或者在调用 `resolve` 或 `reject` 函数之前有错误抛出，`Promise` 实例的状态都会变为 rejected，导致 `catch` 的回调被触发。
     ```js
     let p = new Promise((res, rej)=>{
@@ -703,7 +761,7 @@ setTimeout(() => {
     })
     ```
 
-### Error propagation
+###  5.1. <a name='Errorpropagation'></a>Error propagation
 1. If there's an exception, the browser will look down the chain for `.catch()` handlers or `onRejected`
     ```js
     doSomething()
@@ -738,7 +796,7 @@ setTimeout(() => {
     ```
 
 
-## Promise rejection events
+##  6. <a name='Promiserejectionevents'></a>Promise rejection events
 1. The `PromiseRejectionEvent` interface represents events which are sent to the global script context when JavaScript Promises are rejected. These events are particularly useful for telemetry and debugging purposes.
 2. Whenever a promise is rejected, one of two events is sent to the global scope:
     * `rejectionhandled`: Fired when a promise is rejected, and after the rejection is handled by the promise's rejection handling code. 这个事件并不是看上去的那样，并不是一个 `reject` 的 promise 添加了捕获错误函数就会触发这个事件。根据 [这个回答](https://stackoverflow.com/a/57261820) 提到了规范中关于这个方法的内容，在规范里看到了 “queue a global task”，看起来是要在下一个宏任务处理了这个 rejection 后才会触发这个事件。也就是说，本轮事件循环没有捕获，但是之后的某个事件循环捕获了，那捕获的那个事件循环里才会触发这个事件。
@@ -748,7 +806,7 @@ setTimeout(() => {
 5. These handlers are global per context, so all errors will go to the same event handlers, regardless of source.
 6. One case of special usefulness: when writing code for Node.js, it's common that modules you include in your project may have unhandled rejected promises, logged to the console by the Node.js runtime. You can capture them for analysis and handling by your code—or just to avoid having them cluttering up your output—by adding a handler for the Node.js unhandledRejection event. 
 
-### 示例
+###  6.1. <a name='-1'></a>示例
 1. 正常处理的 rejection 不会触发这两个事件
     ```js
     window.addEventListener("rejectionhandled", (ev) => {
@@ -807,7 +865,7 @@ setTimeout(() => {
     ```
 
 
-## `Promise.prototype.finally()`
+##  7. <a name='Promise.prototype.finally'></a>`Promise.prototype.finally()`
 1. `finally` 方法用于指定不管 Promise 对象最后状态如何，都会执行的操作。该方法是 ES2018 引入标准的。
 2. 只要想想，其实 `then` 方法只要提供了两个回调参数，也可以实现这个功能。但与 `then` 方法的实现由两点不同：
     * `finally` 方法的回调函数不接受任何参数，这意味着没有办法知道，前面的 Promise 状态到底是 fulfilled 还是 rejected。这表明，`finally` 方法里面的操作，应该是与状态无关的，不依赖于 Promise 的执行结果。异步不管成功或失败之后的收尾工作。
@@ -865,11 +923,11 @@ setTimeout(() => {
     ```
 
 
-## Nested promise
+##  8. <a name='Nestedpromise'></a>Nested promise
 1. 一个 promise 实例作为另一个 promise 的结果
 2. 不懂。嵌套实例的最终解析结果感觉比较混乱，没有总结出规律，先看下面各种情况的例子
 
-### 如果嵌套实例提前 resolve 了
+###  8.1. <a name='resolve'></a>如果嵌套实例提前 resolve 了
 1. 那就要等被嵌套实例的结果。因为只有两个都 resolve 才能整体 resolve。
 2. 如果被嵌套实例最终 resolve 了，则嵌套实例 resolve，表示整体 resolve
     ```js
@@ -900,7 +958,7 @@ setTimeout(() => {
     .catch(error => console.log('rejected', error)); // rejected fail
     ```
 
-### 如果嵌套实例提前 reject 了
+###  8.2. <a name='reject'></a>如果嵌套实例提前 reject 了
 1. 因为已经有一个是 reject 了，不用等待被嵌套实例的结果，整体就立刻 reject。
 2. 因为此时被嵌套实例尚未解析完毕，所以嵌套实例的解析结果只是未被解析的嵌套实例。
     ```js
@@ -930,7 +988,7 @@ setTimeout(() => {
     .catch(error => console.log('rejected', error)); // rejected Promise {<pending>}
     ```
 
-### 如果被嵌套实例提前 resolve 了
+###  8.3. <a name='resolve-1'></a>如果被嵌套实例提前 resolve 了
 1. 同样，需要等待嵌套实例的结果，才能确保是否整体 resolve
 2. 因为最终嵌套实例也调用了 resolve 了，则整体 resolve
     ```js
@@ -964,7 +1022,7 @@ setTimeout(() => {
     // rejected: Promise {<resolved>: "success"}
     ```
 
-### 如果被嵌套实例提前 reject 了
+###  8.4. <a name='reject-1'></a>如果被嵌套实例提前 reject 了
 这是居然仍然要等待被嵌套实例的结果！虽然最终整体结果总是 reject
 
 ```js
@@ -995,7 +1053,7 @@ p2 // 三秒钟之后 reject
 ```
 
 
-## 捕获错误
+##  9. <a name='-1'></a>捕获错误
 1. 不管是 `then` 方法的第二个参数还是 `catch` 方法，都不仅能捕获 `promise` 中 `reject` 记录的错误，还能捕获到 `resolve` 和 `reject` 调用之前发生的其他错误
     ```js
     new Promise((resolve, reject)=>{
@@ -1144,7 +1202,7 @@ p2 // 三秒钟之后 reject
  现在，在 FF 里也可以看到错误被抛出了。
 
 
-## Promise 的执行顺序
+##  10. <a name='Promise-1'></a>Promise 的执行顺序
 1. `executor` 里的操作会立刻执行，这没问题，因为要发起异步操作；但是即使是 resove 或者 reject 之后的操作，也会同步（非异步）的执行
     ```js
     let p = new Promise ((resolve, reject) => {
@@ -1196,7 +1254,7 @@ p2 // 三秒钟之后 reject
     ReferenceError
     ```
 
-### 结合 async-await 函数的例子分析
+###  10.1. <a name='async-await'></a>结合 async-await 函数的例子分析
 1. 程序如下
     ```js
     setTimeout(function () {
@@ -1272,7 +1330,7 @@ p2 // 三秒钟之后 reject
     8. 1
 
 
-## `Promise.all(iterable)`
+##  11. <a name='Promise.alliterable'></a>`Promise.all(iterable)`
 1. `Promise.all` 方法用于将多个 Promise 实例，包装成一个新的 Promise 实例。
 2. `Promise.all` 方法的参数可以不是数组，但必须具有 Iterator 接口
     ```js
@@ -1423,7 +1481,30 @@ p2 // 三秒钟之后 reject
     ```
 
 
-## `Promise.race()`
+##  12. <a name='Promise.allSettlediterable'></a>`Promise.allSettled(iterable)`
+1. The `Promise.allSettled()` static method takes an iterable of promises as input and returns a single Promise. 
+2. This returned promise fulfills when all of the input's promises settle (including when an empty iterable is passed), with an array of objects that describe the outcome of each promise
+    ```js
+    const promise1 = Promise.resolve(3);
+    const promise2 = new Promise((resolve, reject) =>
+        setTimeout(reject,  1000, 'foo'),
+    );
+    const promises = [promise1, promise2];
+
+    Promise.allSettled(promises).then((results) => {
+        results.forEach((result) => {
+            console.log(result);
+        });
+    });
+    ```
+3. 上面的例子中，一秒钟之后打印 
+    ```
+    {status: 'fulfilled', value: 3}
+    {status: 'rejected', reason: 'foo'}
+    ```
+
+
+##  13. <a name='Promise.race'></a>`Promise.race()`
 1. 同样是将多个 Promise 实例，包装成一个新的 Promise 实例。而且和 `Promise.all` 的参数也是相同的。不同的是，可以从名字看出来，race 和 all，`Promise.race()` 参数的若干个 promise 实例只要有一个出结果了，该结果就会作为 `Promise.race()` 返回的总体的 promise 实例的结果。
     ```js
     let p1 = new Promise((resolve, reject)=>{
@@ -1479,12 +1560,51 @@ p2 // 三秒钟之后 reject
     ```
 
 
-## `Promise.resolve()` & `Promise.reject()`
+##  14. <a name='Promise.anyiterable'></a>`Promise.any(iterable)`
+1. The `Promise.any()` static method takes an iterable of promises as input and returns a single Promise. 
+2. This returned promise fulfills when any of the input's promises fulfills, with this first fulfillment value
+    ```js
+    const promise1 = Promise.reject(0);
+    const promise2 = new Promise((resolve) => setTimeout(resolve, 100, 'quick'));
+    const promise3 = new Promise((resolve) => setTimeout(resolve, 500, 'slow'));
+
+    const promises = [promise1, promise2, promise3];
+
+    Promise.any(promises).then((value) => {
+        console.log(value); // "quick"
+    });
+    ```
+3. It rejects when all of the input's promises reject (including when an empty iterable is passed), with an `AggregateError` containing an array of rejection reasons
+    ```js
+    const promise1 = Promise.reject("err1");
+    const promise2 = Promise.reject("err2");
+    const promise3 = Promise.reject("err3");
+
+    const promises = [promise1, promise2, promise3];
+
+
+    Promise.any(promises)
+    .catch((err) => {
+        console.log(err); // AggregateError: All promises were rejected
+        console.log(err.errors); // ['err1', 'err2', 'err3']
+    });
+    ```
+    ```js
+    Promise.any([])
+    .catch((err) => {
+        console.log(err); // AggregateError: All promises were rejected
+        console.log(err.errors); // []
+    });
+    ``
+4. `Promise.race()` 是返回第一个出结果的，结果可能是 fullfilled 也可能是 rejected；而 `Promise.any()` 则是返回第一个 fullfilled。
+
+
+##  15. <a name='Promise.resolvePromise.reject'></a>`Promise.resolve()` & `Promise.reject()`
 1. 将参数的值转换为 promise 实例并返回。
 2. 这两个方法主要是用来将非 promise 的值转换为 promise，当然如果参数传 promise 实例也可以。
 
-### `Promise.resolve()` 返回类型
-#### 如果参数是 promise 实例
+###  15.1. <a name='Promise.resolve'></a>`Promise.resolve()` 返回类型
+####  15.1.1. <a name='promise-1'></a>如果参数是 promise 实例
 直接返回该实例本身。也就是说并不会对 pending 甚至 rejected 的实例进行 resolve
 ```js
     let p0 = new Promise(() => {});
@@ -1503,7 +1623,7 @@ p2 // 三秒钟之后 reject
     });
 ```
 
-#### 如果参数是一个 thenable 对象
+####  15.1.2. <a name='thenable'></a>如果参数是一个 thenable 对象
 1. 其实也就是该对象有 `then` 方法。那么会按照下面逻辑执行：
     1. 创建一个 promise 实例；
     2. 把 thenable 对象的 `then` 方法作为该 promise 实例的 executor 加入到微任务队列；
@@ -1529,13 +1649,13 @@ p2 // 三秒钟之后 reject
     ```
     返回的 `p1` 开始时是 pending 的状态，执行了 `then` 方法的微任务后，就变成了 resolved。
 
-#### 其他参数
+####  15.1.3. <a name='-1'></a>其他参数
 创建一个 promise 实例，并 resolve 为参数的值，然后返回该实例
 ```js
 console.log(Promise.resolve(22)); // Promise {<fulfilled>: 22}
 ```
 
-### `Promise.reject()` 返回类型
+###  15.2. <a name='Promise.reject'></a>`Promise.reject()` 返回类型
 1. 不像 `Promise.resolve()` 那么复杂，不管参数是什么，`Promise.reject()` 就是直接返回一个 rejected 的 promise 实例，reject 时的错误原因就是那个参数。
 2. 如果参数是引用类型，那错误原因就是那个引用类型本身；如果参数是基础类型，那错误原因就是同样的值
     ```js
@@ -1582,7 +1702,7 @@ console.log(Promise.resolve(22)); // Promise {<fulfilled>: 22}
     ```
 
 
-## 其他一些自定义的有用的方法
+##  16. <a name='-1'></a>其他一些自定义的有用的方法
 自定义 `finally` 方法
 ```js
 Promise.prototype.finally = function (callback) {
@@ -1609,9 +1729,9 @@ new Promise((res, rej)=>{
 ```
 
 
-## 自己实现加深理解
-### 基本的 promise
-#### 接口
+##  17. <a name='-1'></a>自己实现加深理解
+###  17.1. <a name='promise-1'></a>基本的 promise
+####  17.1.1. <a name='-1'></a>接口
     ```js
     class My_Promise {
         constructor (executor) {
@@ -1632,8 +1752,8 @@ new Promise((res, rej)=>{
     }
     ```
 
-### 逻辑
-#### 实现功能
+###  17.2. <a name='-1'></a>逻辑
+####  17.2.1. <a name='-1'></a>实现功能
 * resolve 或者 reject 之后就不能再次 resolve 或者 reject
 * 可以使用多个 then 给一个实例添加回调
 * then 可以链式调用，返回的 promise 分为三种情况：
@@ -1641,20 +1761,20 @@ new Promise((res, rej)=>{
     * 回调发生错误，则 then 返回的 promise reject 错误信息；
     * 其他，则 then 返回的 promise resolve 回调返回值。
 
-#### then 逻辑
+####  17.2.2. <a name='then-1'></a>then 逻辑
 1. 因为 then 的回调的结果决定了 then 返回的 promise 的结果，所以 then 的回调逻辑中必须要能访问到 then 返回的 promise 的 resolve 和 reject 函数。
 2. 因此，then 回调必须要在 then 返回的 promise 的 executor 中执行。
 3. 另外，如果 then 调用时前一个 promise 还是 pending，则先要把 then 的回调先加入列表中，等待前一个 promise 有了结果再执行回调。
 4. 但是，不能直接把回调加入队列中，因为要根据回调的结果来调用 then 返回的 promise 的 resolve 和 reject 函数。
 5. 所以 then 的回调需要包装到一个新函数里，内部调用 then 回调，然后根据结果调用 then 返回的 promise 的 resolve 和 reject 函数。
 
-### 边界条件
+###  17.3. <a name='-1'></a>边界条件
 * 没有调用 `then` 和 `catch`；
 * `then` 和 `catch` 没有传函数类型的参数；
 * `executor` 中抛出错误
 * TODO，现在抛出错误只能在自身的 then 里捕获，不能在后续的捕获
 
-### 实现
+###  17.4. <a name='-1'></a>实现
 ```js
 class My_Promise {
     constructor (executor) {
@@ -1860,8 +1980,8 @@ new My_Promise((resolve, reject) => {
 ```
 
 
-## 其他
-### 并行数量限制的 promise
+##  18. <a name='-1'></a>其他
+###  18.1. <a name='promise-1'></a>并行数量限制的 promise
 1. 来自于一个题目
     ```js
     // JS 实现一个带并发限制的异步调度器 Scheduler，保证同时运行的任务最多有两个。
@@ -2029,5 +2149,5 @@ new My_Promise((resolve, reject) => {
     ```
 
 
-## References
+##  19. <a name='References'></a>References
 * [ECMAScript 6 入门](http://es6.ruanyifeng.com/#docs/promise)

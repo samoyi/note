@@ -48,45 +48,38 @@
 
 
 ## Escape Sequences in String Literals
-1. String 数据类型包含一些特殊的字符字面量，也叫转义序列，用于表示非打印字符，或者具有
-其他用途的字符。这些字符字面量如下表所示：
-
-字面量 | 含义
----|---
-`\n` | 换行
-`\t` | 制表
-`\b` | 退格。实测该字符会有打印输出
-`\r` | 回车
-`\f` | 进纸
-`\\\` | 斜杠
-`\\'` | 单引号（'），在用单引号表示的字符串中使用。例如：'He said, \'hey.\''
-`\\"` | 双引号（"），在用双引号表示的字符串中使用。例如："He said, \"hey.\""
-`\xnn` | 以十六进制代码 nn 表示的一个字符。例如，`\x41`表示`A`
-`\unnnn` | 以十六进制代码 nnnn 表示的一个 Unicode 字符。例如，`\u03a3`表示希腊字符`Σ`
-
-2. 这些字符字面量可以出现在字符串中的任意位置，而且也将被作为一个字符来解析，如下面的例
-子所示：
+1. String 数据类型包含一些特殊的字符字面量，也叫转义序列，用于表示非打印字符，或者具有其他用途的字符。这些字符字面量如下表所示：
+    字面量 | 含义
+    ---|---
+    `\n` | 换行
+    `\t` | 制表
+    `\b` | 退格。实测该字符会有打印输出
+    `\r` | 回车
+    `\f` | 进纸
+    `\\\` | 斜杠
+    `\\'` | 单引号（'），在用单引号表示的字符串中使用。例如：'He said, \'hey.\''
+    `\\"` | 双引号（"），在用双引号表示的字符串中使用。例如："He said, \"hey.\""
+    `\xnn` | 以十六进制代码 nn 表示的一个字符。例如，`\x41` 表示 `A`
+    `\unnnn` | 以十六进制代码 nnnn 表示的一个 Unicode 字符。例如，`\u03a3` 表示希腊字符 `Σ`
+2. 这些字符字面量可以出现在字符串中的任意位置，而且也将被作为一个字符来解析，如下面的例子所示：
     ```js   
     var text = "This is the letter sigma: \u03a3.";
     ```
-3. 因为会被作为一个字符解析，所以其`length`值也是1
+3. 因为会被作为一个字符解析，所以其 `length` 值也是 1
 
 
 ## 字符的 Unicode 表示法
-1. 上面提到可以使用`\unnnn`表示一个字符，但该方法最大只能表示`\uffff`。
-2. 比如字符`𝑒`的 Unicode 码点值是`U+1d452`，如果还强行使用上面的写法写成`\u1d452`，则
-只有`\u1d45`会被解析为一个字符，后面的`2`会被当做独立的字符
+1. 上面提到可以使用 `\unnnn` 表示一个字符，但该方法最大只能表示 `\uffff`。
+2. 比如字符 `𝑒` 的 Unicode 码点值是 `U+1d452`，如果还强行使用上面的写法写成 `\u1d452`，则只有 `\u1d45` 会被解析为一个字符，后面的 `2` 会被当做独立的字符
     ```js
     console.log('\u1d452');      // "ᵅ2"
     console.log('\u1d45');       // "ᵅ"
     ```
-3. 如果超出了这个范围，在 ES6 之前，只能按照 utf-16 的规则写成两个`\unnnn`。比如`𝑒`使
-用 utf-16 编码后的两个值是`d835`和`dc52`，那么就可以写成
+3. 如果超出了这个范围，在 ES6 之前，只能按照 utf-16 的规则写成两个 `\unnnn`。比如 `𝑒` 使用 utf-16 编码后的两个值是 `d835` 和 `dc52`，那么就可以写成
     ```js
     console.log('\ud835\udc52'); // "𝑒"
     ```
-4. 但这比较麻烦，因为你还要先进行 utf-16 编码。不过 ES6 支持直接写多字节字符，只要把码
-点值写在大括号里即可
+4. 但这比较麻烦，因为你还要先进行 utf-16 编码。不过 ES6 支持直接写多字节字符，只要把码点值写在大括号里即可
     ```js
     console.log('\u{1d452}');    // "𝑒"
     ```
@@ -257,8 +250,7 @@ foo `\xyz`;
 
 
 ## 四字节字符的处理方法
-1. 字符串在使用内部的 iterator 遍历时，可以正确识别四字节字符，因此可以使用遍历相关的方
-法来获得正确的结果
+1. 字符串在使用内部的 iterator 遍历时，可以正确识别四字节字符，因此可以使用遍历相关的方法来获得正确的结果
 2. 使用扩展运算符转换为数组
     ```js
     let str = 'd𝑒f';
@@ -268,7 +260,7 @@ foo `\xyz`;
     console.log(arr); // ["d", "𝑒", "f"]
     console.log([...str].length); // 3
     ```
-3. 使用`for...of`遍历字符串
+3. 使用 `for...of` 遍历字符串
     ```js
     let str = 'd𝑒f';
 
@@ -291,7 +283,7 @@ foo `\xyz`;
 
 ## 字符方法
 ### `charAt()`
-与`[]`语法的差异
+与 `[]` 语法的差异
 ```js
 let str = 'a';
 console.log(str.charAt(1)); // ""
@@ -306,14 +298,12 @@ console.log(str.codePointAt(0)); // 119890
 console.log(str.charCodeAt(0));  // 55349
 console.log(str.codePointAt(1)); // 56402
 ```
-* 从上面的例子可以看出来，该方法相比于`charCodeAt()`，对多字节字符的兼容性更好一些。但
-还不是完全兼容，因为它仍然可以访问到第二个 2byte。
+* 从上面的例子可以看出来，该方法相比于 `charCodeAt()`，对多字节字符的兼容性更好一些。但还不是完全兼容，因为它仍然可以访问到第二个 2byte。
 
 
 ### `String.fromCodePoint()`
-*  `String.fromCodePoint(num1[, ...[, numN]])`接受若干个 Unicode code point，返回
-它们对应的字符组成的字符串
-* 相比于`String.fromCharCode`，这个方法可以兼容多字节字符
+*  `String.fromCodePoint(num1[, ...[, numN]])` 接受若干个 Unicode code point，返回它们对应的字符组成的字符串
+* 相比于 `String.fromCharCode`，这个方法可以兼容多字节字符
     ```js
     console.log(String.fromCodePoint(72, 119890, 0o154, 0o154, 0x6f)); // H𝑒llo
     console.log(String.fromCharCode(72, 119890, 0o154, 0o154, 0x6f)); // H푒llo
@@ -347,7 +337,7 @@ console.log(`${obj}`);       // world
 console.log("".concat(obj)); // world
 ```
 
-### `padStart()`和`padEnd()`
+### `padStart()` 和 `padEnd()`
 #### Syntax
 `str.padStart(targetLength [, padString])`
 
@@ -376,8 +366,7 @@ console.log("".concat(obj)); // world
 `str.repeat(count);`
 
 #### `count`参数
-An integer between 0 and +∞: [0, +∞), indicating the number of times to repeat
-the string in the newly-created string that is to be returned.
+An integer between 0 and +∞: [0, +∞), indicating the number of times to repeat the string in the newly-created string that is to be returned.
 ```js
 let str = '123';
 console.log(str.repeat(3)); // "123123123"
@@ -390,7 +379,7 @@ console.log(str); // "123"  不改变原字符串
     ```js
     str.repeat(1/0); // RangeError
     ```
-* `(-∞, -1]`：`RangeError`; `(-1, 0)`：相当于`0`
+* `(-∞, -1]`：`RangeError`; `(-1, 0)`：相当于 `0`
     ```js
     str.repeat(-0.9); // ""
     str.repeat(-1); // RangeError
@@ -405,7 +394,7 @@ console.log(str); // "123"  不改变原字符串
     ```js
     console.log(str.repeat(NaN)); // ""
     ```
-* 非数字：内部使用`Number()`转换为数字
+* 非数字：内部使用 `Number()` 转换为数字
     ```js
     let str = '123';
     console.log(str.repeat()); // ""
@@ -424,61 +413,57 @@ console.log(str); // "123"  不改变原字符串
 #### Syntax
 `str.split([separator[, limit]])`
 
-#### 可选的`separator`参数
+#### 可选的 `separator` 参数
 1. 分隔符
     ```js
     let str = 'hello';
     console.log(str.split('l')); // ["he", "", "o"]
     ```
-2. `separator`可以是字符串或正则表达式
+2. `separator` 可以是字符串或正则表达式
     ```js
     let str = '有道云笔记';
     console.log(str.split(/道|笔/)); // ["有", "云", "记"]
     ```
-3. 如果`separator`包含多个字符，则整个`separator`字符串作为分隔符
+3. 如果 `separator` 包含多个字符，则整个 `separator` 字符串作为分隔符
     ```js
     let str = '有道云笔记';
     console.log(str.split('道云笔')); // ["有", "记"]
     ```
-4. 如果`separator`不存在于字符串中，或者直接没传`separator`，那因为没有分隔符，所以就
-不会进行分割。但还是会返回数组，所以就返回包含整个字符串的单项数组
+4. 如果 `separator` 不存在于字符串中，或者直接没传 `separator`，那因为没有分隔符，所以就不会进行分割。但还是会返回数组，所以就返回包含整个字符串的单项数组
     ```js
     let str = '有道云笔记';
     console.log(str.split()); // ["有道云笔记"]
     console.log(str.split(' ')); // ["有道云笔记"]
     ```
-5. 如果`separator`是`''`，`str`就会被逐个拆分。内在的逻辑是：字符之间包含`''`。
+5. 如果 `separator` 是 `''`，`str` 就会被逐个拆分。内在的逻辑是：字符之间包含 `''`。
     ```js
     let str = '有道云笔记';
     console.log(str.split('')); // ["有", "道", "云", "笔", "记"]
     ```
-6. 如果分隔符出现在字符串的首或尾，则还会相应的分出来一个`''`。
+6. 如果分隔符出现在字符串的首或尾，则还会相应的分出来一个 `''`。
     ```js
     let str = '有道云笔记';
     console.log(str.split(/有|记/)); // ["", "道云笔", ""]
     ```
-    这里的逻辑是，不仅字符之间包含`''`，在字符串的首位也各包含一个`''`。即`有`右边是
-    `道`左边是`''`。因此，如果分隔符是字符串本身，则结果会是两个`''`数组
+    这里的逻辑是，不仅字符之间包含 `''`，在字符串的首位也各包含一个 `''`。即 `有` 右边是 `道` 左边是 `''`。因此，如果分隔符是字符串本身，则结果会是两个 `''` 数组
     ```js
     let str = '有道云笔记';
     console.log(str.split('有道云笔记')); // ["", ""]
     ```
-7. 如果`separator`包含捕获组的正则表达式，则每次`separator`匹配到字符的时候，捕获组中
-的值也会被加入到结果数组中
+7. 如果 `separator` 包含捕获组的正则表达式，则每次 `separator` 匹配到字符的时候，捕获组中的值也会被加入到结果数组中
     ```js
     let str = '有道云笔记有道云笔记';
     console.log(str.split(/道云笔/)); // ["有", "记有", "记"]
     console.log(str.split(/(道)云(笔)/)); // ["有", "道", "笔", "记有", "道", "笔", "记"]
     ```
-8. 如果字符串和`separator`都是`''`，则结果是空数组。
+8. 如果字符串和 `separator` 都是 `''`，则结果是空数组。
     ```js
     let str = '';
     console.log(str.split('')); // []
     ```
 
-#### 可选的`limit`参数
-最大分块数量。如果拆分的块数已经达到该值，即使字符串还没有拆分完，也会停止拆分，只返回已
-拆分出来的部分。
+#### 可选的 `limit` 参数
+最大分块数量。如果拆分的块数已经达到该值，即使字符串还没有拆分完，也会停止拆分，只返回已拆分出来的部分
 ```js
 let str = '102030405060';
 console.log(str.split('0', 3)); // ["1", "2", "3"]
@@ -489,7 +474,7 @@ console.log(str.split('0', 3)); // ["1", "2", "3"]
 ### `includes()`
 1. `str.includes(searchString[, position])`
 2. 可选参数表示从哪里开始找
-3. 搜索空字符串总是返回`true`
+3. 搜索空字符串总是返回 `true`
 ```js
 let str = 'hello world';
 console.log(str.includes('lo'));    // true
@@ -509,10 +494,8 @@ console.log(str.includes('', 99));  // true
     console.log(str.indexOf('c'));     // 2
     console.log(str.lastIndexOf('c')); // 10
     ```
-3. `indexOf()`是从左边开始找，`lastIndexOf()`是从右边开始找。两个方法可选的第二个参数
-都是寻找的起点 index。
-4. 注意`lastIndexOf()`只是寻找方向是从右到左，起返回结果的 index 以及第二个参数的
-index 仍然是正常的以左边作为起点。
+3. `indexOf()` 是从左边开始找，`lastIndexOf()` 是从右边开始找。两个方法可选的第二个参数都是寻找的起点 index。
+4. 注意 `lastIndexOf()` 只是寻找方向是从右到左，起返回结果的 index 以及第二个参数的 index 仍然是正常的以左边作为起点
     ```js
     let str = '123321';
     // 从左数第三个字符的位置开始向右找 3，立刻就找到了，找到时的 index 是 2
@@ -542,8 +525,7 @@ index 仍然是正常的以左边作为起点。
     console.log(str.indexOf(''));         // 0
     console.log(str.lastIndexOf(''));     // 13
     ```
-    * 如果有第二个参数：如果参数指定的序号合理就直接返回该序号，如果序号不合理就返回离
-    它最近的合理序号
+    * 如果有第二个参数：如果参数指定的序号合理就直接返回该序号，如果序号不合理就返回离它最近的合理序号
     ```js
     console.log(str.indexOf('', 3));      // 3
     console.log(str.lastIndexOf('', 3));  // 3
@@ -556,7 +538,7 @@ index 仍然是正常的以左边作为起点。
 ### `startsWidth` `endsWidth`
 1. `str.startsWith(searchString [, position])`
    `str.endsWith(searchString[, length])`
-2. 注意`endsWith`的第二个参数并不是和`lastIndexOf`的第二个参数一样
+2. 注意 `endsWith` 的第二个参数并不是和 `lastIndexOf` 的第二个参数一样
     ```js
     let str = 'hello world';
     console.log(str.startsWith('he'));    // true
@@ -583,7 +565,7 @@ index 仍然是正常的以左边作为起点。
 
 ### `match()`
 1. `str.match(regexp)`
-2. 如果参数不是正则，内部会通过`new RegExp()`将其转换为正则
+2. 如果参数不是正则，内部会通过 `new RegExp()` 将其转换为正则
     ```js
     let str = 'ab|cba';
     console.log(str.match('b|c'));
@@ -594,10 +576,7 @@ index 仍然是正常的以左边作为起点。
     let str = 'abcba';
     console.log(str.match()); // ["", index: 0, input: "abcba", groups: undefined]
     ```
-4. 如果没有匹配到，返回值是`null`。如果匹配到了，返回一个数组，数组项是完整匹配到的字符
-串和若干个可能的捕获组。如果不是全局匹配，那么该数组同时还有`index`属性和`input`两个属
-性，前者表示完整匹配的字符串的起始位置，后者表示进行匹配的原始字符串。还有一个`groups`
-属性不知道是什么，没有地方提到这个属性。
+4. 如果没有匹配到，返回值是 `null`。如果匹配到了，返回一个数组，数组项是完整匹配到的字符 串和若干个可能的捕获组。如果不是全局匹配，那么该数组同时还有 `index` 属性和 `input` 两个属性，前者表示完整匹配的字符串的起始位置，后者表示进行匹配的原始字符串。还有一个 `groups` 属性不知道是什么，没有地方提到这个属性。
     ```js
     let str = 'abcba';
     console.log(str.match(/(b(c))(b)/));
@@ -606,10 +585,28 @@ index 仍然是正常的以左边作为起点。
     console.log(str.match(/cd/)); // null
     ```
 
+### `matchAll()`
+1. The `matchAll()` method of String values returns an iterator of all results matching this string against a regular expression, including capturing groups.
+2. 
+```js
+const regexp = /t(e)(st(\d?))/g;
+const str = 'test1test2';
+
+const array = [...str.matchAll(regexp)];
+
+console.log(array.length) // 2
+
+console.log(array[0]);
+// Expected output: Array ["test1", "e", "st1", "1"]
+
+console.log(array[1]);
+// Expected output: Array ["test2", "e", "st2", "2"]
+```
+
 ### `search()`
 1. `str.search(regexp)`
-2. 和`match`一样，如果参数不是正则先会被转换为正则
-3. 和`match`一样，如果不传参将搜索空串
+2. 和 `match` 一样，如果参数不是正则先会被转换为正则
+3. 和 `match` 一样，如果不传参将搜索空串
     ```js
     let str = 'abcba';
     console.log(str.search()); // 0
@@ -623,20 +620,14 @@ index 仍然是正常的以左边作为起点。
 
 ## 获取、删除和替换子字符串
 ### 获取子字符串
-1. `slice()`方法接收一到两个参数。第一个参数指定字符串的开始位置，第二个参数指定的是子
-字符串最后一个字符后面的位置。如果第二个参数小于第一个，则返回空字符串。
-2. `substring()`方法接收一到两个参数。第一个参数指定字符串的开始位置，第二个参数指定的
-是子字符串最后一个字符后面的位置。如果第二个参数小于第一个，则颠倒两个参数。
-3. `substr()`方法接收一到两个参数。第一个参数指定字符串的开始位置，第二个参数指定的是
-子字符串的字符个数。
-4. 在传递的参数是负值的情况下，`slice()`方法将负值加上字符串`length`；`substring()`方
-法会将负值转换为`0`；`substr()`方法第一个参数为负数时将负值加上字符串`length`，而第二
-个为负值时，则转换为`0`。
+1. `slice()` 方法接收一到两个参数。第一个参数指定字符串的开始位置，第二个参数指定的是子字符串最后一个字符后面的位置。如果第二个参数小于第一个，则返回空字符串。
+2. `substring()` 方法接收一到两个参数。第一个参数指定字符串的开始位置，第二个参数指定的是子字符串最后一个字符后面的位置。如果第二个参数小于第一个，则颠倒两个参数。
+3. `substr()` 方法接收一到两个参数。第一个参数指定字符串的开始位置，第二个参数指定的是子字符串的字符个数。
+4. 在传递的参数是负值的情况下，`slice()` 方法将负值加上字符串 `length`；`substring()` 方法会将负值转换为 `0`；`substr()` 方法第一个参数为负数时将负值加上字符串 `length`，而第二个为负值时，则转换为 `0`。
 
 ### 替换和删除子字符串
 #### `str.replace(regexp|substr, newSubstr|function)`
-1. 默认都只是替换第一次匹配到的字符串。但如果第一个参数是正则且使用全局模式，则所有匹配
-到的都将被替换。
+1. 默认都只是替换第一次匹配到的字符串。但如果第一个参数是正则且使用全局模式，则所有匹配到的都将被替换
     ```js
     let str = 'abcba';
     console.log(str.replace(/a/, 'A'));    // "Abcba"
@@ -688,10 +679,7 @@ index 仍然是正常的以左边作为起点。
     let str = 'abcba';
     console.log(str.replace(/c/, '[$$]'));       // "ab[$]ba"
     ```
-3. 如果第二个参数是函数，则该函数的返回值将作为替换的值。该函数的第一个参数是匹配到的字
-符串，最后一个参数是进行匹配的的完整字符串，倒数第二个参数是匹配位置的偏移量(For
-example, if the whole string was 'abcd', and the matched substring was 'bc',
-then this argument will be 1.)，中间的若干个可选参数是捕获组。
+3. 如果第二个参数是函数，则该函数的返回值将作为替换的值。该函数的第一个参数是匹配到的字符串，最后一个参数是进行匹配的的完整字符串，倒数第二个参数是匹配位置的偏移量(Forexample, if the whole string was 'abcd', and the matched substring was 'bc', then this argument will be 1.)，中间的若干个可选参数是捕获组。
     ```js
     let str = 'abcba';
     let newStr = str.replace(/b((c)b)/, function(match, p1, p2, offset, string){
@@ -714,6 +702,25 @@ then this argument will be 1.)，中间的若干个可选参数是捕获组。
     console.log(styleHyphenFormat('BorderTop')); // "border-top"
     ```
 
+#### `String.prototype.replaceAll(pattern, replacement)`
+1. The `pattern` can be a string or a RegExp, and the `replacement` can be a string or a function to be called for each match. Global flag required when calling `replaceAll` with regex
+    ```js
+    const paragraph = "I think Ruth's dog is cuter than your dog!";
+
+    console.log(paragraph.replaceAll('dog', 'monkey'));
+    // "I think Ruth's monkey is cuter than your monkey!"
+
+    // Global flag required when calling replaceAll with regex
+    const regex = /Dog/gi;
+    console.log(paragraph.replaceAll(regex, 'ferret'));
+    // "I think Ruth's ferret is cuter than your ferret!"
+    ```
+2. If the pattern is an empty string, the replacement will be inserted in between every UTF-16 code unit, similar to `split()` behavior
+    ```js
+    "xxx".replaceAll("", "_"); // "_x_x_x_"
+    ```
+3. The original string is left unchanged.
+
 
 ## 格式化字符串
 ## 大小写转换的`Locale`的问题
@@ -724,28 +731,21 @@ rather than a locale-independent result. There will only be a difference in the
 few cases (such as Turkish) where the rules for that language conflict with the
 regular Unicode case mappings.
 
-2. 看起来是说，Unicode 本身有一套大小写映射，而且绝大多数语言都符合这套映射规则。但只有
-很少的语言不符合该规则，比如土耳其语。
-3. 也就是说，如果是类似于土耳其语这样的语言，仍然使用`toLowerCase`的话，就是使用的
-Unicode 的大小写转换规则，而这并不是土耳其语本身的大小写规则，所以转换结果就不是正确的
-土耳其语。
-4. 比如你要对用户输入内容进行大小写转换，而恰好用户使用土耳其语输入的，那就可能出现异常。
-下面是一个例子：
+2. 看起来是说，Unicode 本身有一套大小写映射，而且绝大多数语言都符合这套映射规则。但只有很少的语言不符合该规则，比如土耳其语。
+3. 也就是说，如果是类似于土耳其语这样的语言，仍然使用 `toLowerCase` 的话，就是使用的 Unicode 的大小写转换规则，而这并不是土耳其语本身的大小写规则，所以转换结果就不是正确的土耳其语。
+4. 比如你要对用户输入内容进行大小写转换，而恰好用户使用土耳其语输入的，那就可能出现异常。下面是一个例子：
     ```js
     var str = 'İstanbul';
     console.log(str.toLocaleLowerCase('en-US') === str.toLocaleLowerCase('tr'));
     // false
     // 使用美式英语和土耳其语的规则转换的结果并不相同
     ```
-5. 所以如果不确定应用会应用于哪些语言环境，最好还是使用带`Locale`的。
-6. 带`Locale`方法的参数是指定使用哪里的转换规则，不过一般情况下都不需要传参，以为根据
-MDN 上说的，该参数默认值是 the host environment’s current locale。
+5. 所以如果不确定应用会应用于哪些语言环境，最好还是使用带 `Locale` 的。
+6. 带 `Locale` 方法的参数是指定使用哪里的转换规则，不过一般情况下都不需要传参，以为根据 MDN 上说的，该参数默认值是 the host environment’s current locale。
 
 ### `trim()`
 1. The `trim()` method removes whitespace from both ends of a string.
-2. Whitespace in this context is all the whitespace characters (space, tab,
-no-break space, etc.) and all the line terminator characters (LF, CR, etc.). 但不
-包括`\b`，`\b`会有实际字符输出。
+2. Whitespace in this context is all the whitespace characters (space, tab, no-break space, etc.) and all the line terminator characters (LF, CR, etc.). 但不包括 `\b`，`\b` 会有实际字符输出。
 3. 多行 trim
     ```js
     let str = `  hel  l o\t\v
@@ -763,7 +763,7 @@ no-break space, etc.) and all the line terminator characters (LF, CR, etc.). 但
     // world
     // !
     ```
-3. IE 不支持 `trimStart()`/`trimLeft()`和`trimEnd()`/`trimRight()`
+3. 只删除一侧空白：`trimStart()`/`trimLeft()` 和 `trimEnd()`/`trimRight()`
 
 
 ## 字符串比较

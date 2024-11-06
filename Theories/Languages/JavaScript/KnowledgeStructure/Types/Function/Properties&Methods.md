@@ -267,8 +267,4 @@ They also do not have a `prototype` property.
     ```
 
 ### toString()
-Like all JavaScript objects, functions have a `toString()` method. The
-ECMAScript spec requires this method to return a string that follows the syntax
-of the function declaration statement. In practice most (but not all)
-implementations of this `toString()` method return the complete source code for
-the function.
+Like all JavaScript objects, functions have a `toString()` method. The ECMAScript spec requires this method to return a string that follows the syntax of the function declaration statement. In practice most (but not all) implementations of this `toString()` method return the complete source code for the function.

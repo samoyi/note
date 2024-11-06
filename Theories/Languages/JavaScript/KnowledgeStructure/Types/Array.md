@@ -521,6 +521,80 @@ console.log(a.concat([[4, 5]])); // [1, 2, 3, [4, 5]]
     console.log(result.length); // 3
     ```
 
+### `Array.prototype.flatMap()`
+1. The flatMap() method of Array instances returns a new array formed by applying a given callback function to each element of the array, and then flattening the result by one level
+    ```js
+    const arr1 = ["it's Sunny in", "", "California"];
+
+    arr1.map((x) => x.split(" "));
+    // [["it's","Sunny","in"],[""],["California"]]
+
+    arr1.flatMap((x) => x.split(" "));
+    // ["it's","Sunny","in", "", "California"]
+    ```
+2. The `flatMap()` method is identical to `map(callbackFn, thisArg)` followed by `flat(1)` — for each element, it produces an array of new elements, and concatenates the resulting arrays together to form a new array
+    ```js
+    // Let's say we want to remove all the negative numbers
+    // and split the odd numbers into an even number and a 1
+    const a = [5, 4, -3, 20, 17, -33, -4, 18];
+    //         |\  \  x   |  | \   x   x   |
+    //        [4,1, 4,   20, 16, 1,       18]
+
+    const result = a.flatMap((n) => {
+    if (n < 0) {
+        return [];
+    }
+    return n % 2 === 0 ? [n] : [n - 1, 1];
+    });
+    console.log(result); // [4, 1, 4, 20, 16, 1, 18]
+    ```
+
+#### Using the third argument of callbackFn
+    ```js
+    const stations = ["New Haven", "West Haven", "Milford (closed)", "Stratford"];
+    const line = stations
+    .filter((name) => !name.endsWith("(closed)"))
+    .flatMap((name, idx, arr) => {
+        // Without the arr argument, there's no way to easily access the
+        // intermediate array without saving it to a variable.
+        if (idx === arr.length - 1) return []; // last station has no next station
+        return [`${name} - ${arr[idx + 1]}`];
+    });
+    console.log(line); // ['New Haven - West Haven', 'West Haven - Stratford']
+    ```
+
+#### Using flatMap() on sparse arrays
+The callbackFn won't be called for empty slots in the source array because `map()` doesn't, while `flat()` ignores empty slots in the returned arrays.
+```js
+console.log([1, 2, , 4, 5].flatMap((x) => [x, x * 2])); // [1, 2, 2, 4, 4, 8, 5, 10]
+console.log([1, 2, 3, 4].flatMap((x) => [, x * 2])); // [2, 4, 6, 8]
+```
+
+#### Calling flatMap() on non-array objects
+1. The `flatMap()` method reads the `length` property of `this` and then accesses each property whose key is a nonnegative integer less than `length`
+    ```js
+    const arrayLike = {
+    length: 3,
+    0: 1,
+    1: 2,
+    2: 3,
+    3: 4, // ignored by flatMap() since length is 3
+    };
+    console.log(Array.prototype.flatMap.call(arrayLike, (x) => [x, x * 2]));
+    // [1, 2, 2, 4, 3, 6]
+    ```
+2.  If the return value of the callback function is not an array, it is always directly appended to the result array
+    ```js
+    // Array-like objects returned from the callback won't be flattened
+    console.log(
+    Array.prototype.flatMap.call(arrayLike, (x) => ({
+        length: 1,
+        0: x,
+    })),
+    );
+    // [ { '0': 1, length: 1 }, { '0': 2, length: 1 }, { '0': 3, length: 1 } ]
+    ```
+
 ### `entries()`、`keys()` 和 `values()`
 1. 它们都返回一个遍历器对象，可以用 `for...of` 进行遍历。
 2. 如果不使用 `for...of` 循环，可以手动调用遍历器对象的 `next()` 方法进行遍历。

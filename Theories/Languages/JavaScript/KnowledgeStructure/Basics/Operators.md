@@ -1,4 +1,54 @@
-# Operators
+<!-- vscode-markdown-toc -->
+* 1. [一元操作符](#)
+	* 1.1. [递增和递减操作符，分为前置型和后置型。](#-1)
+	* 1.2. [一元加减操作符](#-1)
+		* 1.2.1. [和模板字符串以及 `concat` 方法转字符串的不同](#concat)
+	* 1.3. [Spread syntax](#Spreadsyntax)
+		* 1.3.1. [Syntax](#Syntax)
+		* 1.3.2. [Usage](#Usage)
+* 2. [Bitwise Operators](#BitwiseOperators)
+	* 2.1. [Basic](#Basic)
+	* 2.2. [Bitwise NOT](#BitwiseNOT)
+	* 2.3. [Bitwise AND](#BitwiseAND)
+	* 2.4. [Bitwise OR](#BitwiseOR)
+	* 2.5. [Bitwise XOR](#BitwiseXOR)
+	* 2.6. [Left Shift](#LeftShift)
+	* 2.7. [Signed Right Shift](#SignedRightShift)
+	* 2.8. [Unsigned Right Shift](#UnsignedRightShift)
+* 3. [布尔操作符](#-1)
+	* 3.1. [逻辑非  `!`](#-1)
+	* 3.2. [逻辑与  `&&`](#-1)
+	* 3.3. [逻辑或  `||`](#-1)
+	* 3.4. [使用逻辑运算符实现 `if` 的功能](#if)
+	* 3.5. [Nullish coalescing operator `??`](#Nullishcoalescingoperator)
+	* 3.6. [Logical nullish assignment `??=`](#Logicalnullishassignment)
+	* 3.7. [Logical OR assignment `||=`](#LogicalORassignment)
+	* 3.8. [Optional chaining `?.`](#Optionalchaining.)
+		* 3.8.1. [Dealing with optional callbacks or event handlers](#Dealingwithoptionalcallbacksoreventhandlers)
+* 4. [乘性操作符](#-1)
+	* 4.1. [乘法](#-1)
+	* 4.2. [除法](#-1)
+	* 4.3. [求模](#-1)
+* 5. [加性操作符](#-1)
+	* 5.1. [加法](#-1)
+	* 5.2. [减法](#-1)
+* 6. [指数操作符 `**`](#-1)
+* 7. [关系操作符 `>` `<`](#-1)
+* 8. [相等操作符](#-1)
+	* 8.1. [`==` 和 `!=`](#-1)
+	* 8.2. [`===` 和 `!==`](#-1)
+* 9. [条件操作符](#-1)
+* 10. [赋值操作符](#-1)
+* 11. [逗号操作符](#-1)
+* 12. [`in`](#in)
+* 13. [`delete`](#delete)
+* 14. [运算符优先级](#-1)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc --># Operators
 
 Operators are unique in ECMAScript in that they can be used on a wide range of values, including strings, numbers, Booleans, and even objects. When used on objects, operators typically call the `valueOf()` and/or `toString()` method to retrieve a value they can work with.
 
@@ -60,8 +110,8 @@ Operators are unique in ECMAScript in that they can be used on a wide range of v
 <!-- /TOC -->
 
 
-## 一元操作符
-### 递增和递减操作符，分为前置型和后置型。
+##  1. <a name=''></a>一元操作符
+###  1.1. <a name='-1'></a>递增和递减操作符，分为前置型和后置型。
 1. 不管是前置还是后置，这个表达式都会对变量进行加一或减一，如果变量不是数值类型会先试图转换为数值类型。但两者的返回值不同：前置语句返回自增或自减之后的值，而后置型的返回原来的值。
 2. 所有这四个操作符对任何值都适用，还可以用于字符串、布尔值、浮点数和对象。在应用于不同的值时，递增和递减操作符遵循下列规则：
     * 在应用于一个包含有有效数字字符的字符串时，先将其转换为数字值，再执行操作。
@@ -71,12 +121,12 @@ Operators are unique in ECMAScript in that they can be used on a wide range of v
     * 在应用于浮点数值时，直接执行操作。
     * 在应用于对象时，先调用对象的 `valueOf()` 方法以取得一个可供操作的值，然后对该值应用前述规则。
 
-### 一元加减操作符
+###  1.2. <a name='-1'></a>一元加减操作符
 1. 一元加操作符放在数值前面，对数值不会产生任何影响。
 2. 在对非数值应用时，一元加操作符会像 `Number()` 转型函数一样对这个值执行转换。布尔值转换为 `0` 和 `1`，字符串值按照一组特殊的规则进行解析，而对象是先调用它们的 `valueOf()` 和（或）`toString()` 方法，再转换得到的值。
 3. 一元减操作符主要用于表示负数。而当应用于非数值时，一元减操作符遵循与一元加操作符相同的规则，最后再将得到的数值转换为负数。
 
-#### 和模板字符串以及 `concat` 方法转字符串的不同
+####  1.2.1. <a name='concat'></a>和模板字符串以及 `concat` 方法转字符串的不同
 1. `+` 转字符串是调用被转对象的 `valueOf` 方法，而模板字符串以及 `concat` 方法转字符串时是调用 `toString` 方法
     ```js
     const obj = {
@@ -94,10 +144,10 @@ Operators are unique in ECMAScript in that they can be used on a wide range of v
     ```
 2. 如果不确定被转对象的 `valueOf` 是否会符合预期，那建议还是使用模板字符串或 `concat` 方法转字符串。
 
-### Spread syntax
+###  1.3. <a name='Spreadsyntax'></a>Spread syntax
 Spread syntax allows an iterable such as an array expression or string to be expanded in places where zero or more arguments (for function calls) or elements (for array literals) are expected, or an object expression to be expanded in places where zero or more key-value pairs (for object literals) are expected.
 
-#### Syntax
+####  1.3.1. <a name='Syntax'></a>Syntax
 * For function calls:
     ```js
     myFunction(...iterableObj);
@@ -111,7 +161,7 @@ Spread syntax allows an iterable such as an array expression or string to be exp
     let objClone = { ...obj };
     ```
 
-#### Usage
+####  1.3.2. <a name='Usage'></a>Usage
 ##### Replace apply
 Any argument in the argument list can use spread syntax and it can be used multiple times:
 ```js
@@ -225,8 +275,8 @@ var mergedObj = { ...obj1, ...obj2 };
 ```
 
 
-## Bitwise Operators
-### Basic
+##  2. <a name='BitwiseOperators'></a>Bitwise Operators
+###  2.1. <a name='Basic'></a>Basic
 1. All numbers in ECMAScript are stored in IEEE-754 64-bit format, but the bitwise operations do not work directly on the 64-bit representation. Instead, the value is converted into a 32-bit integer, which in the range of `[-2147483648, 2147483647]`,the operation takes place, and the result is converted back into 64 bits. To the developer, it appears that only the 32-bit integer exists, because the 64-bit storage format is transparent.
 2. A curious side effect of this conversion is that the special values `NaN` and `Infinity` both are treated as equivalent to `0` when used in bitwise operations.
 3. Signed integers use the first 31 of the 32 bits to represent the numeric value of the integer. The 32nd bit represents the sign of the number: `0` for positive or `1` for negative.
@@ -264,7 +314,7 @@ var mergedObj = { ...obj1, ...obj2 };
     ```
 8. If a bitwise operator is applied to a nonnumeric value, the value is first converted into a number using the `Number()` function automatically and then the bitwise operation is applied. The resulting value is a number.
 
-### Bitwise NOT
+###  2.2. <a name='BitwiseNOT'></a>Bitwise NOT
 1. `~`: returns the one’s complement of the number.
     ```js
     console.log(~26);        // -27
@@ -288,32 +338,32 @@ var mergedObj = { ...obj1, ...obj2 };
     ```
 4. The summary above is actually not much useful, bitwise operation is not used to achieve a faster math calculation.
 
-### Bitwise AND
+###  2.3. <a name='BitwiseAND'></a>Bitwise AND
 * `&`
 
-### Bitwise OR
+###  2.4. <a name='BitwiseOR'></a>Bitwise OR
 * `|`
 
-### Bitwise XOR
+###  2.5. <a name='BitwiseXOR'></a>Bitwise XOR
 * `^`: when different returns `1`, when same returns `0`
 
-### Left Shift
+###  2.6. <a name='LeftShift'></a>Left Shift
 * `<<`
 
-### Signed Right Shift
+###  2.7. <a name='SignedRightShift'></a>Signed Right Shift
 * `>>`: The empty bits occur at the left of the number but after the sign bit
 
-### Unsigned Right Shift
+###  2.8. <a name='UnsignedRightShift'></a>Unsigned Right Shift
 * `>>>`
 * For numbers that are negative, the empty bits get fi lled with zeros regardless of the sign of the number.
 * Because the negative number is the two’s complement of its absolute value, the number becomes very large if not only moved a few bits.
 
 
-## 布尔操作符
-### 逻辑非  `!`
+##  3. <a name='-1'></a>布尔操作符
+###  3.1. <a name='-1'></a>逻辑非  `!`
 可以用于ECMAScript中的任何值。无论这个值是什么数据类型，这个操作符都会返回一个布尔值。逻辑非操作符首先会将它的操作数转换为个布尔值，然后再对其求反。
 
-### 逻辑与  `&&`
+###  3.2. <a name='-1'></a>逻辑与  `&&`
 1. 逻辑与操作属于短路操作，即如果第一个操作数能够决定结果，那么就不会再对第二个操作数求值
     ```js
     var a = true;
@@ -326,11 +376,24 @@ var mergedObj = { ...obj1, ...obj2 };
     ```
 2. 逻辑与的返回结果是两个操作数中的一个，它的规则是：结合上面短路操作原理，返回那个决定了整体逻辑布尔值的操作数。即，例如 `x && y`：如果 `x == false`，则返回 `x`；如果 `x == true`，则返回 `y`。
 
-### 逻辑或  `||`
+### Logical AND assignment (`&&=`)
+only evaluates the right operand and assigns to the left if the left operand is truthy
+```js
+let a = 1;
+let b = 0;
+
+a &&= 2;
+console.log(a); // 2
+
+b &&= 2;
+console.log(b); //0
+```
+
+###  3.3. <a name='-1'></a>逻辑或  `||`
 1. 逻辑或运算符也是短路操作符
 2. 返回结果的逻辑与逻辑与相似
 
-### 使用逻辑运算符实现 `if` 的功能
+###  3.4. <a name='if'></a>使用逻辑运算符实现 `if` 的功能
 ` a || b();` 相当于：
 ```js
 if (!a){
@@ -348,7 +411,7 @@ if(a){
 callback && callback();
 ```
 
-### Nullish coalescing operator `??`
+###  3.5. <a name='Nullishcoalescingoperator'></a>Nullish coalescing operator `??`
 1. 与 `||` 不同的是，`??` 只有在左侧操作数不是 `null` 或者 `undefined` 是才会返回右侧的操作数。这样就可以保证只有在左侧严格为空值时才返回右侧，如果左侧是 `0` 或者 `""` 之类的 falsy 时依然返回左侧操作数。
     ```js
     const foo = null ?? 'default string';
@@ -360,7 +423,7 @@ callback && callback();
 2. 显然使用 `??` 来设定默认值就要更加合理，现在只有 `null` 和 `undefined` 才被认为是没有值，而是用后面的默认值。
 3. 优先级比 `||` 低，比 conditional (ternary) operator 高。
 
-### Logical nullish assignment `??=`
+###  3.6. <a name='Logicalnullishassignment'></a>Logical nullish assignment `??=`
 1. 只有当左侧的值是 nullish (`null` or `undefined`) 才进行赋值操作，否则直接短路
     ```js
     const a = { duration: 50 };
@@ -394,10 +457,10 @@ callback && callback();
     console.log(n); // null
     ```
 
-### Logical OR assignment `||=`
+###  3.7. <a name='LogicalORassignment'></a>Logical OR assignment `||=`
 感觉大部分时候还是要使用 `??=`
 
-### Optional chaining `?.`
+###  3.8. <a name='Optionalchaining.'></a>Optional chaining `?.`
 1. 属性链中如果某个属性或方法为 nullish (`null` or `undefined`)，则该表达式直接在此短路并返回 `undefined`，否则正常求值。这样就不用先判断该属性存在然后再向后求值了
     ```js
     const adventurer = {
@@ -443,7 +506,7 @@ callback && callback();
     object?.property = 1; // Uncaught SyntaxError: Invalid left-hand side in assignment
     ```
 
-#### Dealing with optional callbacks or event handlers
+####  3.8.1. <a name='Dealingwithoptionalcallbacksoreventhandlers'></a>Dealing with optional callbacks or event handlers
 1. If you use callbacks or fetch methods from an object with a destructuring assignment, you may have non-existent values that you cannot call as functions unless you have tested their existence。例如使用类似于下面异步回调函数时可能只会传成功的处理函数而不传失败的，那么在回调内部就要判断一下是否传了失败的处理函数
     ```js
     function foo (onSuccess, onError) {
@@ -471,10 +534,10 @@ callback && callback();
 3. 其实不光是回调之类的，普通参数函数都可以这样。
 
 
-## 乘性操作符
+##  4. <a name='-1'></a>乘性操作符
 ECMAScript 定义了 3 个乘性操作符：乘法、除法和求模。在操作符为非数值的情况下会调用 `Number()` 函数执行自动的类型转换。
 
-### 乘法
+###  4.1. <a name='-1'></a>乘法
 在处理特殊值的情况下，乘法操作符遵循下列特殊的规则：
 * 如果有一个操作数是 `NaN`，则结果是 `NaN`；
 * 如果 `Infinity` 与 `0` 相乘，结果是 `NaN`；
@@ -482,7 +545,7 @@ ECMAScript 定义了 3 个乘性操作符：乘法、除法和求模。在操作
 * 如果无穷之间相乘，结果仍然是无穷，正负号也相乘；
 * 如果有一个操作数不是数值，则在后台调用 `Number()`，然后再应用上面的规则。
 
-### 除法
+###  4.2. <a name='-1'></a>除法
 在处理特殊值的情况下，除法操作符遵循下列特殊的规则：
 * 如果有一个操作数是 `NaN`，则结果是 `NaN`；
 * 如果无穷除无穷，结果是 `NaN`；
@@ -492,7 +555,7 @@ ECMAScript 定义了 3 个乘性操作符：乘法、除法和求模。在操作
   符号取决于该非零数和 `0` 两者的符号。
 * 如果有一个操作数不是数值，则在后台调用 `Number()` 将其转换为数值，然后再应用上面的规则。
 
-### 求模
+###  4.3. <a name='-1'></a>求模
 1. 结果的符号和被除数相同
     ```js
     console.log(8 % -3); // 2
@@ -510,10 +573,10 @@ ECMAScript 定义了 3 个乘性操作符：乘法、除法和求模。在操作
     * 如果有一个操作数不是数值，则在后台调用 `Number()` 将其转换为数值，然后再应用上面的规则。
 
 
-## 加性操作符
+##  5. <a name='-1'></a>加性操作符
 加性操作符也会在后台转换不同的数据类型。然而，对于加性操作符而言，相应的转换规则还稍微有点复杂。
 
-### 加法
+###  5.1. <a name='-1'></a>加法
 * 如果有一个操作数是 `NaN`，则结果是 `NaN`；
 * 正无穷加正无穷等于正无穷，负无穷加负无穷等于负无穷，正无穷加负无穷结果为 `NaN`；
 * `+0` 加 `+0`，结果是 `+0`；`-0` 加 `-0`，结果是 `-0`；`+0` 加 `-0`，结果是 `+0`;
@@ -553,7 +616,7 @@ ECMAScript 定义了 3 个乘性操作符：乘法、除法和求模。在操作
     console.log(typeof result8); // string
     ```
 
-### 减法
+###  5.2. <a name='-1'></a>减法
 * 如果有一个操作数是 `NaN`，则结果是 `NaN`；
 * 正无穷减正无穷结果为 `NaN`，负无穷减负无穷结果为 `NaN`，正无穷减负无穷结果为正无穷，负无穷减正无穷结果为负无穷；
 * 两种 0 之间互相减：
@@ -571,7 +634,7 @@ ECMAScript 定义了 3 个乘性操作符：乘法、除法和求模。在操作
 * 如果有一个操作数是对象，则调用对象的 `valueOf()` 方法以取得表示该对象的数值。如果对象没有 `valueOf()` 方法，则调用其 `toString()` 方法。
 
 
-## 指数操作符 `**`
+##  6. <a name='-1'></a>指数操作符 `**`
 ```js
 console.log(2 ** 3); // 8
 ```
@@ -591,7 +654,7 @@ console.log(2 ** 3); // 8
     ```
 
 
-## 关系操作符 `>` `<`
+##  7. <a name='-1'></a>关系操作符 `>` `<`
 * 当关系操作符的操作数使用了非数值时，也要进行数据转换或完成某些奇怪的操作：
     * 如果两个操作数都是字符串，则比较两个字符串对应的字符串编码；
     * 如果一个操作数是数值，则将另一个操作数转换为数值，然后进行比较；
@@ -623,8 +686,8 @@ console.log(2 ** 3); // 8
     ```
 
 
-## 相等操作符
-### `==` 和 `!=`
+##  8. <a name='-1'></a>相等操作符
+###  8.1. <a name='-1'></a>`==` 和 `!=`
 两个操作符都会先转换操作数，然后再比较；
 * 如果有一个操作数是布尔值，则在比较相等性之前先将其转换为数值；
 * 如果一个操作数是字符串，另一个操作数是数值，先将字符串转为数值；
@@ -640,17 +703,17 @@ console.log(2 ** 3); // 8
 * 如果两个操作数都是对象，则比较它们是不是同一个对象。如果是则返回 `true`，否则返回 `false`。
 * `null` 和 `0` 不相等，`undefined`和 `0` 也不相等。
 
-### `===` 和 `!==`
+###  8.2. <a name='-1'></a>`===` 和 `!==`
 * 不转换类型直接比较。
 * `-0` 和 `0` 相等
 
 
-## 条件操作符
+##  9. <a name='-1'></a>条件操作符
 ```js
 variable = boolean_expression ? true_value : false_value;
 ```
 
-## 赋值操作符
+##  10. <a name='-1'></a>赋值操作符
 * 每个主要算数操作符（以及个别的其他操作符）都有对应的赋值操作符：
     ```js
     *=
@@ -666,7 +729,7 @@ variable = boolean_expression ? true_value : false_value;
 * 设计这些操作符的主要目的就是简化赋值操作，使用它们不会带来任何性能的提升。
 
 
-## 逗号操作符
+##  11. <a name='-1'></a>逗号操作符
 1. 逗号操作符可以在一条语句中执行多个操作，多用于声明多个变量
     ```js
     var num1 = 1, num2 = 2, num3 = 3;
@@ -676,11 +739,11 @@ variable = boolean_expression ? true_value : false_value;
     var num = (4, 5, 2, 8);  // num的值为8。看起来好像没什么意义
     ```
 
-## `in`
+##  12. <a name='in'></a>`in`
 It evaluates to true if the left-side value is the name of a property of the right-side object.
 
 
-## `delete`
+##  13. <a name='delete'></a>`delete`
 1. 它用来 **删除** 对象属性或者 **清空** 数组元素
 2. 针对对象是删除其整个属性（而不仅仅是属性值）；针对数组并不是删除，而是清空该项的内容。如果用数组的 `splice` 方法，则是彻底删除该项，后面的项也会一次修改序号
     ```js
@@ -711,6 +774,6 @@ It evaluates to true if the left-side value is the name of a property of the rig
 7. 使用 `var` 声明的全局变量会作为 `window` 的属性，但其 `configurable` 特性为 `false`，不能通过 `delete` 删除
 
 
-## 运算符优先级
+##  14. <a name='-1'></a>运算符优先级
 下表按照运算符的优先级排序的，前面的运算符优先级要高于后面的运算符优先级。被水平分割线分隔开来的运算符具有不同的优先级。标题为A的列表示运算符的结合性，L（从左至右）或 R（从右至左），标题为N的列表示操作数的个数。标题为 “类型” 的列表示期望的操作数类型，以及运算符的结果类型（在 “→” 符号之后）。
 ![运算符优先级](./assets/运算符优先级.jpg)

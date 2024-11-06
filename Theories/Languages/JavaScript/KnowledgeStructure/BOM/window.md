@@ -100,7 +100,16 @@ Despite global variables becoming properties of the `window` object, there is a 
 2. You would probably use the `top` object instead of `window` to refer to these frames. The `top` object always points to the very top (outermost) frame, which is the browser window itself. This ensures that you are pointing to the correct
 frame from which to access the others. Any code written within a frame that references the `window` object is pointing to that frame’s unique instance rather than the topmost one.
 3. Another `window` object is called `parent`. The `parent` object always points to the current frame’s immediate parent frame.
-4. There is one final `window` object, called `self`, which always points to `window`. The two can, in fact, be used interchangeably.
+4. There is one final `window` object, called `self`, which always points to `window`. The two can, in fact, be used interchangeably. ES11 有新增了一个 `globalThis` ，它在 web 和 node 环境里通用，可以获得全局对象
+    ```js
+    // web 
+    console.log(window === self) // true
+    console.log(globalThis === self) // true
+    ```
+    ```js
+    // node
+    console.log(globalThis === global) // true
+    ```
 5. Whenever frames are used, multiple Global objects exist in the browser. Global variables defined in each frame are defined to be properties of that frame’s `window` object. Since each `window` object contains the native type constructors, each frame has its own version of the constructors, which are not equal. For example, `top.Object` is not equal to `top.frames[0].Object`, which affects the use of `instanceof` when objects are passed across frames.
 
 ### Pros & Cons of using frames
