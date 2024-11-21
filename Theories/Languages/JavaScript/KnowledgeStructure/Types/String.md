@@ -611,7 +611,7 @@ console.log(array[1]);
     let str = 'abcba';
     console.log(str.search()); // 0
     ```
-4. 和`indexOf`一样只会返回第一个匹配到的序号，不支持全局匹配
+4. 和 `indexOf` 一样只会返回第一个匹配到的序号，不支持全局匹配
     ```js
     let str = 'abcba';
     console.log(str.search(/b/g)); // 1
