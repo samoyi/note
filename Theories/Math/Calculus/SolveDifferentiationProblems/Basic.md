@@ -28,7 +28,7 @@
 
 ### $x^n$ 关于 x 求导
 TODO 下面这段莫名其妙的证明
-<img src="./images/02.png" width="600" style="display: block;" />
+<img src="./images/02.png" width="600" style="display: block; margin: 5px 0 10px;" />
 
 
 ## 用更好的办法求导
@@ -40,18 +40,18 @@ TODO 下面这段莫名其妙的证明
 1. 对于 $f(x)$，$x$ 变化 $Δx$ 时，$f(x)$会变为 $f(x) + f'(x) \times Δx$。
 2. 对于 $g(x)$，$x$ 变化 $Δx$ 时，$g(x)$会变为 $g(x) + g'(x) \times Δx$。
 3. 所以对于 $h(x) = f(x) + g(x)$，x 变化 $Δx$ 时，$h(x)$会变为 $f(x) + f'(x) \times Δx + g(x) + g'(x) \times Δx$。
-4. $h(x)$ 的变化量为 $f'(x) \times Δx + g'(x) \times Δx$，根据导数的定义，可以求得 $h(x)$ 对 x 求导的结果为 $f'(x)+g'(x)$。
+4. $h(x)$ 的变化量为 $f'(x) \times Δx + g'(x) \times Δx$，根据导数的定义，可以求得 $h(x)$ 对 x 求导的结果为 $\Large f'(x)+g'(x)$。
 5. 也就是说函数和的导数等于函数导数的和。
 
 ### 通过乘积法则求积函数的导数
 1. 根据上面函数和求导的推导，对于 $h(x) = f(x) \times g(x)$，$x$ 变化 $Δx$ 时，$h(x)$会变为 $(f(x) + f'(x) \times Δx) \times (g(x) + g'(x) \times Δx)$。
 2. 展开之后是 $f(x) \times g(x) + f(x) \times g'(x) \times Δx + f'(x) \times Δx \times g(x) + f'(x) \times Δx \times g'(x) \times Δx$
 3. 再减去$f(x) \times g(x)$就是$h(x)$的变化量，即$f(x) \times g'(x) \times Δx + f'(x) \times Δx \times g(x) + f'(x) \times Δx \times g'(x) \times Δx$
-4. 除以 $Δx$ 并求 $Δx$ 趋向于 0 时的极限，也就是求 $h(x)$ 关于 $x$ 的导数，结果为 $f(x) \times g'(x) + f'(x) \times g(x)$
-5. 对于 3 个函数相乘的情况，也是同样的原理，只不过展开的过程更麻烦一些。最终的结果是 $f'(x)g(x)h(x) + f(x)g'(x)h(x) + f(x)g(x)h'(x)$
+4. 除以 $Δx$ 并求 $Δx$ 趋向于 0 时的极限，也就是求 $h(x)$ 关于 $x$ 的导数，结果为 $\Large f(x) \times g'(x) + f'(x) \times g(x)$
+5. 对于 3 个函数相乘的情况，也是同样的原理，只不过展开的过程更麻烦一些。最终的结果是 $\Large f'(x)g(x)h(x) + f(x)g'(x)h(x) + f(x)g(x)h'(x)$
 
 ### 通过商法则求商函数的导数
-还是按照上面的方法，得出如果 $h(x) = \frac{f(x)}{g(x)}$，那么 $h'(x) = \frac{f'(x)g(x) - f(x)g'(x)}{(g(x))^2}$
+还是按照上面的方法，得出如果 $h(x) = \frac{f(x)}{g(x)}$，那么 $\Large h'(x) = \frac{f'(x)g(x) - f(x)g'(x)}{(g(x))^2}$
 
 ### 通过链式求导法则求复合函数的导数
 1. $h(x) = f(g(x))$
@@ -62,11 +62,21 @@ TODO 下面这段莫名其妙的证明
 6. 而 $Δg(x)$ 又可以由因变量 $x$ 推出，即 $g'(x) \times Δx$。
 7. 所以，$f(g(x))$ 的变化值就是 $f'(g(x)) \times (g'(x) \times Δx)$。那变化率就是  $f'(g(x)) \times g'(x)$
 
+#### 多变量函数的链式法则
+1. 变量 $z$ 为 $u$、$v$ 的函数，如果 $u$、$v$ 分别为 $x$、$y$ 的函数，则 $z$ 为 $x$、$y$ 的函数，此时
+    * $\LARGE \frac{dz}{dx} = \frac{dz}{du}\frac{du}{dx} + \frac{dz}{dv}\frac{dv}{dx}$
+    * $\LARGE \frac{dz}{dy} = \frac{dz}{du}\frac{du}{dy} + \frac{dz}{dv}\frac{dv}{dy}$
+2. $x$ 的微小增加量（可能是负值）会先分别会先 $u$ 和 $v$ 增加（可能是负值），然后进一步让 $z$ 增加（可能是负值）。
+3. $x$ 让 $u$ 的增加率是 $\LARGE \frac{du}{dx}$，因此 $u$ 的增加让 $z$ 的增加率是 $\LARGE \frac{dz}{du}\frac{du}{dx}$；
+4. $x$ 让 $v$ 的增加率是 $\LARGE \frac{dv}{dx}$，因此 $v$ 的增加让 $z$ 的增加率是 $\LARGE \frac{dz}{dv}\frac{dv}{dx}$；
+5. 所以 $x$ 的微小增加最终让 $z$ 的增加率是上面两者之和 $\LARGE \frac{dz}{du}\frac{du}{dx} + \frac{dz}{dv}\frac{dv}{dx}$。
+6. $x$ 的微小增加值乘以 $\LARGE \frac{dz}{dx}$ 就是 $z$ 的增加值。
+
 
 ## 速度和加速度
-1. 速度是位移关于时间的导数：$v = \frac{dx}{dt}$。
-2. 而加速度是速度关于时间的导数：$a = \frac{dv}{dt}$。
-3. 所以加速度就是位移位移关于时间的二阶导数：$a = \frac{dv}{dt} = \frac{d^2x}{dt^2}$。
+1. 速度是位移关于时间的导数：$\Large v = \frac{dx}{dt}$。
+2. 而加速度是速度关于时间的导数：$\Large a = \frac{dv}{dt}$。
+3. 所以加速度就是位移位移关于时间的二阶导数：$\Large a = \frac{dv}{dt} = \frac{d^2x}{dt^2}$。
 
 
 ## 导数伪装的极限
@@ -97,3 +107,4 @@ TODO 下面这段莫名其妙的证明
 
 ## References
 * [《普林斯顿微积分读本 (修订版)》](https://book.douban.com/subject/26899701/) 第6章
+* [《深度学习的数学》](https://book.douban.com/subject/26899701/) 2-8

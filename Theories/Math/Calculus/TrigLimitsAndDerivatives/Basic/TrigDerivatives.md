@@ -51,3 +51,7 @@ TODO
 
 ### 然后根据正弦和余弦的极限就可以证明其他三角函数的极限
 <img src="../images/04.jpg" width="600" style="display: block;" />
+
+
+## References
+* [《普林斯顿微积分读本 (修订版)》](https://book.douban.com/subject/26899701/) 第7章

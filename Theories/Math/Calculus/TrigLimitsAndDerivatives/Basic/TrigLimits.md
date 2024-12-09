@@ -36,3 +36,7 @@
 
 ## $\lim\limits_{x\rightarrow\\0}\frac{sin(x)}{x}=1$ 的证明
 TODO
+
+
+## References
+* [《普林斯顿微积分读本 (修订版)》](https://book.douban.com/subject/26899701/) 第7章

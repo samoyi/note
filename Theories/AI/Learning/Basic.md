@@ -257,6 +257,8 @@ t_batch = t_train[batch_mask] # 对应的 batch_size 个监督数据
 
 
 ## 5 数值微分
+TODO 和 《深度学习的数学》 2-9 中 近似公式的关系
+
 ### 5.1 导数
 #### 5.1.1 数值微分和解析微分
 1. 所谓 **数值微分**（numerical differentiation），就是用数值方法、利用微小的差分近似求解函数的导数的过程。
