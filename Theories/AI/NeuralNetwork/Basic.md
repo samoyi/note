@@ -732,79 +732,78 @@
         init_mnist()
     ```
 
-###  8.4. <a name='-1'></a>神经网络的推理处理
+###  8.4. <a name='-1'></a>使用已有的神经网络进行推理处理
 1. 这个神经网络的输入层有 784 个神经元，输出层有 10 个神经元。输入层的 784 这个数字来源于图像大小的 28 × 28 = 784，输出层的 10 这个数字来源于 10 类别分类（数字 0 到 9，共 10 类别）。
 2. 此外，这个神经网络有 2 个隐藏层，第 1 个隐藏层有 50 个神经元，第 2 个隐藏层有 100 个神经元。这个 50 和 100 可以设置为任何值。
 
-####  8.4.1. <a name='-1'></a>代码实现
-下面的代码来自`./mnist_demo/demo/neuralnet_mnist.py`
-```py
-# coding: utf-8
-import sys, os
-sys.path.append(os.pardir)  # 为了导入父目录的文件而进行的设定
-# 如果当前工作目录（命令行工具的当前目录）不是该文件所在目录，就应该使用下面的绝对路径
-# sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
-import numpy as np
-import pickle
-from dataset.mnist import load_mnist
-from common.functions import sigmoid, softmax
+####  8.4.1. <a name='-1'></a>代码实现 
+1. 测试时把 `neuralnet_mnist.py` `mnist.py` `neuralnet_mnist.py` `functions.py` `sample_weight.pkl` 放在同一个目录中。
+2. 下面的代码来自 `./demo/neuralnet_mnist.py`
+    ```py
+    # coding: utf-8
+    import numpy as np
+    import pickle
+    from mnist import load_mnist
+    from functions import sigmoid, softmax
 
 
-# 读取数据集，返回测试用的图像和标签
-# 第 3 个参数 one_hot_label 设置是否将标签保存为 one-hot 表示（one-hot representation）。
-# one-hot 表示是仅正确解标签为 1，其余皆为 0 的数组，就像 [0,0,1,0,0,0,0,0,0,0] 这样。
-# 当 one_hot_label 为 False 时，只是像 7、2 这样简单保存正确解标签
-def get_data():
-    (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, flatten=True, one_hot_label=False)
-    return x_test, t_test
+    # 读取数据集，返回测试用的图像和标签
+    # 这里 normalize 设为了 True，所以每个像素的值不是 0-255 而是 0-1
+    # 这里 flatten 设为了 True，所以每个图像的数据是一个 784 项的一维数组
+    # 这里 one_hot_label 设为了 False，所以每个标签的值是一个数而不是一个 10 项数组
+    def get_data():
+        (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, flatten=True, one_hot_label=False)
+        return x_test, t_test
 
 
-# 读入保存在 pickle 文件 sample_weight.pkl 中的学习到的权重参数
-# (假设学习已经完成，并将学习到的参数保存在这里)。这个文件中以字典变量的形式保存了权重和偏置参数。
-def init_network():
-    with open("sample_weight.pkl", 'rb') as f:
-        network = pickle.load(f)
-    return network
+    # 读入保存 sample_weight.pkl 中的学习到的权重参数(假设学习已经完成，并将学习到的参数保存在这里)。
+    # 这个文件中以字典变量的形式保存了权重和偏置参数。
+    def init_network():
+        with open("sample_weight.pkl", 'rb') as f:
+            network = pickle.load(f)
+        return network
 
 
-# 输入之前神经网络循环的权重和偏置，并接受一个图像数据，演算并推测结果
-def predict(network, x):
-    W1, W2, W3 = network['W1'], network['W2'], network['W3']
-    b1, b2, b3 = network['b1'], network['b2'], network['b3']
+    # 输入之前神经网络学习到的权重和偏置，并接受一个图像数据，演算并推测结果
+    # predict() 函数以 NumPy 数组的形式输出各个标签对应的概率。比如输出[0.1, 0.3, 0.2, ..., 0.04] 
+    def predict(network, x):
+        W1, W2, W3 = network['W1'], network['W2'], network['W3']
+        b1, b2, b3 = network['b1'], network['b2'], network['b3']
 
-    a1 = np.dot(x, W1) + b1
-    z1 = sigmoid(a1)
-    a2 = np.dot(z1, W2) + b2
-    z2 = sigmoid(a2)
-    a3 = np.dot(z2, W3) + b3
-    y = softmax(a3)
+        a1 = np.dot(x, W1) + b1
+        z1 = sigmoid(a1)
+        a2 = np.dot(z1, W2) + b2
+        z2 = sigmoid(a2)
+        a3 = np.dot(z2, W3) + b3
+        y = softmax(a3)
 
-    return y
+        return y
 
 
-x, t = get_data()  # 获得 MNIST 数据集
-network = init_network()  # 生成神经网络，也就是之前循环得到的权重和偏置
-accuracy_cnt = 0
-# 遍历所有图像
-for i in range(len(x)):
-    # predict() 函数以 NumPy 数组的形式输出各个标签对应的概率。
-    # 比如输出[0.1, 0.3, 0.2, ..., 0.04] 的数组，该数组表示“0”的概率为 0.1，“1”的概率为 0.3，等等。
-    y = predict(network, x[i])
-    p = np.argmax(y) # 获取概率最高的元素的索引。也就是说，神经网络判断图像中的数字最有可能为 p
-    if p == t[i]:
-        # 对比标签，如果真的为 p ，则准确次数加一
-        accuracy_cnt += 1
+    x, t = get_data()  # 获得 MNIST 数据集
+    network = init_network()  # 生成神经网络，也就是之前学习到的权重和偏置
+    accuracy_cnt = 0
+    # 遍历所有图像
+    for i in range(len(x)):
+        # 表示当前图像预测结果的一个 10 项数组，每一个项对应这个数的可能概率
+        y = predict(network, x[i])
+        # 获取概率最高的元素的索引，也就是说，神经网络判断图像中的数字最有可能为 p。
+        # 注意 np.argmax 函数获得的不是值而是索引。但实际上这里的值恰好就是索引。
+        p = np.argmax(y)
+        if p == t[i]:
+            # 对比标签，如果真的为 p ，则准确次数加一
+            accuracy_cnt += 1
 
-# 输出准确率
-print("Accuracy:" + str(float(accuracy_cnt) / len(x)))
-```
+    # 输出准确率
+    print("Accuracy:" + str(float(accuracy_cnt) / len(x))) # Accuracy:0.9352
+    ```
 
 
 ##  9. <a name='pre-processing'></a>预处理（pre-processing）
 1. 在这个例子中，我们把 `load_mnist` 函数的参数 `normalize` 设置成了 `True` 。将 `normalize` 设置成 `True` 后，函数内部会进行转换，将图像的各个像素值除以 255，使得数据的值在 0.0～1.0 的范围内。
-2. 像这样把数据限定到某个范围内的处理称为**正规化**（normalization）。此外，对神经网络的输入数据进行某种既定的转换称为**预处理**（pre-processing）。这里，作为对输入图像的一种预处理，我们进行了正规化。
+2. 像这样把数据限定到某个范围内的处理称为 **正规化**（normalization）。此外，对神经网络的输入数据进行某种既定的转换称为 **预处理**（pre-processing）。这里，作为对输入图像的一种预处理，我们进行了正规化。
 3. 预处理在神经网络（深度学习）中非常实用，其有效性已在提高识别性能和学习的效率等众多实验中得到证明。在刚才的例子中，作为一种预处理，我们将各个像素值除以 255，进行了简单的正规化。
-4. 实际上，很多预处理都会考虑到数据的整体分布。比如，利用数据整体的均值或标准差，移动数据，使数据整体以 0 为中心分布，或者进行正规化，把数据的延展控制在一定范围内。除此之外，还有将数据整体的分布形状均匀化的方法，即数据**白化**（whitening）等。
+4. 实际上，很多预处理都会考虑到数据的整体分布。比如，利用数据整体的均值或标准差，移动数据，使数据整体以 0 为中心分布，或者进行正规化，把数据的延展控制在一定范围内。除此之外，还有将数据整体的分布形状均匀化的方法，即数据 **白化**（whitening）等。
 
 
 ##  10. <a name='-1'></a>批处理
@@ -822,57 +821,62 @@ print("Accuracy:" + str(float(accuracy_cnt) / len(x)))
     print(W3.shape)    # (100, 10)
     ```
 2. 可以看出来，数据集中的图像有 10000 张，每张 784 像素。每张图片输入神经网络时，是作为 784 项的一维数组。
-第一次点积运算的结果（$a_1$）是 50 项的一维数组，第二次点积运算的结果（$a_2$）是 100 项的一维数组，，第三次点积运算的结果（$a_3$）是 10 项的一维数组。最终再通过激活函数，输出结果为 10 项的一维数组。
+第一次点积运算的结果（$a_1$）是 50 项的一维数组，第二次点积运算的结果（$a_2$）是 100 项的一维数组，第三次点积运算的结果（$a_3$）是 10 项的一维数组。最终再通过激活函数，输出结果为 10 项的一维数组。
 3. 也就是说，每次输入一张图片时，也就是输入 784 项的一维数组，得到 10 项的一维数组。
 
 ###  10.2. <a name='-1'></a>批处理
-1. 基于上面的说明，考虑每次输入 100 张图片的，输入的数据就变成了 100 * 784 的二维数组。
+1. 基于上面的说明，考虑每次输入 100 张图片，输入的数据就变成了 100 * 784 的二维数组。
 2. 同样可以计算得出，通过三次点积运算，输出的结果会是 100 * 10 的二维数组。
-3. 这表示，输入的 100 张图像的结果被一次性输出了。这种打包式的输入数据称为**批**（batch）。
+3. 这表示，输入的 100 张图像的结果被一次性输出了。这种打包式的输入数据称为 **批**（batch）。
 4. 批处理对计算机的运算大有利处，可以大幅缩短每张图像的处理时间。那么为什么批处理可以缩短处理时间呢？
 5. 这是因为大多数处理数值计算的库都进行了能够高效处理大型数组运算的最优化。并且，在神经网络的运算中，当数据传送成为瓶颈时，批处理可以减轻数据总线的负荷（严格地讲，相对于数据读入，可以将更多的时间用在计算上）。
 6. 也就是说，批处理一次性计算大型数组要比分开逐步计算各个小型数组速度更快。
 
 ###  10.3. <a name='-1'></a>代码实现
-下面的代码来自`./mnist_demo/demo/neuralnet_mnist_batch.py`
+修改上面的 `neuralnet_mnist.py`，增加一个批数量变量 `batch_size`，并修改 `for` 循环
 ```py
 # coding: utf-8
-import sys, os
-sys.path.append(os.pardir)
 import numpy as np
 import pickle
-from dataset.mnist import load_mnist
-from common.functions import sigmoid, softmax
+from mnist import load_mnist
+from functions import sigmoid, softmax
 
 
+# 读取数据集，返回测试用的图像和标签
+# 这里 normalize 设为了 True，所以每个像素的值不是 0-255 而是 0-1
+# 这里 flatten 设为了 True，所以每个图像的数据是一个 784 项的一维数组
+# 这里 one_hot_label 设为了 False，所以每个标签的值是一个数而不是一个 10 项数组
 def get_data():
     (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, flatten=True, one_hot_label=False)
     return x_test, t_test
 
 
+# 读入保存 sample_weight.pkl 中的学习到的权重参数(假设学习已经完成，并将学习到的参数保存在这里)。
+# 这个文件中以字典变量的形式保存了权重和偏置参数。
 def init_network():
     with open("sample_weight.pkl", 'rb') as f:
         network = pickle.load(f)
     return network
 
 
+# 输入之前神经网络学习到的权重和偏置，并接受一个图像数据，演算并推测结果
+# predict() 函数以 NumPy 数组的形式输出各个标签对应的概率。比如输出[0.1, 0.3, 0.2, ..., 0.04] 
 def predict(network, x):
-    w1, w2, w3 = network['W1'], network['W2'], network['W3']
+    W1, W2, W3 = network['W1'], network['W2'], network['W3']
     b1, b2, b3 = network['b1'], network['b2'], network['b3']
 
-    a1 = np.dot(x, w1) + b1
+    a1 = np.dot(x, W1) + b1
     z1 = sigmoid(a1)
-    a2 = np.dot(z1, w2) + b2
+    a2 = np.dot(z1, W2) + b2
     z2 = sigmoid(a2)
-    a3 = np.dot(z2, w3) + b3
+    a3 = np.dot(z2, W3) + b3
     y = softmax(a3)
 
     return y
 
 
-x, t = get_data()
-network = init_network()
-
+x, t = get_data()  # 获得 MNIST 数据集
+network = init_network()  # 生成神经网络，也就是之前学习到的权重和偏置
 batch_size = 100 # 批数量
 accuracy_cnt = 0
 
@@ -881,19 +885,28 @@ accuracy_cnt = 0
 # [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 # >>> list( range(0, 10, 3) )
 # [0, 3, 6, 9]
+# 所以 range(0, len(x), batch_size) 是 [0, 100, 200, ... , 9800, 9900]
 for i in range(0, len(x), batch_size):
-    x_batch = x[i:i+batch_size] # 每个批次读取 batch_size 个图片数据
-    y_batch = predict(network, x_batch) # 批量计算结果
-    # 批量获取值最大的元素的索引
-    # 注意现在 y_batch 是二维数组，需要告诉 argmax 对哪个维度的元素进行最大筛选
-    # 第一个维度（ axis=0 ）的元素是数组，第二个维度（ axis=1 ）的元素是每个数组的数字数组项，
-    # 所以我们这里应该是对第二维的数字数组中挑选最大元素的索引
-    # 这样，每批输入 100 个图像数据，会得到 100 个预测结果索引
+    # 取出一批 100 张图
+    x_batch = x[i:i+batch_size]
+    # 得出这 100 张图的预测结果
+    y_batch = predict(network, x_batch)
+    # 现在 y_batch 是二维数组，第一维的每个数组项是一个 10 项数组，第二维的每个数组项是一个数。
+    # 如果直接使用 argmax 的话，那就是比较第一维里面的数组项，也就是比较 100 个 10 项数组了，显然不对。
+    # 所以需要告诉 argmax 对第二个维度（ axis=1 ）里面的数组项进行比较，也就是对 100 个 10 项数组中的 10 个数求最大值的索引，
+    # 最终会得到 100 个最大值的索引，是一个 100 项的一维数组 p。
+    # 这样，每批输入 100 个图像数据，会得到 100 个预测结果。
     p = np.argmax(y_batch, axis=1)
-    # 再使用该批次的 100 个预测索引和标签中的对应的 100 个正确答案索引进行对比
+    # np.sum 的参数如果是数组，那就是累加数组项的值。但这里的参数是两个数组的相等判断，它累加的就是对应的项相等的次数。例如
+    # y = np.array([1, 2, 1, 4])
+    # t = np.array([1, 2, 0, 4])
+    # print(y==t) # [True True False True]
+    # print( np.sum(y==t) ) # 3
     accuracy_cnt += np.sum(p == t[i:i+batch_size])
 
-print("Accuracy:" + str(float(accuracy_cnt) / len(x)))
+
+# 输出准确率
+print("Accuracy:" + str(float(accuracy_cnt) / len(x))) # Accuracy:0.9352
 ```
 
 
