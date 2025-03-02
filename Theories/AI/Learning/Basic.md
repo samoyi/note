@@ -1,5 +1,19 @@
 # Basic
 
+<!-- vscode-markdown-toc -->
+* 1. [思想](#)
+* 2. [从数据中学习](#-1)
+	* 2.1. [数据驱动](#-1)
+	* 2.2. [训练数据和测试数据](#-1)
+* 3. [损失函数](#-1)
+	* 3.1. [均方误差（mean squared error）损失函数](#meansquarederror)
+
+<!-- vscode-markdown-toc-config
+	numbering=true
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
 
 ##  1. <a name=''></a>思想
 1. 对于智能问题，最初的想法可能也是和古典人工智能的思路一样，即有人设计好思考方式。
@@ -48,7 +62,7 @@ $$E=\frac{1}{2}\sum_k(y_k-t_k)^2$$
     t = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
     ``` 
 3. 上述数据可以看出，神经网络判断该图片最后可能是数字 2，有 60% 的概率；监督数据也表示该图片就是数字 2。
-4. 根据均方误差函数的逻辑可以看出，当神经网络对一条数据判断的越准确是，`y` 和 `t` 就越相似，均方误差函数的值也就最小，损失也就最小，就代表判断越准确。
+4. 根据均方误差函数的逻辑可以看出，当神经网络对一条数据判断的越准确时，`y` 和 `t` 就越相似，均方误差函数的值也就最小，损失也就最小，就代表判断越准确。
 5. 均方误差损失函数实际上计算的就是每一项的答案和正确答案的差距的总和。
 6. 该损失函数的 Python 实现如下
     ```py
@@ -137,7 +151,7 @@ train_size = x_train.shape[0]
 batch_size = 10
 # 从 60000 （train_size）条训练数据中随机选择 10 （batch_size）条数据作为 mini-batch 进行训练
 # random.choice 方法第一个参数如果是数组，则将从数组中随机取出若干个项；
-# 如果第一个参数是整数 n，则会从 np.arange(a) 中随机取出若干个项；
+# 如果第一个参数是整数 n，则会从 np.arange(a) 中随机取出若干个项，所以这里选出来的就是一组 10 个索引值；
 # replace=False 表示不能取到重复的
 batch_mask = np.random.choice(train_size, batch_size, replace=False)
 x_batch = x_train[batch_mask] # batch_size 个随机输入数据
@@ -157,6 +171,28 @@ t_batch = t_train[batch_mask] # 对应的 batch_size 个监督数据
         batch_size = y.shape[0]
         return -np.sum(t * np.log(y + 1e-7)) / batch_size
     ```
+    * `y` 现在是二维数组，`np.log(y)` 就是对其中每个数求自然对数，然后返回同样形状的数组
+        ```py
+        y = np.array([
+                        [1, 2], 
+                        [3, 1]
+                    ])
+
+        print( np.log(y) )  
+        # [
+        #     [0.         0.69314718]
+        #     [1.09861229 0.        ]
+        # ]
+        ```
+    * `np.sum` 用在多维数组上，是累加其中的每个值，然后返回一个数
+        ```py
+        y = np.array([
+                        [1, 2, 3], 
+                        [3, 4, 5]
+                    ])
+
+        print( np.sum(y) )  # 18
+        ```
 2. 先看一下下面会用到了一种特殊的多维数组数组项提取方式。下面每一对 `print`，第一个是普通方式，第二种是特殊方式
     ```py
     y = np.array([
@@ -180,7 +216,7 @@ t_batch = t_train[batch_mask] # 对应的 batch_size 个监督数据
     print( y[1, 0, 2] ) # IndexError: too many indices for array: array is 2-dimensional, but 3 were indexed
     print( y[[1], [0], [2]] ) # IndexError: too many indices for array: array is 2-dimensional, but 3 were indexed
     ```
-    所以，对于 m×n 二维数组来说，这种提取方法中，第一个数组里的值都是 m 维的索引，第二个数组里的值都是对应的 n 为的索引。
+    所以，对于 m×n 二维数组来说，这种提取方法中，第一个数组里的值都是 m 维的索引，第二个数组里的值都是对应的 n 维的索引。
 3. 当监督数据是标签形式（非 one-hot 表示，而是像 “2” “7” 这样的标签）时，交叉熵误差可通过如下代码实现
     ```py
     def cross_entropy_error(y, t):
@@ -212,8 +248,6 @@ t_batch = t_train[batch_mask] # 对应的 batch_size 个监督数据
 
 
 ## 5 数值微分
-TODO 和 《深度学习的数学》 2-9 中 近似公式的关系
-
 ### 5.1 导数
 #### 5.1.1 数值微分和解析微分
 1. 所谓 **数值微分**（numerical differentiation），就是用数值方法、利用微小的差分近似求解函数的导数的过程。
@@ -266,20 +300,21 @@ def numerical_diff(f, x):
     ```
 3. 我们来画一下这个函数的图，是一个三维图像
     <img src="./images/06.png" width="400" style="display: block; margin: 5px 0 10px;" />
-4. 现在我们来求 $f(x_0, x_1)$ 的导数。这里需要注意的是，函数有两个变量，所以有必要区分对哪个变量求导数，即对 $x_0$ 和 $x_1$ 两个变量中的哪一个求导数。
+4. 现在我们来求 $f(x_0, x_1)$ 的导数。这里需要注意的是，函数有两个变量，所以有必要区分对哪个变量求导数，即对 $x_0$ 和 $x_1$ 两个变量中的哪一个求导数。也就是考虑其中一个变量在某个位置单独变化时，对整个函数的值的影响。
 5. 我们把这里讨论的有多个变量的函数的导数称为 **偏导数**，用数学式表示的话，可以写成$\frac{∂f}{∂x_0}$、$\frac{∂f}{∂x_1}$。
 
 #### 5.3.2 求偏导数
-1. 求 $x_0 = 3, x_1 = 4$ 时，关于 $x_0$ 的偏导数
+1. 求 $x_0 = 3, x_1 = 4$ 时，关于 $x_0$ 的偏导数。所以 $x_1 = 4$ 是固定的，在这个求导过程中，它就是一个已知量，而不是自变量未知数。所以本次求导的函数实际上是
     ```py
     def function_tem1(x0):
         return x0*x0 + 4.0 * 4.0
-
-
+    ```        
+2. 这个新函数 `function_tem1` 现在只有一个自变量，也就是 $x_0$。那么就可以使用上面求单变量数值微分的函数 `numerical_diff`，看看 $x_0$ 在 3 附近微小变化时对函数值的影响
+    ```py
     d = numerical_diff(function_tem1, 3.0)
     print(d)  # 6.00000000000378
     ```
-2. 求 $x_0 = 3, x_1 = 4$ 时，关于 $x_1$ 的偏导数
+3. 同理，求 $x_0 = 3, x_1 = 4$ 时，关于 $x_1$ 的偏导数
     ```py
     def function_tem2(x1):
         return 3*3 + x1 * x1
@@ -288,12 +323,12 @@ def numerical_diff(f, x):
     d = numerical_diff(function_tem2, 4.0)
     print(d)  # 7.999999999999119
     ```
-3. 像这样，偏导数和单变量的导数一样，都是求某个地方的斜率。不过，偏导数需要将多个变量中的某一个变量定为目标变量，并将其他变量固定为某个值。
-4. 在上例的代码中，为了将目标变量以外的变量固定到某些特定的值上，我们定义了新函数。然后，对新定义的函数应用了之前的求数值微分的函数，得到偏导数。
+4. 像这样，偏导数和单变量的导数一样，都是求某个地方的斜率。不过，偏导数需要将多个变量中的某一个变量定为目标变量，并将其他变量固定为某个值。
+5. 在上例的代码中，为了将目标变量以外的变量固定到某些特定的值上，我们定义了新函数。然后，对新定义的函数应用了之前的求数值微分的函数，得到偏导数。
 
 
 ## 6 梯度
-先要确保理解了 `Theories\AI\MathematicalFoundations\Calculus\GradientDescent.md` 中的内容
+先要确保理解了 `..\MathematicalFoundations\Calculus\GradientDescent.md` 中的内容
 
 ### 6.1 梯度下降法是干什么用的？
 #### 6.1.1 我们希望找到神经网络的最优权重
@@ -317,8 +352,10 @@ def numerical_diff(f, x):
 
 
 ### 6.2 梯度的表达式和意义
-1. 在上面的例子中，我们按变量分别计算了 $x_0$ 和 $x_1$ 的偏导数。现在，我们希望一起计算 $x_0$ 和 $x_1$ 的偏导数。比如，我们来考虑求 $x_0=3,x_1=4$ 时 $(x_0,x_1)$ 的偏导数 $\Bigl(\frac{\partial f}{\partial x_0},\frac{\partial f}{\partial x_1}\Bigr)$。
-2. 像 $\Bigl(\frac{\partial f}{\partial x_0},\frac{\partial f}{\partial x_1}\Bigr)$ 这样的由全部变量的偏导数汇总而成的向量称为 **梯度**（gradient）
+TODO 和 《深度学习的数学》 2-9 中 近似公式的关系。那个近似公式直接把自变量从 $x$ 换成了 $\Delta x$，那不就是不是同一个函数了吗？
+
+1. 在上面的例子中，我们按变量分别计算了 $x_0$ 和 $x_1$ 的偏导数。现在，我们希望一起计算 $x_0$ 和 $x_1$ 的偏导数。比如，我们来考虑求 $x_0=3,x_1=4$ 时 $(x_0,x_1)$ 的偏导数 $\large \Bigl(\frac{\partial f}{\partial x_0},\frac{\partial f}{\partial x_1}\Bigr)$。
+2. 像 $\large \Bigl(\frac{\partial f}{\partial x_0},\frac{\partial f}{\partial x_1}\Bigr)$ 这样的由全部变量的偏导数汇总而成的向量称为 **梯度**（gradient）
 3. 梯度可以像下面这样来实现
     ```py
     def numerical_gradient(f, x):
@@ -376,12 +413,11 @@ def numerical_diff(f, x):
 ### 6.3 图像
 1. 画出 `function_2` 的负梯度向量
     <img src="./images/07.png" width="600" style="display: block; margin: 5px 0 10px;" />
-2. 输入的是一个 2D 向量，即 $(x_1 x_2)$。这个向量确定了图上的一点，这个点会作为图上有向向量箭头的起点。
-3. 输出值也是一个 2D 向量，这个向量确定了图上有向向量箭头的位移。
-4. 但是看起来比例好像不对？比如输入 $(1.0, 2.0)$，梯度向量应该是 $(2.0, 4.0)$，但图中的向量长度明显是很短的。下面会解释。
-4. 起点和位移结合起来，就是一个有向向量箭头。
-5. 另外，因为这里绘制采用负梯度方向，所以方向是和值相反的。负梯度方向是梯度法中变量的更新方向，也就是权重更新的方向。
-6. 和梯度相反的方向，再结合上面说的比例明显缩小，可以看出来，这个图里面的向量，并不是梯度的向量，而是权重改变的向量！这个向量和梯度方向相反，且比例小了很多，正是上面 $-\eta * d（\eta 为正的微小常数）$ 对应的向量！
+2. 输入的是一个 2D 向量，即 $(x_1, x_2)$。这个向量确定了图上的一点，这个点会作为图上向量的起点。
+3. 输出值也是一个 2D 向量，这个向量确定了图上向量的终点。
+4. 但是看起来比例好像不对？比如输入 $(1.0, 2.0)$，梯度向量应该是 $(2.0, 4.0)$，但图中的向量长度明显是很短的，因为向量 $(2.0, 4.0)$ 的长度应该是 $\sqrt{20}$。下面会解释。
+5. 另外，因为这里绘制采用负梯度方向，所以方向是相反的。负梯度方向是梯度法中变量的更新方向，也就是权重更新的方向。
+6. 和梯度相反的方向，再结合上面说的比例明显缩小，可以看出来，这个图里面的向量，并不是梯度的向量，而是权重改变的向量。这个向量和梯度方向相反，且比例小了很多，正是上面 $-\eta * d（\eta 为正的微小常数）$ 对应的向量。
 
 ### 6.4 图像分析
 这个图的负梯度向量，是 `function_2` 的，也就是 $f(x_0,x_1)=x^2_0+x^2_1$ 的。
@@ -396,7 +432,7 @@ def numerical_diff(f, x):
 
 #### 6.4.1 箭头长短
 1. 可以看出来，越靠外的箭头越长。
-2. 因为箭头向量的值是 $-\eta * d（\eta 为正的微小常数）$，那可以推断出，越靠外 $f(x_0,x_1)$ 的梯度向量的绝对值越大。
+2. 因为箭头向量是 $-\eta * d{\footnotesize（\eta 为正的微小常数）}$，那可以推断出，越靠外 $f(x_0,x_1)$ 的梯度向量的绝对值越大。
 3. 实际上 $f(x_0,x_1)$ 梯度的解析解是向量 $(2x, 2y)$，确实也是越远离中心绝对值越大。
 
 ### 6.5 梯度法
@@ -429,9 +465,9 @@ def gradient_descent(f, init_x, lr=0.01, step_num=100):
 #### 6.5.3 实例
 1. 用梯度法求 $f(x_0+x_1)=x^2_0+x^2_1$ 的最小值
     ```py
-    init_x = np.array([2.0, 2.0])
+    init_x = np.array([-3.0, 4.0])
     minX = gradient_descent(function_2, init_x=init_x, lr=0.1, step_num=100)
-    print(minX)  # [4.07407195e-10 4.07407195e-10]
+    print(minX)  # [-6.11110793e-10  8.14814391e-10]
     ```
 2. 这里，设初始值为 $(-3.0, 4.0)$，开始使用梯度法寻找最小值。最终的结果是 $(-6.1e-10, 8.1e-10)$，非常接近 $(0, 0)$，通过梯度法我们基本得到了正确结果。
 3. 如果用图来表示梯度法的更新过程
@@ -452,10 +488,15 @@ def gradient_descent(f, init_x, lr=0.01, step_num=100):
 5. 像学习率这样的参数称为 **超参数**。这是一种和神经网络的参数（权重和偏置）性质不同的参数。相对于神经网络的权重参数是通过训练数据和学习算法自动获得的，学习率这样的超参数则是人工设定的。一般来说，超参数需要尝试多个值，以便找到一种可以使学习顺利进行的设定。
 
 ### 6.6 神经网络的梯度
-#### 6.6.1 实例：实现一个简单的神经网络并求梯度
-源码在 `./demo/gradient_simplenet.py`
+1. 神经网络的梯度是指损失函数关于权重参数的梯度。
+2. 例如有一个神经网络有 2×3 的权重
+    $\boldsymbol{W} = \begin{bmatrix} w_{11} & w_{12} & w_{13} \\ w_{21} & w_{22} & w_{23} \end{bmatrix}$
+3. 损失函数用 $L$ 表示的话，它的梯度就是
+    $\Large \frac{\partial{L}}{\partial{\boldsymbol{W}}} = \begin{bmatrix} \frac{\partial{L}}{\partial{w_{11}}} & \frac{\partial{L}}{\partial{w_{12}}} & \frac{\partial{L}}{\partial{w_{13}}} \\ \frac{\partial{L}}{\partial{w_{21}}} & \frac{\partial{L}}{\partial{w_{22}}} & \frac{\partial{L}}{\partial{w_{23}}} \end{bmatrix}$
 
-1. 先实现一个简单的神经网络
+#### 6.6.1 实例：实现一个简单的神经网络并求梯度
+1. 先实现一个简单的神经网络，该神经网络的权重会作为损失函数的自变量，然后以损失函数最小值为目标来不断调整权重。
+2. 神经网络实现，源码在 `./demo/gradient_simplenet.py`
     ```py
     # coding: utf-8
     import sys, os
@@ -467,12 +508,16 @@ def gradient_descent(f, init_x, lr=0.01, step_num=100):
 
     class simpleNet:
         def __init__(self):
-            self.W = np.random.randn(2, 3)  # 用高斯分布进行初始化参数
+            # random.randn 返回的值符合标准正态分布，也就是说，例如，它返回的 95% 的数都在 ±1.96 的范围内，68% 的数都在 ±1 的范围内
+            # random.randn(2, 3) 表示返回一个两行三列数组，所有的值符合标准正态分布
+            self.W = np.random.randn(2, 3)  # 用高斯分布进行初始化一组 2×3 的权重
 
+        # 这里只有一层隐藏层，直接用输入值和该层权重求点积即可
         def predict(self, x):
             return np.dot(x, self.W)
 
-        #  x 接收输入数据，t 接收正确解标签
+        # 使用 softmax 函数作为激活函数，使用交叉熵误差作为损失函数
+        # x 接收输入数据，t 接收正确解标签
         def loss(self, x, t):
             z = self.predict(x)
             y = softmax(z)
@@ -494,15 +539,77 @@ def gradient_descent(f, init_x, lr=0.01, step_num=100):
     x = np.array([0.6, 0.9])
     p = net.predict(x) # 使用随机参数预测三个结果
     print(p)  # [-0.5070523   0.1241366   1.79418418]   预测结果正好倾向于最后一项
-    print(np.argmax(p))  # 如果使用随机参数预测的结果也是更倾向于最后一项，则损失函数的值会比较小
     print(net.loss(x, t))  # 0.25338010072421907   
     ```
-3. 接下来求当前参数下的梯度
+3. 现在，输入不变，分别测试正确答案是前两项的损失函数值，可以看到损失值都明显变大了
+    ```py
+    t = np.array([0, 1, 0])
+    p = net.predict(x)
+    print(net.loss(x, t)) # 1.9234271308654354  
+
+    t = np.array([1, 0, 0])
+    p = net.predict(x)
+    print(net.loss(x, t)) # 2.5546154256672673 
+    ```
+4. 现在，我们想要调整参数，让新的损失函数的值比上面的更小一些。因此，需要求损失函数在当前参数下的梯度。
+5. 注意到，上面实现的 `numerical_gradient`，它表示函数自变量的第二个参数是一个一维数组，但我们这里的的自变量 $\boldsymbol{W}$ 是二维的。我们这里实现一个支持多维数组的 `numerical_gradient`。先看一下其中用到的遍历多维数组的方法
+    ```py
+    x = np.array([
+        [1, 2, 3],
+        [4, 5, 6],
+    ])
+
+    it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
+
+    while not it.finished:
+        print(it.multi_index)
+        it.iternext()  
+    # (0, 0)
+    # (0, 1)
+    # (0, 2)
+    # (1, 0)
+    # (1, 1)
+    # (1, 2)
+    ```
+6. 新的 `numerical_gradient` 实现如下
+    ```py
+    def numerical_gradient(f, x):
+        h = 1e-4 # 0.0001
+        grad = np.zeros_like(x)
+        
+        it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
+        while not it.finished:
+            idx = it.multi_index
+
+            tmp_val = x[idx]
+
+            # TODO 为什么要显示转型
+            x[idx] = float(tmp_val) + h
+            fxh1 = f(x) # f(x+h)
+            
+            x[idx] = tmp_val - h 
+            fxh2 = f(x) # f(x-h)
+
+            grad[idx] = (fxh1 - fxh2) / (2*h)
+            
+            x[idx] = tmp_val # 还原值
+
+            it.iternext()   
+        return grad
+    ```
+7. 上面损失函数是 `net.loss`，但它的函数参数不是神经网络的权重 $\boldsymbol{W}$。我们在使用 `numerical_gradient` 求数值微分时，第二个函数参数必须要是第一个函数参数所指定的函数的自变量。
+8. 看一下 `numerical_gradient` 的实现，如果你直接 `numerical_gradient(net.loss, net.W)`，那么函数内部就会计算 `net.loss(net.W)`，这显然是不正确的。
+9. 所以我们要把 `net.loss` 在包装成一个新函数，让新函数的参数为 $\boldsymbol{W}$
     ```py
     # 损失值关于参数的函数
     def f(W):
         return net.loss(x, t)
-
+    # 或者使用 lambda 表示法定义函数
+    # f = lambda w: net.loss(x, t)
+    ```
+10. 这个新函数 `f` 看起来有点奇怪，它的参数是 $\boldsymbol{W}$，但它的内部并没有用到 $\boldsymbol{W}$。但实际上，这个传参 $\boldsymbol{W}$ 是没有意义的，因为 `net.loss` 调用时内部会根据 $\boldsymbol{W}$ 计算损失值。所以，新函数 `f` 其实不需要这个参数，`f` 唯一真正的作用只是避免 `net.loss(net.W)`
+11. 现在，我们使用 `numerical_gradient` 求当前 $\boldsymbol{W}$ 下的梯度
+    ```py
     # 求当前参数下的函数梯度
     # 这个求梯度的函数不是上面定义的那个，那个只支持向量。这里的参数是矩阵
     dW = numerical_gradient(f, net.W) 
@@ -512,9 +619,19 @@ def gradient_descent(f, init_x, lr=0.01, step_num=100):
     #   [0.06994981  0.13149474  -0.20144454]
     # ]
     ```
-4. 简单来说，左边四个偏导是正右边两个偏导是否，说明如果在当前参数的位置，左边四个参数如果稍微减小，则损失函数的会减小，右边两个参数如果稍微增大，损失函数的值也会减小。
-5. 而且绝对值的大小也说明它们各自更新的作用有大有小。比如右下角稍微增大一点的贡献就要比左上角减小同样值起的作用要大。
-6. 求出神经网络的梯度后，接下来只需根据梯度法，乘以学习率计算出此时合适的权重变化值，更新权重参数即可。
+12. 简单来说，左边四个偏导是正、右边两个偏导是否，说明如果在当前参数的位置，左边四个参数如果稍微减小，则损失函数的会减小，右边两个参数如果稍微增大，损失函数的值也会减小。
+13. 而且绝对值的大小也说明它们各自更新的作用有大有小。比如右下角稍微增大一点的贡献就要比左上角减小同样值起的作用要大。
+14. 求出神经网络的梯度后，接下来只需根据梯度法，乘以学习率计算出此时合适的权重变化值，更新权重参数即可。
+15. 我们这里可以先简单测试一下。假定学习率是 0.1，那么得出新的权重是 
+    ```py
+    net.W -= 0.1 * dW
+    print(net.W)
+    # [
+    #     [-0.3167806   0.80907064  1.05038984]
+    #     [-0.36230824 -0.42044456  1.32237563]
+    # ]
+    ```
+16. 用这个新权重再进行一次预测，得出的损失函数值是 0.2444572434502961，比之前的 0.25338009946586093 小了一点。
 
 
 ## 7 学习算法的实现
@@ -545,13 +662,12 @@ class TwoLayerNet:
     def __init__(self, input_size, hidden_size, output_size,
                  weight_init_std=0.01):
         # 根据各层神经元的数量，初始化权重和偏置
+        # 权重在标准正态分布的基础上乘以了 weight_init_std，这个值的设定由什么决定呢
         self.params = {}
-        self.params['W1'] = weight_init_std * \
-            np.random.randn(input_size, hidden_size)   # 第 1 层权重
-        self.params['b1'] = np.zeros(hidden_size)      # 第 1 层偏置
-        self.params['W2'] = weight_init_std * \
-            np.random.randn(hidden_size, output_size)  # 第 2 层权重
-        self.params['b2'] = np.zeros(output_size)      # 第 2 层偏置
+        self.params['W1'] = weight_init_std * np.random.randn(input_size, hidden_size) # 第 1 层权重
+        self.params['b1'] = np.zeros(hidden_size) # 第 1 层偏置
+        self.params['W2'] = weight_init_std * np.random.randn(hidden_size, output_size) # 第 2 层权重
+        self.params['b2'] = np.zeros(output_size) # 第 2 层偏置
 
     # 用当前的参数进行预测
     def predict(self, x):
@@ -582,12 +698,14 @@ class TwoLayerNet:
 
     # x:输入数据, t:监督数据
     # 因为要使用梯度下降法，所以实现求当前梯度的方法
+    # 这里定义的方法和 common.gradient 中求梯度的函数同名
     def numerical_gradient(self, x, t):
         # 基于当前输入数据的数据，定义损失函数值关于权重和偏置的函数
         # 该函数的自变量是权重和偏置，函数值是损失函数的输出值
         def loss_W(W): return self.loss(x, t)
 
         # 计算关于当前权重和偏置的梯度，确定怎么调整权重和偏置
+        # 调用 common.gradient 中的 numerical_gradient 函数具体求梯度
         grads = {}
         grads['W1'] = numerical_gradient(loss_W, self.params['W1']) # 第 1 层权重的梯度
         grads['b1'] = numerical_gradient(loss_W, self.params['b1']) # 第 1 层偏置的梯度
