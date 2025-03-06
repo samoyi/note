@@ -608,7 +608,7 @@ class SoftmaxWithLoss:
     4. **步骤 4（重复）**：重复步骤 1、步骤 2、步骤 3。
 2. 之前利用数值微分求梯度，数值微分虽然实现简单，但是计算要耗费较多的时间。和需要花费较多时间的数值微分不同，误差反向传播法可以快速高效地计算梯度。
 
-### 7.2 对应误差反向传播法的神经网络的实现 TODO 重新看
+### 7.2 对应误差反向传播法的神经网络的实现
 （源码在`./demos/two_layer_net.py`）
 ```py
 import sys, os
@@ -622,8 +622,10 @@ class TwoLayerNet:
 
     def __init__(self, input_size, hidden_size, output_size,
                  weight_init_std=0.01):
-        # 初始化权重
+        # 初始化权重和偏置
         self.params = {}
+        # random.randn 返回的值符合标准正态分布，也就是说，例如，它返回的 95% 的数都在 ±1.96 的范围内，68% 的数都在 ±1 的范围内
+        # random.randn(2, 3) 表示返回一个两行三列数组，所有的值符合标准正态分布
         self.params['W1'] = weight_init_std * np.random.randn(input_size, hidden_size)
         self.params['b1'] = np.zeros(hidden_size)
         self.params['W2'] = weight_init_std * np.random.randn(hidden_size, output_size)
@@ -634,7 +636,6 @@ class TwoLayerNet:
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['Relu1'] = Relu()
         self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
-
         self.lastLayer = SoftmaxWithLoss()
 
     def predict(self, x):
@@ -650,7 +651,10 @@ class TwoLayerNet:
 
     def accuracy(self, x, t):
         y = self.predict(x)
+        # 获得批中每条数据中预测的最大值所在的索引
         y = np.argmax(y, axis=1)
+        # 当监督数据 t 是 one-hot 编码形式时，其维度会是 2 维（例如形状为 (batch_size, num_classes)）
+        # 通过 np.argmax(t, axis=1) 可以获取每个样本正确类别的索引（例如 [[0,1,0]] → [1]）
         if t.ndim != 1 : t = np.argmax(t, axis=1)
         accuracy = np.sum(y == t) / float(x.shape[0])
         return accuracy
@@ -751,6 +755,7 @@ test_acc_list = []
 iter_per_epoch = max(train_size / batch_size, 1)
 
 for i in range(iters_num):
+    # 下面三行从所有的训练数据中随机的选取 batch_size 个数据，同时从标签中选取对应的标签
     batch_mask = np.random.choice(train_size, batch_size)
     x_batch = x_train[batch_mask]
     t_batch = t_train[batch_mask]
