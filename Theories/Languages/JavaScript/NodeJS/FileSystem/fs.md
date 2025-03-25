@@ -22,7 +22,7 @@
 <!-- /vscode-markdown-toc -->
 
 
-##  1. <a name=''></a>读取信息
+## 读取信息
 1. 读取文件和目录信息
     ```js
     const fs = require('fs');
@@ -117,7 +117,7 @@
     ```
 
 
-##  2. <a name='Filedescriptors'></a>File descriptors
+## File descriptors
 1. 文件描述符是对一个打开的文件的引用，是通过 `fs.open()` 获得的一个数值。在一个操作系统中，每一个打开的文件都有不同的文件描述符
     ```js
     fs.open('package.json', 'r', (err, fd) => {
@@ -152,7 +152,7 @@
     ```
 
 
-##  3. <a name='Readingfiles'></a>Reading files
+## Reading files
 1. 回调方法
     ```js
     const fs = require('fs');
@@ -199,7 +199,7 @@
 2. 可以在 VS Code 把文件格式转换为 UTF-8。
 
 
-##  4. <a name='Writingafile'></a>Writing a file
+## Writing a file
 1. 回调方法
     ```js
     const fs = require('fs');
@@ -259,7 +259,7 @@
 6. 也有对应的 `fs.appendFileSync()` 和 `fsPromises.appendFile()`。
 
 
-##  5. <a name='Workingwithfolders'></a>Working with folders
+## Working with folders
 ###  5.1. <a name='-1'></a>检查文件是否存在以及是否有读写权限
 1. `fs.access(path[, mode], callback)`。
 2. 不写 `mode` 参数时，默认为 `constants.F_OK`，用来检查文件是否存在；设置其他值可以检查读写权限。
@@ -426,5 +426,5 @@ catch (err) {
     ```
 
 
-##  6. <a name='References'></a>References
+## References
 * [nodejs.dev](https://nodejs.dev/en/learn/)
