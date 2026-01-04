@@ -67,18 +67,13 @@
     ```
 
 #### 4. Function 构造函数方式
-1. 构造函数可以接收任意数量的参数，但最后一个参数始终被看成是函数体，而前面的参数则枚举
-出了新函数的参数     
+1. 构造函数可以接收任意数量的参数，但最后一个参数始终被看成是函数体，而前面的参数则枚举出了新函数的参数     
     ```js
     var sum = new Function("num1", "num2", "return num1*num2");
     ```
-2. The `Function()` constructor allows JavaScript functions to be dynamically
-created and compiled at runtime.
-    1. 从技术角度讲，该方法相当于函数表达式，但不推荐使用这种方法定义函数，因为这种语法
-    会导致解析两次代码。第一次是解析常规 ECMAScript 代码，第二次是解析传入构造函数中的
-    字符串。
-    2. The functions it creates do not use lexical scoping; instead, they are
-    always compiled as if they were top-level functions
+2. The `Function()` constructor allows JavaScript functions to be dynamically created and compiled at runtime
+    1. 从技术角度讲，该方法相当于函数表达式，但不推荐使用这种方法定义函数，因为这种语法会导致解析两次代码。第一次是解析常规 ECMAScript 代码，第二次是解析传入构造函数中的字符串。
+    2. The functions it creates do not use lexical scoping; instead, they are always compiled as if they were top-level functions
     ```js
     var scope = "global";
     function constructFunction() {

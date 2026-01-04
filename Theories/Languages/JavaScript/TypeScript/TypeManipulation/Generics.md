@@ -3,13 +3,19 @@
 
 <!-- TOC -->
 
-- [Generics](#generics)
-    - [泛型的用途](#泛型的用途)
-    - [使用泛型变量](#使用泛型变量)
-    - [Generic Types](#generic-types)
-    - [Generic Classes](#generic-classes)
-    - [Using Class Types in Generics](#using-class-types-in-generics)
-    - [References](#references)
+- [泛型的用途](#泛型的用途)
+- [使用泛型变量](#使用泛型变量)
+- [Generic Types](#generic-types)
+- [Generic Classes](#generic-classes)
+- [Generic Constraints](#generic-constraints)
+  - [Using Type Parameters in Generic Constraints](#using-type-parameters-in-generic-constraints)
+- [Using Class Types in Generics](#using-class-types-in-generics)
+- [Generic Parameter Defaults](#generic-parameter-defaults)
+- [应用](#应用)
+  - [使用泛型约束两个数组具有相同的长度和类型的参数](#使用泛型约束两个数组具有相同的长度和类型的参数)
+    - [首先我们只约束长度相同，但不要求类型](#首先我们只约束长度相同但不要求类型)
+    - [让数组类型一开始就是确定的，而不再是任意类型（`unknown`）](#让数组类型一开始就是确定的而不再是任意类型unknown)
+- [References](#references)
 
 <!-- /TOC -->
 
@@ -295,6 +301,78 @@ TODO
 
 
 
+## 应用
+### 使用泛型约束两个数组具有相同的长度和类型的参数
+#### 首先我们只约束长度相同，但不要求类型
+1. 实现如下
+   ```ts
+    function foo<T extends unknown[]>(
+        fromArr: [...T], 
+        toArr: [...T]
+    ) {
+        // 函数实现...
+    }
+
+    // 类型: function foo<[string, string]>(fromArr: [string, string], toArr: [string, string]): void
+    foo(["a", "b"], ["c", "d"]); // ok
+
+    // 类型: function foo<[number, string]>(fromArr: [number, string], toArr: [number, string]): void
+    foo([1, "b"], [3, "d"]); // ok
+
+    // 类型: function foo<[number, number]>(fromArr: [number, number], toArr: [number, number]): void
+    foo([1, 2], [3, "d"]); // error
+    // Type 'string' is not assignable to type 'number'.
+    ```
+2. `<T extends unknown[]>` 表示 `T` 是一个任意类型（`unknown`）的数组或元组，用于捕获传入数组的实际类型和长度信息。
+3. 而把两个参数的类型定义为 `[...T]`，此时它们的类型就不是普通的数组，而是元组。而且它俩是同一个元组类型，都是 `[...T]`，这就要求它们的长度和每个对应的数组项类型都要相同。
+4. 当传递第一参数数组时，`T` 就确定下来了，所以 `toArr` 也必须和 `fromArr` 保持相同的数组长度，并且对应的数组项的类型也必须相同。
+
+#### 让数组类型一开始就是确定的，而不再是任意类型（`unknown`）
+1. 例如我们希望两个参数数组都是字符串数组。
+2. 我们可能尝试把 `unknown` 改为 `string`，但这样是不行的
+    ```ts
+    //  类型: function foo<T extends string[]>(fromArr: [...T], toArr: [...T]): void
+    function foo<T extends string[]>(
+        fromArr: [...T], 
+        toArr: [...T]
+    ) {
+        // 函数实现...
+    }
+
+    // 类型: function foo<["a", "b"]>(fromArr: ["a", "b"], toArr: ["a", "b"]): void
+    foo(["a", "b"], ["c", "d"]); // error
+    // Type '"c"' is not assignable to type '"a"'.
+    // Type '"d"' is not assignable to type '"b"'.
+    ```
+3. 在这种泛型场景下，因为使用了元组语法 `[...T]`，TS 对待元组会比对待数组更严格，会把泛型的类型尽可能的收窄到确定的类型。TODO，但为什么要收窄到字面量呢？如果收窄到字面量？至少在这个场景下，这种收窄将导致这个函数的参数没法用了。
+4. 所以当传入第一个参数数组时，`T` 的类型就是确定的字面量元组 `["a", "b"]` 了。
+5. 面对这种情况，我们可以使用 **类型映射** 放宽约束：
+    ```ts
+    type StringifyTuple<T extends any[]> = {
+        [K in keyof T]: string;
+    };
+    ```
+6. `StringifyTuple` 是一种 **映射类型**，它接受任何类型的数组，并将它的所有元素转为字符串类型。
+7. 现在，我们在定义函数 `foo` 的参数类型时，这样使用这个映射类型
+    ```ts
+    // 类型: function foo<T extends string[]>(fromArr: [...T], destArr: [...StringifyTuple<T>]): void
+    function foo<T extends string[]>(
+        fromArr: [...T],
+        destArr: [...StringifyTuple<T>]
+    ) {
+        // 函数实现...
+    }
+    ```
+8. 可以看到，现在参数 `destArr` 的类型不再是直接用 `T` 转换为的元组 `[...T]`，而是 `T` 被映射后的再转换为的元组。看一下调用时的类型
+   ```ts
+   // 类型: function foo<["a", "b"]>(fromArr: ["a", "b"], destArr: [string, string]): void
+    foo(["a", "b"], ["c", "d"]); 
+    ```
+9. `destArr` 的类型仍然是两项元组，它和 `fromArr` 保持一致，符合我们期望的预期。但现在它的元组的项不再是字面量了，而是映射为 `string`。
+10. `StringifyTuple` 做了以下的事情：
+    1. `keyof T`: 获取类型 `T` 的所有属性名组成的联合类型，也就是获取了元组的索引（在另一种情况下还会获取到不可遍历的属性名，例如 `length`，详见 `keyof` 的章节）
+    2. `[K in keyof T]: string`: 遍历上一步获得的所有索引属性，并把它们的类型都定义为 `string`。
+11. 所以，现在 `destArr` 的类型仍然是和 `fromArr` 长度相同的元组，但它的项的类型已经映射为了 `string`。映射仍然保留了长度的约束，但放宽了类型约束。
 
 
 ## References

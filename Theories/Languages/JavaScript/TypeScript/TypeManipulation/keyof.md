@@ -2,9 +2,9 @@
 
 <!-- TOC -->
 
-- [Keyof Type Operator](#keyof-type-operator)
-    - [Usage](#usage)
-    - [References](#references)
+- [Usage](#usage)
+- [是否包含不可遍历属性](#是否包含不可遍历属性)
+- [References](#references)
 
 <!-- /TOC -->
 
@@ -40,6 +40,10 @@
     type Mapish = { [k: string]: boolean };
     type M = keyof Mapish; // type M = string | number
     ```
+
+
+## 是否包含不可遍历属性
+<img src="../images/01.jpg" width="600" style="display: block; margin: 5px 0 10px;" />
 
 
 ## References

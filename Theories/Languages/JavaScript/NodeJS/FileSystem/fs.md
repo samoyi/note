@@ -293,7 +293,23 @@
 4. `fs.exists()` 已经被弃用；另一个可以检查是否存在的方法是 ` fs.access()`。但 `fs.existsSync` 没有被弃用。
 
 ### 检查目录是否存在
-`fs.existsSync`
+* 同步方法 `fs.existsSync`
+* promise 方法
+```js
+async function isDirectoryPromise(path) {
+    try {
+        const stats = await fsPromises.stat(path);
+        return stats.isDirectory();
+    } 
+    catch (error) {
+        if (error.code === 'ENOENT') {
+        // 路径不存在
+        return false;
+        }
+        throw error; // 其他错误重新抛出
+    }
+}
+```
 
 
 ###  5.2. <a name='-1'></a>创建文件夹
@@ -420,10 +436,14 @@ catch (err) {
     ```js
     fs.cp
     ```
-3. 至少在使用同步方法时，需要如下设置第三个参数
+3. 即使复制空目录，也需要如下设置第三个参数
     ```js
     fs.cpSync(srcPath, destPath, { recursive: true })
     ```
+    这样设计的目的是：
+        * 复制目录本质上就是一个递归操作；只复制一个目录的外层就不算是复制目录，而是根据目录名创建一个空目录；
+        * 假设可以不传这个参数，那么 `recursive` 默认为 `false`。此时你复制一个空目录时，它是空的，你不加这个参数也可以复制成功。但此时代码的含义是：只复制目录本身；而你的意图可能是：因为它现在是空目录所以必须要设置 `recursive: true`。也就是说，你并不是真的只要复制目录本身。那么当之后这么目录有了内容，这个复制行为就是不对的了；
+        * 同时也是为了和 Unix 的 `cp` 命令保持一致。
 
 
 ## References

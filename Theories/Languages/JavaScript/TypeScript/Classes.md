@@ -3,18 +3,18 @@
 
 <!-- TOC -->
 
-- [Classes](#classes)
-    - [类的定义](#类的定义)
-    - [`public`、`private` 和 `protected`](#publicprivate-和-protected)
-        - [默认为 `public`](#默认为-public)
-        - [`protected`](#protected)
-        - [类型兼容](#类型兼容)
-    - [`readonly` 修饰符](#readonly-修饰符)
-        - [只读属性](#只读属性)
-        - [参数属性](#参数属性)
-    - [抽象类](#抽象类)
-    - [TODO](#todo)
-    - [References](#references)
+- [类的定义](#类的定义)
+  - [实例属性初始化](#实例属性初始化)
+- [`public`、`private` 和 `protected`](#publicprivate-和-protected)
+  - [默认为 `public`](#默认为-public)
+  - [`protected`](#protected)
+  - [类型兼容](#类型兼容)
+- [`readonly` 修饰符](#readonly-修饰符)
+  - [只读属性](#只读属性)
+  - [参数属性](#参数属性)
+- [抽象类](#抽象类)
+- [TODO](#todo)
+- [References](#references)
 
 <!-- /TOC -->
 
@@ -259,3 +259,50 @@ dad.name = "Man with the 3-piece suit"; // 错误
 
 ## References
 * [中文文档](https://www.tslang.cn/docs/handbook/classes.html)
+
+
+
+1. 我定义了一个 TypeScript 抽象类
+    ```ts
+    export abstract class ManifestFile {
+        abstract widgetID: WidgetID;
+        abstract widgetSizeID: WidgetSizeID;
+        abstract extraWidgetIDs: WidgetID[];
+        constructor(widgetID: WidgetID, widgetSizeID: WidgetSizeID, extraWidgetIDs: WidgetID[]=[]) {
+            this.widgetID = widgetID;
+            this.widgetSizeID = widgetSizeID;
+            this.extraWidgetIDs = extraWidgetIDs;
+        }
+
+        gene() {
+            // 省略实现
+            return xmlFormat(ret);
+        }
+        protected abstract geneExternalCommands(widgetID: WidgetID): string;
+        protected abstract geneVariableBinders(widgetID: WidgetID): string;
+        protected abstract geneGlobalVar(widgetID: WidgetID, widgetSizeID: WidgetSizeID): string;
+        protected abstract geneMaybeUseful(widgetID: WidgetID): string;
+    }
+    ```
+2. 其中有三个抽象属性 `widgetID`、`widgetSizeID` 和 `extraWidgetIDs`。
+3. 然后子类实现如下
+   ```ts
+   export default class AccountingManifestFile extends ManifestFile {
+        constructor(widgetSizeID: WidgetSizeID, extraWidgetIDs: WidgetID[] = []) {
+            super(accountingID, widgetSizeID, extraWidgetIDs);
+        }
+        geneExternalCommands() {
+            return ExternalCommands([accountingID, ...this.extraWidgetIDs]);
+        }
+        geneVariableBinders() {
+            return [accountingID, ...this.extraWidgetIDs].map((id) => VariableBinderMap[id]).join('\n');
+        }
+        geneGlobalVar() {
+            return geneGlobalVar(accountingID, this.widgetSizeID);
+        }
+        geneMaybeUseful() {
+            return [accountingID, ...this.extraWidgetIDs].map((id) => geneMaybeUseful(id)).join('\n');
+        }
+    }
+    ```
+4. 子类并没有实现那三个抽象属性，为什么也能通过编译呢？

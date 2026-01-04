@@ -3,33 +3,38 @@
 
 <!-- TOC -->
 
-- [Types](#types)
-    - [Misc](#misc)
-        - [隐式推断类型](#隐式推断类型)
-    - [基本类型](#基本类型)
-        - [`any`](#any)
-            - [禁止隐式声明为 `any` 类型](#禁止隐式声明为-any-类型)
-        - [`Void`](#void)
-        - [`Null` 和 `Undefined`](#null-和-undefined)
-            - [断言非 `null` 或 `undefined`](#断言非-null-或-undefined)
-    - [引用类型](#引用类型)
-        - [Object Types](#object-types)
-            - [可选属性](#可选属性)
-        - [数组](#数组)
-            - [两种声明方式](#两种声明方式)
-            - [`ReadonlyArray`](#readonlyarray)
-        - [Union Types](#union-types)
-        - [Intersection Types](#intersection-types)
-            - [函数参数的情况](#函数参数的情况)
-        - [Tuple](#tuple)
-        - [`enum`](#enum)
-    - [Type Aliases](#type-aliases)
-    - [Interfaces](#interfaces)
-        - [和类型别名的区别](#和类型别名的区别)
-    - [Type Assertions](#type-assertions)
-    - [Literal Types](#literal-types)
-        - [Literal Inference](#literal-inference)
-    - [References](#references)
+- [Misc](#misc)
+  - [隐式推断类型](#隐式推断类型)
+- [基本类型](#基本类型)
+  - [`any`](#any)
+    - [禁止隐式声明为 `any` 类型](#禁止隐式声明为-any-类型)
+  - [`Void`](#void)
+  - [`Null` 和 `Undefined`](#null-和-undefined)
+    - [断言非 `null` 或 `undefined`](#断言非-null-或-undefined)
+- [引用类型](#引用类型)
+  - [Object Types](#object-types)
+    - [可选属性](#可选属性)
+    - [解构赋值的情况](#解构赋值的情况)
+  - [数组](#数组)
+    - [两种声明方式](#两种声明方式)
+    - [`ReadonlyArray`](#readonlyarray)
+    - [解决类型为数组元素类型但无法检测某个值是否在该数组的情况](#解决类型为数组元素类型但无法检测某个值是否在该数组的情况)
+  - [Union Types](#union-types)
+  - [Intersection Types](#intersection-types)
+    - [函数参数的情况](#函数参数的情况)
+  - [Tuple](#tuple)
+  - [enum](#enum)
+  - [`object` 类型](#object-类型)
+- [Type Aliases](#type-aliases)
+- [Interfaces](#interfaces)
+  - [和类型别名的区别](#和类型别名的区别)
+- [Type Assertions](#type-assertions)
+- [类型满足性检查（Type Satisfaction Check）](#类型满足性检查type-satisfaction-check)
+  - [`satisfies` 关键字](#satisfies-关键字)
+    - [示例](#示例)
+- [Literal Types](#literal-types)
+  - [Literal Inference](#literal-inference)
+- [References](#references)
 
 <!-- /TOC -->
 
@@ -619,6 +624,51 @@ f(1, "test");         // Error
 4. TypeScript only allows type assertions which convert to a more specific or less specific version of a type. This rule prevents “impossible” coercions like:
     ```ts
     const x = "hello" as number; // 编译报错
+    ```
+
+
+## 类型满足性检查（Type Satisfaction Check）
+### `satisfies` 关键字
+`satisfies` 用于验证表达式的类型是否 **满足** 某个接口或类型，但 **不改变** 表达式本身的推断类型。
+
+#### 示例
+1. 现在有下面的代码
+    ```ts
+    const palette = {
+        red: [255, 0, 0],
+        green: "#00ff00",
+        bleu: [0, 0, 255]  // 这里有个不会报错的笔误
+    };
+    const greenNormalized = palette.green.toUpperCase();
+    ```
+2. 我们可以通过对 `palette` 进行类型注解来避免这种笔误
+    ```ts
+    type Colors = "red" | "green" | "blue";
+    type RGB = [red: number, green: number, blue: number];
+    const palette: Record<Colors, string | RGB> = {
+        red: [255, 0, 0],
+        green: "#00ff00",
+        bleu: [0, 0, 255]  // 现在这里会报错
+    };
+
+    // 但现在，这里又有了类型错误
+    const greenNormalized = palette.green.toUpperCase();
+    // Property 'toUpperCase' does not exist on type 'string | RGB'.
+    //   Property 'toUpperCase' does not exist on type 'RGB'.
+    ```
+3. 现在我们当然可以通过判断 `palette.green` 的类型来解决。但还有一种方法，我们不需要对 `palette` 进行类型注解，我们并不是想要 **定义** `palette` 的类型，而只是想要它 **满足** 某个类型就可以。
+4. 所以可以使用 `satisfies` 关键字来确保它满足指定类型
+    ```ts
+    type Colors = "red" | "green" | "blue";
+    type RGB = [red: number, green: number, blue: number];
+    const palette = {
+        red: [255, 0, 0],
+        green: "#00ff00",
+        bleu: [0, 0, 255]  // 这里仍然有报错
+    } satisfies Record<Colors, string | RGB>;;
+
+    // 这里不会有报错了，因为我们并没有定义 palette.green 的类型
+    const greenNormalized = palette.green.toUpperCase();
     ```
 
 
