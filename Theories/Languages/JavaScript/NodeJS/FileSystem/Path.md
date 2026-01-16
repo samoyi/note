@@ -1,5 +1,5 @@
 - [Nodejs 中的路径](#nodejs-中的路径)
-- [`basename()`](#basename)
+- [`basename(path [, suffix])`](#basenamepath--suffix)
 - [`extname()`](#extname)
 - [`dirname()`](#dirname)
 - [获取路径中的各部分信息](#获取路径中的各部分信息)
@@ -59,7 +59,7 @@ D:\
 ```
 
 
-## `basename()` 
+## `basename(path [, suffix])` 
 1. 获取路径中的文件名（包含扩展名），或者路径的最后一级路径。
 2. 不包括前后的路径分隔符
     ```js
@@ -70,7 +70,13 @@ D:\
     console.log( path.basename('.htaccess') );   // '.htaccess'
     console.log( path.basename('htaccess.') );   // 'htaccess.'
     ```
-
+3. 如果带上第二个参数 `suffix`，且路径的最后一级部分以该后缀结尾，则会将后缀去掉
+    ```js
+    console.log( path.basename('/foo/bar/baz.html///', '.html') );  // 'baz'
+    console.log( path.basename('htaccess.', '.') );                 // 'htaccess'
+    ```
+   
+   
 ## `extname()`
 1. 获取文件扩展名。注意扩展名是包括 `.` 的
     ```js
@@ -145,7 +151,17 @@ path.parse('/home/user/dir/file.txt');
 
 
 ## `resolve([...paths])`
-根据参数解析出一个绝对路径。
+1. 根据参数解析出一个绝对路径。
+2. The given sequence of paths is processed from right to left, with each subsequent path prepended until an absolute path is constructed.
+3. 例如 `path.resolve('/foo', '/bar', 'baz')`，首先处理最后的路径 `baz`，它不是绝对路径，所以继续向左处理 `/bar`，它是绝对路径，所以停止处理，再左边的 `/foo` 就不要了。然后将 `/bar` 和 `baz` 连接起来，得到最终结果 `/bar/baz`。
+4. 而如果处理完最左边的参数后，仍然没有得到一个绝对路径，则会将当前工作目录作为最左边的路径进行处理，直到得到一个绝对路径为止。例如当前当前工作目录是 `/home/user/dir`，则：
+    ```js
+    path.resolve('foo', 'bar'); // /home/user/dir/foo/bar
+    ```
+5. 如果没有提供任何参数，则返回当前工作目录的绝对路径
+    ```js
+    path.resolve(); // /home/user/dir
+    ```
 
 ### 解决相对路径的动态性
 1. 相对路径的基准路径是 **当前进程的工作目录**（即运行脚本时所在的目录，可通过 `process.cwd()` 获取），而不是代码文件所在的目录。
@@ -164,14 +180,8 @@ path.parse('/home/user/dir/file.txt');
     现在，无论从哪里运行脚本，`config.json` 的路径都会解析为：`/project/src/config.json`
 
 #### 防止路径拼接被恶意利用
-1. 示例代码
-    ```js
-    console.log( join('../', '../', 'privacy.js') ) // ..\..\privacy.js
-    console.log( resolve('../', '../', 'privacy.js') ) // D:\privacy.js
-    ```
-2. 如果隐私文件位于当前脚本之外两层，而有人恶意输入两个 `'../'`，那通过 `join` 拼接的路径就会访问到该隐私文件。
-3. 但因为 `resolve` 直接把最右边的 `/` 作为根目录，所以就无法访问到隐私文件。
-
+TODO
+   
 ### 跨平台路径格式兼容
 1. 不同操作系统使用不同的路径分隔符：
     * Windows：`C:\\project\\src\\app.js`
