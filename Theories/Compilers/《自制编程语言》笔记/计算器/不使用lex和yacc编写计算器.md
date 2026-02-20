@@ -1,4 +1,13 @@
-# 不借助工具编写计算器
+# 使用lex和yacc编写计算器
+
+- [自制词法分析器](#自制词法分析器)
+- [自制语法分析器](#自制语法分析器)
+  - [递归下降分析](#递归下降分析)
+  - [一个更完整的例子](#一个更完整的例子)
+  - [LL(1) 与 LALR(1)](#ll1-与-lalr1)
+- [扩展计算器](#扩展计算器)
+  - [支持括号](#支持括号)
+  - [支持负数](#支持负数)
 
 
 ## 自制词法分析器
@@ -13,7 +22,8 @@
      */
     void get_token(Token *token);
     ```
-3. `get_token()` 接受的入口参数为一个 `Token` 结构体指针，函数中会分割出记号的信息装入 `Token` 结构体并返回。上面两个函数的声明以及 `Token` 结构体的定义位于 *token.h* 文件
+3. `get_token()` 接受的入口参数为一个 `Token` 结构体指针，函数中会分割出 token 的信息装入 `Token` 结构体并返回。
+4. 上面两个函数的声明以及 `Token` 结构体的定义位于 *token.h* 文件
     ```cpp
     #ifndef TOKEN_H_INCLUDED
     #define TOKEN_H_INCLUDED
@@ -41,7 +51,7 @@
 
     #endif /* TOKEN_H_INCLUDED */
     ```
-4. 源代码在 *lexicalanalyzer.c* 
+5. 源代码在 *lexicalanalyzer.c* 
     ```cpp
     #include <stdio.h>
     #include <stdlib.h>
@@ -55,8 +65,9 @@
 
     /**
      * 由于下面扫描字符时是每次扫描一个字符，运算符是单个字符，所以扫描到之后可以直接确定，
-     * 但数值字符串可能并不是单个字符所以如果扫描到一个数字字符时，必须要确保扫描到可能得完整的数值字符串。
-     * 因此定义一个枚举类型 LexerStatus 实现这个功能。不懂，为什么不直接定义枚举变量，而是定义了一个类型？* 具体的逻辑是：
+     * 但数值字符串可能并不是单个字符所以如果扫描到一个数字字符时，必须要确保扫描到的是完整的数值字符串。
+     * 因此定义一个枚举类型 LexerStatus 实现这个功能。
+     * 具体的逻辑是：
      *  1. 定义一个 LexerStatus 类型的变量 status，初始值 INITIAL_STATUS
      *  2. 当扫描到一个数字字符时，将值设为 IN_INT_PART_STATUS
      *  3. 再扫描到小数点时，将值从 IN_INT_PART_STATUS 设为 DOT_STATUS
@@ -89,7 +100,7 @@
         while (st_line[st_line_pos] != '\0') {
             current_char = st_line[st_line_pos];
             
-            // 扫描完了一个数值字符串
+            // 扫描完了一个数值字符串：上一个字符是数值的整数或小数数位，并且当前字符既不是数值也不是小数点
             if ( (status == IN_INT_PART_STATUS || status == IN_FRAC_PART_STATUS)
                     && !isdigit(current_char) 
                     && current_char != '.'
@@ -114,11 +125,9 @@
             }
 
             /**
-             * 上面两个 if 都是说明当前 token 已经解析结束了；如果走到这里，
-             * 说明是当前字符仍然是当前 token 的一部分，在本例中就是正在解析数值字符串，
-             * 那就要检查这个作为数值字符串是不是超长了。
-             * 不懂，等于 MAX_TOKEN_SIZE-1 为什么也不行？下一个字符如果是当前 token 的最后一个字符，
-             * 那不就刚好不超过 MAX_TOKEN_SIZE 吗？
+             * 上面两个 if 都是说明当前 token 已经解析结束了；
+             * 但如果走到这里，则说明是当前字符仍然是当前 token 的一部分，在本例中就是正在解析数值字符串或者运算符；如果是数值字符串则可能过长，这里进行检查。
+             * 等于 MAX_TOKEN_SIZE-1 也不行，因为字符串必须要以 '\0' 结尾
              */
             if (out_pos >= MAX_TOKEN_SIZE-1) {
                 fprintf(stderr, "token too long.\n");
@@ -380,7 +389,7 @@ int main(int argc, char **argv)
     ```
 2. 这些语法规则可以用下面的语法图（syntax.graph, syntax.diagram）来表示
     <img src="../../images/16.png" width="700" style="display: block; margin: 5px 0 10px;" />
-    其中，非终端用长方形表示，终端用椭圆形表示。
+    其中，非终结符用长方形表示，终结符用椭圆形表示。
 3. 以 `term` 的语法图为例：
     1. `term` 语法图开始是一个 `primary_expression`，然后可以直接一直向右结束，那就是匹配了 `term` 产生式的第一条规则；
     2. 但也可以不直接结束，而是走向下的分支，走向乘除法那里；乘以或者除以一个 `primary_expression` 然后再拐上去；
@@ -401,7 +410,7 @@ int main(int argc, char **argv)
             /**
              * 如果第二个 token 不是乘除运算符，则说明这个 term 只是一个单独的 primary_expression，
              * 因此回退这个 token 的获得，因为它不属于这个 term。
-             * 然后 直接 break 并返回 v1，完成对这个 term: primary_expression 的解析
+             * 然后直接 break 并返回 v1，完成对这个 term: primary_expression 的解析
              */
             if (token.kind != MUL_OPERATOR_TOKEN
                 && token.kind != DIV_OPERATOR_TOKEN) {
@@ -427,46 +436,17 @@ int main(int argc, char **argv)
     * 当匹配 `term: primary_expression` 时，例如匹配到的是 `"2"` 时：调用 `parse_term` 后 `v1` 被赋值为 `2`，循环第一轮就 break，`parse_term` 函数返回 `2`；
     * 当匹配 `term: term MUL primary_expression` 且右边的 `term` 也是 `primary_expression` 时，例如匹配到的是 `"2 * 3"` 时：调用 `parse_term` 后，`v1` 被赋值为 `2`，第一轮循环中 `token.kind == MUL_OPERATOR_TOKEN` 为真，`v2` 被赋值为 `3`，计算后 `v1` 被赋值为 `6`；进入第二轮循环，但此时该 `term` 已经解析完成，所以会 break 并返回 `6`；
     * 当匹配 `term: term MUL primary_expression` 且右边的 `term` 是 `term DIV primary_expression` 时，例如匹配到的是 `"6 / 2 * 4"` 时：调用 `parse_term` 后，`v1` 被赋值为 `6`，第一轮循环中 `token.kind == DIV_OPERATOR_TOKEN` 为真，`v2` 被赋值为 `2`，计算后 `v1` 被赋值为 `3`；进入第二轮循环，`token.kind == MUL_OPERATOR_TOKEN` 为真，`v2` 被赋值为 `4`，计算后 `v1` 被赋值为 `12`；进入第三轮循环，但此时该 `term` 已经解析完成，所以会 break 并返回 `12`。
-    * 当输入是 `1 * 2 + 3` 时，`term` 只会匹配 `1 * 2`，看一下对后面 `+ 3` 的处理：调用 `parse_term` 后，`v1` 被赋值为 `1`，第一轮循环中 `token.kind == primary_expression` 为真，`v2` 被赋值为 `2`，计算后 `v1` 被赋值为 `2`；进入第二轮循环，`token.kind == ADD_OPERATOR_TOKEN` 为真，已经不属于 `term` 了，所以会调用 `unget_token` 把这个 token 退回，供之后的 token 解析使用。接着就是 break 循环，返回 `2`，完成了对 `1 * 2` 的解析。
+    * 当输入是 `1 * 2 + 3` 时，`term` 只会匹配 `1 * 2`，看一下对后面 `+ 3` 的处理：调用 `parse_term` 后，`v1` 被赋值为 `1`，第一轮循环中 `token.kind == primary_expression` 为真，`v2` 被赋值为 `2`，计算后 `v1` 被赋值为 `2`；进入第二轮循环，`token.kind != MUL_OPERATOR_TOKEN && token.kind != DIV_OPERATOR_TOKEN` 为假，已经不属于 `term` 了，所以会调用 `unget_token` 把这个 token 退回，供之后的 token 解析使用。接着就是 break 循环，返回 `2`，完成了对 `1 * 2` 的解析。
 
 ### 一个更完整的例子
 1. 以输入 `1 * 2 + 6 / 2` 为例。
 2. `main` 调用 `parse_line`，`parse_line` 调用 `parse_expression`；
 3. `parse_expression` 调用 `parse_term()` 返回 `2` 保存在 `v1` 中；
-4. `parse_expression` 进入 `for` 循环，`my_get_token(&token)` 获得 `+` 的 token，`token.kind` 为 `= ADD_OPERATOR_TOKEN`；
+4. `parse_expression` 进入 `for` 循环，`my_get_token(&token)` 获得 `+` 的 token，`token.kind` 为 `ADD_OPERATOR_TOKEN`；
 5. `parse_term()` 返回 `3` 保存在 `v2` 中；
 6. 执行 `v1 += v2`，`v1` 值更新为 `5`；进入下一轮循环。
 7. `my_get_token(&token)` 获得 `END_OF_LINE_TOKEN`，循环结束，返回 `5`。
 8. 编译 *parser.c*（`gcc parser.c lexicalanalyzer.c -o calc`），但要注意，因为 `parser.c` 已经定义了 `parse_line` 和 `main` 函数，所以这里编译时要把 `lexicalanalyzer` 里这两个函数删掉。编译完成后执行，所以输入 "1 * 2 + 6 / 2" 后打印出 `5.000000`。
-
-### 预读记号的处理
-1. 本书中采用的递归下降解析法，会预先读入一个记号，一旦发现预读的记号是不需要的，则通过 `unget_token()` 将记号 “退回”。
-2. 换一种思路，其实也可以考虑 “始终保持预读一个记号” 的方法。按照这种思路，`parse_term` 可以改为 TODO
-    ```cpp
-    static double parse_term()
-    {
-        double v1;
-        double v2;
-        Token token;
-
-        v1 = parse_primary_expression();
-        for (;;) {
-            my_get_token(&token);
-            if (token.kind != MUL_OPERATOR_TOKEN
-                && token.kind != DIV_OPERATOR_TOKEN) {
-                unget_token(&token);
-                break;
-            }
-            v2 = parse_primary_expression();
-            if (token.kind == MUL_OPERATOR_TOKEN) {
-                v1 *= v2;
-            } else if (token.kind == DIV_OPERATOR_TOKEN) {
-                v1 /= v2;
-            }
-        }
-        return v1;
-    }
-    ```
 
 ### LL(1) 与 LALR(1)
 TODO
@@ -511,7 +491,7 @@ TODO
 3. *parser.c* 中的逻辑。括号表达式有最高的优先级，所以它和 `primary_expression` 拥有同样的优先级，或者说，它可以看做是 `primary_expression` 一种规则。
 4. 那么此时，`primary_expression` 的语法图就可以改成
     <img src="../../images/17.png" width="600" style="display: block; margin: 5px 0 10px;" />
-    `primary_expression` 既可以是是一个终端的数值字符串，也可以是一个括号表达式。
+    `primary_expression` 既可以是是一个终结的数值字符串，也可以是一个括号表达式。
 5. 相应的，`parse_primary_expression` 改成 
     ```cpp
     static double parse_primary_expression()
@@ -533,9 +513,8 @@ TODO
             return value;
         }
         else {
-            // TODO 为什么把打印错误和 exit 的代码换成了 `my_get_token`
-            my_get_token(&token);
-            return 0.0; /* make compiler happy */
+            fprintf(stderr, "syntax error: expected number or '(', found unexpected token.\n");
+            exit(1);
         }
     }
     ```
@@ -550,19 +529,21 @@ TODO
     static double parse_primary_expression()
     {
         Token token;
-        double value = 0.0;、
+        double value = 0.0;
         int minus_flag = 0;
 
+        // 检查是否有负号
         my_get_token(&token);
         if (token.kind == SUB_OPERATOR_TOKEN) {
             minus_flag = 1;
         } else {
-            unget_token(&token);
+            unget_token(&token);  // 如果不是负号，退回token
         }
         
+        // 获取实际的数值或括号表达式
         my_get_token(&token);
         if (token.kind == NUMBER_TOKEN) {
-            return token.value;
+            value = token.value;
         }
         else if (token.kind == LEFT_PAREN_TOKEN) {
             value = parse_expression();
@@ -571,13 +552,13 @@ TODO
                 fprintf(stderr, "missing ')' error.\n");
                 exit(1);
             }
-            // 这里不 return 了，因为下面判断如果有负号还要取反
-            // return value;
         }
         else {
-            my_get_token(&token);
+            fprintf(stderr, "syntax error: expected number or '(', found unexpected token.\n");
+            exit(1);
         }
 
+        // 如果有负号标志，则取反
         if (minus_flag) {
             value = -value;
         }
