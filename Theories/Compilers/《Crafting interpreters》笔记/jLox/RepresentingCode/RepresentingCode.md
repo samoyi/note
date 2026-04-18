@@ -1,34 +1,27 @@
-# Scanning
+# RepresentingCode
 
-<!-- vscode-markdown-toc -->
-* 1. [设计原理](#)
-* 2. [Context-Free Grammars](#Context-FreeGrammars)
-	* 2.1. [Formal grammar](#Formalgrammar)
-	* 2.2. [Rules for grammars](#Rulesforgrammars)
-	* 2.3. [Enhancing our notation](#Enhancingournotation)
-	* 2.4. [A Grammar for Lox expressions](#AGrammarforLoxexpressions)
-* 3. [Implementing Syntax Trees](#ImplementingSyntaxTrees)
-	* 3.1. [Metaprogramming the trees](#Metaprogrammingthetrees)
-* 4. [Working with Trees](#WorkingwithTrees)
-	* 4.1. [使用访问者模式](#-1)
-* 5. [A (Not Very) Pretty Printer](#ANotVeryPrettyPrinter)
-* 6. [References](#References)
-
-<!-- vscode-markdown-toc-config
-	numbering=true
-	autoSave=true
-	/vscode-markdown-toc-config -->
-<!-- /vscode-markdown-toc -->
+- [Context-Free Grammars](#context-free-grammars)
+- [Formal grammar](#formal-grammar)
+- [Rules for grammars](#rules-for-grammars)
+- [Enhancing our notation](#enhancing-our-notation)
+- [A Grammar for Lox expressions](#a-grammar-for-lox-expressions)
+- [Implementing Syntax Trees](#implementing-syntax-trees)
+  - [Metaprogramming the trees](#metaprogramming-the-trees)
+- [Working with Trees](#working-with-trees)
+  - [使用访问者模式](#使用访问者模式)
+- [A (Not Very) Pretty Printer](#a-not-very-pretty-printer)
+- [References](#references)
 
 
-##  1. <a name=''></a>设计原理
+## Context-Free Grammars
+1. In the last chapter, the formalism we used for defining the lexical grammar — the rules for how characters get grouped into tokens — was called a **regular language**.
+2. 使用正则的 lexical grammar 对于 scanner 来说很好，因为正则表达式可以直接转换为有限自动机。
+3. 但它功能不够强大，无法处理可以任意深度嵌套的表达式，因此无法描述诸如任意深度嵌套的表达式或配对括号这类递归结构。
+4. 因此，为了定义编程语言中完整的语法结构（它天生就是递归和嵌套的），我们需要这里的 **Context-Free Grammars**（CFG）。这是描述语法（syntactic grammar）的标准工具，它能够自然地表达这些嵌套规则。
+5. 其实，从形式语言理论来说，正则语言也是上下文无关的语言，但它是一种功能受限的上下文无关文法，其标准定义并不支持递归描述。
 
 
-##  2. <a name='Context-FreeGrammars'></a>Context-Free Grammars
-1. In the last chapter, the formalism we used for defining the lexical grammar — the rules for how characters get grouped into tokens — was called a **regular language**. TODO，到底是语法分析的 grammar 是是正则语言还是这个语言本身是正则语言？
-2. 使用正则的 lexical grammar 对于 scanner 来说很好，但它功能不够强大，无法处理可以任意深度嵌套的表达式。为此，我们需要这里的 **Context-Free Grammars**（CFG）。It’s the next heaviest tool in the toolbox of **formal grammars**. 
-
-###  2.1. <a name='Formalgrammar'></a>Formal grammar
+## Formal grammar
 1. A formal grammar describes which strings from an alphabet of a formal language are valid according to the language's syntax. 
 2. A formal grammar takes a set of atomic pieces it calls its “alphabet”. Then it defines a (usually infinite) set of “strings” that are “in” the grammar. Each string is a sequence of “letters” in the alphabet.
 3. A grammar does not describe the meaning of the strings or what can be done with them in whatever context—only their form. 
@@ -36,13 +29,14 @@
 5. A formal grammar is a set of rules for rewriting strings, along with a "start symbol" from which rewriting starts. Therefore, a grammar is usually thought of as a language generator. 
 6. However, it can also sometimes be used as the basis for a "recognizer"—a function in computing that determines whether a given string belongs to the language or is grammatically incorrect.
 
-###  2.2. <a name='Rulesforgrammars'></a>Rules for grammars
-1. 在词法分析器的 lexical grammar 中，atomic pieces 是各种单个字符；而这里我们讨论的是语法分析器的 syntactic grammar，atomic pieces 就是各种词法分析器生成的 token。
-2. Grammars 有一些规则，通过这些规则，可以把原本无意义的字符序列生成为若干有意义的字符串。这些规则被称为 **产生式**（production），因为它们产生出了有意义的字符串。
+
+## Rules for grammars
+1. 在词法分析器的词法文法中，原子单元是各种单个字符；而这里我们讨论的是语法分析器的语义文法，原子单元就是各种词法分析器生成的 token。
+2. 语法文法有一些规则，通过这些规则，可以把原本无意义的 token 序列生成为若干有意义的字符串。这些规则被称为 **产生式**（production），因为它们产生出了有意义的字符串。
 3. CFG 的每个产生式都有 **head** 和 **body** 两部分组成。head 是产生式的名称，body 描述了要产生什么。
 4. 在纯粹的形式中，body 只是一个符号列表。符号有两种类型：
-    * **terminal**：终结符就是 atomic pieces，对应到这里就是 token。因为它已经是 atomic 的了，所以就是终结的。
-    * **nonterminal**：非终结符是用来引用另一条规则的名称。
+    * **terminal**：终结符就是原子单元，对应到这里就是 token。因为它已经是 atomic 的了，所以就是终结的。
+    * **nonterminal**：非终结符是用来引用另一条规则的名称，也就是某个规则执行后产生的结果。
 5. 可以有多个同名规则，如果遇到具有该名称的非终结符时，可以为其选择其中任意一个规则。
 6. 这里我们定义一组产生式。每个产生式的 `→` 左边是 head，右边是 body。终结符带引号，非终结符不带
     ```
@@ -65,10 +59,11 @@
     bread      → "biscuits" ;
     bread      → "English muffin" ;
     ```
-7. 不懂，书上的例子中说到 “Recursion in the grammar is a good sign that the language being defined is context-free instead of regular. In particular, recursion where the recursive nonterminal has productions on both sides implies that the language is not regular.”
+7. Recursion in the grammar is a good sign that the language being defined is context-free instead of regular. In particular, recursion where the recursive nonterminal has productions on both sides implies that the language is not regular.
 8. 每当我们遇到一条有多个产生式的规则时，我们只需任意选择一个。正是这种灵活性使得少量的语法规则能够编码大量的字符串。规则可以直接或间接引用自身这一事实进一步提高了它的性能，让我们能够将无限数量的字符串打包到有限的语法中。
 
-###  2.3. <a name='Enhancingournotation'></a>Enhancing our notation
+
+## Enhancing our notation
 1. 加强和简化产生式的表示规则。
     * 同名的多个产生式可以写在一起。例如把上面三个 bread 的产生式合并
         ```
@@ -82,11 +77,11 @@
         ```
         crispiness → "really" "really"* ;
         ``` 
-    * 使用后缀 `*` 表示它左边的某个符号或者符号组（用括号括起来的）出现一次或多次。所以 `crispiness → "really" "really"* ;` 可以表示为
+    * 使用后缀 `+` 表示它左边的某个符号或者符号组（用括号括起来的）出现一次或多次。所以 `crispiness → "really" "really"* ;` 可以表示为
         ```
         crispiness → "really"+ ;
         ```
-    * 使用后缀 `*` 表示它左边的某个符号或者符号组（用括号括起来的）出现零次或一次。所以
+    * 使用后缀 `?` 表示它左边的某个符号或者符号组（用括号括起来的）出现零次或一次。所以
         ```
         breakfast  → protein "with" breakfast "on the side" ;
         breakfast  → protein ;
@@ -107,7 +102,8 @@
     bread     → "toast" | "biscuits" | "English muffin" ;
     ```
 
-###  2.4. <a name='AGrammarforLoxexpressions'></a>A Grammar for Lox expressions
+
+## A Grammar for Lox expressions
 1. 我们暂时只考虑下面四种表达式：
     * 字面量（literal）：数字、字符串、布尔值和 `nil`。
     * 一元表达式（unary）：用于执行逻辑非运算的 `!` 和数字求反的 `-`。
@@ -127,13 +123,13 @@
     operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
                     | "+"  | "-"  | "*" | "/" ;
     ```
-3. 数值和字符串也是字面量终结符，但我们这里没办法列出所有的数值和字符串字面量，所以用大写的 `NUMBER` 和 `STRING` 替代。之后也会有 `IDENTIFIER` 替代所有的标识符。
+3. 数值和字符串也是字面量终结符，但我们这里没办法列出所有的数值和字符串字面量，所以用大写的 `NUMBER` 和 `STRING` 替代。之后也会用 `IDENTIFIER` 替代所有的标识符。
 4. 上面的表达式 grammar 实际上是有歧义的，在解析的时候会发现问题。不过暂时这样。
 
 
-##  3. <a name='ImplementingSyntaxTrees'></a>Implementing Syntax Trees
-1. 我们将要定义一个 AST，每个产生式都对应树种的一个节点。
-2. Scanner 使用单个 Token 类来表示所有的词素，每个 token 里有一个类型字段来区分不同的类型。但语法树不能用单个的类来表示所有的表达式，因为不同的表达式差别比较明显：一元表达式只有一个操作数，二元表达式有两个，而文字没有。
+## Implementing Syntax Trees
+1. 我们将要定义一个 AST，每个产生式都对应树中的一个节点。
+2. Scanner 使用单个 `Token` 类来表示所有的词素，每个 token 里有一个类型字段来区分不同的类型。但语法树不能用单个的类来表示所有的表达式，因为不同的表达式差别比较明显：一元表达式只有一个操作数，二元表达式有两个，而文字没有。
 3. 我们首先定义一个表达式的基类，然后为每种表达式（每种表达式的产生式）创建一个子类，这个子类包含这个产生式的非终结符字段。不懂，为什么只有非终结符。
 4. 这样，如果我们尝试访问一元表达式的第二个操作数，就会出现编译错误。不懂
 5. 下面是表达式基类和其中的二元表达式子类
@@ -157,7 +153,7 @@
     }
     ```
 
-###  3.1. <a name='Metaprogrammingthetrees'></a>Metaprogramming the trees
+### Metaprogramming the trees
 1. 上面我们写出了 `Binary` 类，我们不用费力地为每一个表达式都这样手写类定义、字段声明、构造函数和初始化程序。我们只需编写一个脚本，它包含每个树类型的描述（名称和字段），并打印出定义具有该名称和状态的类所需的 Java 代码。该脚本是一个小型 Java 命令行应用程序，它生成一个名为 `Expr.java` 的文件。
 2. 这个脚本运行时，接收一个目录参数，然后会把 `Expr.java` 生成在这个目录里
     ```java
@@ -205,6 +201,8 @@
         // 从这一行开始写 Expr 基类
         // 这里用了参数 baseName 而不是硬编码为 "Expr"，因为 defineAst 还用来生成 Stmt 基类
         writer.println("abstract class " + baseName + " {");
+
+        // 定义每个子类，代码在下面的讲解中
 
         writer.println("}");
         writer.close();
@@ -254,13 +252,13 @@
 8. 现在，运行 `GenerateAst.java` 就可以生成 `Expr.java`，里面包含了所有表达式类的定义。
 
 
-##  4. <a name='WorkingwithTrees'></a>Working with Trees
+## Working with Trees
 1. 对于不同的表达式对象，解释器对其有不同的处理方法。我们当然可以给每个表达式类都添加一个比如 `interpret` 方法，然后在里面写对应的处理逻辑。
 2. 但对于表达式对象的操作不只有 `interpret` 这一种，如果其他操作也都写在表达式对象里面，那就使得不同的功能的代码都混在同一个对象里了。
-3. 我们这里希望把每种功能的操作都放在各自独立的模块里，也就是负责 `interpret` 放在一个模块里，放在另一个功能的代码放在另一个模块里。
+3. 我们这里希望把每种功能的操作都放在各自独立的模块里，也就是负责 `interpret` 放在一个模块里，另一个功能的代码放在另一个模块里。
 4. 这里我们使用访问者模式来设计
 
-###  4.1. <a name='-1'></a>使用访问者模式
+### 使用访问者模式
 1. 访问者类型的接口定义如下，访问者对象里有对每种表达式的处理方法
     ```java
     interface Visitor<R> {
@@ -307,7 +305,7 @@
 4. 上述代码都是通过 `GenerateAst.java` 生成的。
 
 
-##  5. <a name='ANotVeryPrettyPrinter'></a>A (Not Very) Pretty Printer
+## A (Not Very) Pretty Printer
 1. 我们想要打印出语法树的结构，但并不是真的打印树的形状，而是像下面这样，把
     <img src="../../images/expression.png" width="600" style="display: block; margin: 5px 0 10px;" />
     打印成
@@ -390,5 +388,5 @@
 
 
 
-##  6. <a name='References'></a>References
+## References
 * [*Crafting interpreters*: Representing Code](https://craftinginterpreters.com/representing-code.html)

@@ -1,45 +1,33 @@
 # Scanning
 
-<!-- vscode-markdown-toc -->
-* 1. [设计原理](#)
-* 2. [解释器框架](#-1)
-	* 2.1. [`package`](#package)
-	* 2.2. [执行方式](#-1)
-	* 2.3. [`run`](#run)
-	* 2.4. [错误处理](#-1)
-* 3. [Lexemes and Tokens](#LexemesandTokens)
-	* 3.1. [Token 可能包含的信息](#Token)
-		* 3.1.1. [Token type](#Tokentype)
-		* 3.1.2. [Literal value](#Literalvalue)
-		* 3.1.3. [Location information](#Locationinformation)
-	* 3.2. [jLox 的 token 类](#jLoxtoken)
-* 4. [Regular Languages and Expressions](#RegularLanguagesandExpressions)
-* 5. [The Scanner Class](#TheScannerClass)
-* 6. [Recognizing Lexemes](#RecognizingLexemes)
-	* 6.1. [从识别单个字符词素开始](#-1)
-	* 6.2. [Lexical errors](#Lexicalerrors)
-	* 6.3. [双字符运算符](#-1)
-* 7. [Longer Lexemes](#LongerLexemes)
-	* 7.1. [注释](#-1)
-	* 7.2. [String literals](#Stringliterals)
-	* 7.3. [Number literals](#Numberliterals)
-		* 7.3.1. [负数的情况](#-1)
-* 8. [Reserved Words and Identifiers](#ReservedWordsandIdentifiers)
-	* 8.1. [maximal munch/longest match](#maximalmunchlongestmatch)
-* 9. [References](#References)
-
-<!-- vscode-markdown-toc-config
-	numbering=true
-	autoSave=true
-	/vscode-markdown-toc-config -->
-<!-- /vscode-markdown-toc -->
+- [解释器框架](#解释器框架)
+  - [`package`](#package)
+  - [执行方式](#执行方式)
+  - [`run`](#run)
+  - [错误处理](#错误处理)
+- [Lexemes and Tokens](#lexemes-and-tokens)
+  - [Token 可能包含的信息](#token-可能包含的信息)
+    - [Token type](#token-type)
+    - [Literal value](#literal-value)
+    - [Location information](#location-information)
+  - [jLox 的 token 类](#jlox-的-token-类)
+- [Regular Languages and Expressions](#regular-languages-and-expressions)
+- [The Scanner Class](#the-scanner-class)
+- [Recognizing Lexemes](#recognizing-lexemes)
+  - [从识别单个字符词素开始](#从识别单个字符词素开始)
+  - [Lexical errors](#lexical-errors)
+  - [双字符运算符](#双字符运算符)
+- [Longer Lexemes](#longer-lexemes)
+  - [注释](#注释)
+  - [String literals](#string-literals)
+  - [Number literals](#number-literals)
+    - [负数的情况](#负数的情况)
+- [Reserved Words and Identifiers](#reserved-words-and-identifiers)
+  - [maximal munch/longest match](#maximal-munchlongest-match)
+- [References](#references)
 
 
-##  1. <a name=''></a>设计原理
-
-
-
-##  2. <a name='-1'></a>解释器框架
+## 解释器框架
 1. 初始代码
     ```java
     // Lox.java
@@ -70,14 +58,14 @@
     }
     ```
 
-###  2.1. <a name='package'></a>`package`
+### `package`
 1. `package` 指定了当前文件要编译到什么目录之下。在这一章中，四个 java 文件（Lox.java Scanner.java Token.java TokenType.java）的 `package` 都设置了这个相同的值。
 2. 这四个 java 文件也在同一个目录中。
 3. 在当前目录下编译当前目录的所有 java文件：`javac -d . *.java`。结果是它们对应的 `.class` 都生成到了当前目录的子目录 `com/craftinginterpreters/lox`。
 4. 执行命令运行 `java com/craftinginterpreters/lox/Lox`。
-5. Lox.java 并没有显式的引用其他几个文件，但可以用其他文件里的类，不知道是不是也和设置了相同的 `package` 有关。
+5. Lox.java 并没有显式的引用其他几个文件，但可以用其他文件里的类，这是因为它们设置了相同的 `package`，并且都同时编译了。
 
-###  2.2. <a name='-1'></a>执行方式
+### 执行方式
 1. `main` 方法会读取命令行参数：
     * 如果参数大于 1，会给出一个提示并退出程序，因为这是非正常的使用方式；
     * 如果有一个参数，那么期望这个参数是一个 jLox 源文件路径，例如 `test.jLox`。然后 `runFile` 会读取这个文件并扫描里面的代码；例如执行命令 `java com/craftinginterpreters/lox/Lox test.jLox`。`test.jLox` 应该放在 `Lox.java` 所在目录里，而不是 `com/craftinginterpreters/lox/` 里。
@@ -113,7 +101,7 @@
     }
     ```
 
-###  2.3. <a name='run'></a>`run`
+### `run`
 1. 目前的代码如下
     ```java
     // Lox.java
@@ -130,7 +118,7 @@
     ```
 2. 扫描阶段只是通过 `Scanner` 类分析出 token，并没有后续工作，所以这里只是简单的打印 token。
 
-###  2.4. <a name='-1'></a>错误处理
+### 错误处理
 1. 代码
     ```java
     // Lox.java
@@ -144,17 +132,17 @@
         hadError = true;
     }
     ```
-2. 一旦发生错误 `hadError` 就会被设置为 `true`。`runFile` 中发现错误会退出程序，`runPrompt` 中每轮循环会被 `hadError` 置为 `false`，这样就可以正常的继续输入下一行代码并分析。
+2. 一旦发生错误 `hadError` 就会被设置为 `true`。`runFile` 中发现错误会退出程序，`runPrompt` 中每轮循环会把 `hadError` 置为 `false`，这样就可以正常的继续输入下一行代码并分析。
 
 
-##  3. <a name='LexemesandTokens'></a>Lexemes and Tokens
+## Lexemes and Tokens
 1. Lexeme 是对源代码分隔出的最小单元的文本字符串，而 token 是在 lexeme 附加上一些信息组成的。
 2. 例如 `var language = "lox";` 中：
     * `var` 和 `"lox"` 这两个字符串本身是 lexeme；
     * `{lexeme: 'var', type: keyword}` 和 `{lexeme: '"lox"', type: string}` 就可以作为 token。
 
-###  3.1. <a name='Token'></a>Token 可能包含的信息
-####  3.1.1. <a name='Tokentype'></a>Token type
+### Token 可能包含的信息
+#### Token type
 jLox 的 token 类型如下
 ```java
 // TokenType.java
@@ -183,17 +171,17 @@ enum TokenType {
 }
 ```
 
-####  3.1.2. <a name='Literalvalue'></a>Literal value
+#### Literal value
 1. There are lexemes for literal values: numbers and strings and the like. 
 2. Since the scanner has to walk each character in the literal to correctly identify it, it can also convert that textual representation of a value to the living runtime object that will be used by the interpreter later.
 3. 如果一个 lexeme 表示的是数值字面量或者字符串字面量，那这个 literal 就是对应类型的值。lexeme 是源代码中的一段文本，它本身是没有意义的；而 literal 是有明确类型的字面量值。
 
-####  3.1.3. <a name='Locationinformation'></a>Location information
+#### Location information
 1. 一些 token 实现将位置存储为两个数字：从源文件开头到 lexeme 开头的偏移量，以及词素的长度。扫描器无论如何都需要知道这些，因此计算它们没有任何开销。
 2. 稍后可以通过查看源文件并计算前面的换行符来将偏移量转换为行和列的位置。这听起来很慢，事实也确实如此。但是，只有当您需要实际向用户显示行和列时才需要这样做。大多数标记永远不会出现在错误消息中。对于这些标记，提前计算位置信息所花的时间越少越好。
 3. jLox 只记录词素的行号。
 
-###  3.2. <a name='jLoxtoken'></a>jLox 的 token 类
+### jLox 的 token 类
 ```java
 // Token.java
 
@@ -220,13 +208,13 @@ class Token {
 ```
 
 
-##  4. <a name='RegularLanguagesandExpressions'></a>Regular Languages and Expressions
+## Regular Languages and Expressions
 1. 扫描器的核心是一个循环，从源代码的第一个字符开始，扫描器会确定该字符属于哪个词素，并使用该字符以及属于该词素的任何后续字符。当它到达该词素的末尾时，它会发出一个标记。
 2. 然后它循环回去，从源代码中的下一个字符开始重复这一过程。
-3. 决定特定语言如何将字符分组为词素的规则称为这个语言的 lexical grammar，也就是怎样对这个语言进行词法分析的语法。在 Lox 中，与大多数编程语言一样，Lox 使用正则表达式的方法进行词法分析，所以 Lox 是一种 regular language。
+3. 决定特定语言如何将字符分组为词素的规则称为这个语言的 lexical grammar，也就是怎样对这个语言进行词法分析的语法。在 Lox 中，与大多数编程语言一样，Lox 的 lexical grammar 使用正则表达式的方法进行词法分析，所以 Lox 的 lexical grammar 是一种 regular language。
 
 
-##  5. <a name='TheScannerClass'></a>The Scanner Class
+## The Scanner Class
 整体逻辑
 ```java
 // Scanner.java
@@ -278,8 +266,8 @@ class Scanner {
 ```
 
 
-##  6. <a name='RecognizingLexemes'></a>Recognizing Lexemes
-###  6.1. <a name='-1'></a>从识别单个字符词素开始
+## Recognizing Lexemes
+### 从识别单个字符词素开始
 1. `scanToken` 方法和辅助方法
     ```java
     // Scanner.java
@@ -313,9 +301,9 @@ class Scanner {
         tokens.add(new Token(type, text, literal, line));
     }
     ```
-2. 不懂，`addToken` 为什么嵌套调用并且还重复定义
+2. 这里定义了两个 `addToken`，这种特性就是方法重载，只要它们的参数列表不同，编译器就可以区分出。
 
-###  6.2. <a name='Lexicalerrors'></a>Lexical errors
+### Lexical errors
 1. 如果源代码中包含不合法的字符，扫描器就会报告错误
     ```java
     default:
@@ -325,7 +313,7 @@ class Scanner {
 2. 注意，我们扔会继续扫描。程序后面可能还会有其他错误。如果我们一次检测到尽可能多的错误，我们的用户将获得更好的体验。
 3. 但由于已设置 `hadError`，我们将永远不会尝试执行任何代码，即使我们继续扫描其余部分。
 
-###  6.3. <a name='-1'></a>双字符运算符
+### 双字符运算符
 1. 例如 `!`，它可以作为单独的运算符，也可以组成 `!=` 这样的双字符运算符。对于 `!` 这种字符，我们还需要判断它后面的字符是什么才能确定当前是什么 token。
     ```java
     case '!':
@@ -355,8 +343,8 @@ class Scanner {
 3. 注释符号 `//` 也是一个双字符运算符，但因为还要处理它后面的注释文本，所以放在情况有些不同，放在下面。
 
 
-##  7. <a name='LongerLexemes'></a>Longer Lexemes
-###  7.1. <a name='-1'></a>注释
+## Longer Lexemes
+### 注释
 1. `/` 的处理逻辑
     ```java
     case '/':
@@ -378,7 +366,7 @@ class Scanner {
     ```
 3. 注释文本也是词素，但它们没有意义，解析器不处理它们。所以当我们到达注释的末尾时，我们不会调用 `addToken()`。当我们循环回来开始下一个词素时，`start` 会被重置。
 
-###  7.2. <a name='Stringliterals'></a>String literals
+### String literals
 1. 字符串字面量以 `"` 开头
     ```java
     case '"': string(); break;
@@ -406,7 +394,7 @@ class Scanner {
     }
     ```
 
-###  7.3. <a name='Numberliterals'></a>Number literals
+### Number literals
 1. A number literal is a series of digits optionally followed by a `.` and one or more trailing digits
     ```java
     if (isDigit(c)) {
@@ -442,14 +430,13 @@ class Scanner {
     } 
     ```
 
-####  7.3.1. <a name='-1'></a>负数的情况
+#### 负数的情况
 1. 根据前面对数值字面量的定义，比如 `-123` 就不算是数值字面量，因为它不是以 digit 开始的。它是一个表达式，给数值字面量 `123` 应用了操作符 `-`。
-2. 但这样会有一个问题，`-123.abs()` 的求值会是 -123，因为 `-` 的优先级低于方法调用。
-3. TODO，没说怎么解决。
+2. 但这样会有一个问题，`-123.abs()` 的求值会是 -123，因为 `-` 的优先级低于方法调用；但确实也有一些编程语言中求值会是 123；而还有一些则不支持数值直接调用方法。
 
 
-##  8. <a name='ReservedWordsandIdentifiers'></a>Reserved Words and Identifiers
-###  8.1. <a name='maximalmunchlongestmatch'></a>maximal munch/longest match
+## Reserved Words and Identifiers
+### maximal munch/longest match
 1. 考虑要匹配保留字 `or` 的规则，如果还是按照前面匹配双字符操作符的规则的话，如果扫描到了一个变量名 `orchid`，则会把前两个字符识别成保留字 `or`。
 2. 为了避免这个问题，匹配规则应该遵守 maximal munch/longest match 规则：when two lexical grammar rules can both match a chunk of code that the scanner is looking at, whichever one matches the most characters wins.
 3. 所以，这里 `orchid` 既满足关键字 `or` 的匹配语法，也满足变量标识符的匹配语法，但因为后者可以匹配的更多，所以就匹配为后者。不懂，那为什么不能在这里使用 `peekNext` 检查一下 `or` 后面是否是空格呢？
@@ -488,7 +475,8 @@ class Scanner {
         return c >= '0' && c <= '9';
     }
     ```
+5. 注意这里其实任何不是标识符的单词也会被识别为 `IDENTIFIER` 类型的 token。这是正常的，因为词法分析器只负责识别 token 的类型，而任意单词我们也是认为它是正常的标识符，比如说是一个变量名。在语义分析阶段才会检查标识符是否已声明，未声明的标识符会在后续阶段报错。
 
 
-##  9. <a name='References'></a>References
+## References
 * [*Crafting interpreters*: Scanning](https://craftinginterpreters.com/scanning.html)

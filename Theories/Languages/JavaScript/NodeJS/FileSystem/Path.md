@@ -1,8 +1,7 @@
 - [Nodejs 中的路径](#nodejs-中的路径)
-- [`basename(path [, suffix])`](#basenamepath--suffix)
-- [`extname()`](#extname)
-- [`dirname()`](#dirname)
-- [获取路径中的各部分信息](#获取路径中的各部分信息)
+  - [`import.meta.dirname` 和 `import.meta.filename` 的旧版本方案](#importmetadirname-和-importmetafilename-的旧版本方案)
+    - [CommonJS 模块系统](#commonjs-模块系统)
+    - [Nodejs v20.11 之前 ES Module 模块系统](#nodejs-v2011-之前-es-module-模块系统)
 - [`join([...paths])`](#joinpaths)
 - [`resolve([...paths])`](#resolvepaths)
   - [解决相对路径的动态性](#解决相对路径的动态性)
@@ -18,9 +17,10 @@
 - [`normalize(path)`](#normalizepath)
 - [References](#references)
 
+
 ## Nodejs 中的路径
-* `__dirname`：文件所在的绝对路径目录
-* `__filename`：文件的绝对路径
+* `import.meta.dirname`(Nodejs v20.11 开始的 ESModule)：文件所在的绝对路径目录
+* `import.meta.filename`(Nodejs v20.11 开始的 ESModule)：文件的绝对路径
 * `process.cwd()`：returns the current working directory of the Node.js process. `cwd` is the directory in which you are currently working. 在下面的例子里，因为是在 `D:\WWW\gits\Kaze-no-Toorimichi\Back` 运行的 node，所以这个目录就是 `cwd`。至于 node 调用其他目录的文件，那些目录只能算是资源所在的目录了。
 * Relative paths will be resolved relative to the current working directory
 * 不过 `require()` 中的相对路径并不是相对于 cwd，参考 [文档](https://nodejs.org/api/modules.html#modules_file_modules)
@@ -33,8 +33,8 @@ console.log('This is foo.js');
 
 ```js
 // D:\WWW\gits\Kaze-no-Toorimichi\Back\module\test.js
-console.log(__dirname);
-console.log(__filename);
+console.log(import.meta.dirname);
+console.log(import.meta.filename);
 console.log(process.cwd());
 console.log(path.resolve('./'));
 console.log(path.resolve('../'));
@@ -57,6 +57,29 @@ D:\WWW\gits\Kaze-no-Toorimichi
 This is foo.js
 D:\
 ```
+
+### `import.meta.dirname` 和 `import.meta.filename` 的旧版本方案
+#### CommonJS 模块系统
+使用 `__dirname` 和 `__filename`
+
+#### Nodejs v20.11 之前 ES Module 模块系统
+1. ES Moudule 模块系统中没有 `__dirname` 和 `__filename`。使用会报错
+    ```js
+    __dirname;
+    // ReferenceError: __dirname is not defined in ES module scope
+    // This file is being treated as an ES module because it has a '.js' file extension and 'D:\gits\AndroidThemes\SDK\package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
+    ```
+2. 可以如下重定义 `__dirname` 和 `__filename`
+   ```js
+    import { fileURLToPath } from 'url';
+    import path from 'path';
+
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    ```
+3. `import.meta.url` 返回当前文件的 URL（文件协议格式）。例如：`'file:///d:/gits/ConcatFiles/nodemon.config.js'`
+4. `fileURLToPath()` 将 URL 转换为文件系统路径 `'d:\\gits\\ConcatFiles\\nodemon.config.js'`
+5. `path.dirname(__filename)` 获取文件所在目录 `d:\\gits\\ConcatFiles'`
 
 
 ## `basename(path [, suffix])` 
@@ -174,8 +197,8 @@ path.parse('/home/user/dir/file.txt');
     * 如果用户在 `/project/src` 目录下运行 `node app.js`，相对路径会解析为 `/project/src/config.json`。
 4. 而如果你使用 `resolve` 将它解析为绝对路径
     ```js
-    const absolutePath = path.resolve(__dirname, 'config.json');
-    // __dirname 始终是当前文件所在目录的绝对路径，在本例中就是 /project/src/
+    const absolutePath = path.resolve(import.meta.dirname, 'config.json');
+    // import.meta.dirname 始终是当前文件所在目录的绝对路径，在本例中就是 /project/src/
     ```
     现在，无论从哪里运行脚本，`config.json` 的路径都会解析为：`/project/src/config.json`
 
@@ -188,11 +211,11 @@ TODO
     * Linux/macOS：`/project/src/app.js`
 2. 如果手动拼接路径字符串，可能会写出不兼容的代码：
     ```js
-    const badPath = __dirname + '/../data/file.txt'; // 在 Windows 上会生成错误的分隔符！
+    const badPath = import.meta.dirname + '/../data/file.txt'; // 在 Windows 上会生成错误的分隔符！
     ```
 3. 使用 `path.resolve()` 自动处理分隔符，生成当前系统兼容的绝对路径
     ```js
-    const safePath = path.resolve(__dirname, '../data', 'file.txt'); 
+    const safePath = path.resolve(import.meta.dirname, '../data', 'file.txt'); 
     ```
 
 ### 路径的确定性构建
@@ -200,7 +223,7 @@ TODO
     ```js
     path.resolve('src', 'app.js'); // 基于当前工作目录解析
     path.resolve('/project', 'src', 'app.js'); // 从根目录开始解析
-    path.resolve(__dirname, 'app.js'); // 基于当前文件目录解析
+    path.resolve(import.meta.dirname, 'app.js'); // 基于当前文件目录解析
     ```
 2. 这比手动拼接路径更可靠，尤其是当路径中包含 `..` 或 `.` 时。
 
